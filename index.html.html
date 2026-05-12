@@ -1,0 +1,3700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PATEC — Sistema de Gestão de Compras</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --az:#1A3A6B;--azm:#3266AD;--azc:#E6F1FB;
+  --vd:#1D9E75;--vdc:#EAF3DE;
+  --am:#BA7517;--amc:#FAEEDA;
+  --vm:#E24B4A;--vmc:#FCEBEB;
+  --bg:#F4F6FA;--brd:#E0E0E0;--cin:#F7F7F7;
+  --tx:#1A1A1A;--tx2:#666;--sw:220px;
+}
+body{font-family:Arial,sans-serif;font-size:14px;color:var(--tx);background:var(--bg);display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+#sb{width:var(--sw);background:var(--az);min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,.12)}
+.sb-logo h1{font-size:15px;font-weight:700;color:#fff;letter-spacing:.3px}
+.sb-logo p{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+.sb-sec{padding:.75rem 1rem .2rem;font-size:9px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase}
+.sb-it{display:flex;align-items:center;gap:8px;padding:.6rem 1rem;cursor:pointer;font-size:12px;color:rgba(255,255,255,.65);border-left:3px solid transparent;transition:all .15s;user-select:none}
+.sb-it:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-it.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:var(--vd)}
+.sb-badge{margin-left:auto;font-size:9px;background:rgba(186,117,23,.35);color:#FAC775;padding:1px 6px;border-radius:8px}
+
+/* ── MAIN ── */
+#mn{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:#fff;border-bottom:1px solid var(--brd);padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:1rem}
+.topbar-l h2{font-size:15px;font-weight:700;color:var(--az)}
+.topbar-l p{font-size:11px;color:var(--tx2);margin-top:1px}
+.top-dt{font-size:11px;color:var(--tx2);background:var(--cin);padding:4px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0}
+.ct{padding:1.5rem;flex:1}
+
+/* ── PÁGINAS ── */
+.page{display:none}.page.active{display:block}
+
+/* ── SUBTABS ── */
+.stabs{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
+.stab{padding:6px 16px;font-size:12px;border:1px solid var(--brd);border-radius:20px;background:#fff;cursor:pointer;color:var(--tx2);transition:all .15s;font-weight:500}
+.stab.active{background:var(--azm);border-color:var(--azm);color:#fff;font-weight:600}
+
+/* ── KPI ── */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1.25rem}
+.kc{background:#fff;border-radius:10px;padding:1rem 1.1rem;border:1px solid var(--brd);border-top:3px solid var(--azm);transition:box-shadow .15s}
+.kc:hover{box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.kc.ok{border-top-color:var(--vd)}.kc.warn{border-top-color:var(--am)}.kc.bad{border-top-color:var(--vm)}
+.kc-l{font-size:10px;color:var(--tx2);margin-bottom:5px;line-height:1.4}
+.kc-v{font-size:22px;font-weight:700;color:var(--az)}
+.kc.ok .kc-v{color:var(--vd)}.kc.warn .kc-v{color:var(--am)}.kc.bad .kc-v{color:var(--vm)}
+.kc-s{font-size:10px;color:var(--tx2);margin-top:3px}
+.kc-trend{font-size:11px;font-weight:600;margin-top:2px}
+.trend-up{color:var(--vd)}.trend-dn{color:var(--vm)}.trend-eq{color:var(--tx2)}
+
+/* ── CARDS ── */
+.cd{background:#fff;border-radius:10px;padding:1.25rem;border:1px solid var(--brd);margin-bottom:1rem}
+.cd-t{font-size:13px;font-weight:700;color:var(--az);margin-bottom:1rem;display:flex;align-items:center;gap:6px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem}
+.g24{display:grid;grid-template-columns:2.2fr 1fr;gap:1rem;margin-bottom:1rem}
+
+/* ── ALERTA ── */
+.al{border-radius:7px;padding:.7rem 1rem;margin-bottom:1rem;font-size:12px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.al-v{background:var(--vdc);color:#3B6D11;border-left:3px solid var(--vd)}
+.al-a{background:var(--amc);color:#854F0B;border-left:3px solid var(--am)}
+.al-r{background:var(--vmc);color:#A32D2D;border-left:3px solid var(--vm)}
+.al-b{background:var(--azc);color:#0C447C;border-left:3px solid var(--azm)}
+
+/* ── TABLE ── */
+.tw{overflow-x:auto;border-radius:8px;border:1px solid var(--brd);max-height:380px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{position:sticky;top:0;background:#F0F4FA;padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--tx2);border-bottom:1px solid var(--brd);white-space:nowrap;z-index:1}
+td{padding:7px 10px;border-bottom:1px solid #F5F5F5;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFBFF}
+tfoot td{background:#F0F4FA;font-weight:700;position:sticky;bottom:0;border-top:1px solid var(--brd)}
+
+/* ── PILL ── */
+.pl{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.pl-ok{background:var(--vdc);color:#3B6D11}
+.pl-w{background:var(--amc);color:#854F0B}
+.pl-b{background:var(--vmc);color:#A32D2D}
+.pl-g{background:var(--cin);color:var(--tx2)}
+.pl-az{background:var(--azc);color:#0C447C}
+
+/* ── MAPA LINHAS ── */
+.mapa-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #F5F5F5}
+.mapa-row:last-child{border-bottom:none}
+.lnum{font-size:10px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 7px;border-radius:4px;width:28px;text-align:center;flex-shrink:0}
+.mapa-nome{font-size:12px;flex:1;color:var(--tx)}
+.mapa-val{font-size:15px;font-weight:700;color:var(--az);min-width:60px;text-align:right}
+.mapa-bar{height:5px;background:#EEE;border-radius:3px;margin-top:3px;overflow:hidden}
+.mapa-fill{height:100%;border-radius:3px}
+
+/* ── FAIXAS ── */
+.faixa-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem}
+.faixa{text-align:center;padding:.875rem .5rem;border-radius:9px;border:1px solid var(--brd)}
+.faixa-n{font-size:28px;font-weight:700}
+.faixa-l{font-size:10px;color:var(--tx2);margin-top:3px}
+
+/* ── BARRA COLABORADOR ── */
+.colab-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5F5F5}
+.colab-row:last-child{border-bottom:none}
+.colab-nome{font-size:12px;font-weight:600;width:72px;flex-shrink:0}
+.colab-bar-wrap{flex:1}
+.colab-bar{height:8px;background:#EEE;border-radius:4px;overflow:hidden;margin-bottom:2px}
+.colab-fill{height:100%;border-radius:4px;transition:width .5s}
+.colab-meta{font-size:9px;color:var(--tx2)}
+.colab-num{font-size:13px;font-weight:700;width:34px;text-align:right;flex-shrink:0}
+.colab-pct{font-size:10px;width:36px;text-align:right;flex-shrink:0}
+
+/* ── ALERTA CICLO ── */
+.ciclo-box{border-radius:10px;padding:1.1rem 1.25rem;border:1px solid var(--brd);margin-bottom:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.ciclo-ico{font-size:28px;flex-shrink:0}
+.ciclo-txt h3{font-size:13px;font-weight:700;margin-bottom:3px}
+.ciclo-txt p{font-size:12px;color:var(--tx2);line-height:1.5}
+.ciclo-verde{background:var(--vdc);border-color:#A8D5A2}
+.ciclo-amarelo{background:var(--amc);border-color:#DDB56A}
+.ciclo-vermelho{background:var(--vmc);border-color:#EFA5A5}
+
+/* ── PROJEÇÃO CARD ── */
+.proj-card{background:linear-gradient(135deg,var(--az),var(--azm));border-radius:10px;padding:1.25rem;color:#fff;margin-bottom:1rem}
+.proj-card h3{font-size:12px;opacity:.75;margin-bottom:.5rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.proj-val{font-size:32px;font-weight:700}
+.proj-sub{font-size:11px;opacity:.7;margin-top:4px}
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-top:.875rem}
+.proj-item{background:rgba(255,255,255,.12);border-radius:7px;padding:.65rem .875rem;text-align:center}
+.proj-item-v{font-size:18px;font-weight:700}
+.proj-item-l{font-size:9px;opacity:.7;margin-top:2px}
+
+/* ── BUTTONS ── */
+.btn{padding:7px 16px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.btn-p{background:var(--azm);color:#fff}.btn-p:hover{background:var(--az)}
+.btn-s{background:#fff;color:var(--tx);border:1px solid var(--brd)}.btn-s:hover{background:var(--cin)}
+
+/* ── HAMBURGUER ── */
+#hbg{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--az);color:#fff;border:none;border-radius:6px;padding:7px 10px;font-size:16px;cursor:pointer}
+@media(max-width:820px){
+  #hbg{display:block}
+  #sb{transform:translateX(-100%);transition:.25s}
+  #sb.mob-open{transform:translateX(0)}
+  #mn{margin-left:0}
+  .g24{grid-template-columns:1fr}
+  .g2{grid-template-columns:1fr}
+  .g3{grid-template-columns:1fr 1fr}
+  .faixa-grid{grid-template-columns:1fr 1fr 1fr}
+}
+
+/* ── SEPARADOR ── */
+.section-title{font-size:13px;font-weight:700;color:var(--az);margin-bottom:.875rem;padding-bottom:.5rem;border-bottom:2px solid var(--azc);display:flex;align-items:center;gap:6px}
+
+/* ── Estilos específicos Produção ── */
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --az:#1A3A6B;--azm:#3266AD;--azc:#E6F1FB;
+  --vd:#1D9E75;--vdc:#EAF3DE;
+  --am:#BA7517;--amc:#FAEEDA;
+  --vm:#E24B4A;--vmc:#FCEBEB;
+  --bg:#F4F6FA;--brd:#E0E0E0;--cin:#F7F7F7;
+  --tx:#1A1A1A;--tx2:#666;--sw:220px;
+}
+body{font-family:Arial,sans-serif;font-size:14px;color:var(--tx);background:var(--bg);display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+#sb{width:var(--sw);background:var(--az);min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column}
+.sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,.12)}
+.sb-logo h1{font-size:15px;font-weight:700;color:#fff;letter-spacing:.3px}
+.sb-logo p{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+.sb-sec{padding:.75rem 1rem .2rem;font-size:9px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase}
+.sb-it{display:flex;align-items:center;gap:8px;padding:.6rem 1rem;cursor:pointer;font-size:12px;color:rgba(255,255,255,.65);border-left:3px solid transparent;transition:all .15s;user-select:none}
+.sb-it:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-it.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:var(--vd)}
+.sb-badge{margin-left:auto;font-size:9px;background:rgba(186,117,23,.35);color:#FAC775;padding:1px 6px;border-radius:8px}
+
+/* ── MAIN ── */
+#mn{margin-left:var(--sw);flex:1;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid var(--brd);padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-l h2{font-size:15px;font-weight:700;color:var(--az)}
+.topbar-l p{font-size:11px;color:var(--tx2);margin-top:1px}
+.top-dt{font-size:11px;color:var(--tx2);background:var(--cin);padding:4px 10px;border-radius:6px;white-space:nowrap}
+.ct{padding:1.5rem;flex:1}
+
+/* ── PÁGINAS ── */
+.page{display:none}.page.active{display:block}
+
+/* ── SUBTABS ── */
+.stabs{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
+.stab{padding:6px 16px;font-size:12px;border:1px solid var(--brd);border-radius:20px;background:#fff;cursor:pointer;color:var(--tx2);transition:all .15s;font-weight:500}
+.stab.active{background:var(--azm);border-color:var(--azm);color:#fff;font-weight:600}
+
+/* ── CARDS ── */
+.cd{background:#fff;border-radius:10px;padding:1.25rem;border:1px solid var(--brd);margin-bottom:1rem}
+.cd-t{font-size:13px;font-weight:700;color:var(--az);margin-bottom:1rem}
+
+/* ── KPI ── */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem}
+.kc{background:#fff;border-radius:10px;padding:1rem 1.1rem;border:1px solid var(--brd);border-top:3px solid var(--azm)}
+.kc.ok{border-top-color:var(--vd)}.kc.warn{border-top-color:var(--am)}.kc.bad{border-top-color:var(--vm)}
+.kc-l{font-size:10px;color:var(--tx2);margin-bottom:5px;line-height:1.4}
+.kc-v{font-size:22px;font-weight:700;color:var(--az)}
+.kc.ok .kc-v{color:var(--vd)}.kc.warn .kc-v{color:var(--am)}.kc.bad .kc-v{color:var(--vm)}
+.kc-s{font-size:10px;color:var(--tx2);margin-top:2px}
+
+/* ── ALERTA ── */
+.al{border-radius:7px;padding:.65rem 1rem;margin-bottom:1rem;font-size:12px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.al-v{background:var(--vdc);color:#3B6D11;border-left:3px solid var(--vd)}
+.al-a{background:var(--amc);color:#854F0B;border-left:3px solid var(--am)}
+.al-b{background:var(--azc);color:#0C447C;border-left:3px solid var(--azm)}
+
+/* ── TABLE ── */
+.tw{overflow-x:auto;border-radius:8px;border:1px solid var(--brd);max-height:420px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{position:sticky;top:0;background:#F0F4FA;padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--tx2);border-bottom:1px solid var(--brd);white-space:nowrap;z-index:1}
+td{padding:7px 10px;border-bottom:1px solid #F5F5F5;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFBFF}
+tfoot td{background:#F0F4FA;font-weight:700;position:sticky;bottom:0;border-top:1px solid var(--brd)}
+
+/* ── PILL ── */
+.pl{display:inline-block;padding:2px 9px;border-radius:8px;font-size:10px;font-weight:600}
+.pl-ok{background:var(--vdc);color:#3B6D11}
+.pl-az{background:var(--azc);color:#0C447C}
+.pl-g{background:var(--cin);color:var(--tx2)}
+.pl-f{background:#F0F0F0;color:#444;border:1px solid var(--brd)}
+
+/* ── INPUTS ── */
+input,select{font-family:Arial,sans-serif;font-size:13px;padding:7px 11px;border:1px solid var(--brd);border-radius:6px;background:#fff;color:var(--tx);width:100%}
+input:focus,select:focus{outline:none;border-color:var(--azm);box-shadow:0 0 0 2px rgba(50,102,173,.12)}
+input[type=number]{text-align:center}
+input[type=number]::-webkit-inner-spin-button{opacity:.5}
+.field-wrap{display:flex;flex-direction:column;gap:3px}
+.field-label{font-size:11px;color:var(--tx2);font-weight:500}
+
+/* ── GRID FORM ── */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1.25rem}
+
+/* ── LINHAS DE PRODUÇÃO ── */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:1.25rem}
+.prod-row{display:flex;align-items:center;gap:10px;background:var(--cin);padding:8px 12px;border-radius:7px;border:1px solid var(--brd)}
+.prod-row label{font-size:12px;color:var(--tx);flex:1;line-height:1.3}
+.prod-row input{width:76px;flex-shrink:0;padding:6px 8px;font-size:13px;font-weight:700;color:var(--azm)}
+
+/* ── BOTÕES ── */
+.btn{padding:8px 18px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn-p{background:var(--azm);color:#fff}.btn-p:hover{background:var(--az)}
+.btn-g{background:var(--vd);color:#fff}.btn-g:hover{background:#0F6E56}
+.btn-s{background:#fff;color:var(--tx);border:1px solid var(--brd)}.btn-s:hover{background:var(--cin)}
+.btn-r{background:var(--vmc);color:var(--vm);border:1px solid #f5b8b8}.btn-r:hover{background:#f8d0d0}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── PCP LOCK ── */
+.lock-box{text-align:center;padding:2.5rem 1.5rem}
+
+/* ── BADGE PRESENÇA ── */
+.pres-sel{display:flex;gap:6px;flex-wrap:wrap}
+.pres-opt{padding:6px 14px;border-radius:20px;border:1px solid var(--brd);background:#fff;cursor:pointer;font-size:12px;color:var(--tx2);transition:all .15s;user-select:none}
+.pres-opt.sel-P{background:var(--azc);border-color:var(--azm);color:#0C447C;font-weight:600}
+.pres-opt.sel-H{background:#EFF8F5;border-color:var(--vd);color:#3B6D11;font-weight:600}
+.pres-opt.sel-F{background:#FFF3E0;border-color:#CC6600;color:#884400;font-weight:600}
+
+/* ── BARRA DE PROGRESSO ── */
+.prog-bar{height:7px;background:#EEE;border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width .4s}
+
+/* ── SEPARADOR ── */
+.divider{height:1px;background:var(--brd);margin:1.25rem 0}
+
+/* ── TOOLTIP TOTAL ── */
+.total-badge{font-size:20px;font-weight:700;color:var(--az);padding:4px 12px;background:var(--azc);border-radius:7px;border:1px solid rgba(50,102,173,.2)}
+
+@media(max-width:768px){
+  #sb{transform:translateX(-100%);transition:.25s}
+  #sb.mob-open{transform:translateX(0)}
+  #mn{margin-left:0}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .prod-grid{grid-template-columns:1fr}
+  .g2{grid-template-columns:1fr !important}
+}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+/* hamburguer */
+#hbg{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--az);color:#fff;border:none;border-radius:6px;padding:7px 10px;font-size:16px;cursor:pointer}
+@media(max-width:768px){#hbg{display:block}}
+
+/* ── Estilos específicos Mapa ── */
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --az:#1A3A6B;--azm:#3266AD;--azc:#E6F1FB;
+  --vd:#1D9E75;--vdc:#EAF3DE;
+  --am:#BA7517;--amc:#FAEEDA;
+  --vm:#E24B4A;--vmc:#FCEBEB;
+  --bg:#F4F6FA;--brd:#E0E0E0;--cin:#F7F7F7;
+  --tx:#1A1A1A;--tx2:#666;--sw:220px;
+}
+body{font-family:Arial,sans-serif;font-size:14px;color:var(--tx);background:var(--bg);display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+#sb{width:var(--sw);background:var(--az);min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
+.sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,.12)}
+.sb-logo h1{font-size:15px;font-weight:700;color:#fff;letter-spacing:.3px}
+.sb-logo p{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+.sb-sec{padding:.75rem 1rem .2rem;font-size:9px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase}
+.sb-it{display:flex;align-items:center;gap:8px;padding:.6rem 1rem;cursor:pointer;font-size:12px;color:rgba(255,255,255,.65);border-left:3px solid transparent;transition:all .15s;user-select:none}
+.sb-it:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-it.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:var(--vd)}
+.sb-badge{margin-left:auto;font-size:9px;background:rgba(186,117,23,.35);color:#FAC775;padding:1px 6px;border-radius:8px}
+
+/* ── MAIN ── */
+#mn{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:#fff;border-bottom:1px solid var(--brd);padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:1rem;flex-wrap:wrap}
+.topbar-l h2{font-size:15px;font-weight:700;color:var(--az)}
+.topbar-l p{font-size:11px;color:var(--tx2);margin-top:1px}
+.top-dt{font-size:11px;color:var(--tx2);background:var(--cin);padding:4px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0}
+.ct{padding:1.5rem;flex:1}
+
+/* ── PÁGINAS ── */
+.page{display:none}.page.active{display:block}
+
+/* ── SUBTABS ── */
+.stabs{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
+.stab{padding:6px 16px;font-size:12px;border:1px solid var(--brd);border-radius:20px;background:#fff;cursor:pointer;color:var(--tx2);transition:all .15s;font-weight:500}
+.stab.active{background:var(--azm);border-color:var(--azm);color:#fff;font-weight:600}
+
+/* ── KPI ── */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1.25rem}
+.kc{background:#fff;border-radius:10px;padding:1rem 1.1rem;border:1px solid var(--brd);border-top:3px solid var(--azm);transition:box-shadow .15s;position:relative;overflow:hidden}
+.kc:hover{box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.kc.ok{border-top-color:var(--vd)}.kc.warn{border-top-color:var(--am)}.kc.bad{border-top-color:var(--vm)}
+.kc.big{border-top-width:4px}
+.kc-l{font-size:10px;color:var(--tx2);margin-bottom:5px;line-height:1.4}
+.kc-v{font-size:22px;font-weight:700;color:var(--az);line-height:1}
+.kc-v.xl{font-size:32px}
+.kc.ok .kc-v{color:var(--vd)}.kc.warn .kc-v{color:var(--am)}.kc.bad .kc-v{color:var(--vm)}
+.kc-s{font-size:10px;color:var(--tx2);margin-top:4px}
+.kc-trend{font-size:11px;font-weight:600;margin-top:3px}
+.t-up{color:var(--vm)}.t-dn{color:var(--vd)}.t-eq{color:var(--tx2)}
+
+/* ── CARDS ── */
+.cd{background:#fff;border-radius:10px;padding:1.25rem;border:1px solid var(--brd);margin-bottom:1rem}
+.cd-t{font-size:13px;font-weight:700;color:var(--az);margin-bottom:1rem;display:flex;align-items:center;gap:6px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem}
+
+/* ── ALERTA ── */
+.al{border-radius:7px;padding:.7rem 1rem;margin-bottom:1rem;font-size:12px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.al-v{background:var(--vdc);color:#3B6D11;border-left:3px solid var(--vd)}
+.al-a{background:var(--amc);color:#854F0B;border-left:3px solid var(--am)}
+.al-b{background:var(--azc);color:#0C447C;border-left:3px solid var(--azm)}
+
+/* ── TABLE ── */
+.tw{overflow-x:auto;border-radius:8px;border:1px solid var(--brd);max-height:400px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{position:sticky;top:0;background:#F0F4FA;padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--tx2);border-bottom:1px solid var(--brd);white-space:nowrap;z-index:1}
+td{padding:7px 10px;border-bottom:1px solid #F5F5F5;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFBFF}
+tfoot td{background:#F0F4FA;font-weight:700;position:sticky;bottom:0;border-top:1px solid var(--brd)}
+
+/* ── PILL ── */
+.pl{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.pl-ok{background:var(--vdc);color:#3B6D11}
+.pl-w{background:var(--amc);color:#854F0B}
+.pl-b{background:var(--vmc);color:#A32D2D}
+.pl-g{background:var(--cin);color:var(--tx2)}
+.pl-az{background:var(--azc);color:#0C447C}
+
+/* ── LINHA CARD (visual principal) ── */
+.linha-card{background:#fff;border-radius:10px;border:1px solid var(--brd);padding:1.1rem 1.25rem;display:flex;align-items:center;gap:12px;transition:box-shadow .15s;margin-bottom:8px}
+.linha-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.lnum{font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:3px 8px;border-radius:5px;flex-shrink:0;min-width:34px;text-align:center}
+.linha-info{flex:1;min-width:0}
+.linha-nome{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.linha-fila{font-size:10px;color:var(--tx2)}
+.linha-bar{height:6px;background:#EEE;border-radius:3px;margin-top:5px;overflow:hidden}
+.linha-fill{height:100%;border-radius:3px;transition:width .6s}
+.linha-val{font-size:20px;font-weight:700;flex-shrink:0;min-width:60px;text-align:right}
+.linha-var{font-size:10px;font-weight:600;flex-shrink:0;text-align:right;width:60px}
+.lv-up{color:var(--vm)}.lv-dn{color:var(--vd)}.lv-eq{color:var(--tx2)}
+
+/* ── DESTAQUE L10/L12 ── */
+.destaque-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem}
+.destaque{border-radius:12px;padding:1.5rem;color:#fff;position:relative;overflow:hidden}
+.destaque-az{background:linear-gradient(135deg,var(--az) 0%,#2A5FA0 100%)}
+.destaque-vd{background:linear-gradient(135deg,var(--vd) 0%,#0F6E56 100%)}
+.destaque::after{content:'';position:absolute;right:-20px;bottom:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.06)}
+.destaque h3{font-size:11px;opacity:.7;margin-bottom:.5rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.destaque-val{font-size:40px;font-weight:700;line-height:1}
+.destaque-sub{font-size:11px;opacity:.65;margin-top:5px}
+.destaque-var{font-size:12px;font-weight:600;margin-top:8px;padding:3px 10px;background:rgba(255,255,255,.15);border-radius:20px;display:inline-block}
+
+/* ── VARIAÇÃO CARDS (dia a dia) ── */
+.var-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:1.25rem}
+.var-card{background:#fff;border-radius:8px;padding:.875rem;border:1px solid var(--brd);text-align:center}
+.var-card-l{font-size:10px;color:var(--tx2);margin-bottom:4px}
+.var-card-v{font-size:20px;font-weight:700;color:var(--az)}
+.var-card-d{font-size:11px;font-weight:600;margin-top:3px}
+.vc-up{border-top:2px solid var(--vm)}.vc-dn{border-top:2px solid var(--vd)}.vc-eq{border-top:2px solid var(--tx2)}
+
+/* ── INPUT LANÇAMENTO ── */
+.lanc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:1.25rem}
+.lanc-item{display:flex;flex-direction:column;gap:4px}
+.lanc-label{font-size:11px;color:var(--tx2);font-weight:500}
+.lanc-input{padding:8px 12px;border:1.5px solid var(--brd);border-radius:7px;font-size:15px;font-weight:700;color:var(--vd);background:rgba(29,158,117,.06);text-align:right;width:100%}
+.lanc-input:focus{outline:none;border-color:var(--vd);box-shadow:0 0 0 2px rgba(29,158,117,.15)}
+.lanc-lnum{font-size:9px;font-weight:700;color:var(--azm);background:var(--azc);padding:1px 6px;border-radius:3px;margin-bottom:2px;display:inline-block}
+.lanc-total{background:var(--azc);border-radius:8px;padding:.875rem 1.25rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.lanc-total label{font-size:12px;font-weight:700;color:var(--az)}
+.lanc-total-val{font-size:22px;font-weight:700;color:var(--azm)}
+
+/* ── BOTÕES ── */
+.btn{padding:8px 18px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn-p{background:var(--azm);color:#fff}.btn-p:hover{background:var(--az)}
+.btn-g{background:var(--vd);color:#fff}.btn-g:hover{background:#0F6E56}
+.btn-s{background:#fff;color:var(--tx);border:1px solid var(--brd)}.btn-s:hover{background:var(--cin)}
+
+/* ── HAMBURGUER ── */
+#hbg{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--az);color:#fff;border:none;border-radius:6px;padding:7px 10px;font-size:16px;cursor:pointer}
+@media(max-width:820px){
+  #hbg{display:block}
+  #sb{transform:translateX(-100%);transition:.25s}
+  #sb.mob-open{transform:translateX(0)}
+  #mn{margin-left:0}
+  .destaque-grid,.g2,.g3{grid-template-columns:1fr}
+  .var-grid{grid-template-columns:repeat(3,1fr)}
+}
+
+</style>
+</head>
+<body>
+<button id="hbg" onclick="document.getElementById('sb').classList.toggle('mob-open')">☰</button>
+<nav id="sb">
+  <div class="sb-logo"><h1>PATEC</h1><p>Sistema de Gestão de Compras</p></div>
+  <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">◈ VISÃO GERAL</div>
+  <div class="sb-it active" onclick="go('vg-visao',this)">📊 Painel Geral</div>
+  <div class="sb-it" onclick="go('vg-medicao',this)">📈 Gráfico de Medição</div>
+  <div class="sb-it" onclick="go('vg-colab',this)">👤 Por Colaborador</div>
+  <div class="sb-it" onclick="go('vg-validade',this)">⏱ Validade Oportunidades</div>
+  <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ PRODUÇÃO</div>
+  <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Lançar Produção</div>
+  <div class="sb-it" onclick="go('pr-equipe',this)">👥 Visão da Equipe</div>
+  <div class="sb-it" onclick="go('pr-porlinha',this)">📋 Por Linha</div>
+  <div class="sb-it" onclick="go('pr-pcp',this)">🔒 Dados PCP</div>
+  <div class="sb-it" onclick="go('pr-exportar',this)">💾 Exportar</div>
+  <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">📋 MAPA L10/L12</div>
+  <div class="sb-it" onclick="go('mp-posicao',this)">📋 Posição Atual</div>
+  <div class="sb-it" onclick="go('mp-lancamento',this)">✏️ Lançamento</div>
+  <div class="sb-it" onclick="go('mp-historico',this)">📅 Histórico do Ciclo</div>
+  <div class="sb-it" onclick="go('mp-variacao',this)">↕ Variação Dia a Dia</div>
+  <div class="sb-it" onclick="go('mp-detalhe',this)">🔍 Detalhe por Linha</div>
+  <div class="sb-sec">Em breve</div>
+  <div class="sb-it" style="opacity:.45;cursor:default">⬆ Upload MAPA <span class="sb-badge">breve</span></div>
+  <div class="sb-it" style="opacity:.45;cursor:default">⚠ Itens Críticos <span class="sb-badge">breve</span></div>
+  <div class="sb-it" style="opacity:.45;cursor:default">📦 Backlog <span class="sb-badge">breve</span></div>
+</nav>
+<main id="mn">
+<div class="topbar">
+  <div class="topbar-l"><h2 id="ttl">Painel Geral</h2><p>Ciclo Maio 2026 · 22 dias úteis · Meta 90 itens/dia</p></div>
+  <div class="top-dt" id="tdt"></div>
+</div>
+<div class="ct">
+
+<!-- ══ VISÃO GERAL ══ -->
+<!-- SIDEBAR -->
+<!-- MAIN -->
+<main id="mn">
+  <div class="topbar">
+    <div class="topbar-l">
+      <h2 id="ttl">Visão Geral</h2>
+      <p>Ciclo Maio 2026 · 22 dias úteis · Meta 90 itens/dia · Referência: <span id="ref-data"></span></p>
+    </div>
+    <div class="top-dt" id="tdt"></div>
+  </div>
+
+  <div class="ct">
+
+    <!-- ══════════════════ VISÃO GERAL ══════════════════ -->
+    <div id="p-vg-visao" class="page active">
+
+      <!-- KPIs principais -->
+      <div class="kgrid">
+        <div class="kc ok">
+          <div class="kc-l">Total PATEC (L12)</div>
+          <div class="kc-v">2.682</div>
+          <div class="kc-s">L3+L4+L5+L6</div>
+          <div class="kc-trend trend-up">▲ +265 vs 8/mai</div>
+        </div>
+        <div class="kc" id="kc-real">
+          <div class="kc-l">Realizado acumulado</div>
+          <div class="kc-v" style="color:var(--azm)">743</div>
+          <div class="kc-s">10 dias registrados</div>
+          <div class="kc-trend trend-dn">▼ −157 vs programado</div>
+        </div>
+        <div class="kc warn">
+          <div class="kc-l">Gap vs programado</div>
+          <div class="kc-v">−157</div>
+          <div class="kc-s">Programado: 900</div>
+          <div class="kc-trend trend-dn">91,7% → 82,6%</div>
+        </div>
+        <div class="kc warn">
+          <div class="kc-l">Meta necessária</div>
+          <div class="kc-v">103/dia</div>
+          <div class="kc-s">12 dias restantes</div>
+          <div class="kc-trend" style="color:var(--am)">+14% acima da meta base</div>
+        </div>
+        <div class="kc">
+          <div class="kc-l">Saídas acumuladas</div>
+          <div class="kc-v" style="color:var(--az)">439</div>
+          <div class="kc-s">10 dias</div>
+          <div class="kc-trend trend-eq">Média: 44/dia</div>
+        </div>
+        <div class="kc">
+          <div class="kc-l">Ritmo atual</div>
+          <div class="kc-v" style="color:var(--am)">74/dia</div>
+          <div class="kc-s">média dos 10 dias</div>
+          <div class="kc-trend trend-dn">▼ −16 vs meta (90)</div>
+        </div>
+      </div>
+
+      <!-- Alerta dinâmico -->
+      <div class="ciclo-box ciclo-amarelo">
+        <div class="ciclo-ico">⚠</div>
+        <div class="ciclo-txt">
+          <h3>Atenção — ciclo abaixo da meta</h3>
+          <p>Ritmo atual de <strong>74 itens/dia</strong> gera projeção de <strong>1.631 itens</strong> ao fim do ciclo (meta: 1.980). Para fechar em 100% são necessários <strong>103 itens/dia</strong> nos 12 dias restantes.</p>
+        </div>
+      </div>
+
+      <!-- Projeção card -->
+      <div class="proj-card">
+        <h3>Projeção de fechamento</h3>
+        <div class="proj-val" id="proj-val">1.631</div>
+        <div class="proj-sub">itens projetados ao final do ciclo (22 dias úteis)</div>
+        <div class="proj-grid">
+          <div class="proj-item"><div class="proj-item-v">1.980</div><div class="proj-item-l">Meta 100%</div></div>
+          <div class="proj-item"><div class="proj-item-v">82%</div><div class="proj-item-l">% projetada</div></div>
+          <div class="proj-item"><div class="proj-item-v">12</div><div class="proj-item-l">Dias restantes</div></div>
+          <div class="proj-item"><div class="proj-item-v">103</div><div class="proj-item-l">Meta necessária/dia</div></div>
+        </div>
+      </div>
+
+      <!-- Gráfico acumulado + faixas -->
+      <div class="g24">
+        <div class="cd">
+          <div class="cd-t">📈 Programado × Realizado (acumulado + projeção)</div>
+          <canvas id="ch-acum" height="140"></canvas>
+        </div>
+        <div class="cd">
+          <div class="cd-t">Faixas de performance — 10 dias</div>
+          <div class="faixa-grid">
+            <div class="faixa" style="border-top:3px solid var(--vd)">
+              <div class="faixa-n" style="color:var(--vd)">3</div>
+              <div class="faixa-l">≥ 100%<br>≥ 90 itens</div>
+            </div>
+            <div class="faixa" style="border-top:3px solid var(--am)">
+              <div class="faixa-n" style="color:var(--am)">2</div>
+              <div class="faixa-l">80–99%<br>72–89 itens</div>
+            </div>
+            <div class="faixa" style="border-top:3px solid var(--vm)">
+              <div class="faixa-n" style="color:var(--vm)">5</div>
+              <div class="faixa-l">≤ 79%<br>< 72 itens</div>
+            </div>
+          </div>
+          <div style="margin-top:1rem">
+            <div class="section-title" style="font-size:11px;margin-bottom:.75rem">Média por colaborador</div>
+            <div id="colab-bars"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico diário + mapa -->
+      <div class="g2">
+        <div class="cd">
+          <div class="cd-t">📊 Produção diária — últimos 10 dias</div>
+          <canvas id="ch-diario" height="160"></canvas>
+        </div>
+        <div class="cd">
+          <div class="cd-t">📋 Mapa PATEC — posição atual</div>
+          <div id="mapa-mini"></div>
+        </div>
+      </div>
+
+      <!-- Tabela resumo -->
+      <div class="cd">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px">
+          <div class="cd-t" style="margin:0">Resumo — 10 dias registrados</div>
+          <button class="btn btn-s" onclick="exportResumo()">💾 Exportar Excel</button>
+        </div>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr>
+                <th>Dia</th><th>Data</th>
+                <th>Programado</th><th>Realizado</th>
+                <th>Acum. Prog.</th><th>Acum. Real.</th>
+                <th>Gap</th><th>Performance</th><th>Saídas</th>
+              </tr>
+            </thead>
+            <tbody id="tb-resumo"></tbody>
+            <tfoot id="tf-resumo"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ MAPA L10/L12 ══════════════════ -->
+    <div id="p-vg-mapa" class="page">
+      <div class="al al-b">ℹ Valores calculados automaticamente via Level Board · Fila: col BN (Status_Desc) · Data de referência: 14/05/2026</div>
+
+      <!-- L10/L12 destaque -->
+      <div class="g2" style="margin-bottom:1rem">
+        <div class="proj-card" style="background:linear-gradient(135deg,var(--az),#2A5FA0)">
+          <h3>L10 — Total geral (incl. Abrir PATEC)</h3>
+          <div class="proj-val">4.516</div>
+          <div class="proj-sub">L3 + L4 + L5 + L6 + L7 + L8</div>
+        </div>
+        <div class="proj-card" style="background:linear-gradient(135deg,var(--vd),#0F6E56)">
+          <h3>L12 — Total somente PATEC</h3>
+          <div class="proj-val">2.682</div>
+          <div class="proj-sub">L3 + L4 + L5 + L6</div>
+        </div>
+      </div>
+
+      <!-- Linhas detalhadas -->
+      <div class="g2">
+        <div class="cd">
+          <div class="cd-t">Composição do L12 (PATEC)</div>
+          <div id="mapa-l12"></div>
+          <div style="margin-top:.875rem;padding-top:.875rem;border-top:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px;font-weight:700;color:var(--az)">Total L12</span>
+            <span style="font-size:20px;font-weight:700;color:var(--azm)">2.682</span>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="cd-t">Abrir PATEC (L7+L8) — fora do L12</div>
+          <div id="mapa-l78"></div>
+          <div style="margin-top:.875rem;padding-top:.875rem;border-top:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px;font-weight:700;color:var(--az)">Total L7+L8</span>
+            <span style="font-size:20px;font-weight:700;color:var(--tx2)">1.834</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Histórico L12 -->
+      <div class="cd">
+        <div class="cd-t">📉 Histórico L12 — variação dos 9 dias</div>
+        <canvas id="ch-l12" height="120"></canvas>
+      </div>
+
+      <!-- Tabela histórico -->
+      <div class="cd">
+        <div class="cd-t">Histórico diário — todas as linhas</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Dia</th><th>L3</th><th>L4</th><th>L5</th><th>L6</th><th>L7</th><th>L8</th><th>L10</th><th>L12</th><th>Var.L12</th></tr></thead>
+            <tbody id="tb-hist-mapa"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ GRÁFICO DE MEDIÇÃO ══════════════════ -->
+    <div id="p-vg-medicao" class="page">
+      <div class="kgrid">
+        <div class="kc"><div class="kc-l">Programado acumulado</div><div class="kc-v" style="color:var(--az)">900</div><div class="kc-s">10 × 90/dia</div></div>
+        <div class="kc warn"><div class="kc-l">Realizado acumulado</div><div class="kc-v">743</div><div class="kc-s">82,6% da meta</div></div>
+        <div class="kc warn"><div class="kc-l">Gap</div><div class="kc-v">−157</div><div class="kc-s">abaixo do programado</div></div>
+        <div class="kc"><div class="kc-l">Saídas acumuladas</div><div class="kc-v" style="color:var(--az)">439</div></div>
+        <div class="kc"><div class="kc-l">Dias registrados</div><div class="kc-v" style="color:var(--az)">10 / 22</div></div>
+        <div class="kc warn"><div class="kc-l">Meta necessária</div><div class="kc-v">103/dia</div><div class="kc-s">12 dias restantes</div></div>
+      </div>
+
+      <div class="al al-a">⚠ Ritmo atual 74/dia · Projeção: 1.631 itens ao fim do ciclo · Para fechar em 100% precisa de 103/dia</div>
+
+      <div class="g24">
+        <div class="cd">
+          <div class="cd-t">Acumulado — Programado × Realizado (+ projeção)</div>
+          <canvas id="ch-med-acum" height="160"></canvas>
+        </div>
+        <div class="cd">
+          <div class="cd-t">Produção diária</div>
+          <canvas id="ch-med-bar" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="cd">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px">
+          <div class="cd-t" style="margin:0">Tabela completa — 22 dias úteis</div>
+          <button class="btn btn-s" onclick="exportMedicao()">💾 Exportar Excel</button>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Dia</th><th>Data</th><th>Program.</th><th>Realizado</th><th>Acum.Prog.</th><th>Acum.Real.</th><th>Gap</th><th>%</th><th>Saídas</th></tr></thead>
+            <tbody id="tb-medicao"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ POR COLABORADOR ══════════════════ -->
+    <div id="p-vg-colab" class="page">
+      <div class="stabs" id="colab-tabs">
+        <button class="stab active" onclick="selColab('André',this)">André</button>
+        <button class="stab" onclick="selColab('Aline',this)">Aline</button>
+        <button class="stab" onclick="selColab('Lory',this)">Lory</button>
+        <button class="stab" onclick="selColab('Ludy',this)">Ludy</button>
+        <button class="stab" onclick="selColab('Wanessa',this)">Wanessa</button>
+      </div>
+      <div class="kgrid" id="kpi-colab"></div>
+      <div class="g24">
+        <div class="cd">
+          <div class="cd-t" id="colab-chart-title">Produção diária — André</div>
+          <canvas id="ch-colab" height="160"></canvas>
+        </div>
+        <div class="cd">
+          <div class="cd-t">Distribuição por linha</div>
+          <div id="colab-linhas"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ VALIDADE ══════════════════ -->
+    <div id="p-vg-validade" class="page">
+      <div class="al al-b">ℹ Regra: <strong>≤ 59 dias = dentro do prazo · 60–90 dias = próximo do vencimento · ≥ 91 dias = vencida</strong> · Cálculo: hoje − DATA_ENCERRAMENTO_OPORTUNIDADE (col AK do Level Board)</div>
+      <div class="g2">
+        <div class="cd">
+          <div class="cd-t">G1 — Analisar PATEC Fin. + PATEC s/fornec. + Cancelado (L3+L5+L6)</div>
+          <div style="position:relative;width:160px;height:160px;margin:0 auto 1rem"><canvas id="rc1"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="font-size:20px;font-weight:700;color:var(--az)">1.467</div><div style="font-size:9px;color:var(--tx2)">itens</div></div></div>
+          <div id="rc1-leg"></div>
+        </div>
+        <div class="cd">
+          <div class="cd-t">G2 — Aguardar PATEC ser Finalizado (L4)</div>
+          <div style="position:relative;width:160px;height:160px;margin:0 auto 1rem"><canvas id="rc2"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="font-size:20px;font-weight:700;color:var(--az)">1.215</div><div style="font-size:9px;color:var(--tx2)">itens</div></div></div>
+          <div id="rc2-leg"></div>
+        </div>
+        <div class="cd">
+          <div class="cd-t">G3 — Abrir PATEC Idêntico Não + Grupo Mercadoria (L7+L8)</div>
+          <div style="position:relative;width:160px;height:160px;margin:0 auto 1rem"><canvas id="rc3"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="font-size:20px;font-weight:700;color:var(--az)">1.834</div><div style="font-size:9px;color:var(--tx2)">itens</div></div></div>
+          <div id="rc3-leg"></div>
+        </div>
+        <div class="cd">
+          <div class="cd-t">G4 — Consolidado G1+G2 = L3+L4+L5+L6 (L12)</div>
+          <div style="position:relative;width:160px;height:160px;margin:0 auto 1rem"><canvas id="rc4"></canvas><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="font-size:20px;font-weight:700;color:var(--az)">2.682</div><div style="font-size:9px;color:var(--tx2)">itens</div></div></div>
+          <div id="rc4-leg"></div>
+        </div>
+      </div>
+
+      <div class="cd">
+        <div class="cd-t">SLA máximo por fila (Level Board)</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Linha MAPA</th><th>Fila Level Board</th><th>Maior SLA</th><th>Total itens</th><th>% Fora prazo</th><th>Status</th></tr></thead>
+            <tbody id="tb-sla"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /ct -->
+</main>
+
+<script>
+// ════════════════════════════════════════════
+// DADOS REAIS — Ciclo Maio 2026
+// ════════════════════════════════════════════
+const PROD  = [79,90,93,46,70,64,131,88,56,26];
+const SAIDA = [55,44,80,27,58,38,35,54,18,30];
+const DATAS = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai','14/mai'];
+const DATAS_FULL = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai','14/mai','15/mai','16/mai','19/mai','20/mai','21/mai','22/mai','23/mai','26/mai','27/mai','28/mai','29/mai','30/mai'];
+const META = 90;
+const DIAS_UTEIS = 22;
+const HOJE = new Date();
+
+const COLABS_PROD = {
+  André:  [26,0,0,0,0,0,0,26,0,0],
+  Aline:  [0,0,0,0,0,0,0,0,0,0],
+  Lory:   [21,35,35,8,19,29,46,40,20,0],
+  Ludy:   [17,8,3,0,8,16,52,6,8,10],
+  Wanessa:[0,0,0,0,0,0,0,0,0,0],
+};
+
+const L = {
+  3:[727,712,722,679,711,703,679,687,592],
+  4:[218,228,241,234,190,189,285,347,359],
+  5:[5,6,6,0,22,9,8,5,8],
+  6:[0,1,1,0,0,0,0,1,0],
+  7:[190,191,273,301,303,320,278,233,168],
+  8:[154,148,185,218,216,252,221,216,153],
+};
+
+const ROSCAS = [
+  {id:'rc1',total:1467,dentro:1285,prox:157,venc:19,sem:6},
+  {id:'rc2',total:1215,dentro:1215,prox:0,venc:0,sem:0},
+  {id:'rc3',total:1834,dentro:82,prox:53,venc:25,sem:1674},
+  {id:'rc4',total:2682,dentro:2500,prox:157,venc:19,sem:6},
+];
+
+const SLA_TABLE = [
+  {linha:'L3',fila:'Analisar PATEC Finalizado',sla:174,total:1019,fora:0,pct:0},
+  {linha:'L4',fila:'Aguardar PATEC ser Finalizado',sla:136,total:1215,fora:0,pct:0},
+  {linha:'L5',fila:'PATEC s/ fornecedores aprovados',sla:122,total:43,fora:0,pct:0},
+  {linha:'L6',fila:'Analisar PATEC Cancelado',sla:297,total:405,fora:44,pct:10.9},
+  {linha:'L7',fila:'Abrir PATEC Idêntico Não',sla:126,total:1694,fora:78,pct:4.6},
+  {linha:'L8',fila:'Abrir PATEC Grupo Mercadoria Obrig.',sla:154,total:140,fora:25,pct:17.9},
+];
+
+// ── INIT ──
+const dtStr = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+document.getElementById('tdt').textContent = dtStr;
+document.getElementById('ref-data').textContent = '14/05/2026';
+
+// ── SIDEBAR ──
+function go(id, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  const titles={visao:'Visão Geral',mapa:'Mapa — L10 / L12',medicao:'Gráfico de Medição',colab:'Por Colaborador',validade:'Validade Oportunidades'};
+  document.getElementById('ttl').textContent = titles[id]||id;
+  if(id==='medicao') renderMedicao();
+  if(id==='mapa')    renderMapa();
+  if(id==='colab')   selColab('André', document.querySelector('#colab-tabs .stab'));
+  if(id==='validade') renderValidade();
+  document.getElementById('sb').classList.remove('mob-open');
+}
+
+// ── UTILS ──
+let charts = {};
+function mkChart(id,type,data,opts={}){
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id),{
+    type, data,
+    options:{
+      responsive:true,
+      plugins:{legend:{display:opts.legend??false},...(opts.plugins||{})},
+      scales:opts.scales??{},
+      ...(opts.extra||{})
+    }
+  });
+  return charts[id];
+}
+function pct(v,base){ return base>0?Math.round(v/base*100):0; }
+function pill(txt,cls){ return `<span class="pl ${cls}">${txt}</span>`; }
+function perfPill(val){
+  const p=pct(val,META);
+  if(p>=100) return pill(`${p}%`,'pl-ok');
+  if(p>=80)  return pill(`${p}%`,'pl-w');
+  return pill(`${p}%`,'pl-b');
+}
+function exportSheet(data, sheetName, filename){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  XLSX.writeFile(wb,filename);
+}
+
+// ════════════════════════════════
+// RENDER VISÃO GERAL
+// ════════════════════════════════
+(function renderVisao(){
+  // Acumulados
+  const acProg = DATAS_FULL.map((_,i)=>META*(i+1));
+  const acReal = [];
+  let s=0; PROD.forEach(v=>{s+=v; acReal.push(s);});
+  // Projeção (ritmo atual)
+  const rate = 743/10;
+  const proj  = acReal.map(v=>v); // cópia dos 10 primeiros
+  for(let i=10;i<DIAS_UTEIS;i++) proj.push(Math.round(743+(i-9)*rate));
+
+  mkChart('ch-acum','line',{
+    labels: DATAS_FULL,
+    datasets:[
+      {label:'Programado',data:acProg,borderColor:'#3266AD',backgroundColor:'rgba(50,102,173,.07)',borderWidth:2,pointRadius:0,fill:true,tension:.1},
+      {label:'Realizado', data:[...acReal,...Array(12).fill(null)],borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#1D9E75',fill:false},
+      {label:'Projeção',  data:proj,borderColor:'#BA7517',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
+    ]
+  },{legend:true,scales:{
+    y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},
+    x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:8}}
+  }});
+
+  // Barras diárias
+  const bcolors = PROD.map(v=>v>=META?'#1D9E75':v>=META*.8?'#EF9F27':'#E24B4A');
+  mkChart('ch-diario','bar',{
+    labels: DATAS,
+    datasets:[
+      {label:'Realizado',data:PROD,backgroundColor:bcolors,borderRadius:4},
+      {label:'Meta (90)', data:Array(10).fill(META),type:'line',borderColor:'#3266AD',borderWidth:1.5,borderDash:[5,3],pointRadius:0},
+    ]
+  },{legend:true,scales:{
+    y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:0},
+    x:{grid:{display:false},ticks:{font:{size:9}}}
+  }});
+
+  // Barras colaborador
+  const colabData = Object.entries(COLABS_PROD).map(([n,v])=>{
+    const dias = v.filter(x=>x>0).length;
+    const tot  = v.reduce((a,b)=>a+b,0);
+    const med  = dias>0?Math.round(tot/dias):0;
+    return {n,med,dias,tot};
+  });
+  document.getElementById('colab-bars').innerHTML = colabData.map(({n,med,dias})=>{
+    const p = pct(med,META);
+    const col = p>=100?'var(--vd)':p>=80?'var(--am)':'var(--vm)';
+    return `<div class="colab-row">
+      <span class="colab-nome">${n}</span>
+      <div class="colab-bar-wrap">
+        <div class="colab-bar"><div class="colab-fill" style="width:${Math.min(p,120)}%;background:${col}"></div></div>
+        <div class="colab-meta">${dias} dia${dias!==1?'s':''} registrado${dias!==1?'s':''}</div>
+      </div>
+      <span class="colab-num" style="color:${col}">${med}</span>
+      <span class="colab-pct" style="color:${col}">${p}%</span>
+    </div>`;
+  }).join('');
+
+  // Mapa mini
+  const mapaLinhas = [
+    {lnum:'L3',nome:'Analisar PATEC Fin.',val:592,max:727,cor:'#3266AD'},
+    {lnum:'L4',nome:'Aguardar PATEC',val:359,max:285,cor:'#3266AD'},
+    {lnum:'L5',nome:'PATEC s/ forn.',val:8,max:22,cor:'#1D9E75'},
+    {lnum:'L6',nome:'PATEC Cancelado',val:0,max:1,cor:'#1D9E75'},
+    {lnum:'L7',nome:'Abrir PATEC Idêntico',val:168,max:320,cor:'#BA7517'},
+    {lnum:'L8',nome:'Abrir PATEC Grupo',val:153,max:252,cor:'#BA7517'},
+  ];
+  document.getElementById('mapa-mini').innerHTML = mapaLinhas.map(({lnum,nome,val,max,cor})=>{
+    const p = max>0?Math.round(val/max*100):0;
+    return `<div class="mapa-row">
+      <span class="lnum">${lnum}</span>
+      <div style="flex:1">
+        <div class="mapa-nome">${nome}</div>
+        <div class="mapa-bar"><div class="mapa-fill" style="width:${Math.min(p,100)}%;background:${cor}"></div></div>
+      </div>
+      <span class="mapa-val">${val.toLocaleString('pt-BR')}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('mapa-mini').innerHTML += `
+    <div style="margin-top:.75rem;padding-top:.75rem;border-top:2px solid var(--azc);display:flex;justify-content:space-between">
+      <span style="font-size:11px;font-weight:700">L12 (PATEC)</span>
+      <span style="font-size:18px;font-weight:700;color:var(--azm)">2.682</span>
+    </div>`;
+
+  // Tabela resumo
+  let ap=0,ar=0;
+  document.getElementById('tb-resumo').innerHTML = PROD.map((v,i)=>{
+    ap+=META; ar+=v; const g=ar-ap;
+    return `<tr>
+      <td>${i+1}</td><td>${DATAS[i]}</td>
+      <td>${META}</td>
+      <td style="font-weight:600;color:${v>=META?'var(--vd)':v>=META*.8?'var(--am)':'var(--vm)'}">${v}</td>
+      <td>${ap}</td><td>${ar}</td>
+      <td style="font-weight:600;color:${g<0?'var(--vm)':'var(--vd)'}">${g>0?'+':''}${g}</td>
+      <td>${perfPill(v)}</td>
+      <td>${SAIDA[i]}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tf-resumo').innerHTML = `<tr>
+    <td colspan="2">TOTAL / MÉDIA</td>
+    <td>${META*10}</td><td style="font-weight:700">743</td>
+    <td>${META*10}</td><td style="font-weight:700">743</td>
+    <td style="font-weight:700;color:var(--vm)">−157</td>
+    <td>${perfPill(74)}</td>
+    <td style="font-weight:700">439</td>
+  </tr>`;
+})();
+
+// ════════════════════════════════
+// RENDER MEDIÇÃO
+// ════════════════════════════════
+function renderMedicao(){
+  const acProg=DATAS_FULL.map((_,i)=>META*(i+1));
+  const acReal=[]; let s=0; PROD.forEach(v=>{s+=v;acReal.push(s);});
+  const rate=743/10;
+  const proj=acReal.slice();
+  for(let i=10;i<DIAS_UTEIS;i++) proj.push(Math.round(743+(i-9)*rate));
+
+  mkChart('ch-med-acum','line',{
+    labels:DATAS_FULL,
+    datasets:[
+      {label:'Programado',data:acProg,borderColor:'#3266AD',borderWidth:2,pointRadius:0,fill:false},
+      {label:'Realizado',data:[...acReal,...Array(12).fill(null)],borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#1D9E75',fill:false},
+      {label:'Projeção',data:proj,borderColor:'#BA7517',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
+    ]
+  },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:8}}}});
+
+  const bc=PROD.map(v=>v>=META?'#1D9E75':v>=META*.8?'#EF9F27':'#E24B4A');
+  mkChart('ch-med-bar','bar',{
+    labels:DATAS,
+    datasets:[{label:'Realizado',data:PROD,backgroundColor:bc,borderRadius:4}]
+  },{scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:0},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  let ap2=0,ar2=0;
+  document.getElementById('tb-medicao').innerHTML=DATAS_FULL.map((dt,i)=>{
+    const v=PROD[i]??0; const s=SAIDA[i]??0;
+    ap2+=META; if(v>0)ar2+=v;
+    const g=ar2-ap2; const p=v>0?pct(v,META):0;
+    if(i<10) return`<tr><td>${i+1}</td><td>${dt}</td><td>${META}</td><td style="font-weight:600;color:${v>=META?'var(--vd)':v>=META*.8?'var(--am)':'var(--vm)'}">${v}</td><td>${ap2}</td><td>${ar2}</td><td style="color:${g<0?'var(--vm)':'var(--vd)'};font-weight:600">${g>0?'+':''}${g}</td><td>${perfPill(v)}</td><td>${s||'—'}</td></tr>`;
+    return`<tr style="opacity:.5"><td>${i+1}</td><td>${dt}</td><td>${META}</td><td>—</td><td>${ap2}</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// RENDER MAPA
+// ════════════════════════════════
+function renderMapa(){
+  const mapaL12=[
+    {lnum:'L3',nome:'Analisar PATEC Finalizado',val:592,cor:'#3266AD'},
+    {lnum:'L4',nome:'Aguardar PATEC ser Finalizado',val:359,cor:'#3266AD'},
+    {lnum:'L5',nome:'PATEC Finalizado sem fornecedores',val:8,cor:'#1D9E75'},
+    {lnum:'L6',nome:'Analisar PATEC Cancelado',val:0,cor:'#BA7517'},
+  ];
+  const mapaL78=[
+    {lnum:'L7',nome:'Abrir PATEC Idêntico Não',val:168,cor:'#BA7517'},
+    {lnum:'L8',nome:'Abrir PATEC Grupo Mercadoria Obrig.',val:153,cor:'#BA7517'},
+  ];
+  const mapaRow=({lnum,nome,val,cor},total)=>{
+    const p=total>0?Math.round(val/total*100):0;
+    return`<div class="mapa-row"><span class="lnum">${lnum}</span><div style="flex:1"><div class="mapa-nome">${nome}</div><div class="mapa-bar"><div class="mapa-fill" style="width:${p}%;background:${cor}"></div></div></div><span class="mapa-val">${val.toLocaleString('pt-BR')}</span></div>`;
+  };
+  document.getElementById('mapa-l12').innerHTML=mapaL12.map(r=>mapaRow(r,592+359+8+0)).join('');
+  document.getElementById('mapa-l78').innerHTML=mapaL78.map(r=>mapaRow(r,168+153)).join('');
+
+  // Gráfico histórico L12
+  const l12hist=L[3].map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
+  const l10hist=l12hist.map((v,i)=>v+L[7][i]+L[8][i]);
+  const dHist=Array.from({length:9},(_,i)=>'Dia '+(i+1));
+  mkChart('ch-l12','line',{labels:dHist,datasets:[
+    {label:'L10',data:l10hist,borderColor:'#3266AD',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+    {label:'L12',data:l12hist,borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,fill:false,tension:.1},
+    {label:'L3', data:L[3],borderColor:'#BA7517',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+    {label:'L4', data:L[4],borderColor:'#E24B4A',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+  ]},{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  // Tabela histórico
+  document.getElementById('tb-hist-mapa').innerHTML=L[3].map((_,i)=>{
+    const l10=L[3][i]+L[4][i]+L[5][i]+L[6][i]+L[7][i]+L[8][i];
+    const l12=L[3][i]+L[4][i]+L[5][i]+L[6][i];
+    const prev_l12=i>0?L[3][i-1]+L[4][i-1]+L[5][i-1]+L[6][i-1]:l12;
+    const dif=l12-prev_l12;
+    return`<tr>
+      <td>${i+1}</td><td>${L[3][i]}</td><td>${L[4][i]}</td><td>${L[5][i]}</td>
+      <td>${L[6][i]}</td><td>${L[7][i]}</td><td>${L[8][i]}</td>
+      <td style="font-weight:600">${l10.toLocaleString('pt-BR')}</td>
+      <td style="font-weight:600;color:var(--azm)">${l12.toLocaleString('pt-BR')}</td>
+      <td style="font-weight:600;color:${dif>0?'var(--vd)':dif<0?'var(--vm)':'var(--tx2)'}">${i>0?(dif>0?'▲ +':'▼ ')+Math.abs(dif):'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// RENDER POR COLABORADOR
+// ════════════════════════════════
+function selColab(nome, btn){
+  document.querySelectorAll('#colab-tabs .stab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const v = COLABS_PROD[nome] || Array(10).fill(0);
+  const dias = v.filter(x=>x>0).length;
+  const tot  = v.reduce((a,b)=>a+b,0);
+  const med  = dias>0?Math.round(tot/dias):0;
+  const max  = Math.max(...v);
+
+  document.getElementById('kpi-colab').innerHTML=`
+    <div class="kc"><div class="kc-l">Dias registrados</div><div class="kc-v" style="color:var(--az)">${dias}</div><div class="kc-s">de 10 registrados</div></div>
+    <div class="kc ok"><div class="kc-l">Total analisados</div><div class="kc-v">${tot}</div></div>
+    <div class="kc ${med>=META?'ok':med>=META*.8?'warn':'bad'}"><div class="kc-l">Média diária</div><div class="kc-v">${med}</div><div class="kc-s">meta: ${META}/dia</div></div>
+    <div class="kc"><div class="kc-l">Melhor dia</div><div class="kc-v" style="color:var(--az)">${max}</div></div>
+  `;
+
+  document.getElementById('colab-chart-title').textContent=`Produção diária — ${nome}`;
+  const bc=v.map(x=>x>=META?'#1D9E75':x>=META*.8?'#EF9F27':x>0?'#E24B4A':'#E0E0E0');
+  mkChart('ch-colab','bar',{
+    labels:DATAS,
+    datasets:[
+      {label:'Realizado',data:v,backgroundColor:bc,borderRadius:4},
+      {label:'Meta (90)',data:Array(10).fill(META),type:'line',borderColor:'#3266AD',borderWidth:1.5,borderDash:[5,3],pointRadius:0},
+    ]
+  },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:0},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  // Linhas (só para histórico)
+  const linhas=['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
+  document.getElementById('colab-linhas').innerHTML=linhas.map((l,i)=>{
+    const val=i===0?tot:0; // só temos dado de analisados por colaborador
+    const p=tot>0?Math.round(val/tot*100):0;
+    return`<div class="mapa-row"><span style="font-size:11px;flex:1">${l}</span><div class="mapa-bar" style="width:80px;display:inline-block;margin:0 8px;height:5px;background:#eee;border-radius:3px;vertical-align:middle"><div class="mapa-fill" style="width:${p}%;background:var(--azm)"></div></div><span style="font-size:12px;font-weight:600;width:40px;text-align:right">${i===0?tot:'—'}</span></div>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// RENDER VALIDADE
+// ════════════════════════════════
+function renderValidade(){
+  const rcCharts={};
+  ROSCAS.forEach(r=>{
+    const el=document.getElementById(r.id);if(!el)return;
+    if(rcCharts[r.id])rcCharts[r.id].destroy();
+    const data=[r.dentro,r.prox,r.venc].concat(r.sem>0?[r.sem]:[]);
+    const colors=['#1D9E75','#EF9F27','#E24B4A'].concat(r.sem>0?['#C4C4C4']:[]);
+    new Chart(el,{type:'doughnut',data:{datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:false,cutout:'63%',plugins:{legend:{display:false}}}});
+    // legenda
+    const legEl=document.getElementById(r.id+'-leg');
+    if(legEl) legEl.innerHTML=`
+      <div style="font-size:10px">
+        <div class="mapa-row" style="padding:4px 0"><span class="rl-d" style="width:8px;height:8px;border-radius:2px;background:#1D9E75;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Dentro do prazo</span><strong style="color:var(--vd)">${r.dentro.toLocaleString('pt-BR')}</strong></div>
+        <div class="mapa-row" style="padding:4px 0"><span style="width:8px;height:8px;border-radius:2px;background:#EF9F27;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Próx. vencimento</span><strong style="color:var(--am)">${r.prox.toLocaleString('pt-BR')}</strong></div>
+        <div class="mapa-row" style="padding:4px 0"><span style="width:8px;height:8px;border-radius:2px;background:#E24B4A;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Vencida</span><strong style="color:var(--vm)">${r.venc.toLocaleString('pt-BR')}</strong></div>
+        ${r.sem>0?`<div class="mapa-row" style="padding:4px 0"><span style="width:8px;height:8px;border-radius:2px;background:#C4C4C4;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Sem data</span><strong>${r.sem.toLocaleString('pt-BR')}</strong></div>`:''}
+      </div>`;
+  });
+
+  // SLA tabela
+  document.getElementById('tb-sla').innerHTML=SLA_TABLE.map(r=>{
+    const cls=r.sla>=200?'pl-b':r.sla>=100?'pl-w':'pl-ok';
+    const pfora=r.pct>10?'pl-b':r.pct>0?'pl-w':'pl-ok';
+    return`<tr>
+      <td><span class="lnum">${r.linha}</span></td>
+      <td style="font-size:11px">${r.fila}</td>
+      <td style="font-weight:700;color:${r.sla>=200?'var(--vm)':r.sla>=100?'var(--am)':'var(--vd)'}"><span class="pl ${cls}">${r.sla} dias</span></td>
+      <td>${r.total.toLocaleString('pt-BR')}</td>
+      <td><span class="pl ${pfora}">${r.pct.toFixed(1)}%</span></td>
+      <td>${r.fora>0?`<span class="pl pl-b">${r.fora} críticos</span>`:`<span class="pl pl-ok">OK</span>`}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// EXPORTAÇÕES
+// ════════════════════════════════
+function exportResumo(){
+  const hd=['Dia','Data','Programado','Realizado','Acum.Prog.','Acum.Real.','Gap','%','Saídas'];
+  let ap=0,ar=0;
+  const rows=PROD.map((v,i)=>{ap+=META;ar+=v;return[i+1,DATAS[i],META,v,ap,ar,ar-ap,pct(v,META)+'%',SAIDA[i]];});
+  exportSheet([hd,...rows],'Resumo',`PATEC_VisaoGeral_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+}
+function exportMedicao(){
+  const hd=['Dia','Data','Programado','Realizado','Acum.Prog.','Acum.Real.','Gap','%','Saídas'];
+  let ap=0,ar=0;
+  const rows=DATAS_FULL.map((dt,i)=>{
+    const v=PROD[i]??0;ap+=META;if(v>0)ar+=v;
+    return[i+1,dt,META,v||'',ap,v>0?ar:'',v>0?ar-ap:'',v>0?pct(v,META)+'%':'',SAIDA[i]??''];
+  });
+  exportSheet([hd,...rows],'Medição',`PATEC_Medicao_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+}
+
+// ── INIT RENDERS ──
+renderValidade();
+renderMapa();
+renderMedicao();
+selColab('André',null);
+</script>
+
+<!-- ══ PRODUÇÃO ══ -->
+<!-- SIDEBAR -->
+<!-- MAIN -->
+<main id="mn">
+  <div class="topbar">
+    <div class="topbar-l">
+      <h2 id="ttl">Lançar Produção</h2>
+      <p id="tsub">Ciclo Maio 2026 · 22 dias úteis · Meta 90 itens/dia</p>
+    </div>
+    <div class="top-dt" id="tdt"></div>
+  </div>
+
+  <div class="ct">
+
+    <!-- ══════ LANÇAR PRODUÇÃO ══════ -->
+    <div id="p-pr-lancar" class="page active">
+      <div class="al al-b">ℹ Preencha sua produção diária. Todos os campos são opcionais — preencha apenas os que tiver lançado no dia.</div>
+
+      <!-- Seleção colaborador/presença/data -->
+      <div class="cd">
+        <div class="cd-t">Identificação</div>
+        <div class="form-grid">
+          <div class="field-wrap">
+            <span class="field-label">Colaborador</span>
+            <select id="sel-colab" onchange="updateHeader()">
+              <option value="André">André</option>
+              <option value="Aline">Aline</option>
+              <option value="Lory">Lory</option>
+              <option value="Ludy">Ludy</option>
+              <option value="Wanessa">Wanessa</option>
+            </select>
+          </div>
+          <div class="field-wrap">
+            <span class="field-label">Data de referência</span>
+            <input type="date" id="sel-data">
+          </div>
+          <div class="field-wrap">
+            <span class="field-label">Presença</span>
+            <div class="pres-sel" id="pres-sel">
+              <div class="pres-opt sel-P" onclick="selPres('Presencial',this)">🏢 Presencial</div>
+              <div class="pres-opt" onclick="selPres('Home Office',this)">🏠 Home Office</div>
+              <div class="pres-opt" onclick="selPres('Folga',this)">🌴 Folga</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Linhas de produção -->
+      <div class="cd">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+          <div class="cd-t" style="margin:0">Lançamento de produção — <span id="colab-display" style="color:var(--azm)">André</span></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--tx2)">Total itens analisados:</span>
+            <span class="total-badge" id="total-badge">0</span>
+          </div>
+        </div>
+
+        <div class="prod-grid">
+          <div class="prod-row">
+            <label>Itens Analisados<br><span style="font-size:10px;color:var(--tx2)">(novos)</span></label>
+            <input type="number" id="f0" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+          <div class="prod-row">
+            <label>Itens em Tratativa</label>
+            <input type="number" id="f1" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+          <div class="prod-row">
+            <label>Fornecedor</label>
+            <input type="number" id="f2" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+          <div class="prod-row">
+            <label>Requisitante</label>
+            <input type="number" id="f3" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+          <div class="prod-row">
+            <label>MDG</label>
+            <input type="number" id="f4" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+          <div class="prod-row">
+            <label>Validação Thiago</label>
+            <input type="number" id="f5" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+          <div class="prod-row">
+            <label>XGL</label>
+            <input type="number" id="f6" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+          <div class="prod-row">
+            <label>Republicação</label>
+            <input type="number" id="f7" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+          <div class="prod-row">
+            <label>RCs para Pedidos</label>
+            <input type="number" id="f8" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+          <div class="prod-row">
+            <label>RCs para Devoluções</label>
+            <input type="number" id="f9" min="0" placeholder="0" oninput="updateTotal()">
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-p" onclick="salvar()">✓ Salvar produção</button>
+          <button class="btn btn-s" onclick="limpar()">↺ Limpar campos</button>
+          <span id="msg-salvo" style="font-size:12px;color:var(--vd);font-weight:600;display:none">✓ Produção salva com sucesso!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ VISÃO DA EQUIPE ══════ -->
+    <div id="p-pr-equipe" class="page">
+      <div class="stabs">
+        <button class="stab active" onclick="setEquipeTab('hoje',this)">Dia atual</button>
+        <button class="stab" onclick="setEquipeTab('acum',this)">Acumulado do ciclo</button>
+      </div>
+
+      <!-- KPIs do dia -->
+      <div class="kgrid" id="kpi-equipe"></div>
+
+      <div id="eq-hoje">
+        <div class="cd">
+          <div class="cd-t">👥 Visão da equipe — <span id="eq-data-label"></span></div>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Colaborador</th>
+                  <th>Presença</th>
+                  <th>Analisados</th>
+                  <th>Tratativa</th>
+                  <th>Fornecedor</th>
+                  <th>Requisitante</th>
+                  <th>MDG</th>
+                  <th>Val.Thiago</th>
+                  <th>XGL</th>
+                  <th>Rep.</th>
+                  <th>Pedidos</th>
+                  <th>Dev.</th>
+                  <th>Total</th>
+                  <th>% Meta</th>
+                </tr>
+              </thead>
+              <tbody id="eq-tb-hoje"></tbody>
+              <tfoot id="eq-tfoot-hoje"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="eq-acum" style="display:none">
+        <div class="cd">
+          <div class="cd-t">📊 Acumulado do ciclo — todos os registros</div>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Colaborador</th>
+                  <th>Dias</th>
+                  <th>Analisados</th>
+                  <th>Tratativa</th>
+                  <th>Fornecedor</th>
+                  <th>Requisitante</th>
+                  <th>MDG</th>
+                  <th>Val.Thiago</th>
+                  <th>XGL</th>
+                  <th>Rep.</th>
+                  <th>Pedidos</th>
+                  <th>Dev.</th>
+                  <th>Total</th>
+                  <th>Média/dia</th>
+                </tr>
+              </thead>
+              <tbody id="eq-tb-acum"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ POR COLABORADOR ══════ -->
+    <div id="p-pr-porcolab" class="page">
+      <div style="margin-bottom:1rem">
+        <label class="field-label" style="display:block;margin-bottom:5px">Selecionar colaborador</label>
+        <div class="stabs" id="colab-tabs">
+          <button class="stab active" onclick="setColab('André',this)">André</button>
+          <button class="stab" onclick="setColab('Aline',this)">Aline</button>
+          <button class="stab" onclick="setColab('Lory',this)">Lory</button>
+          <button class="stab" onclick="setColab('Ludy',this)">Ludy</button>
+          <button class="stab" onclick="setColab('Wanessa',this)">Wanessa</button>
+        </div>
+      </div>
+      <div class="kgrid" id="kpi-colab"></div>
+      <div class="cd">
+        <div class="cd-t" id="colab-title">Histórico de produção — André</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Data</th><th>Presença</th><th>Analisados</th><th>Tratativa</th><th>Fornecedor</th><th>Req.</th><th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Total</th></tr></thead>
+            <tbody id="colab-tb"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ POR LINHA ══════ -->
+    <div id="p-pr-porlinha" class="page">
+      <div class="cd">
+        <div class="cd-t">📋 Produção por linha — acumulado do ciclo</div>
+        <div id="linhas-cards"></div>
+      </div>
+      <div class="cd">
+        <div class="cd-t">Detalhe por dia — todas as linhas</div>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th><th>Colaborador</th>
+                <th>Analisados</th><th>Tratativa</th><th>Fornecedor</th><th>Req.</th>
+                <th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th>
+              </tr>
+            </thead>
+            <tbody id="linha-tb"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ PCP ══════ -->
+    <div id="p-pr-pcp" class="page">
+      <div id="pcp-lock" class="cd lock-box">
+        <div style="font-size:42px;margin-bottom:12px">🔒</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;color:var(--az)">Área restrita — Dados PCP</div>
+        <div style="font-size:12px;color:var(--tx2);margin-bottom:1.5rem">Acesso exclusivo para o gestor</div>
+        <div style="max-width:220px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
+          <input type="password" id="pcp-pwd" placeholder="Senha" onkeydown="if(event.key==='Enter')checkPwd()">
+          <button class="btn btn-p" style="justify-content:center" onclick="checkPwd()">🔓 Entrar</button>
+          <span id="pcp-err" style="font-size:11px;color:var(--vm);display:none;text-align:center">Senha incorreta</span>
+        </div>
+      </div>
+
+      <div id="pcp-data" style="display:none">
+        <div class="al al-v">✓ Acesso autorizado — Dados PCP do ciclo</div>
+        <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+          <button class="btn btn-g" onclick="exportPCP()">💾 Exportar CSV</button>
+          <button class="btn btn-r" onclick="logoutPCP()">🔒 Sair</button>
+        </div>
+        <div class="kgrid">
+          <div class="kc ok"><div class="kc-l">PATEC Finalizado / Parada</div><div class="kc-v" id="pcp-v1">—</div></div>
+          <div class="kc"><div class="kc-l">MDG + XGL</div><div class="kc-v" style="color:var(--az)" id="pcp-v2">—</div></div>
+          <div class="kc ok"><div class="kc-l">RCs para Pedidos</div><div class="kc-v" id="pcp-v3">—</div></div>
+          <div class="kc"><div class="kc-l">RCs para Devoluções</div><div class="kc-v" style="color:var(--az)" id="pcp-v4">—</div></div>
+        </div>
+        <div class="cd">
+          <div class="cd-t">Saídas diárias (PCP)</div>
+          <div class="tw">
+            <table>
+              <thead><tr><th>Data</th><th>PATEC Fin./Parada</th><th>MDG + XGL</th><th>RCs Pedidos</th><th>RCs Dev.</th><th>Total</th></tr></thead>
+              <tbody id="pcp-tb"></tbody>
+              <tfoot id="pcp-tfoot"></tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="cd-t">Adicionar registro PCP</div>
+          <div class="form-grid">
+            <div class="field-wrap"><span class="field-label">Data</span><input type="date" id="pcp-dt"></div>
+            <div class="field-wrap"><span class="field-label">PATEC Fin./Parada</span><input type="number" id="pcp-f1" min="0" placeholder="0"></div>
+            <div class="field-wrap"><span class="field-label">MDG + XGL</span><input type="number" id="pcp-f2" min="0" placeholder="0"></div>
+            <div class="field-wrap"><span class="field-label">RCs Pedidos</span><input type="number" id="pcp-f3" min="0" placeholder="0"></div>
+            <div class="field-wrap"><span class="field-label">RCs Devoluções</span><input type="number" id="pcp-f4" min="0" placeholder="0"></div>
+          </div>
+          <button class="btn btn-p" onclick="salvarPCP()">Salvar registro PCP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ EXPORTAR ══════ -->
+    <div id="p-pr-exportar" class="page">
+      <div class="al al-b">ℹ Exporte os dados de produção lançados nesta sessão. Para manter o histórico entre sessões, exporte regularmente e guarde o arquivo.</div>
+      <div class="g2">
+        <div class="cd">
+          <div class="cd-t">📥 Exportar produção</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-g" onclick="exportExcel()" style="width:100%;justify-content:center">💾 Exportar Excel (.xlsx) — todos os registros</button>
+            <button class="btn btn-s" onclick="exportCSV()" style="width:100%;justify-content:center">📄 Exportar CSV — todos os registros</button>
+            <button class="btn btn-s" onclick="exportHoje()" style="width:100%;justify-content:center">📋 Exportar Excel — apenas hoje</button>
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:12px;color:var(--tx2)">
+            <strong style="color:var(--tx)">Registros salvos nesta sessão:</strong>
+            <span id="exp-count" style="font-size:16px;font-weight:700;color:var(--azm);margin-left:8px">0</span>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="cd-t">🗑 Gerenciar registros</div>
+          <div style="font-size:12px;color:var(--tx2);margin-bottom:1rem">Visualize e exclua registros individualmente</div>
+          <div class="tw" style="max-height:280px">
+            <table>
+              <thead><tr><th>Data</th><th>Colaborador</th><th>Total</th><th></th></tr></thead>
+              <tbody id="exp-tb"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /ct -->
+</main>
+
+<script>
+// ════════════════════════════════════════════
+// DADOS HISTÓRICOS REAIS (ciclo Maio 2026)
+// ════════════════════════════════════════════
+const HISTORICO_INICIAL = [
+  // André
+  {colab:'André',data:'2026-05-12',pres:'Presencial',f:[26,0,19,1,0,0,0,10,2,5]},
+  // Lory
+  {colab:'Lory',data:'2026-05-01',pres:'Presencial',f:[21,1,1,0,0,0,0,0,21,0]},
+  {colab:'Lory',data:'2026-05-02',pres:'Presencial',f:[35,3,0,0,0,0,0,6,1,0]},
+  {colab:'Lory',data:'2026-05-05',pres:'Presencial',f:[35,0,0,0,0,0,0,0,35,0]},
+  {colab:'Lory',data:'2026-05-06',pres:'Presencial',f:[8,17,15,0,0,0,0,8,1,1]},
+  {colab:'Lory',data:'2026-05-07',pres:'Home Office',f:[19,11,7,1,0,1,1,9,9,2]},
+  {colab:'Lory',data:'2026-05-08',pres:'Presencial',f:[29,5,16,0,1,0,0,0,0,2]},
+  {colab:'Lory',data:'2026-05-09',pres:'Presencial',f:[46,0,46,0,0,0,0,15,0,0]},
+  {colab:'Lory',data:'2026-05-12',pres:'Presencial',f:[40,3,12,0,0,0,0,0,12,0]},
+  {colab:'Lory',data:'2026-05-13',pres:'Home Office',f:[20,6,18,3,2,1,0,16,12,2]},
+  // Ludy
+  {colab:'Ludy',data:'2026-05-01',pres:'Home Office',f:[17,16,15,0,0,1,1,7,5,4]},
+  {colab:'Ludy',data:'2026-05-02',pres:'Home Office',f:[8,24,7,4,0,2,0,8,1,10]},
+  {colab:'Ludy',data:'2026-05-05',pres:'Home Office',f:[3,33,12,4,0,2,1,3,3,11]},
+  {colab:'Ludy',data:'2026-05-07',pres:'Home Office',f:[8,32,19,4,0,2,2,6,2,5]},
+  {colab:'Ludy',data:'2026-05-08',pres:'Home Office',f:[16,14,9,7,0,2,1,0,6,5]},
+  {colab:'Ludy',data:'2026-05-09',pres:'Home Office',f:[52,7,33,2,0,3,0,3,17,1]},
+  {colab:'Ludy',data:'2026-05-12',pres:'Home Office',f:[6,39,16,4,0,0,0,8,11,1]},
+  {colab:'Ludy',data:'2026-05-13',pres:'Home Office',f:[10,16,8,0,1,0,0,8,2,10]},
+  // Wanessa
+  {colab:'Wanessa',data:'2026-05-06',pres:'Presencial',f:[0,24,11,0,0,3,1,5,3,1]},
+  {colab:'Wanessa',data:'2026-05-07',pres:'Presencial',f:[0,20,0,0,0,2,1,8,2,7]},
+  {colab:'Wanessa',data:'2026-05-08',pres:'Presencial',f:[0,22,3,3,1,1,3,5,3,3]},
+  {colab:'Wanessa',data:'2026-05-09',pres:'Presencial',f:[0,21,5,4,1,1,1,7,3,3]},
+];
+const PCP_INICIAL = [
+  {data:'2026-05-01',f1:79,f2:2,f3:29,f4:7},
+  {data:'2026-05-02',f1:90,f2:1,f3:4,f4:17},
+  {data:'2026-05-05',f1:93,f2:5,f3:41,f4:27},
+  {data:'2026-05-06',f1:46,f2:1,f3:1,f4:10},
+  {data:'2026-05-07',f1:70,f2:3,f3:11,f4:22},
+  {data:'2026-05-08',f1:64,f2:2,f3:6,f4:11},
+  {data:'2026-05-09',f1:131,f2:0,f3:19,f4:7},
+  {data:'2026-05-12',f1:88,f2:0,f3:23,f4:5},
+  {data:'2026-05-13',f1:56,f2:3,f3:0,f4:8},
+];
+
+const LINHAS = ['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
+const COLABS = ['André','Aline','Lory','Ludy','Wanessa'];
+const SENHA_PCP = 'patec2026';
+const HOJE = new Date();
+
+// Estado
+let registros = [...HISTORICO_INICIAL];
+let pcpData   = [...PCP_INICIAL];
+let presAtual = 'Presencial';
+let colabAtual = 'André';
+
+// ── INIT ──
+document.getElementById('tdt').textContent = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+document.getElementById('sel-data').value  = HOJE.toISOString().split('T')[0];
+document.getElementById('pcp-dt').value    = HOJE.toISOString().split('T')[0];
+document.getElementById('eq-data-label').textContent = HOJE.toLocaleDateString('pt-BR');
+
+// ── SIDEBAR ──
+function toggleSb(){document.getElementById('sb').classList.toggle('mob-open');}
+function goPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  const titles={lancar:'Lançar Produção',equipe:'Visão da Equipe',porcolab:'Por Colaborador',porlinha:'Por Linha',pcp:'Dados PCP',exportar:'Exportar'};
+  document.getElementById('ttl').textContent = titles[id]||id;
+  if(id==='equipe'){renderEquipe();renderEquipeAcum();}
+  if(id==='porcolab'){renderColab('André');}
+  if(id==='porlinha')renderLinhas();
+  if(id==='exportar')renderExport();
+  if(id==='pcp')renderPCP();
+  document.getElementById('sb').classList.remove('mob-open');
+}
+
+// ── PRESENÇA ──
+function selPres(v,el){
+  presAtual=v;
+  document.querySelectorAll('.pres-opt').forEach(o=>{o.className='pres-opt';});
+  el.classList.add(v==='Presencial'?'sel-P':v==='Home Office'?'sel-H':'sel-F');
+}
+
+// ── TOTAL DINÂMICO ──
+function updateTotal(){
+  let t=0;
+  for(let i=0;i<10;i++){const v=parseInt(document.getElementById('f'+i).value)||0;t+=v;}
+  document.getElementById('total-badge').textContent=t.toLocaleString('pt-BR');
+  document.getElementById('total-badge').style.color=t>=90?'var(--vd)':t>=72?'var(--am)':'var(--az)';
+}
+function updateHeader(){
+  colabAtual=document.getElementById('sel-colab').value;
+  document.getElementById('colab-display').textContent=colabAtual;
+}
+
+// ── SALVAR ──
+function salvar(){
+  const colab=document.getElementById('sel-colab').value;
+  const data =document.getElementById('sel-data').value;
+  if(!data){alert('Informe a data.');return;}
+  const f=[];for(let i=0;i<10;i++)f.push(parseInt(document.getElementById('f'+i).value)||0);
+  registros.push({colab,data,pres:presAtual,f});
+  const msg=document.getElementById('msg-salvo');
+  msg.style.display='inline';setTimeout(()=>msg.style.display='none',3000);
+  // não limpa — usuário pode querer ajustar e salvar de novo
+}
+function limpar(){
+  for(let i=0;i<10;i++)document.getElementById('f'+i).value='';
+  updateTotal();
+}
+
+// ── UTIL ──
+function fmtData(d){
+  if(!d)return'—';
+  const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];
+}
+function pill(txt,cls){return`<span class="pl ${cls}">${txt}</span>`;}
+function presPill(p){
+  if(p==='Presencial')return pill('🏢 Presencial','pl-az');
+  if(p==='Home Office')return pill('🏠 Home Office','pl-ok');
+  if(p==='Folga')return pill('🌴 Folga','pl-f');
+  return pill(p,'pl-g');
+}
+function metaPill(t){
+  const pct=Math.round(t/90*100);
+  if(pct>=100)return`<span style="color:var(--vd);font-weight:700">${pct}%</span>`;
+  if(pct>=80)return`<span style="color:var(--am);font-weight:700">${pct}%</span>`;
+  return`<span style="color:var(--vm);font-weight:700">${pct}%</span>`;
+}
+
+// ── SUBTAB EQUIPE ──
+function setEquipeTab(id,btn){
+  document.querySelectorAll('#p-equipe .stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('eq-hoje').style.display=id==='hoje'?'block':'none';
+  document.getElementById('eq-acum').style.display=id==='acum'?'block':'none';
+}
+
+// ── RENDER EQUIPE (hoje) ──
+function renderEquipe(){
+  const dataHoje=document.getElementById('sel-data').value||HOJE.toISOString().split('T')[0];
+  const regs=registros.filter(r=>r.data===dataHoje);
+  // KPIs
+  const totAnalisados=regs.reduce((a,r)=>a+r.f[0],0);
+  const totGeral=regs.reduce((a,r)=>a+r.f.reduce((s,v)=>s+v,0),0);
+  const presentes=regs.filter(r=>r.pres!=='Folga').length;
+  document.getElementById('kpi-equipe').innerHTML=`
+    <div class="kc ok"><div class="kc-l">Itens analisados (novos)</div><div class="kc-v">${totAnalisados}</div><div class="kc-s">equipe hoje</div></div>
+    <div class="kc"><div class="kc-l">Total de ações</div><div class="kc-v" style="color:var(--az)">${totGeral}</div><div class="kc-s">todas as linhas</div></div>
+    <div class="kc"><div class="kc-l">Colaboradores ativos</div><div class="kc-v" style="color:var(--az)">${presentes}</div><div class="kc-s">de ${COLABS.length}</div></div>
+    <div class="kc ${totAnalisados>=90?'ok':totAnalisados>=72?'warn':'bad'}"><div class="kc-l">% da meta (analisados)</div><div class="kc-v">${Math.round(totAnalisados/90*100)}%</div><div class="kc-s">meta: 90/dia</div></div>
+  `;
+  if(regs.length===0){
+    document.getElementById('eq-tb-hoje').innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum registro para hoje. Lance a produção na aba anterior.</td></tr>';
+    document.getElementById('eq-tfoot-hoje').innerHTML='';return;
+  }
+  // Totais por coluna para tfoot
+  const sums=Array(10).fill(0);
+  let totT=0;
+  document.getElementById('eq-tb-hoje').innerHTML=regs.map(r=>{
+    const t=r.f.reduce((a,b)=>a+b,0);totT+=t;
+    r.f.forEach((v,i)=>sums[i]+=v);
+    return`<tr>
+      <td><strong>${r.colab}</strong></td>
+      <td>${presPill(r.pres)}</td>
+      ${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}
+      <td style="font-weight:700">${t}</td>
+      <td>${metaPill(r.f[0])}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('eq-tfoot-hoje').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>—</td>${sums.map(v=>`<td style="font-weight:700">${v||'—'}</td>`).join('')}<td style="font-weight:700">${totT}</td><td>${metaPill(sums[0])}</td></tr>`;
+}
+
+// ── RENDER EQUIPE ACUMULADO ──
+function renderEquipeAcum(){
+  const acum={};
+  COLABS.forEach(c=>{acum[c]={dias:0,f:Array(10).fill(0)};});
+  registros.forEach(r=>{
+    if(!acum[r.colab])acum[r.colab]={dias:0,f:Array(10).fill(0)};
+    acum[r.colab].dias++;
+    r.f.forEach((v,i)=>acum[r.colab].f[i]+=v);
+  });
+  document.getElementById('eq-tb-acum').innerHTML=Object.entries(acum).map(([c,d])=>{
+    const t=d.f.reduce((a,b)=>a+b,0);
+    const med=d.dias>0?Math.round(d.f[0]/d.dias):0;
+    return`<tr><td><strong>${c}</strong></td><td>${d.dias}</td>${d.f.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${t}</td><td style="font-weight:700;color:${med>=90?'var(--vd)':med>=72?'var(--am)':'var(--vm)'}">${med}/dia</td></tr>`;
+  }).join('');
+}
+
+// ── RENDER POR COLABORADOR ──
+function setColab(c,btn){
+  document.querySelectorAll('#colab-tabs .stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderColab(c);
+}
+function renderColab(c){
+  document.getElementById('colab-title').textContent='Histórico de produção — '+c;
+  const regs=registros.filter(r=>r.colab===c).sort((a,b)=>a.data.localeCompare(b.data));
+  const totF=Array(10).fill(0);
+  let totT=0;
+  const rows=regs.map(r=>{
+    const t=r.f.reduce((a,b)=>a+b,0);totT+=t;
+    r.f.forEach((v,i)=>totF[i]+=v);
+    return`<tr><td>${fmtData(r.data)}</td><td>${presPill(r.pres)}</td>${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${t}</td></tr>`;
+  }).join('');
+  const dias=regs.length;
+  const med=dias>0?Math.round(regs.reduce((a,r)=>a+r.f[0],0)/dias):0;
+  document.getElementById('kpi-colab').innerHTML=`
+    <div class="kc"><div class="kc-l">Dias registrados</div><div class="kc-v" style="color:var(--az)">${dias}</div></div>
+    <div class="kc ok"><div class="kc-l">Total analisados</div><div class="kc-v">${totF[0]}</div></div>
+    <div class="kc ${med>=90?'ok':med>=72?'warn':'bad'}"><div class="kc-l">Média diária</div><div class="kc-v">${med}</div><div class="kc-s">meta: 90/dia</div></div>
+    <div class="kc"><div class="kc-l">Total ações</div><div class="kc-v" style="color:var(--az)">${totT}</div></div>
+  `;
+  document.getElementById('colab-tb').innerHTML=rows||'<tr><td colspan="13" style="text-align:center;color:var(--tx2);padding:1.5rem">Sem registros para '+c+'</td></tr>';
+}
+
+// ── RENDER POR LINHA ──
+function renderLinhas(){
+  const sums=Array(10).fill(0);
+  registros.forEach(r=>r.f.forEach((v,i)=>sums[i]+=v));
+  const total=sums.reduce((a,b)=>a+b,0);
+  document.getElementById('linhas-cards').innerHTML=LINHAS.map((l,i)=>{
+    const pct=total>0?Math.round(sums[i]/total*100):0;
+    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--brd)">
+      <span style="width:120px;font-size:12px;font-weight:600">${l}</span>
+      <div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${i===0?'var(--vd)':i<4?'var(--azm)':i<7?'var(--am)':'var(--tx2)'}"></div></div>
+      <span style="font-size:13px;font-weight:700;width:50px;text-align:right;color:var(--az)">${sums[i]}</span>
+      <span style="font-size:10px;color:var(--tx2);width:35px">${pct}%</span>
+    </div>`;
+  }).join('');
+  document.getElementById('linha-tb').innerHTML=registros.sort((a,b)=>a.data.localeCompare(b.data)).map(r=>`<tr><td>${fmtData(r.data)}</td><td><strong>${r.colab}</strong></td>${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}</tr>`).join('');
+}
+
+// ── PCP ──
+function checkPwd(){
+  if(document.getElementById('pcp-pwd').value===SENHA_PCP){
+    document.getElementById('pcp-lock').style.display='none';
+    document.getElementById('pcp-data').style.display='block';
+    renderPCP();
+  }else{
+    const err=document.getElementById('pcp-err');err.style.display='block';
+    setTimeout(()=>err.style.display='none',2500);
+  }
+}
+function logoutPCP(){
+  document.getElementById('pcp-lock').style.display='block';
+  document.getElementById('pcp-data').style.display='none';
+  document.getElementById('pcp-pwd').value='';
+}
+function renderPCP(){
+  if(document.getElementById('pcp-data').style.display==='none')return;
+  const tot={f1:0,f2:0,f3:0,f4:0};
+  pcpData.forEach(r=>{tot.f1+=r.f1;tot.f2+=r.f2;tot.f3+=r.f3;tot.f4+=r.f4;});
+  document.getElementById('pcp-v1').textContent=tot.f1.toLocaleString('pt-BR');
+  document.getElementById('pcp-v2').textContent=tot.f2.toLocaleString('pt-BR');
+  document.getElementById('pcp-v3').textContent=tot.f3.toLocaleString('pt-BR');
+  document.getElementById('pcp-v4').textContent=tot.f4.toLocaleString('pt-BR');
+  const sorted=pcpData.slice().sort((a,b)=>a.data.localeCompare(b.data));
+  document.getElementById('pcp-tb').innerHTML=sorted.map(r=>{
+    const t=r.f1+r.f2+r.f3+r.f4;
+    return`<tr><td>${fmtData(r.data)}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.f3}</td><td>${r.f4}</td><td style="font-weight:700">${t}</td></tr>`;
+  }).join('');
+  const gt=tot.f1+tot.f2+tot.f3+tot.f4;
+  document.getElementById('pcp-tfoot').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>${tot.f1}</td><td>${tot.f2}</td><td>${tot.f3}</td><td>${tot.f4}</td><td style="font-weight:700">${gt}</td></tr>`;
+}
+function salvarPCP(){
+  const d=document.getElementById('pcp-dt').value;
+  if(!d){alert('Informe a data.');return;}
+  pcpData.push({data:d,f1:parseInt(document.getElementById('pcp-f1').value)||0,f2:parseInt(document.getElementById('pcp-f2').value)||0,f3:parseInt(document.getElementById('pcp-f3').value)||0,f4:parseInt(document.getElementById('pcp-f4').value)||0});
+  ['pcp-f1','pcp-f2','pcp-f3','pcp-f4'].forEach(id=>document.getElementById(id).value='');
+  renderPCP();
+}
+function exportPCP(){
+  const hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Devoluções,Total\n';
+  const rows=pcpData.map(r=>`${fmtData(r.data)},${r.f1},${r.f2},${r.f3},${r.f4},${r.f1+r.f2+r.f3+r.f4}`).join('\n');
+  dlFile('PCP_PATEC.csv','text/csv','\uFEFF'+hd+rows);
+}
+
+// ── EXPORTAR ──
+function renderExport(){
+  document.getElementById('exp-count').textContent=registros.length;
+  document.getElementById('exp-tb').innerHTML=registros.slice().sort((a,b)=>b.data.localeCompare(a.data)).map((r,i)=>`<tr><td>${fmtData(r.data)}</td><td>${r.colab}</td><td>${r.f.reduce((a,b)=>a+b,0)}</td><td><button class="btn btn-r" style="padding:3px 8px;font-size:10px" onclick="delReg(${registros.indexOf(r)})">✕</button></td></tr>`).join('');
+}
+function delReg(i){if(confirm('Excluir registro?')){registros.splice(i,1);renderExport();}}
+function buildData(regs){
+  return[
+    ['Colaborador','Data','Presença',...LINHAS,'Total Geral'],
+    ...regs.map(r=>[r.colab,fmtData(r.data),r.pres,...r.f,r.f.reduce((a,b)=>a+b,0)])
+  ];
+}
+function exportExcel(){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(buildData(registros.slice().sort((a,b)=>a.data.localeCompare(b.data))));
+  ws['!cols']=[{wch:10},{wch:11},{wch:12},...LINHAS.map(()=>({wch:10})),{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws,'Produção');
+  // Aba por colaborador
+  COLABS.forEach(c=>{
+    const regs=registros.filter(r=>r.colab===c);
+    if(regs.length){
+      const ws2=XLSX.utils.aoa_to_sheet(buildData(regs.sort((a,b)=>a.data.localeCompare(b.data))));
+      XLSX.utils.book_append_sheet(wb,ws2,c.substring(0,20));
+    }
+  });
+  XLSX.writeFile(wb,`Producao_PATEC_${HOJE.toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+}
+function exportCSV(){
+  const hd='Colaborador,Data,Presença,'+LINHAS.join(',')+',Total\n';
+  const rows=registros.map(r=>`${r.colab},${fmtData(r.data)},${r.pres},${r.f.join(',')},${r.f.reduce((a,b)=>a+b,0)}`).join('\n');
+  dlFile('Producao_PATEC.csv','text/csv','\uFEFF'+hd+rows);
+}
+function exportHoje(){
+  const d=HOJE.toISOString().split('T')[0];
+  const regs=registros.filter(r=>r.data===d);
+  if(!regs.length){alert('Nenhum registro para hoje.');return;}
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(buildData(regs));
+  XLSX.utils.book_append_sheet(wb,ws,'Hoje');
+  XLSX.writeFile(wb,`Producao_PATEC_Hoje.xlsx`);
+}
+function dlFile(name,type,content){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;a.click();
+}
+
+// ── INIT renders ──
+renderEquipe();
+renderEquipeAcum();
+</script>
+
+<!-- ══ MAPA ══ -->
+<!-- SIDEBAR -->
+<!-- MAIN -->
+<main id="mn">
+  <div class="topbar">
+    <div class="topbar-l">
+      <h2 id="ttl">Posição Atual — Mapa PATEC</h2>
+      <p>Ciclo Maio 2026 · Level Board atualizado em <strong>14/05/2026</strong> · 9 dias registrados na aba Dinâmica</p>
+    </div>
+    <div class="top-dt" id="tdt"></div>
+  </div>
+
+  <div class="ct">
+
+    <!-- ════════════════ POSIÇÃO ATUAL ════════════════ -->
+    <div id="p-mp-posicao" class="page active">
+
+      <!-- L10 / L12 destaque -->
+      <div class="destaque-grid">
+        <div class="destaque destaque-az">
+          <h3>L10 — Soma total (Level Board)</h3>
+          <div class="destaque-val">4.516</div>
+          <div class="destaque-sub">L3 + L4 + L5 + L6 + L7 + L8</div>
+          <div class="destaque-var">▲ inclui Abrir PATEC (L7+L8)</div>
+        </div>
+        <div class="destaque destaque-vd">
+          <h3>L12 — Total somente PATEC</h3>
+          <div class="destaque-val">2.682</div>
+          <div class="destaque-sub">L3 + L4 + L5 + L6</div>
+          <div class="destaque-var">KPI principal do ciclo</div>
+        </div>
+      </div>
+
+      <!-- KPIs por linha -->
+      <div class="kgrid">
+        <div class="kc big"><div class="kc-l">L3 — Analisar PATEC Fin.</div><div class="kc-v xl">1.019</div><div class="kc-s">PATEC (col BN)</div><div class="kc-trend t-dn">▼ −135 vs pico (dia 1)</div></div>
+        <div class="kc big"><div class="kc-l">L4 — Aguardar PATEC ser Fin.</div><div class="kc-v xl">1.215</div><div class="kc-s">Oport. em Andamento</div><div class="kc-trend t-up">▲ +141 vs início (dia 1)</div></div>
+        <div class="kc ok"><div class="kc-l">L5 — PATEC s/ fornecedores</div><div class="kc-v">43</div><div class="kc-s">Emitir Pedido PATEC</div><div class="kc-trend t-up">▲ +3 vs dia 1</div></div>
+        <div class="kc ok"><div class="kc-l">L6 — PATEC Cancelado</div><div class="kc-v">405</div><div class="kc-s">Análise de Oportunidade</div><div class="kc-trend t-eq">— estável</div></div>
+        <div class="kc warn"><div class="kc-l">L7 — Abrir PATEC Idêntico</div><div class="kc-v">1.694</div><div class="kc-s">Fila de publicação</div><div class="kc-trend t-up">▲ crescendo no ciclo</div></div>
+        <div class="kc"><div class="kc-l">L8 — Abrir PATEC Grupo Merc.</div><div class="kc-v" style="color:var(--az)">140</div><div class="kc-s">Item em Parada</div><div class="kc-trend t-dn">▼ −14 vs pico</div></div>
+      </div>
+
+      <div class="al al-b">ℹ Valores do Level Board (col BN = Status_Desc) · Chave de cruzamento: RC (col B) + Item (col C) + Nº Op (col AE) + Item Op (col AF) · Fonte: itens.csv filtrado por ITEM_NA_CARTEIRA_LEVEL = SIM</div>
+
+      <!-- Linhas visuais -->
+      <div class="cd">
+        <div class="cd-t">📋 Composição do L12 — PATEC (L3+L4+L5+L6)</div>
+        <div id="linhas-l12"></div>
+        <div style="margin-top:1rem;padding:1rem;background:var(--azc);border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;font-weight:700;color:var(--az)">Total L12 (somente PATEC)</span>
+          <span style="font-size:28px;font-weight:700;color:var(--azm)">2.682</span>
+        </div>
+      </div>
+
+      <div class="cd">
+        <div class="cd-t">📋 Abrir PATEC — L7 + L8 (fora do L12, incluso no L10)</div>
+        <div id="linhas-l78"></div>
+        <div style="margin-top:1rem;padding:1rem;background:var(--cin);border-radius:8px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--brd)">
+          <span style="font-size:13px;font-weight:700;color:var(--az)">Total L7+L8</span>
+          <span style="font-size:28px;font-weight:700;color:var(--tx2)">1.834</span>
+        </div>
+      </div>
+
+      <!-- Gráfico comparativo das linhas -->
+      <div class="g2">
+        <div class="cd">
+          <div class="cd-t">Distribuição L12 por linha</div>
+          <canvas id="ch-pizza-l12" height="200"></canvas>
+        </div>
+        <div class="cd">
+          <div class="cd-t">Distribuição L10 por linha</div>
+          <canvas id="ch-pizza-l10" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ LANÇAMENTO ════════════════ -->
+    <div id="p-mp-lancamento" class="page">
+      <div class="al al-v">✓ Preencha os valores diretamente da aba Dinâmica do MAPA.xlsb. L10 e L12 são calculados automaticamente.</div>
+
+      <div class="cd">
+        <div class="cd-t">✏️ Lançar valores do MAPA — aba Dinâmica</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-size:11px;color:var(--tx2);font-weight:500">Data de referência</span>
+            <input type="date" id="lanc-data" style="padding:8px 12px;border:1px solid var(--brd);border-radius:7px;font-size:13px;background:#fff">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-size:11px;color:var(--tx2);font-weight:500">Observação (opcional)</span>
+            <input type="text" id="lanc-obs" placeholder="ex: após reunião de alinhamento" style="padding:8px 12px;border:1px solid var(--brd);border-radius:7px;font-size:13px;background:#fff">
+          </div>
+        </div>
+
+        <div class="lanc-grid">
+          <div class="lanc-item">
+            <span class="lanc-lnum">L3</span>
+            <span class="lanc-label">Analisar PATEC Finalizado</span>
+            <input type="number" class="lanc-input" id="lv3" value="1019" min="0" oninput="recalcL()">
+          </div>
+          <div class="lanc-item">
+            <span class="lanc-lnum">L4</span>
+            <span class="lanc-label">Aguardar PATEC ser Finalizado</span>
+            <input type="number" class="lanc-input" id="lv4" value="1215" min="0" oninput="recalcL()">
+          </div>
+          <div class="lanc-item">
+            <span class="lanc-lnum">L5</span>
+            <span class="lanc-label">PATEC Fin. sem fornec. aprovados</span>
+            <input type="number" class="lanc-input" id="lv5" value="43" min="0" oninput="recalcL()">
+          </div>
+          <div class="lanc-item">
+            <span class="lanc-lnum">L6</span>
+            <span class="lanc-label">Analisar PATEC Cancelado</span>
+            <input type="number" class="lanc-input" id="lv6" value="405" min="0" oninput="recalcL()">
+          </div>
+          <div class="lanc-item">
+            <span class="lanc-lnum">L7</span>
+            <span class="lanc-label">Abrir PATEC Idêntico Não</span>
+            <input type="number" class="lanc-input" id="lv7" value="1694" min="0" oninput="recalcL()" style="color:var(--am)">
+          </div>
+          <div class="lanc-item">
+            <span class="lanc-lnum">L8</span>
+            <span class="lanc-label">Abrir PATEC Grupo Merc. Obrig.</span>
+            <input type="number" class="lanc-input" id="lv8" value="140" min="0" oninput="recalcL()" style="color:var(--am)">
+          </div>
+        </div>
+
+        <!-- Totais calculados -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem">
+          <div class="lanc-total" style="background:var(--azc)">
+            <div>
+              <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">L10 — Soma total (L3+L4+L5+L6+L7+L8)</div>
+              <div class="lanc-total-val" id="l10-calc">4.516</div>
+            </div>
+            <span style="font-size:11px;color:var(--azm);background:rgba(50,102,173,.1);padding:3px 8px;border-radius:5px">auto</span>
+          </div>
+          <div class="lanc-total" style="background:var(--vdc)">
+            <div>
+              <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">L12 — Somente PATEC (L3+L4+L5+L6)</div>
+              <div class="lanc-total-val" id="l12-calc" style="color:var(--vd)">2.682</div>
+            </div>
+            <span style="font-size:11px;color:var(--vd);background:rgba(29,158,117,.1);padding:3px 8px;border-radius:5px">auto</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-g" onclick="salvarLancamento()">✓ Salvar lançamento</button>
+          <button class="btn btn-s" onclick="exportLancamento()">💾 Exportar Excel</button>
+          <span id="lanc-msg" style="font-size:12px;color:var(--vd);font-weight:600;display:none">✓ Lançamento salvo!</span>
+        </div>
+      </div>
+
+      <!-- Histórico de lançamentos desta sessão -->
+      <div class="cd" id="lanc-hist-card" style="display:none">
+        <div class="cd-t">📋 Lançamentos desta sessão</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Data</th><th>L3</th><th>L4</th><th>L5</th><th>L6</th><th>L7</th><th>L8</th><th>L10</th><th>L12</th><th>Obs.</th></tr></thead>
+            <tbody id="lanc-tb"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ HISTÓRICO ════════════════ -->
+    <div id="p-mp-historico" class="page">
+      <div class="kgrid">
+        <div class="kc"><div class="kc-l">Dias registrados</div><div class="kc-v" style="color:var(--az)">9</div><div class="kc-s">aba Dinâmica MAPA</div></div>
+        <div class="kc big"><div class="kc-l">L12 — máximo</div><div class="kc-v ok">1.040</div><div class="kc-s">dia 8 (12/mai)</div></div>
+        <div class="kc warn"><div class="kc-l">L12 — mínimo</div><div class="kc-v">901</div><div class="kc-s">dia 6 (08/mai)</div></div>
+        <div class="kc"><div class="kc-l">L12 — média</div><div class="kc-v" style="color:var(--az)">958</div><div class="kc-s">dos 9 dias</div></div>
+        <div class="kc bad"><div class="kc-l">Maior variação (queda)</div><div class="kc-v">−81</div><div class="kc-s">dia 9 vs dia 8</div></div>
+        <div class="kc ok"><div class="kc-l">Maior variação (alta)</div><div class="kc-v">+71</div><div class="kc-s">dia 7 vs dia 6</div></div>
+      </div>
+
+      <!-- Gráfico histórico L10/L12/L3/L4 -->
+      <div class="cd">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+          <div class="cd-t" style="margin:0">📈 Histórico — L10 / L12 / L3 / L4 (9 dias)</div>
+          <div class="stabs" style="margin:0">
+            <button class="stab active" onclick="setHistChart('todas',this)">Todas as linhas</button>
+            <button class="stab" onclick="setHistChart('l12',this)">Somente L12</button>
+            <button class="stab" onclick="setHistChart('l34',this)">L3 + L4</button>
+            <button class="stab" onclick="setHistChart('l78',this)">L7 + L8</button>
+          </div>
+        </div>
+        <canvas id="ch-hist" height="160"></canvas>
+      </div>
+
+      <!-- Gráficos das 6 linhas individualmente -->
+      <div class="g3">
+        <div class="cd" style="padding:1rem">
+          <div class="cd-t" style="font-size:11px;color:var(--azm)">L3 — Analisar PATEC Fin.</div>
+          <canvas id="ch-l3" height="100"></canvas>
+        </div>
+        <div class="cd" style="padding:1rem">
+          <div class="cd-t" style="font-size:11px;color:var(--azm)">L4 — Aguardar PATEC</div>
+          <canvas id="ch-l4" height="100"></canvas>
+        </div>
+        <div class="cd" style="padding:1rem">
+          <div class="cd-t" style="font-size:11px;color:var(--vd)">L5 — PATEC s/ fornec.</div>
+          <canvas id="ch-l5" height="100"></canvas>
+        </div>
+        <div class="cd" style="padding:1rem">
+          <div class="cd-t" style="font-size:11px;color:var(--vd)">L6 — PATEC Cancelado</div>
+          <canvas id="ch-l6" height="100"></canvas>
+        </div>
+        <div class="cd" style="padding:1rem">
+          <div class="cd-t" style="font-size:11px;color:var(--am)">L7 — Abrir PATEC Idêntico</div>
+          <canvas id="ch-l7" height="100"></canvas>
+        </div>
+        <div class="cd" style="padding:1rem">
+          <div class="cd-t" style="font-size:11px;color:var(--am)">L8 — Abrir PATEC Grupo Merc.</div>
+          <canvas id="ch-l8" height="100"></canvas>
+        </div>
+      </div>
+
+      <!-- Tabela completa -->
+      <div class="cd">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px">
+          <div class="cd-t" style="margin:0">Tabela histórico — 9 dias · aba Dinâmica</div>
+          <button class="btn btn-s" onclick="exportHistorico()">💾 Exportar Excel</button>
+        </div>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr>
+                <th>Dia</th>
+                <th style="color:var(--azm)">L3</th>
+                <th style="color:var(--azm)">L4</th>
+                <th style="color:var(--vd)">L5</th>
+                <th style="color:var(--vd)">L6</th>
+                <th style="color:var(--am)">L7</th>
+                <th style="color:var(--am)">L8</th>
+                <th>L10</th>
+                <th style="font-size:11px">L12</th>
+                <th>Var. L12</th>
+                <th>% vs max</th>
+              </tr>
+            </thead>
+            <tbody id="tb-hist"></tbody>
+            <tfoot id="tf-hist"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ VARIAÇÃO DIA A DIA ════════════════ -->
+    <div id="p-mp-variacao" class="page">
+      <div class="al al-a">⚠ Última variação registrada: L12 caiu <strong>81 itens</strong> (dia 9 vs dia 8) · L3 recuou 95 itens · L4 cresceu 12 itens</div>
+
+      <!-- Cards de variação (posição atual vs dia anterior) -->
+      <div class="cd">
+        <div class="cd-t">↕ Variação — dia 9 vs dia 8 (última comparação disponível)</div>
+        <div class="var-grid" id="var-cards"></div>
+      </div>
+
+      <!-- Gráfico variação L12 dia a dia -->
+      <div class="cd">
+        <div class="cd-t">📊 Variação diária do L12 (barras)</div>
+        <canvas id="ch-var-l12" height="140"></canvas>
+      </div>
+
+      <!-- Gráfico variação por linha -->
+      <div class="cd">
+        <div class="cd-t">📊 Variação por linha — todos os 9 dias</div>
+        <canvas id="ch-var-linhas" height="160"></canvas>
+      </div>
+
+      <!-- Tabela de variações -->
+      <div class="cd">
+        <div class="cd-t">Tabela de variações dia a dia</div>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr>
+                <th>Transição</th>
+                <th>ΔL3</th><th>ΔL4</th><th>ΔL5</th><th>ΔL6</th>
+                <th>ΔL7</th><th>ΔL8</th>
+                <th>ΔL10</th><th>ΔL12</th>
+              </tr>
+            </thead>
+            <tbody id="tb-var"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ DETALHE POR LINHA ════════════════ -->
+    <div id="p-mp-detalhe" class="page">
+      <div class="stabs" id="detalhe-tabs">
+        <button class="stab active" onclick="selLinha('L3',this)">L3</button>
+        <button class="stab" onclick="selLinha('L4',this)">L4</button>
+        <button class="stab" onclick="selLinha('L5',this)">L5</button>
+        <button class="stab" onclick="selLinha('L6',this)">L6</button>
+        <button class="stab" onclick="selLinha('L7',this)">L7</button>
+        <button class="stab" onclick="selLinha('L8',this)">L8</button>
+      </div>
+
+      <div class="kgrid" id="kpi-linha"></div>
+
+      <div class="g2">
+        <div class="cd">
+          <div class="cd-t" id="detalhe-chart-title">L3 — Evolução histórica</div>
+          <canvas id="ch-detalhe" height="180"></canvas>
+        </div>
+        <div class="cd" id="detalhe-info">
+          <!-- preenchido dinamicamente -->
+        </div>
+      </div>
+
+      <div class="cd">
+        <div class="cd-t" id="detalhe-tb-title">Histórico diário — L3</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Dia</th><th>Valor</th><th>Variação</th><th>% vs máximo</th><th>Tendência</th></tr></thead>
+            <tbody id="tb-detalhe"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /ct -->
+</main>
+
+<script>
+// ════════════════════════════════════════════
+// DADOS REAIS — Ciclo Maio 2026
+// ════════════════════════════════════════════
+const HOJE = new Date();
+const DATAS_MAPA = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai'];
+const DATAS_ISO  = ['2026-05-01','2026-05-02','2026-05-05','2026-05-06','2026-05-07','2026-05-08','2026-05-09','2026-05-12','2026-05-13'];
+
+// Dados históricos da aba Dinâmica MAPA
+const L = {
+  3:[727,712,722,679,711,703,679,687,592],
+  4:[218,228,241,234,190,189,285,347,359],
+  5:[5,6,6,0,22,9,8,5,8],
+  6:[0,1,1,0,0,0,0,1,0],
+  7:[190,191,273,301,303,320,278,233,168],
+  8:[154,148,185,218,216,252,221,216,153],
+};
+
+// Dados do Level Board (posição atual)
+const LB = {
+  L3:{val:1019,fila:'PATEC',fila_mapa:'Analisar PATEC Finalizado',cor:'#3266AD',corFill:'rgba(50,102,173,.12)'},
+  L4:{val:1215,fila:'Oportunidade em Andamento',fila_mapa:'Aguardar PATEC ser Finalizado',cor:'#3266AD',corFill:'rgba(50,102,173,.12)'},
+  L5:{val:43,fila:'Emitir Pedido PATEC',fila_mapa:'PATEC Finalizado sem fornecedores aprovados',cor:'#1D9E75',corFill:'rgba(29,158,117,.12)'},
+  L6:{val:405,fila:'Análise de Oportunidade',fila_mapa:'Analisar PATEC Cancelado',cor:'#1D9E75',corFill:'rgba(29,158,117,.12)'},
+  L7:{val:1694,fila:'Fila de publicação',fila_mapa:'Abrir PATEC Idêntico Não',cor:'#BA7517',corFill:'rgba(186,117,23,.12)'},
+  L8:{val:140,fila:'Item em Parada',fila_mapa:'Abrir PATEC Grupo de Mercadoria Obrigatório',cor:'#BA7517',corFill:'rgba(186,117,23,.12)'},
+};
+const L12_LB = 1019+1215+43+405; // 2682
+const L10_LB = L12_LB+1694+140;  // 4516
+
+// Histórico de lançamentos desta sessão
+let lancamentos = [];
+
+// ── INIT ──
+document.getElementById('tdt').textContent = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+document.getElementById('lanc-data').value = HOJE.toISOString().split('T')[0];
+
+// ── SIDEBAR ──
+let chartsMap = {};
+function mkChart(id,type,data,opts={}){
+  if(chartsMap[id]) chartsMap[id].destroy();
+  chartsMap[id] = new Chart(document.getElementById(id),{
+    type, data,
+    options:{
+      responsive:true,
+      plugins:{legend:{display:opts.legend??false},...(opts.plugins||{})},
+      scales:opts.scales||{},
+      ...(opts.extra||{})
+    }
+  });
+  return chartsMap[id];
+}
+
+function go(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  const titles={posicao:'Posição Atual — Mapa PATEC',lancamento:'Lançamento do Mapa',historico:'Histórico do Ciclo',variacao:'Variação Dia a Dia',detalhe:'Detalhe por Linha'};
+  document.getElementById('ttl').textContent = titles[id]||id;
+  if(id==='historico') renderHistorico();
+  if(id==='variacao')  renderVariacao();
+  if(id==='detalhe')   selLinha('L3', document.querySelector('#detalhe-tabs .stab'));
+  document.getElementById('sb').classList.remove('mob-open');
+}
+
+// ── UTILS ──
+function varSpan(d){
+  if(d===0) return '<span style="color:var(--tx2)">—</span>';
+  return d>0
+    ? `<span style="color:var(--vm);font-weight:600">▲ +${d}</span>`
+    : `<span style="color:var(--vd);font-weight:600">▼ ${d}</span>`;
+}
+function pct(v,base){ return base>0?Math.round(v/base*100):0; }
+function pill(txt,cls){ return `<span class="pl ${cls}">${txt}</span>`; }
+
+// ════════════════════════════════
+// POSIÇÃO ATUAL — render
+// ════════════════════════════════
+(function renderPosicao(){
+  // Linhas L12
+  const lL12=[
+    {k:'L3',nome:'Analisar PATEC Finalizado',fila:'PATEC (col BN)',val:1019,cor:'#3266AD'},
+    {k:'L4',nome:'Aguardar PATEC ser Finalizado',fila:'Oportunidade em Andamento',val:1215,cor:'#3266AD'},
+    {k:'L5',nome:'PATEC Finalizado sem fornecedores',fila:'Emitir Pedido PATEC',val:43,cor:'#1D9E75'},
+    {k:'L6',nome:'Analisar PATEC Cancelado',fila:'Análise de Oportunidade',val:405,cor:'#1D9E75'},
+  ];
+  const lL78=[
+    {k:'L7',nome:'Abrir PATEC Idêntico Não',fila:'Fila de publicação',val:1694,cor:'#BA7517'},
+    {k:'L8',nome:'Abrir PATEC Grupo de Mercadoria Obrigatório',fila:'Item em Parada',val:140,cor:'#BA7517'},
+  ];
+  const maxL12=Math.max(...lL12.map(l=>l.val));
+  const maxL78=Math.max(...lL78.map(l=>l.val));
+
+  function linhaHTML(l,maxVal){
+    const p = Math.round(l.val/maxVal*100);
+    const d9 = L[parseInt(l.k.slice(1))];
+    const varD = d9[d9.length-1]-d9[d9.length-2];
+    const varCls = varD>0?'lv-up':varD<0?'lv-dn':'lv-eq';
+    const varSym = varD>0?'▲ +':varD<0?'▼ ':'';
+    return `<div class="linha-card">
+      <span class="lnum">${l.k}</span>
+      <div class="linha-info">
+        <div class="linha-nome">${l.nome}</div>
+        <div class="linha-fila">Fila LB: ${l.fila}</div>
+        <div class="linha-bar"><div class="linha-fill" style="width:${p}%;background:${l.cor}"></div></div>
+      </div>
+      <span class="linha-val" style="color:${l.cor}">${l.val.toLocaleString('pt-BR')}</span>
+      <span class="linha-var ${varCls}">${varD!==0?varSym+Math.abs(varD):'—'}<br><span style="font-size:9px;color:var(--tx2)">vs D8</span></span>
+    </div>`;
+  }
+  document.getElementById('linhas-l12').innerHTML=lL12.map(l=>linhaHTML(l,maxL12)).join('');
+  document.getElementById('linhas-l78').innerHTML=lL78.map(l=>linhaHTML(l,maxL78)).join('');
+
+  // Pizza L12
+  mkChart('ch-pizza-l12','doughnut',{
+    labels:['L3 — Analisar PATEC','L4 — Aguardar PATEC','L5 — s/ fornec.','L6 — Cancelado'],
+    datasets:[{data:[1019,1215,43,405],backgroundColor:['#3266AD','#5A8DD9','#1D9E75','#8BC4B2'],borderWidth:2,borderColor:'#fff'}]
+  },{legend:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}},extra:{cutout:'50%'}});
+
+  // Pizza L10
+  mkChart('ch-pizza-l10','doughnut',{
+    labels:['L3','L4','L5','L6','L7 — Abrir Idêntico','L8 — Grupo Merc.'],
+    datasets:[{data:[1019,1215,43,405,1694,140],backgroundColor:['#3266AD','#5A8DD9','#1D9E75','#8BC4B2','#BA7517','#E8A030'],borderWidth:2,borderColor:'#fff'}]
+  },{legend:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}},extra:{cutout:'50%'}});
+})();
+
+// ════════════════════════════════
+// LANÇAMENTO
+// ════════════════════════════════
+function recalcL(){
+  const g=id=>parseInt(document.getElementById(id).value)||0;
+  const l10=g('lv3')+g('lv4')+g('lv5')+g('lv6')+g('lv7')+g('lv8');
+  const l12=g('lv3')+g('lv4')+g('lv5')+g('lv6');
+  document.getElementById('l10-calc').textContent=l10.toLocaleString('pt-BR');
+  document.getElementById('l12-calc').textContent=l12.toLocaleString('pt-BR');
+}
+function salvarLancamento(){
+  const g=id=>parseInt(document.getElementById(id).value)||0;
+  const dt=document.getElementById('lanc-data').value;
+  if(!dt){alert('Informe a data.');return;}
+  const row={data:dt,obs:document.getElementById('lanc-obs').value,
+    L3:g('lv3'),L4:g('lv4'),L5:g('lv5'),L6:g('lv6'),L7:g('lv7'),L8:g('lv8')};
+  row.L10=row.L3+row.L4+row.L5+row.L6+row.L7+row.L8;
+  row.L12=row.L3+row.L4+row.L5+row.L6;
+  lancamentos.push(row);
+  document.getElementById('lanc-hist-card').style.display='block';
+  document.getElementById('lanc-tb').innerHTML=lancamentos.map(r=>
+    `<tr><td>${r.data.split('-').reverse().join('/')}</td>
+    <td>${r.L3}</td><td>${r.L4}</td><td>${r.L5}</td><td>${r.L6}</td><td>${r.L7}</td><td>${r.L8}</td>
+    <td style="font-weight:700">${r.L10.toLocaleString('pt-BR')}</td>
+    <td style="font-weight:700;color:var(--azm)">${r.L12.toLocaleString('pt-BR')}</td>
+    <td style="font-size:10px;color:var(--tx2)">${r.obs||'—'}</td></tr>`
+  ).join('');
+  const msg=document.getElementById('lanc-msg');
+  msg.style.display='inline';setTimeout(()=>msg.style.display='none',3000);
+}
+function exportLancamento(){
+  const g=id=>parseInt(document.getElementById(id).value)||0;
+  const dt=document.getElementById('lanc-data').value.split('-').reverse().join('/');
+  const l3=g('lv3'),l4=g('lv4'),l5=g('lv5'),l6=g('lv6'),l7=g('lv7'),l8=g('lv8');
+  const rows=[
+    ['Data referência',dt],['',''],
+    ['Linha','Fila do MAPA (aba Dinâmica)','Fila Level Board','Quantidade'],
+    ['L3','Analisar PATEC Finalizado','PATEC',l3],
+    ['L4','Aguardar PATEC ser Finalizado','Oportunidade em Andamento',l4],
+    ['L5','PATEC Fin. sem fornec. aprovados','Emitir Pedido PATEC',l5],
+    ['L6','Analisar PATEC Cancelado','Análise de Oportunidade',l6],
+    ['L7','Abrir PATEC Idêntico Não','Fila de publicação',l7],
+    ['L8','Abrir PATEC Grupo Merc. Obrig.','Item em Parada',l8],
+    ['','','',''],
+    ['L10 (soma total)','','',l3+l4+l5+l6+l7+l8],
+    ['L12 (somente PATEC)','','',l3+l4+l5+l6],
+  ];
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:8},{wch:42},{wch:34},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,'Lançamento MAPA');
+  XLSX.writeFile(wb,`Lancamento_MAPA_${dt.replace(/\//g,'-')}.xlsx`);
+}
+
+// ════════════════════════════════
+// HISTÓRICO
+// ════════════════════════════════
+const HIST_DATASETS = {
+  todas:[
+    {label:'L10',data:DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0)),borderColor:'#3266AD',borderWidth:2.5,pointRadius:3,fill:false,tension:.1},
+    {label:'L12',data:DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]),borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,fill:false,tension:.1},
+    {label:'L3',data:L[3],borderColor:'#5A8DD9',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+    {label:'L4',data:L[4],borderColor:'#8BD9C5',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+    {label:'L7',data:L[7],borderColor:'#EF9F27',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+    {label:'L8',data:L[8],borderColor:'#E8C072',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+  ],
+  l12:[{label:'L12 (PATEC)',data:DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]),borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,.08)',borderWidth:2.5,pointRadius:4,fill:true,tension:.15}],
+  l34:[
+    {label:'L3',data:L[3],borderColor:'#3266AD',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+    {label:'L4',data:L[4],borderColor:'#1D9E75',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+  ],
+  l78:[
+    {label:'L7',data:L[7],borderColor:'#BA7517',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+    {label:'L8',data:L[8],borderColor:'#E24B4A',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+  ],
+};
+const SCALE_HIST={y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}};
+
+function renderHistorico(){
+  mkChart('ch-hist','line',{labels:DATAS_MAPA,datasets:HIST_DATASETS.todas},{legend:true,scales:SCALE_HIST});
+
+  // Mini-gráficos por linha
+  [[3,'#3266AD'],[4,'#3266AD'],[5,'#1D9E75'],[6,'#1D9E75'],[7,'#BA7517'],[8,'#BA7517']].forEach(([k,cor])=>{
+    const prev=L[k].slice(0,-1);const last=L[k].slice(1);
+    const cols=DATAS_MAPA.map((_,i)=>i>0?(L[k][i]>L[k][i-1]?'rgba(226,75,74,.7)':'rgba(29,158,117,.7)'):cor);
+    mkChart(`ch-l${k}`,'bar',{labels:DATAS_MAPA,datasets:[{data:L[k],backgroundColor:cols,borderRadius:3}]},
+      {scales:{y:{grid:{display:false},ticks:{font:{size:8},maxTicksLimit:4}},x:{grid:{display:false},ticks:{font:{size:8}}}}});
+  });
+
+  // Tabela
+  const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
+  const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
+  const maxL12=Math.max(...l12arr);
+  document.getElementById('tb-hist').innerHTML=DATAS_MAPA.map((dt,i)=>{
+    const l12=l12arr[i],l10=l10arr[i];
+    const dif=i>0?l12-l12arr[i-1]:0;
+    return`<tr>
+      <td><strong>Dia ${i+1}</strong> <span style="font-size:10px;color:var(--tx2)">${dt}</span></td>
+      <td>${L[3][i]}</td><td>${L[4][i]}</td><td>${L[5][i]}</td><td>${L[6][i]}</td>
+      <td>${L[7][i]}</td><td>${L[8][i]}</td>
+      <td style="font-weight:600">${l10.toLocaleString('pt-BR')}</td>
+      <td style="font-weight:700;color:var(--azm)">${l12.toLocaleString('pt-BR')}</td>
+      <td>${i>0?varSpan(dif):'—'}</td>
+      <td>${pill(pct(l12,maxL12)+'%',l12===maxL12?'pl-ok':'pl-g')}</td>
+    </tr>`;
+  }).join('');
+  // Tfoot médias
+  const avgL=k=>Math.round(L[k].reduce((a,b)=>a+b,0)/9);
+  const avgL12=Math.round(l12arr.reduce((a,b)=>a+b,0)/9);
+  const avgL10=Math.round(l10arr.reduce((a,b)=>a+b,0)/9);
+  document.getElementById('tf-hist').innerHTML=`<tr>
+    <td>MÉDIA</td>
+    <td>${avgL(3)}</td><td>${avgL(4)}</td><td>${avgL(5)}</td><td>${avgL(6)}</td>
+    <td>${avgL(7)}</td><td>${avgL(8)}</td>
+    <td>${avgL10.toLocaleString('pt-BR')}</td>
+    <td style="color:var(--azm)">${avgL12.toLocaleString('pt-BR')}</td>
+    <td>—</td><td>—</td>
+  </tr>`;
+}
+function setHistChart(tipo,btn){
+  document.querySelectorAll('#p-historico .stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  mkChart('ch-hist','line',{labels:DATAS_MAPA,datasets:HIST_DATASETS[tipo]},{legend:true,scales:SCALE_HIST});
+}
+function exportHistorico(){
+  const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
+  const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
+  const hd=['Dia','Data','L3','L4','L5','L6','L7','L8','L10','L12','Var.L12'];
+  const rows=DATAS_MAPA.map((dt,i)=>{
+    const dif=i>0?l12arr[i]-l12arr[i-1]:0;
+    return[i+1,dt,L[3][i],L[4][i],L[5][i],L[6][i],L[7][i],L[8][i],l10arr[i],l12arr[i],i>0?dif:''];
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([hd,...rows]);
+  ws['!cols']=[{wch:6},{wch:9},...Array(9).fill({wch:8})];
+  XLSX.utils.book_append_sheet(wb,ws,'Histórico Mapa');
+  XLSX.writeFile(wb,'Historico_MAPA_PATEC.xlsx');
+}
+
+// ════════════════════════════════
+// VARIAÇÃO
+// ════════════════════════════════
+function renderVariacao(){
+  // Cards variação dia 9 vs dia 8
+  const linhasVar=[
+    {k:3,nom:'L3',cor:'#3266AD'},{k:4,nom:'L4',cor:'#3266AD'},
+    {k:5,nom:'L5',cor:'#1D9E75'},{k:6,nom:'L6',cor:'#1D9E75'},
+    {k:7,nom:'L7',cor:'#BA7517'},{k:8,nom:'L8',cor:'#BA7517'},
+  ];
+  const l12d8=L[3][7]+L[4][7]+L[5][7]+L[6][7];
+  const l12d9=L[3][8]+L[4][8]+L[5][8]+L[6][8];
+  const l10d8=Object.keys(L).reduce((s,k)=>s+L[k][7],0);
+  const l10d9=Object.keys(L).reduce((s,k)=>s+L[k][8],0);
+  const varCards=[...linhasVar.map(({k,nom,cor})=>{
+    const d=L[k][8]-L[k][7];
+    const cls=d>0?'vc-up':d<0?'vc-dn':'vc-eq';
+    return`<div class="var-card ${cls}">
+      <div class="var-card-l">${nom}</div>
+      <div class="var-card-v" style="color:${cor}">${L[k][8].toLocaleString('pt-BR')}</div>
+      <div class="var-card-d" style="color:${d>0?'var(--vm)':d<0?'var(--vd)':'var(--tx2)'}">${d>0?'▲ +':d<0?'▼ ':''}${d!==0?Math.abs(d):'—'}</div>
+    </div>`;
+  }),
+  `<div class="var-card ${(l10d9-l10d8)>0?'vc-up':(l10d9-l10d8)<0?'vc-dn':'vc-eq'}" style="border:2px solid var(--azm)">
+    <div class="var-card-l">L10</div>
+    <div class="var-card-v">${l10d9.toLocaleString('pt-BR')}</div>
+    <div class="var-card-d" style="color:${(l10d9-l10d8)>0?'var(--vm)':'var(--vd)'}">${(l10d9-l10d8)>0?'▲ +':'▼ '}${Math.abs(l10d9-l10d8)}</div>
+  </div>`,
+  `<div class="var-card ${(l12d9-l12d8)>0?'vc-up':'vc-dn'}" style="border:2px solid var(--vd)">
+    <div class="var-card-l">L12 (PATEC)</div>
+    <div class="var-card-v" style="color:var(--azm)">${l12d9.toLocaleString('pt-BR')}</div>
+    <div class="var-card-d" style="color:${(l12d9-l12d8)>0?'var(--vm)':'var(--vd)'}">${(l12d9-l12d8)>0?'▲ +':'▼ '}${Math.abs(l12d9-l12d8)}</div>
+  </div>`];
+  document.getElementById('var-cards').innerHTML=varCards.join('');
+
+  // Gráfico variação L12
+  const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
+  const varL12=l12arr.map((v,i)=>i>0?v-l12arr[i-1]:0);
+  mkChart('ch-var-l12','bar',{
+    labels:DATAS_MAPA,
+    datasets:[{
+      label:'Variação L12',data:varL12,
+      backgroundColor:varL12.map(v=>v>0?'rgba(226,75,74,.75)':'rgba(29,158,117,.75)'),
+      borderRadius:4,
+    }]
+  },{scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  // Gráfico variação por linha (stacked)
+  const varLinhas=[3,4,7,8].map(k=>({
+    label:`L${k}`,
+    data:L[k].map((v,i)=>i>0?v-L[k][i-1]:0),
+    borderColor:k<=4?'#3266AD':k===5||k===6?'#1D9E75':'#BA7517',
+    backgroundColor:(k<=4?'rgba(50,102,173,.15)':k<7?'rgba(29,158,117,.15)':'rgba(186,117,23,.15)'),
+    borderWidth:2,pointRadius:2,fill:false,tension:.1,
+  }));
+  mkChart('ch-var-linhas','line',{labels:DATAS_MAPA,datasets:varLinhas},{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  // Tabela variações
+  const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
+  document.getElementById('tb-var').innerHTML=DATAS_MAPA.slice(1).map((dt,i)=>{
+    const j=i+1;
+    const dL=[3,4,5,6,7,8].map(k=>L[k][j]-L[k][i]);
+    const dL10=l10arr[j]-l10arr[i];
+    const dL12=l12arr[j]-l12arr[i];
+    return`<tr>
+      <td><strong>D${i+1}→D${j+1}</strong> <span style="font-size:10px;color:var(--tx2)">${DATAS_MAPA[i]}→${dt}</span></td>
+      ${dL.map(d=>`<td style="font-weight:600;color:${d>0?'var(--vm)':d<0?'var(--vd)':'var(--tx2)'}">${d>0?'+':''}${d!==0?d:'—'}</td>`).join('')}
+      <td style="font-weight:600;color:${dL10>0?'var(--vm)':dL10<0?'var(--vd)':'var(--tx2)'}">${dL10>0?'+':''}${dL10}</td>
+      <td style="font-weight:700;color:${dL12>0?'var(--vm)':dL12<0?'var(--vd)':'var(--tx2)'}">${dL12>0?'+':''}${dL12}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// DETALHE POR LINHA
+// ════════════════════════════════
+function selLinha(linha,btn){
+  document.querySelectorAll('#detalhe-tabs .stab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const k=parseInt(linha.slice(1));
+  const data=L[k];
+  const lb=LB[linha];
+  const max=Math.max(...data), min=Math.min(...data);
+  const avg=Math.round(data.reduce((a,b)=>a+b,0)/data.length);
+  const tendencia=data[data.length-1]-data[data.length-2];
+
+  document.getElementById('kpi-linha').innerHTML=`
+    <div class="kc"><div class="kc-l">Valor atual (LB)</div><div class="kc-v xl" style="color:${lb.cor}">${lb.val.toLocaleString('pt-BR')}</div><div class="kc-s">Level Board</div></div>
+    <div class="kc ok"><div class="kc-l">Máximo (aba Din.)</div><div class="kc-v">${max.toLocaleString('pt-BR')}</div><div class="kc-s">Dia ${data.indexOf(max)+1}</div></div>
+    <div class="kc warn"><div class="kc-l">Mínimo (aba Din.)</div><div class="kc-v">${min.toLocaleString('pt-BR')}</div><div class="kc-s">Dia ${data.indexOf(min)+1}</div></div>
+    <div class="kc"><div class="kc-l">Média (aba Din.)</div><div class="kc-v" style="color:var(--az)">${avg.toLocaleString('pt-BR')}</div><div class="kc-s">9 dias</div></div>
+    <div class="kc ${tendencia>0?'bad':tendencia<0?'ok':''}"><div class="kc-l">Última variação</div><div class="kc-v">${tendencia>0?'▲ +':tendencia<0?'▼ ':''}${Math.abs(tendencia)}</div><div class="kc-s">D9 vs D8</div></div>
+  `;
+
+  document.getElementById('detalhe-chart-title').textContent=`${linha} — ${lb.fila_mapa} (histórico 9 dias)`;
+  document.getElementById('detalhe-tb-title').textContent=`Histórico diário — ${linha}`;
+
+  const bc=data.map((v,i)=>i>0?(v>data[i-1]?'rgba(226,75,74,.75)':'rgba(29,158,117,.75)'):lb.cor);
+  mkChart('ch-detalhe','bar',{
+    labels:DATAS_MAPA,
+    datasets:[
+      {label:linha,data,backgroundColor:bc,borderRadius:4},
+      {label:'Média',data:Array(9).fill(avg),type:'line',borderColor:'#888',borderWidth:1.5,borderDash:[4,3],pointRadius:0},
+    ]
+  },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:Math.max(0,min-10)},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  document.getElementById('detalhe-info').innerHTML=`
+    <div class="cd-t">${linha} — Informações</div>
+    <div style="font-size:12px;line-height:2;color:var(--tx2)">
+      <div><strong style="color:var(--tx)">Fila MAPA:</strong> ${lb.fila_mapa}</div>
+      <div><strong style="color:var(--tx)">Fila Level Board:</strong> ${lb.fila}</div>
+      <div><strong style="color:var(--tx)">Valor Level Board:</strong> <span style="font-size:16px;font-weight:700;color:${lb.cor}">${lb.val.toLocaleString('pt-BR')}</span></div>
+      <div><strong style="color:var(--tx)">Incluso no L12?</strong> ${k<=6?pill('Sim — L12','pl-ok'):pill('Não — apenas L10','pl-w')}</div>
+      <div style="margin-top:.75rem;padding:.75rem;background:var(--cin);border-radius:7px;border:1px solid var(--brd)">
+        <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:6px">AMPLITUDE (aba Dinâmica)</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <div><span style="color:var(--tx2);font-size:10px">MÍN</span><br><strong>${min}</strong></div>
+          <div style="text-align:center"><span style="color:var(--tx2);font-size:10px">MÉDIA</span><br><strong>${avg}</strong></div>
+          <div style="text-align:right"><span style="color:var(--tx2);font-size:10px">MÁX</span><br><strong>${max}</strong></div>
+        </div>
+        <div style="height:6px;background:#EEE;border-radius:3px;margin-top:8px;overflow:hidden">
+          <div style="height:100%;background:${lb.cor};border-radius:3px;width:${pct(data[data.length-1]-min,max-min)}%;margin-left:${pct(min,max)}%"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('tb-detalhe').innerHTML=data.map((v,i)=>{
+    const dif=i>0?v-data[i-1]:0;
+    const tend=i>0?(dif>20?'📈 Alta forte':dif>0?'↗ Alta':dif<-20?'📉 Queda forte':dif<0?'↘ Queda':'→ Estável'):'—';
+    return`<tr>
+      <td><strong>Dia ${i+1}</strong> <span style="font-size:10px;color:var(--tx2)">${DATAS_MAPA[i]}</span></td>
+      <td style="font-size:15px;font-weight:700;color:${lb.cor}">${v.toLocaleString('pt-BR')}</td>
+      <td>${i>0?varSpan(dif):'—'}</td>
+      <td>${pill(pct(v,max)+'%',v===max?'pl-ok':v===min?'pl-b':'pl-g')}</td>
+      <td style="font-size:11px">${tend}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── INIT ──
+renderVariacao();
+renderHistorico();
+selLinha('L3',null);
+</script>
+
+</div></main>
+<script>
+// ══ NAVEGAÇÃO UNIFICADA ══
+
+function go(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-it').forEach(i => i.classList.remove('active'));
+  const page = document.getElementById('p-' + id);
+  if (page) page.classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = {
+    'vg-visao':'Painel Geral','vg-mapa':'Mapa — L10/L12','vg-medicao':'Gráfico de Medição',
+    'vg-colab':'Por Colaborador','vg-validade':'Validade Oportunidades',
+    'pr-lancar':'Lançar Produção','pr-equipe':'Visão da Equipe','pr-porcolab':'Por Colaborador',
+    'pr-porlinha':'Por Linha','pr-pcp':'Dados PCP','pr-exportar':'Exportar',
+    'mp-posicao':'Posição Atual — Mapa','mp-lancamento':'Lançamento do Mapa',
+    'mp-historico':'Histórico do Ciclo','mp-variacao':'Variação Dia a Dia','mp-detalhe':'Detalhe por Linha'
+  };
+  document.getElementById('ttl').textContent = titles[id] || id;
+  document.getElementById('sb').classList.remove('mob-open');
+  // Triggers de render
+  if (id==='vg-medicao') renderMedicao();
+  if (id==='vg-colab') selVGColab('André', document.querySelector('#vg-colab-tabs .stab'));
+  if (id==='vg-validade') renderValidade();
+  if (id==='pr-equipe') { renderEquipe(); renderEquipeAcum(); }
+  if (id==='pr-porlinha') renderLinhas();
+  if (id==='pr-exportar') renderExport();
+  if (id==='pr-pcp') renderPCP();
+  if (id==='mp-historico') renderHistorico();
+  if (id==='mp-variacao') renderVariacao();
+  if (id==='mp-detalhe') selLinha('L3', document.querySelector('#mp-det-tabs .stab'));
+}
+
+
+// ══ VISÃO GERAL ══
+// ════════════════════════════════════════════
+// DADOS REAIS — Ciclo Maio 2026
+// ════════════════════════════════════════════
+const PROD  = [79,90,93,46,70,64,131,88,56,26];
+const SAIDA = [55,44,80,27,58,38,35,54,18,30];
+const DATAS = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai','14/mai'];
+const DATAS_FULL = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai','14/mai','15/mai','16/mai','19/mai','20/mai','21/mai','22/mai','23/mai','26/mai','27/mai','28/mai','29/mai','30/mai'];
+const META = 90;
+const DIAS_UTEIS = 22;
+const HOJE = new Date();
+
+const COLABS_PROD = {
+  André:  [26,0,0,0,0,0,0,26,0,0],
+  Aline:  [0,0,0,0,0,0,0,0,0,0],
+  Lory:   [21,35,35,8,19,29,46,40,20,0],
+  Ludy:   [17,8,3,0,8,16,52,6,8,10],
+  Wanessa:[0,0,0,0,0,0,0,0,0,0],
+};
+
+const L = {
+  3:[727,712,722,679,711,703,679,687,592],
+  4:[218,228,241,234,190,189,285,347,359],
+  5:[5,6,6,0,22,9,8,5,8],
+  6:[0,1,1,0,0,0,0,1,0],
+  7:[190,191,273,301,303,320,278,233,168],
+  8:[154,148,185,218,216,252,221,216,153],
+};
+
+const ROSCAS = [
+  {id:'rc1',total:1467,dentro:1285,prox:157,venc:19,sem:6},
+  {id:'rc2',total:1215,dentro:1215,prox:0,venc:0,sem:0},
+  {id:'rc3',total:1834,dentro:82,prox:53,venc:25,sem:1674},
+  {id:'rc4',total:2682,dentro:2500,prox:157,venc:19,sem:6},
+];
+
+const SLA_TABLE = [
+  {linha:'L3',fila:'Analisar PATEC Finalizado',sla:174,total:1019,fora:0,pct:0},
+  {linha:'L4',fila:'Aguardar PATEC ser Finalizado',sla:136,total:1215,fora:0,pct:0},
+  {linha:'L5',fila:'PATEC s/ fornecedores aprovados',sla:122,total:43,fora:0,pct:0},
+  {linha:'L6',fila:'Analisar PATEC Cancelado',sla:297,total:405,fora:44,pct:10.9},
+  {linha:'L7',fila:'Abrir PATEC Idêntico Não',sla:126,total:1694,fora:78,pct:4.6},
+  {linha:'L8',fila:'Abrir PATEC Grupo Mercadoria Obrig.',sla:154,total:140,fora:25,pct:17.9},
+];
+
+// ── INIT ──
+const dtStr = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+document.getElementById('tdt').textContent = dtStr;
+document.getElementById('ref-data').textContent = '14/05/2026';
+
+// ── SIDEBAR ──
+function go(id, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  const titles={visao:'Visão Geral',mapa:'Mapa — L10 / L12',medicao:'Gráfico de Medição',colab:'Por Colaborador',validade:'Validade Oportunidades'};
+  document.getElementById('ttl').textContent = titles[id]||id;
+  if(id==='medicao') renderMedicao();
+  if(id==='mapa')    renderMapa();
+  if(id==='colab')   selColab('André', document.querySelector('#colab-tabs .stab'));
+  if(id==='validade') renderValidade();
+  document.getElementById('sb').classList.remove('mob-open');
+}
+
+// ── UTILS ──
+let charts = {};
+function mkChart(id,type,data,opts={}){
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id),{
+    type, data,
+    options:{
+      responsive:true,
+      plugins:{legend:{display:opts.legend??false},...(opts.plugins||{})},
+      scales:opts.scales??{},
+      ...(opts.extra||{})
+    }
+  });
+  return charts[id];
+}
+function pct(v,base){ return base>0?Math.round(v/base*100):0; }
+function pill(txt,cls){ return `<span class="pl ${cls}">${txt}</span>`; }
+function perfPill(val){
+  const p=pct(val,META);
+  if(p>=100) return pill(`${p}%`,'pl-ok');
+  if(p>=80)  return pill(`${p}%`,'pl-w');
+  return pill(`${p}%`,'pl-b');
+}
+function exportSheet(data, sheetName, filename){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  XLSX.writeFile(wb,filename);
+}
+
+// ════════════════════════════════
+// RENDER VISÃO GERAL
+// ════════════════════════════════
+(function renderVisao(){
+  // Acumulados
+  const acProg = DATAS_FULL.map((_,i)=>META*(i+1));
+  const acReal = [];
+  let s=0; PROD.forEach(v=>{s+=v; acReal.push(s);});
+  // Projeção (ritmo atual)
+  const rate = 743/10;
+  const proj  = acReal.map(v=>v); // cópia dos 10 primeiros
+  for(let i=10;i<DIAS_UTEIS;i++) proj.push(Math.round(743+(i-9)*rate));
+
+  mkChart('ch-acum','line',{
+    labels: DATAS_FULL,
+    datasets:[
+      {label:'Programado',data:acProg,borderColor:'#3266AD',backgroundColor:'rgba(50,102,173,.07)',borderWidth:2,pointRadius:0,fill:true,tension:.1},
+      {label:'Realizado', data:[...acReal,...Array(12).fill(null)],borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#1D9E75',fill:false},
+      {label:'Projeção',  data:proj,borderColor:'#BA7517',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
+    ]
+  },{legend:true,scales:{
+    y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},
+    x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:8}}
+  }});
+
+  // Barras diárias
+  const bcolors = PROD.map(v=>v>=META?'#1D9E75':v>=META*.8?'#EF9F27':'#E24B4A');
+  mkChart('ch-diario','bar',{
+    labels: DATAS,
+    datasets:[
+      {label:'Realizado',data:PROD,backgroundColor:bcolors,borderRadius:4},
+      {label:'Meta (90)', data:Array(10).fill(META),type:'line',borderColor:'#3266AD',borderWidth:1.5,borderDash:[5,3],pointRadius:0},
+    ]
+  },{legend:true,scales:{
+    y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:0},
+    x:{grid:{display:false},ticks:{font:{size:9}}}
+  }});
+
+  // Barras colaborador
+  const colabData = Object.entries(COLABS_PROD).map(([n,v])=>{
+    const dias = v.filter(x=>x>0).length;
+    const tot  = v.reduce((a,b)=>a+b,0);
+    const med  = dias>0?Math.round(tot/dias):0;
+    return {n,med,dias,tot};
+  });
+  document.getElementById('colab-bars').innerHTML = colabData.map(({n,med,dias})=>{
+    const p = pct(med,META);
+    const col = p>=100?'var(--vd)':p>=80?'var(--am)':'var(--vm)';
+    return `<div class="colab-row">
+      <span class="colab-nome">${n}</span>
+      <div class="colab-bar-wrap">
+        <div class="colab-bar"><div class="colab-fill" style="width:${Math.min(p,120)}%;background:${col}"></div></div>
+        <div class="colab-meta">${dias} dia${dias!==1?'s':''} registrado${dias!==1?'s':''}</div>
+      </div>
+      <span class="colab-num" style="color:${col}">${med}</span>
+      <span class="colab-pct" style="color:${col}">${p}%</span>
+    </div>`;
+  }).join('');
+
+  // Mapa mini
+  const mapaLinhas = [
+    {lnum:'L3',nome:'Analisar PATEC Fin.',val:592,max:727,cor:'#3266AD'},
+    {lnum:'L4',nome:'Aguardar PATEC',val:359,max:285,cor:'#3266AD'},
+    {lnum:'L5',nome:'PATEC s/ forn.',val:8,max:22,cor:'#1D9E75'},
+    {lnum:'L6',nome:'PATEC Cancelado',val:0,max:1,cor:'#1D9E75'},
+    {lnum:'L7',nome:'Abrir PATEC Idêntico',val:168,max:320,cor:'#BA7517'},
+    {lnum:'L8',nome:'Abrir PATEC Grupo',val:153,max:252,cor:'#BA7517'},
+  ];
+  document.getElementById('mapa-mini').innerHTML = mapaLinhas.map(({lnum,nome,val,max,cor})=>{
+    const p = max>0?Math.round(val/max*100):0;
+    return `<div class="mapa-row">
+      <span class="lnum">${lnum}</span>
+      <div style="flex:1">
+        <div class="mapa-nome">${nome}</div>
+        <div class="mapa-bar"><div class="mapa-fill" style="width:${Math.min(p,100)}%;background:${cor}"></div></div>
+      </div>
+      <span class="mapa-val">${val.toLocaleString('pt-BR')}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('mapa-mini').innerHTML += `
+    <div style="margin-top:.75rem;padding-top:.75rem;border-top:2px solid var(--azc);display:flex;justify-content:space-between">
+      <span style="font-size:11px;font-weight:700">L12 (PATEC)</span>
+      <span style="font-size:18px;font-weight:700;color:var(--azm)">2.682</span>
+    </div>`;
+
+  // Tabela resumo
+  let ap=0,ar=0;
+  document.getElementById('tb-resumo').innerHTML = PROD.map((v,i)=>{
+    ap+=META; ar+=v; const g=ar-ap;
+    return `<tr>
+      <td>${i+1}</td><td>${DATAS[i]}</td>
+      <td>${META}</td>
+      <td style="font-weight:600;color:${v>=META?'var(--vd)':v>=META*.8?'var(--am)':'var(--vm)'}">${v}</td>
+      <td>${ap}</td><td>${ar}</td>
+      <td style="font-weight:600;color:${g<0?'var(--vm)':'var(--vd)'}">${g>0?'+':''}${g}</td>
+      <td>${perfPill(v)}</td>
+      <td>${SAIDA[i]}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tf-resumo').innerHTML = `<tr>
+    <td colspan="2">TOTAL / MÉDIA</td>
+    <td>${META*10}</td><td style="font-weight:700">743</td>
+    <td>${META*10}</td><td style="font-weight:700">743</td>
+    <td style="font-weight:700;color:var(--vm)">−157</td>
+    <td>${perfPill(74)}</td>
+    <td style="font-weight:700">439</td>
+  </tr>`;
+})();
+
+// ════════════════════════════════
+// RENDER MEDIÇÃO
+// ════════════════════════════════
+function renderMedicao(){
+  const acProg=DATAS_FULL.map((_,i)=>META*(i+1));
+  const acReal=[]; let s=0; PROD.forEach(v=>{s+=v;acReal.push(s);});
+  const rate=743/10;
+  const proj=acReal.slice();
+  for(let i=10;i<DIAS_UTEIS;i++) proj.push(Math.round(743+(i-9)*rate));
+
+  mkChart('ch-med-acum','line',{
+    labels:DATAS_FULL,
+    datasets:[
+      {label:'Programado',data:acProg,borderColor:'#3266AD',borderWidth:2,pointRadius:0,fill:false},
+      {label:'Realizado',data:[...acReal,...Array(12).fill(null)],borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#1D9E75',fill:false},
+      {label:'Projeção',data:proj,borderColor:'#BA7517',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
+    ]
+  },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:8}}}});
+
+  const bc=PROD.map(v=>v>=META?'#1D9E75':v>=META*.8?'#EF9F27':'#E24B4A');
+  mkChart('ch-med-bar','bar',{
+    labels:DATAS,
+    datasets:[{label:'Realizado',data:PROD,backgroundColor:bc,borderRadius:4}]
+  },{scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:0},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  let ap2=0,ar2=0;
+  document.getElementById('tb-medicao').innerHTML=DATAS_FULL.map((dt,i)=>{
+    const v=PROD[i]??0; const s=SAIDA[i]??0;
+    ap2+=META; if(v>0)ar2+=v;
+    const g=ar2-ap2; const p=v>0?pct(v,META):0;
+    if(i<10) return`<tr><td>${i+1}</td><td>${dt}</td><td>${META}</td><td style="font-weight:600;color:${v>=META?'var(--vd)':v>=META*.8?'var(--am)':'var(--vm)'}">${v}</td><td>${ap2}</td><td>${ar2}</td><td style="color:${g<0?'var(--vm)':'var(--vd)'};font-weight:600">${g>0?'+':''}${g}</td><td>${perfPill(v)}</td><td>${s||'—'}</td></tr>`;
+    return`<tr style="opacity:.5"><td>${i+1}</td><td>${dt}</td><td>${META}</td><td>—</td><td>${ap2}</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// RENDER MAPA
+// ════════════════════════════════
+function renderMapa(){
+  const mapaL12=[
+    {lnum:'L3',nome:'Analisar PATEC Finalizado',val:592,cor:'#3266AD'},
+    {lnum:'L4',nome:'Aguardar PATEC ser Finalizado',val:359,cor:'#3266AD'},
+    {lnum:'L5',nome:'PATEC Finalizado sem fornecedores',val:8,cor:'#1D9E75'},
+    {lnum:'L6',nome:'Analisar PATEC Cancelado',val:0,cor:'#BA7517'},
+  ];
+  const mapaL78=[
+    {lnum:'L7',nome:'Abrir PATEC Idêntico Não',val:168,cor:'#BA7517'},
+    {lnum:'L8',nome:'Abrir PATEC Grupo Mercadoria Obrig.',val:153,cor:'#BA7517'},
+  ];
+  const mapaRow=({lnum,nome,val,cor},total)=>{
+    const p=total>0?Math.round(val/total*100):0;
+    return`<div class="mapa-row"><span class="lnum">${lnum}</span><div style="flex:1"><div class="mapa-nome">${nome}</div><div class="mapa-bar"><div class="mapa-fill" style="width:${p}%;background:${cor}"></div></div></div><span class="mapa-val">${val.toLocaleString('pt-BR')}</span></div>`;
+  };
+  document.getElementById('mapa-l12').innerHTML=mapaL12.map(r=>mapaRow(r,592+359+8+0)).join('');
+  document.getElementById('mapa-l78').innerHTML=mapaL78.map(r=>mapaRow(r,168+153)).join('');
+
+  // Gráfico histórico L12
+  const l12hist=L[3].map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
+  const l10hist=l12hist.map((v,i)=>v+L[7][i]+L[8][i]);
+  const dHist=Array.from({length:9},(_,i)=>'Dia '+(i+1));
+  mkChart('ch-l12','line',{labels:dHist,datasets:[
+    {label:'L10',data:l10hist,borderColor:'#3266AD',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+    {label:'L12',data:l12hist,borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,fill:false,tension:.1},
+    {label:'L3', data:L[3],borderColor:'#BA7517',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+    {label:'L4', data:L[4],borderColor:'#E24B4A',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+  ]},{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  // Tabela histórico
+  document.getElementById('tb-hist-mapa').innerHTML=L[3].map((_,i)=>{
+    const l10=L[3][i]+L[4][i]+L[5][i]+L[6][i]+L[7][i]+L[8][i];
+    const l12=L[3][i]+L[4][i]+L[5][i]+L[6][i];
+    const prev_l12=i>0?L[3][i-1]+L[4][i-1]+L[5][i-1]+L[6][i-1]:l12;
+    const dif=l12-prev_l12;
+    return`<tr>
+      <td>${i+1}</td><td>${L[3][i]}</td><td>${L[4][i]}</td><td>${L[5][i]}</td>
+      <td>${L[6][i]}</td><td>${L[7][i]}</td><td>${L[8][i]}</td>
+      <td style="font-weight:600">${l10.toLocaleString('pt-BR')}</td>
+      <td style="font-weight:600;color:var(--azm)">${l12.toLocaleString('pt-BR')}</td>
+      <td style="font-weight:600;color:${dif>0?'var(--vd)':dif<0?'var(--vm)':'var(--tx2)'}">${i>0?(dif>0?'▲ +':'▼ ')+Math.abs(dif):'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// RENDER POR COLABORADOR
+// ════════════════════════════════
+function selColab(nome, btn){
+  document.querySelectorAll('#colab-tabs .stab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const v = COLABS_PROD[nome] || Array(10).fill(0);
+  const dias = v.filter(x=>x>0).length;
+  const tot  = v.reduce((a,b)=>a+b,0);
+  const med  = dias>0?Math.round(tot/dias):0;
+  const max  = Math.max(...v);
+
+  document.getElementById('kpi-colab').innerHTML=`
+    <div class="kc"><div class="kc-l">Dias registrados</div><div class="kc-v" style="color:var(--az)">${dias}</div><div class="kc-s">de 10 registrados</div></div>
+    <div class="kc ok"><div class="kc-l">Total analisados</div><div class="kc-v">${tot}</div></div>
+    <div class="kc ${med>=META?'ok':med>=META*.8?'warn':'bad'}"><div class="kc-l">Média diária</div><div class="kc-v">${med}</div><div class="kc-s">meta: ${META}/dia</div></div>
+    <div class="kc"><div class="kc-l">Melhor dia</div><div class="kc-v" style="color:var(--az)">${max}</div></div>
+  `;
+
+  document.getElementById('colab-chart-title').textContent=`Produção diária — ${nome}`;
+  const bc=v.map(x=>x>=META?'#1D9E75':x>=META*.8?'#EF9F27':x>0?'#E24B4A':'#E0E0E0');
+  mkChart('ch-colab','bar',{
+    labels:DATAS,
+    datasets:[
+      {label:'Realizado',data:v,backgroundColor:bc,borderRadius:4},
+      {label:'Meta (90)',data:Array(10).fill(META),type:'line',borderColor:'#3266AD',borderWidth:1.5,borderDash:[5,3],pointRadius:0},
+    ]
+  },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:0},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  // Linhas (só para histórico)
+  const linhas=['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
+  document.getElementById('colab-linhas').innerHTML=linhas.map((l,i)=>{
+    const val=i===0?tot:0; // só temos dado de analisados por colaborador
+    const p=tot>0?Math.round(val/tot*100):0;
+    return`<div class="mapa-row"><span style="font-size:11px;flex:1">${l}</span><div class="mapa-bar" style="width:80px;display:inline-block;margin:0 8px;height:5px;background:#eee;border-radius:3px;vertical-align:middle"><div class="mapa-fill" style="width:${p}%;background:var(--azm)"></div></div><span style="font-size:12px;font-weight:600;width:40px;text-align:right">${i===0?tot:'—'}</span></div>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// RENDER VALIDADE
+// ════════════════════════════════
+function renderValidade(){
+  const rcCharts={};
+  ROSCAS.forEach(r=>{
+    const el=document.getElementById(r.id);if(!el)return;
+    if(rcCharts[r.id])rcCharts[r.id].destroy();
+    const data=[r.dentro,r.prox,r.venc].concat(r.sem>0?[r.sem]:[]);
+    const colors=['#1D9E75','#EF9F27','#E24B4A'].concat(r.sem>0?['#C4C4C4']:[]);
+    new Chart(el,{type:'doughnut',data:{datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:false,cutout:'63%',plugins:{legend:{display:false}}}});
+    // legenda
+    const legEl=document.getElementById(r.id+'-leg');
+    if(legEl) legEl.innerHTML=`
+      <div style="font-size:10px">
+        <div class="mapa-row" style="padding:4px 0"><span class="rl-d" style="width:8px;height:8px;border-radius:2px;background:#1D9E75;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Dentro do prazo</span><strong style="color:var(--vd)">${r.dentro.toLocaleString('pt-BR')}</strong></div>
+        <div class="mapa-row" style="padding:4px 0"><span style="width:8px;height:8px;border-radius:2px;background:#EF9F27;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Próx. vencimento</span><strong style="color:var(--am)">${r.prox.toLocaleString('pt-BR')}</strong></div>
+        <div class="mapa-row" style="padding:4px 0"><span style="width:8px;height:8px;border-radius:2px;background:#E24B4A;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Vencida</span><strong style="color:var(--vm)">${r.venc.toLocaleString('pt-BR')}</strong></div>
+        ${r.sem>0?`<div class="mapa-row" style="padding:4px 0"><span style="width:8px;height:8px;border-radius:2px;background:#C4C4C4;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Sem data</span><strong>${r.sem.toLocaleString('pt-BR')}</strong></div>`:''}
+      </div>`;
+  });
+
+  // SLA tabela
+  document.getElementById('tb-sla').innerHTML=SLA_TABLE.map(r=>{
+    const cls=r.sla>=200?'pl-b':r.sla>=100?'pl-w':'pl-ok';
+    const pfora=r.pct>10?'pl-b':r.pct>0?'pl-w':'pl-ok';
+    return`<tr>
+      <td><span class="lnum">${r.linha}</span></td>
+      <td style="font-size:11px">${r.fila}</td>
+      <td style="font-weight:700;color:${r.sla>=200?'var(--vm)':r.sla>=100?'var(--am)':'var(--vd)'}"><span class="pl ${cls}">${r.sla} dias</span></td>
+      <td>${r.total.toLocaleString('pt-BR')}</td>
+      <td><span class="pl ${pfora}">${r.pct.toFixed(1)}%</span></td>
+      <td>${r.fora>0?`<span class="pl pl-b">${r.fora} críticos</span>`:`<span class="pl pl-ok">OK</span>`}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// EXPORTAÇÕES
+// ════════════════════════════════
+function exportResumo(){
+  const hd=['Dia','Data','Programado','Realizado','Acum.Prog.','Acum.Real.','Gap','%','Saídas'];
+  let ap=0,ar=0;
+  const rows=PROD.map((v,i)=>{ap+=META;ar+=v;return[i+1,DATAS[i],META,v,ap,ar,ar-ap,pct(v,META)+'%',SAIDA[i]];});
+  exportSheet([hd,...rows],'Resumo',`PATEC_VisaoGeral_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+}
+function exportMedicao(){
+  const hd=['Dia','Data','Programado','Realizado','Acum.Prog.','Acum.Real.','Gap','%','Saídas'];
+  let ap=0,ar=0;
+  const rows=DATAS_FULL.map((dt,i)=>{
+    const v=PROD[i]??0;ap+=META;if(v>0)ar+=v;
+    return[i+1,dt,META,v||'',ap,v>0?ar:'',v>0?ar-ap:'',v>0?pct(v,META)+'%':'',SAIDA[i]??''];
+  });
+  exportSheet([hd,...rows],'Medição',`PATEC_Medicao_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+}
+
+// ── INIT RENDERS ──
+renderValidade();
+renderMapa();
+renderMedicao();
+selColab('André',null);
+
+// ══ PRODUÇÃO ══
+// ════════════════════════════════════════════
+// DADOS HISTÓRICOS REAIS (ciclo Maio 2026)
+// ════════════════════════════════════════════
+const HISTORICO_INICIAL = [
+  // André
+  {colab:'André',data:'2026-05-12',pres:'Presencial',f:[26,0,19,1,0,0,0,10,2,5]},
+  // Lory
+  {colab:'Lory',data:'2026-05-01',pres:'Presencial',f:[21,1,1,0,0,0,0,0,21,0]},
+  {colab:'Lory',data:'2026-05-02',pres:'Presencial',f:[35,3,0,0,0,0,0,6,1,0]},
+  {colab:'Lory',data:'2026-05-05',pres:'Presencial',f:[35,0,0,0,0,0,0,0,35,0]},
+  {colab:'Lory',data:'2026-05-06',pres:'Presencial',f:[8,17,15,0,0,0,0,8,1,1]},
+  {colab:'Lory',data:'2026-05-07',pres:'Home Office',f:[19,11,7,1,0,1,1,9,9,2]},
+  {colab:'Lory',data:'2026-05-08',pres:'Presencial',f:[29,5,16,0,1,0,0,0,0,2]},
+  {colab:'Lory',data:'2026-05-09',pres:'Presencial',f:[46,0,46,0,0,0,0,15,0,0]},
+  {colab:'Lory',data:'2026-05-12',pres:'Presencial',f:[40,3,12,0,0,0,0,0,12,0]},
+  {colab:'Lory',data:'2026-05-13',pres:'Home Office',f:[20,6,18,3,2,1,0,16,12,2]},
+  // Ludy
+  {colab:'Ludy',data:'2026-05-01',pres:'Home Office',f:[17,16,15,0,0,1,1,7,5,4]},
+  {colab:'Ludy',data:'2026-05-02',pres:'Home Office',f:[8,24,7,4,0,2,0,8,1,10]},
+  {colab:'Ludy',data:'2026-05-05',pres:'Home Office',f:[3,33,12,4,0,2,1,3,3,11]},
+  {colab:'Ludy',data:'2026-05-07',pres:'Home Office',f:[8,32,19,4,0,2,2,6,2,5]},
+  {colab:'Ludy',data:'2026-05-08',pres:'Home Office',f:[16,14,9,7,0,2,1,0,6,5]},
+  {colab:'Ludy',data:'2026-05-09',pres:'Home Office',f:[52,7,33,2,0,3,0,3,17,1]},
+  {colab:'Ludy',data:'2026-05-12',pres:'Home Office',f:[6,39,16,4,0,0,0,8,11,1]},
+  {colab:'Ludy',data:'2026-05-13',pres:'Home Office',f:[10,16,8,0,1,0,0,8,2,10]},
+  // Wanessa
+  {colab:'Wanessa',data:'2026-05-06',pres:'Presencial',f:[0,24,11,0,0,3,1,5,3,1]},
+  {colab:'Wanessa',data:'2026-05-07',pres:'Presencial',f:[0,20,0,0,0,2,1,8,2,7]},
+  {colab:'Wanessa',data:'2026-05-08',pres:'Presencial',f:[0,22,3,3,1,1,3,5,3,3]},
+  {colab:'Wanessa',data:'2026-05-09',pres:'Presencial',f:[0,21,5,4,1,1,1,7,3,3]},
+];
+const PCP_INICIAL = [
+  {data:'2026-05-01',f1:79,f2:2,f3:29,f4:7},
+  {data:'2026-05-02',f1:90,f2:1,f3:4,f4:17},
+  {data:'2026-05-05',f1:93,f2:5,f3:41,f4:27},
+  {data:'2026-05-06',f1:46,f2:1,f3:1,f4:10},
+  {data:'2026-05-07',f1:70,f2:3,f3:11,f4:22},
+  {data:'2026-05-08',f1:64,f2:2,f3:6,f4:11},
+  {data:'2026-05-09',f1:131,f2:0,f3:19,f4:7},
+  {data:'2026-05-12',f1:88,f2:0,f3:23,f4:5},
+  {data:'2026-05-13',f1:56,f2:3,f3:0,f4:8},
+];
+
+const LINHAS = ['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
+const COLABS = ['André','Aline','Lory','Ludy','Wanessa'];
+const SENHA_PCP = 'patec2026';
+const HOJE = new Date();
+
+// Estado
+let registros = [...HISTORICO_INICIAL];
+let pcpData   = [...PCP_INICIAL];
+let presAtual = 'Presencial';
+let colabAtual = 'André';
+
+// ── INIT ──
+document.getElementById('tdt').textContent = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+document.getElementById('sel-data').value  = HOJE.toISOString().split('T')[0];
+document.getElementById('pcp-dt').value    = HOJE.toISOString().split('T')[0];
+document.getElementById('eq-data-label').textContent = HOJE.toLocaleDateString('pt-BR');
+
+// ── SIDEBAR ──
+function toggleSb(){document.getElementById('sb').classList.toggle('mob-open');}
+function goPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  const titles={lancar:'Lançar Produção',equipe:'Visão da Equipe',porcolab:'Por Colaborador',porlinha:'Por Linha',pcp:'Dados PCP',exportar:'Exportar'};
+  document.getElementById('ttl').textContent = titles[id]||id;
+  if(id==='equipe'){renderEquipe();renderEquipeAcum();}
+  if(id==='porcolab'){renderColab('André');}
+  if(id==='porlinha')renderLinhas();
+  if(id==='exportar')renderExport();
+  if(id==='pcp')renderPCP();
+  document.getElementById('sb').classList.remove('mob-open');
+}
+
+// ── PRESENÇA ──
+function selPres(v,el){
+  presAtual=v;
+  document.querySelectorAll('.pres-opt').forEach(o=>{o.className='pres-opt';});
+  el.classList.add(v==='Presencial'?'sel-P':v==='Home Office'?'sel-H':'sel-F');
+}
+
+// ── TOTAL DINÂMICO ──
+function updateTotal(){
+  let t=0;
+  for(let i=0;i<10;i++){const v=parseInt(document.getElementById('f'+i).value)||0;t+=v;}
+  document.getElementById('total-badge').textContent=t.toLocaleString('pt-BR');
+  document.getElementById('total-badge').style.color=t>=90?'var(--vd)':t>=72?'var(--am)':'var(--az)';
+}
+function updateHeader(){
+  colabAtual=document.getElementById('sel-colab').value;
+  document.getElementById('colab-display').textContent=colabAtual;
+}
+
+// ── SALVAR ──
+function salvar(){
+  const colab=document.getElementById('sel-colab').value;
+  const data =document.getElementById('sel-data').value;
+  if(!data){alert('Informe a data.');return;}
+  const f=[];for(let i=0;i<10;i++)f.push(parseInt(document.getElementById('f'+i).value)||0);
+  registros.push({colab,data,pres:presAtual,f});
+  const msg=document.getElementById('msg-salvo');
+  msg.style.display='inline';setTimeout(()=>msg.style.display='none',3000);
+  // não limpa — usuário pode querer ajustar e salvar de novo
+}
+function limpar(){
+  for(let i=0;i<10;i++)document.getElementById('f'+i).value='';
+  updateTotal();
+}
+
+// ── UTIL ──
+function fmtData(d){
+  if(!d)return'—';
+  const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];
+}
+function pill(txt,cls){return`<span class="pl ${cls}">${txt}</span>`;}
+function presPill(p){
+  if(p==='Presencial')return pill('🏢 Presencial','pl-az');
+  if(p==='Home Office')return pill('🏠 Home Office','pl-ok');
+  if(p==='Folga')return pill('🌴 Folga','pl-f');
+  return pill(p,'pl-g');
+}
+function metaPill(t){
+  const pct=Math.round(t/90*100);
+  if(pct>=100)return`<span style="color:var(--vd);font-weight:700">${pct}%</span>`;
+  if(pct>=80)return`<span style="color:var(--am);font-weight:700">${pct}%</span>`;
+  return`<span style="color:var(--vm);font-weight:700">${pct}%</span>`;
+}
+
+// ── SUBTAB EQUIPE ──
+function setEquipeTab(id,btn){
+  document.querySelectorAll('#p-equipe .stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('eq-hoje').style.display=id==='hoje'?'block':'none';
+  document.getElementById('eq-acum').style.display=id==='acum'?'block':'none';
+}
+
+// ── RENDER EQUIPE (hoje) ──
+function renderEquipe(){
+  const dataHoje=document.getElementById('sel-data').value||HOJE.toISOString().split('T')[0];
+  const regs=registros.filter(r=>r.data===dataHoje);
+  // KPIs
+  const totAnalisados=regs.reduce((a,r)=>a+r.f[0],0);
+  const totGeral=regs.reduce((a,r)=>a+r.f.reduce((s,v)=>s+v,0),0);
+  const presentes=regs.filter(r=>r.pres!=='Folga').length;
+  document.getElementById('kpi-equipe').innerHTML=`
+    <div class="kc ok"><div class="kc-l">Itens analisados (novos)</div><div class="kc-v">${totAnalisados}</div><div class="kc-s">equipe hoje</div></div>
+    <div class="kc"><div class="kc-l">Total de ações</div><div class="kc-v" style="color:var(--az)">${totGeral}</div><div class="kc-s">todas as linhas</div></div>
+    <div class="kc"><div class="kc-l">Colaboradores ativos</div><div class="kc-v" style="color:var(--az)">${presentes}</div><div class="kc-s">de ${COLABS.length}</div></div>
+    <div class="kc ${totAnalisados>=90?'ok':totAnalisados>=72?'warn':'bad'}"><div class="kc-l">% da meta (analisados)</div><div class="kc-v">${Math.round(totAnalisados/90*100)}%</div><div class="kc-s">meta: 90/dia</div></div>
+  `;
+  if(regs.length===0){
+    document.getElementById('eq-tb-hoje').innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum registro para hoje. Lance a produção na aba anterior.</td></tr>';
+    document.getElementById('eq-tfoot-hoje').innerHTML='';return;
+  }
+  // Totais por coluna para tfoot
+  const sums=Array(10).fill(0);
+  let totT=0;
+  document.getElementById('eq-tb-hoje').innerHTML=regs.map(r=>{
+    const t=r.f.reduce((a,b)=>a+b,0);totT+=t;
+    r.f.forEach((v,i)=>sums[i]+=v);
+    return`<tr>
+      <td><strong>${r.colab}</strong></td>
+      <td>${presPill(r.pres)}</td>
+      ${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}
+      <td style="font-weight:700">${t}</td>
+      <td>${metaPill(r.f[0])}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('eq-tfoot-hoje').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>—</td>${sums.map(v=>`<td style="font-weight:700">${v||'—'}</td>`).join('')}<td style="font-weight:700">${totT}</td><td>${metaPill(sums[0])}</td></tr>`;
+}
+
+// ── RENDER EQUIPE ACUMULADO ──
+function renderEquipeAcum(){
+  const acum={};
+  COLABS.forEach(c=>{acum[c]={dias:0,f:Array(10).fill(0)};});
+  registros.forEach(r=>{
+    if(!acum[r.colab])acum[r.colab]={dias:0,f:Array(10).fill(0)};
+    acum[r.colab].dias++;
+    r.f.forEach((v,i)=>acum[r.colab].f[i]+=v);
+  });
+  document.getElementById('eq-tb-acum').innerHTML=Object.entries(acum).map(([c,d])=>{
+    const t=d.f.reduce((a,b)=>a+b,0);
+    const med=d.dias>0?Math.round(d.f[0]/d.dias):0;
+    return`<tr><td><strong>${c}</strong></td><td>${d.dias}</td>${d.f.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${t}</td><td style="font-weight:700;color:${med>=90?'var(--vd)':med>=72?'var(--am)':'var(--vm)'}">${med}/dia</td></tr>`;
+  }).join('');
+}
+
+// ── RENDER POR COLABORADOR ──
+function setColab(c,btn){
+  document.querySelectorAll('#colab-tabs .stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderColab(c);
+}
+function renderColab(c){
+  document.getElementById('colab-title').textContent='Histórico de produção — '+c;
+  const regs=registros.filter(r=>r.colab===c).sort((a,b)=>a.data.localeCompare(b.data));
+  const totF=Array(10).fill(0);
+  let totT=0;
+  const rows=regs.map(r=>{
+    const t=r.f.reduce((a,b)=>a+b,0);totT+=t;
+    r.f.forEach((v,i)=>totF[i]+=v);
+    return`<tr><td>${fmtData(r.data)}</td><td>${presPill(r.pres)}</td>${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${t}</td></tr>`;
+  }).join('');
+  const dias=regs.length;
+  const med=dias>0?Math.round(regs.reduce((a,r)=>a+r.f[0],0)/dias):0;
+  document.getElementById('kpi-colab').innerHTML=`
+    <div class="kc"><div class="kc-l">Dias registrados</div><div class="kc-v" style="color:var(--az)">${dias}</div></div>
+    <div class="kc ok"><div class="kc-l">Total analisados</div><div class="kc-v">${totF[0]}</div></div>
+    <div class="kc ${med>=90?'ok':med>=72?'warn':'bad'}"><div class="kc-l">Média diária</div><div class="kc-v">${med}</div><div class="kc-s">meta: 90/dia</div></div>
+    <div class="kc"><div class="kc-l">Total ações</div><div class="kc-v" style="color:var(--az)">${totT}</div></div>
+  `;
+  document.getElementById('colab-tb').innerHTML=rows||'<tr><td colspan="13" style="text-align:center;color:var(--tx2);padding:1.5rem">Sem registros para '+c+'</td></tr>';
+}
+
+// ── RENDER POR LINHA ──
+function renderLinhas(){
+  const sums=Array(10).fill(0);
+  registros.forEach(r=>r.f.forEach((v,i)=>sums[i]+=v));
+  const total=sums.reduce((a,b)=>a+b,0);
+  document.getElementById('linhas-cards').innerHTML=LINHAS.map((l,i)=>{
+    const pct=total>0?Math.round(sums[i]/total*100):0;
+    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--brd)">
+      <span style="width:120px;font-size:12px;font-weight:600">${l}</span>
+      <div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${i===0?'var(--vd)':i<4?'var(--azm)':i<7?'var(--am)':'var(--tx2)'}"></div></div>
+      <span style="font-size:13px;font-weight:700;width:50px;text-align:right;color:var(--az)">${sums[i]}</span>
+      <span style="font-size:10px;color:var(--tx2);width:35px">${pct}%</span>
+    </div>`;
+  }).join('');
+  document.getElementById('linha-tb').innerHTML=registros.sort((a,b)=>a.data.localeCompare(b.data)).map(r=>`<tr><td>${fmtData(r.data)}</td><td><strong>${r.colab}</strong></td>${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}</tr>`).join('');
+}
+
+// ── PCP ──
+function checkPwd(){
+  if(document.getElementById('pcp-pwd').value===SENHA_PCP){
+    document.getElementById('pcp-lock').style.display='none';
+    document.getElementById('pcp-data').style.display='block';
+    renderPCP();
+  }else{
+    const err=document.getElementById('pcp-err');err.style.display='block';
+    setTimeout(()=>err.style.display='none',2500);
+  }
+}
+function logoutPCP(){
+  document.getElementById('pcp-lock').style.display='block';
+  document.getElementById('pcp-data').style.display='none';
+  document.getElementById('pcp-pwd').value='';
+}
+function renderPCP(){
+  if(document.getElementById('pcp-data').style.display==='none')return;
+  const tot={f1:0,f2:0,f3:0,f4:0};
+  pcpData.forEach(r=>{tot.f1+=r.f1;tot.f2+=r.f2;tot.f3+=r.f3;tot.f4+=r.f4;});
+  document.getElementById('pcp-v1').textContent=tot.f1.toLocaleString('pt-BR');
+  document.getElementById('pcp-v2').textContent=tot.f2.toLocaleString('pt-BR');
+  document.getElementById('pcp-v3').textContent=tot.f3.toLocaleString('pt-BR');
+  document.getElementById('pcp-v4').textContent=tot.f4.toLocaleString('pt-BR');
+  const sorted=pcpData.slice().sort((a,b)=>a.data.localeCompare(b.data));
+  document.getElementById('pcp-tb').innerHTML=sorted.map(r=>{
+    const t=r.f1+r.f2+r.f3+r.f4;
+    return`<tr><td>${fmtData(r.data)}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.f3}</td><td>${r.f4}</td><td style="font-weight:700">${t}</td></tr>`;
+  }).join('');
+  const gt=tot.f1+tot.f2+tot.f3+tot.f4;
+  document.getElementById('pcp-tfoot').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>${tot.f1}</td><td>${tot.f2}</td><td>${tot.f3}</td><td>${tot.f4}</td><td style="font-weight:700">${gt}</td></tr>`;
+}
+function salvarPCP(){
+  const d=document.getElementById('pcp-dt').value;
+  if(!d){alert('Informe a data.');return;}
+  pcpData.push({data:d,f1:parseInt(document.getElementById('pcp-f1').value)||0,f2:parseInt(document.getElementById('pcp-f2').value)||0,f3:parseInt(document.getElementById('pcp-f3').value)||0,f4:parseInt(document.getElementById('pcp-f4').value)||0});
+  ['pcp-f1','pcp-f2','pcp-f3','pcp-f4'].forEach(id=>document.getElementById(id).value='');
+  renderPCP();
+}
+function exportPCP(){
+  const hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Devoluções,Total\n';
+  const rows=pcpData.map(r=>`${fmtData(r.data)},${r.f1},${r.f2},${r.f3},${r.f4},${r.f1+r.f2+r.f3+r.f4}`).join('\n');
+  dlFile('PCP_PATEC.csv','text/csv','\uFEFF'+hd+rows);
+}
+
+// ── EXPORTAR ──
+function renderExport(){
+  document.getElementById('exp-count').textContent=registros.length;
+  document.getElementById('exp-tb').innerHTML=registros.slice().sort((a,b)=>b.data.localeCompare(a.data)).map((r,i)=>`<tr><td>${fmtData(r.data)}</td><td>${r.colab}</td><td>${r.f.reduce((a,b)=>a+b,0)}</td><td><button class="btn btn-r" style="padding:3px 8px;font-size:10px" onclick="delReg(${registros.indexOf(r)})">✕</button></td></tr>`).join('');
+}
+function delReg(i){if(confirm('Excluir registro?')){registros.splice(i,1);renderExport();}}
+function buildData(regs){
+  return[
+    ['Colaborador','Data','Presença',...LINHAS,'Total Geral'],
+    ...regs.map(r=>[r.colab,fmtData(r.data),r.pres,...r.f,r.f.reduce((a,b)=>a+b,0)])
+  ];
+}
+function exportExcel(){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(buildData(registros.slice().sort((a,b)=>a.data.localeCompare(b.data))));
+  ws['!cols']=[{wch:10},{wch:11},{wch:12},...LINHAS.map(()=>({wch:10})),{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws,'Produção');
+  // Aba por colaborador
+  COLABS.forEach(c=>{
+    const regs=registros.filter(r=>r.colab===c);
+    if(regs.length){
+      const ws2=XLSX.utils.aoa_to_sheet(buildData(regs.sort((a,b)=>a.data.localeCompare(b.data))));
+      XLSX.utils.book_append_sheet(wb,ws2,c.substring(0,20));
+    }
+  });
+  XLSX.writeFile(wb,`Producao_PATEC_${HOJE.toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+}
+function exportCSV(){
+  const hd='Colaborador,Data,Presença,'+LINHAS.join(',')+',Total\n';
+  const rows=registros.map(r=>`${r.colab},${fmtData(r.data)},${r.pres},${r.f.join(',')},${r.f.reduce((a,b)=>a+b,0)}`).join('\n');
+  dlFile('Producao_PATEC.csv','text/csv','\uFEFF'+hd+rows);
+}
+function exportHoje(){
+  const d=HOJE.toISOString().split('T')[0];
+  const regs=registros.filter(r=>r.data===d);
+  if(!regs.length){alert('Nenhum registro para hoje.');return;}
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(buildData(regs));
+  XLSX.utils.book_append_sheet(wb,ws,'Hoje');
+  XLSX.writeFile(wb,`Producao_PATEC_Hoje.xlsx`);
+}
+function dlFile(name,type,content){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;a.click();
+}
+
+// ── INIT renders ──
+renderEquipe();
+renderEquipeAcum();
+
+// ══ MAPA ══
+// ════════════════════════════════════════════
+// DADOS REAIS — Ciclo Maio 2026
+// ════════════════════════════════════════════
+const HOJE = new Date();
+const DATAS_MAPA = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai'];
+const DATAS_ISO  = ['2026-05-01','2026-05-02','2026-05-05','2026-05-06','2026-05-07','2026-05-08','2026-05-09','2026-05-12','2026-05-13'];
+
+// Dados históricos da aba Dinâmica MAPA
+const L = {
+  3:[727,712,722,679,711,703,679,687,592],
+  4:[218,228,241,234,190,189,285,347,359],
+  5:[5,6,6,0,22,9,8,5,8],
+  6:[0,1,1,0,0,0,0,1,0],
+  7:[190,191,273,301,303,320,278,233,168],
+  8:[154,148,185,218,216,252,221,216,153],
+};
+
+// Dados do Level Board (posição atual)
+const LB = {
+  L3:{val:1019,fila:'PATEC',fila_mapa:'Analisar PATEC Finalizado',cor:'#3266AD',corFill:'rgba(50,102,173,.12)'},
+  L4:{val:1215,fila:'Oportunidade em Andamento',fila_mapa:'Aguardar PATEC ser Finalizado',cor:'#3266AD',corFill:'rgba(50,102,173,.12)'},
+  L5:{val:43,fila:'Emitir Pedido PATEC',fila_mapa:'PATEC Finalizado sem fornecedores aprovados',cor:'#1D9E75',corFill:'rgba(29,158,117,.12)'},
+  L6:{val:405,fila:'Análise de Oportunidade',fila_mapa:'Analisar PATEC Cancelado',cor:'#1D9E75',corFill:'rgba(29,158,117,.12)'},
+  L7:{val:1694,fila:'Fila de publicação',fila_mapa:'Abrir PATEC Idêntico Não',cor:'#BA7517',corFill:'rgba(186,117,23,.12)'},
+  L8:{val:140,fila:'Item em Parada',fila_mapa:'Abrir PATEC Grupo de Mercadoria Obrigatório',cor:'#BA7517',corFill:'rgba(186,117,23,.12)'},
+};
+const L12_LB = 1019+1215+43+405; // 2682
+const L10_LB = L12_LB+1694+140;  // 4516
+
+// Histórico de lançamentos desta sessão
+let lancamentos = [];
+
+// ── INIT ──
+document.getElementById('tdt').textContent = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+document.getElementById('lanc-data').value = HOJE.toISOString().split('T')[0];
+
+// ── SIDEBAR ──
+let chartsMap = {};
+function mkChart(id,type,data,opts={}){
+  if(chartsMap[id]) chartsMap[id].destroy();
+  chartsMap[id] = new Chart(document.getElementById(id),{
+    type, data,
+    options:{
+      responsive:true,
+      plugins:{legend:{display:opts.legend??false},...(opts.plugins||{})},
+      scales:opts.scales||{},
+      ...(opts.extra||{})
+    }
+  });
+  return chartsMap[id];
+}
+
+function go(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  const titles={posicao:'Posição Atual — Mapa PATEC',lancamento:'Lançamento do Mapa',historico:'Histórico do Ciclo',variacao:'Variação Dia a Dia',detalhe:'Detalhe por Linha'};
+  document.getElementById('ttl').textContent = titles[id]||id;
+  if(id==='historico') renderHistorico();
+  if(id==='variacao')  renderVariacao();
+  if(id==='detalhe')   selLinha('L3', document.querySelector('#detalhe-tabs .stab'));
+  document.getElementById('sb').classList.remove('mob-open');
+}
+
+// ── UTILS ──
+function varSpan(d){
+  if(d===0) return '<span style="color:var(--tx2)">—</span>';
+  return d>0
+    ? `<span style="color:var(--vm);font-weight:600">▲ +${d}</span>`
+    : `<span style="color:var(--vd);font-weight:600">▼ ${d}</span>`;
+}
+function pct(v,base){ return base>0?Math.round(v/base*100):0; }
+function pill(txt,cls){ return `<span class="pl ${cls}">${txt}</span>`; }
+
+// ════════════════════════════════
+// POSIÇÃO ATUAL — render
+// ════════════════════════════════
+(function renderPosicao(){
+  // Linhas L12
+  const lL12=[
+    {k:'L3',nome:'Analisar PATEC Finalizado',fila:'PATEC (col BN)',val:1019,cor:'#3266AD'},
+    {k:'L4',nome:'Aguardar PATEC ser Finalizado',fila:'Oportunidade em Andamento',val:1215,cor:'#3266AD'},
+    {k:'L5',nome:'PATEC Finalizado sem fornecedores',fila:'Emitir Pedido PATEC',val:43,cor:'#1D9E75'},
+    {k:'L6',nome:'Analisar PATEC Cancelado',fila:'Análise de Oportunidade',val:405,cor:'#1D9E75'},
+  ];
+  const lL78=[
+    {k:'L7',nome:'Abrir PATEC Idêntico Não',fila:'Fila de publicação',val:1694,cor:'#BA7517'},
+    {k:'L8',nome:'Abrir PATEC Grupo de Mercadoria Obrigatório',fila:'Item em Parada',val:140,cor:'#BA7517'},
+  ];
+  const maxL12=Math.max(...lL12.map(l=>l.val));
+  const maxL78=Math.max(...lL78.map(l=>l.val));
+
+  function linhaHTML(l,maxVal){
+    const p = Math.round(l.val/maxVal*100);
+    const d9 = L[parseInt(l.k.slice(1))];
+    const varD = d9[d9.length-1]-d9[d9.length-2];
+    const varCls = varD>0?'lv-up':varD<0?'lv-dn':'lv-eq';
+    const varSym = varD>0?'▲ +':varD<0?'▼ ':'';
+    return `<div class="linha-card">
+      <span class="lnum">${l.k}</span>
+      <div class="linha-info">
+        <div class="linha-nome">${l.nome}</div>
+        <div class="linha-fila">Fila LB: ${l.fila}</div>
+        <div class="linha-bar"><div class="linha-fill" style="width:${p}%;background:${l.cor}"></div></div>
+      </div>
+      <span class="linha-val" style="color:${l.cor}">${l.val.toLocaleString('pt-BR')}</span>
+      <span class="linha-var ${varCls}">${varD!==0?varSym+Math.abs(varD):'—'}<br><span style="font-size:9px;color:var(--tx2)">vs D8</span></span>
+    </div>`;
+  }
+  document.getElementById('linhas-l12').innerHTML=lL12.map(l=>linhaHTML(l,maxL12)).join('');
+  document.getElementById('linhas-l78').innerHTML=lL78.map(l=>linhaHTML(l,maxL78)).join('');
+
+  // Pizza L12
+  mkChart('ch-pizza-l12','doughnut',{
+    labels:['L3 — Analisar PATEC','L4 — Aguardar PATEC','L5 — s/ fornec.','L6 — Cancelado'],
+    datasets:[{data:[1019,1215,43,405],backgroundColor:['#3266AD','#5A8DD9','#1D9E75','#8BC4B2'],borderWidth:2,borderColor:'#fff'}]
+  },{legend:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}},extra:{cutout:'50%'}});
+
+  // Pizza L10
+  mkChart('ch-pizza-l10','doughnut',{
+    labels:['L3','L4','L5','L6','L7 — Abrir Idêntico','L8 — Grupo Merc.'],
+    datasets:[{data:[1019,1215,43,405,1694,140],backgroundColor:['#3266AD','#5A8DD9','#1D9E75','#8BC4B2','#BA7517','#E8A030'],borderWidth:2,borderColor:'#fff'}]
+  },{legend:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}},extra:{cutout:'50%'}});
+})();
+
+// ════════════════════════════════
+// LANÇAMENTO
+// ════════════════════════════════
+function recalcL(){
+  const g=id=>parseInt(document.getElementById(id).value)||0;
+  const l10=g('lv3')+g('lv4')+g('lv5')+g('lv6')+g('lv7')+g('lv8');
+  const l12=g('lv3')+g('lv4')+g('lv5')+g('lv6');
+  document.getElementById('l10-calc').textContent=l10.toLocaleString('pt-BR');
+  document.getElementById('l12-calc').textContent=l12.toLocaleString('pt-BR');
+}
+function salvarLancamento(){
+  const g=id=>parseInt(document.getElementById(id).value)||0;
+  const dt=document.getElementById('lanc-data').value;
+  if(!dt){alert('Informe a data.');return;}
+  const row={data:dt,obs:document.getElementById('lanc-obs').value,
+    L3:g('lv3'),L4:g('lv4'),L5:g('lv5'),L6:g('lv6'),L7:g('lv7'),L8:g('lv8')};
+  row.L10=row.L3+row.L4+row.L5+row.L6+row.L7+row.L8;
+  row.L12=row.L3+row.L4+row.L5+row.L6;
+  lancamentos.push(row);
+  document.getElementById('lanc-hist-card').style.display='block';
+  document.getElementById('lanc-tb').innerHTML=lancamentos.map(r=>
+    `<tr><td>${r.data.split('-').reverse().join('/')}</td>
+    <td>${r.L3}</td><td>${r.L4}</td><td>${r.L5}</td><td>${r.L6}</td><td>${r.L7}</td><td>${r.L8}</td>
+    <td style="font-weight:700">${r.L10.toLocaleString('pt-BR')}</td>
+    <td style="font-weight:700;color:var(--azm)">${r.L12.toLocaleString('pt-BR')}</td>
+    <td style="font-size:10px;color:var(--tx2)">${r.obs||'—'}</td></tr>`
+  ).join('');
+  const msg=document.getElementById('lanc-msg');
+  msg.style.display='inline';setTimeout(()=>msg.style.display='none',3000);
+}
+function exportLancamento(){
+  const g=id=>parseInt(document.getElementById(id).value)||0;
+  const dt=document.getElementById('lanc-data').value.split('-').reverse().join('/');
+  const l3=g('lv3'),l4=g('lv4'),l5=g('lv5'),l6=g('lv6'),l7=g('lv7'),l8=g('lv8');
+  const rows=[
+    ['Data referência',dt],['',''],
+    ['Linha','Fila do MAPA (aba Dinâmica)','Fila Level Board','Quantidade'],
+    ['L3','Analisar PATEC Finalizado','PATEC',l3],
+    ['L4','Aguardar PATEC ser Finalizado','Oportunidade em Andamento',l4],
+    ['L5','PATEC Fin. sem fornec. aprovados','Emitir Pedido PATEC',l5],
+    ['L6','Analisar PATEC Cancelado','Análise de Oportunidade',l6],
+    ['L7','Abrir PATEC Idêntico Não','Fila de publicação',l7],
+    ['L8','Abrir PATEC Grupo Merc. Obrig.','Item em Parada',l8],
+    ['','','',''],
+    ['L10 (soma total)','','',l3+l4+l5+l6+l7+l8],
+    ['L12 (somente PATEC)','','',l3+l4+l5+l6],
+  ];
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:8},{wch:42},{wch:34},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,'Lançamento MAPA');
+  XLSX.writeFile(wb,`Lancamento_MAPA_${dt.replace(/\//g,'-')}.xlsx`);
+}
+
+// ════════════════════════════════
+// HISTÓRICO
+// ════════════════════════════════
+const HIST_DATASETS = {
+  todas:[
+    {label:'L10',data:DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0)),borderColor:'#3266AD',borderWidth:2.5,pointRadius:3,fill:false,tension:.1},
+    {label:'L12',data:DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]),borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,fill:false,tension:.1},
+    {label:'L3',data:L[3],borderColor:'#5A8DD9',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+    {label:'L4',data:L[4],borderColor:'#8BD9C5',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+    {label:'L7',data:L[7],borderColor:'#EF9F27',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+    {label:'L8',data:L[8],borderColor:'#E8C072',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
+  ],
+  l12:[{label:'L12 (PATEC)',data:DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]),borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,.08)',borderWidth:2.5,pointRadius:4,fill:true,tension:.15}],
+  l34:[
+    {label:'L3',data:L[3],borderColor:'#3266AD',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+    {label:'L4',data:L[4],borderColor:'#1D9E75',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+  ],
+  l78:[
+    {label:'L7',data:L[7],borderColor:'#BA7517',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+    {label:'L8',data:L[8],borderColor:'#E24B4A',borderWidth:2,pointRadius:3,fill:false,tension:.1},
+  ],
+};
+const SCALE_HIST={y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}};
+
+function renderHistorico(){
+  mkChart('ch-hist','line',{labels:DATAS_MAPA,datasets:HIST_DATASETS.todas},{legend:true,scales:SCALE_HIST});
+
+  // Mini-gráficos por linha
+  [[3,'#3266AD'],[4,'#3266AD'],[5,'#1D9E75'],[6,'#1D9E75'],[7,'#BA7517'],[8,'#BA7517']].forEach(([k,cor])=>{
+    const prev=L[k].slice(0,-1);const last=L[k].slice(1);
+    const cols=DATAS_MAPA.map((_,i)=>i>0?(L[k][i]>L[k][i-1]?'rgba(226,75,74,.7)':'rgba(29,158,117,.7)'):cor);
+    mkChart(`ch-l${k}`,'bar',{labels:DATAS_MAPA,datasets:[{data:L[k],backgroundColor:cols,borderRadius:3}]},
+      {scales:{y:{grid:{display:false},ticks:{font:{size:8},maxTicksLimit:4}},x:{grid:{display:false},ticks:{font:{size:8}}}}});
+  });
+
+  // Tabela
+  const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
+  const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
+  const maxL12=Math.max(...l12arr);
+  document.getElementById('tb-hist').innerHTML=DATAS_MAPA.map((dt,i)=>{
+    const l12=l12arr[i],l10=l10arr[i];
+    const dif=i>0?l12-l12arr[i-1]:0;
+    return`<tr>
+      <td><strong>Dia ${i+1}</strong> <span style="font-size:10px;color:var(--tx2)">${dt}</span></td>
+      <td>${L[3][i]}</td><td>${L[4][i]}</td><td>${L[5][i]}</td><td>${L[6][i]}</td>
+      <td>${L[7][i]}</td><td>${L[8][i]}</td>
+      <td style="font-weight:600">${l10.toLocaleString('pt-BR')}</td>
+      <td style="font-weight:700;color:var(--azm)">${l12.toLocaleString('pt-BR')}</td>
+      <td>${i>0?varSpan(dif):'—'}</td>
+      <td>${pill(pct(l12,maxL12)+'%',l12===maxL12?'pl-ok':'pl-g')}</td>
+    </tr>`;
+  }).join('');
+  // Tfoot médias
+  const avgL=k=>Math.round(L[k].reduce((a,b)=>a+b,0)/9);
+  const avgL12=Math.round(l12arr.reduce((a,b)=>a+b,0)/9);
+  const avgL10=Math.round(l10arr.reduce((a,b)=>a+b,0)/9);
+  document.getElementById('tf-hist').innerHTML=`<tr>
+    <td>MÉDIA</td>
+    <td>${avgL(3)}</td><td>${avgL(4)}</td><td>${avgL(5)}</td><td>${avgL(6)}</td>
+    <td>${avgL(7)}</td><td>${avgL(8)}</td>
+    <td>${avgL10.toLocaleString('pt-BR')}</td>
+    <td style="color:var(--azm)">${avgL12.toLocaleString('pt-BR')}</td>
+    <td>—</td><td>—</td>
+  </tr>`;
+}
+function setHistChart(tipo,btn){
+  document.querySelectorAll('#p-historico .stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  mkChart('ch-hist','line',{labels:DATAS_MAPA,datasets:HIST_DATASETS[tipo]},{legend:true,scales:SCALE_HIST});
+}
+function exportHistorico(){
+  const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
+  const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
+  const hd=['Dia','Data','L3','L4','L5','L6','L7','L8','L10','L12','Var.L12'];
+  const rows=DATAS_MAPA.map((dt,i)=>{
+    const dif=i>0?l12arr[i]-l12arr[i-1]:0;
+    return[i+1,dt,L[3][i],L[4][i],L[5][i],L[6][i],L[7][i],L[8][i],l10arr[i],l12arr[i],i>0?dif:''];
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([hd,...rows]);
+  ws['!cols']=[{wch:6},{wch:9},...Array(9).fill({wch:8})];
+  XLSX.utils.book_append_sheet(wb,ws,'Histórico Mapa');
+  XLSX.writeFile(wb,'Historico_MAPA_PATEC.xlsx');
+}
+
+// ════════════════════════════════
+// VARIAÇÃO
+// ════════════════════════════════
+function renderVariacao(){
+  // Cards variação dia 9 vs dia 8
+  const linhasVar=[
+    {k:3,nom:'L3',cor:'#3266AD'},{k:4,nom:'L4',cor:'#3266AD'},
+    {k:5,nom:'L5',cor:'#1D9E75'},{k:6,nom:'L6',cor:'#1D9E75'},
+    {k:7,nom:'L7',cor:'#BA7517'},{k:8,nom:'L8',cor:'#BA7517'},
+  ];
+  const l12d8=L[3][7]+L[4][7]+L[5][7]+L[6][7];
+  const l12d9=L[3][8]+L[4][8]+L[5][8]+L[6][8];
+  const l10d8=Object.keys(L).reduce((s,k)=>s+L[k][7],0);
+  const l10d9=Object.keys(L).reduce((s,k)=>s+L[k][8],0);
+  const varCards=[...linhasVar.map(({k,nom,cor})=>{
+    const d=L[k][8]-L[k][7];
+    const cls=d>0?'vc-up':d<0?'vc-dn':'vc-eq';
+    return`<div class="var-card ${cls}">
+      <div class="var-card-l">${nom}</div>
+      <div class="var-card-v" style="color:${cor}">${L[k][8].toLocaleString('pt-BR')}</div>
+      <div class="var-card-d" style="color:${d>0?'var(--vm)':d<0?'var(--vd)':'var(--tx2)'}">${d>0?'▲ +':d<0?'▼ ':''}${d!==0?Math.abs(d):'—'}</div>
+    </div>`;
+  }),
+  `<div class="var-card ${(l10d9-l10d8)>0?'vc-up':(l10d9-l10d8)<0?'vc-dn':'vc-eq'}" style="border:2px solid var(--azm)">
+    <div class="var-card-l">L10</div>
+    <div class="var-card-v">${l10d9.toLocaleString('pt-BR')}</div>
+    <div class="var-card-d" style="color:${(l10d9-l10d8)>0?'var(--vm)':'var(--vd)'}">${(l10d9-l10d8)>0?'▲ +':'▼ '}${Math.abs(l10d9-l10d8)}</div>
+  </div>`,
+  `<div class="var-card ${(l12d9-l12d8)>0?'vc-up':'vc-dn'}" style="border:2px solid var(--vd)">
+    <div class="var-card-l">L12 (PATEC)</div>
+    <div class="var-card-v" style="color:var(--azm)">${l12d9.toLocaleString('pt-BR')}</div>
+    <div class="var-card-d" style="color:${(l12d9-l12d8)>0?'var(--vm)':'var(--vd)'}">${(l12d9-l12d8)>0?'▲ +':'▼ '}${Math.abs(l12d9-l12d8)}</div>
+  </div>`];
+  document.getElementById('var-cards').innerHTML=varCards.join('');
+
+  // Gráfico variação L12
+  const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
+  const varL12=l12arr.map((v,i)=>i>0?v-l12arr[i-1]:0);
+  mkChart('ch-var-l12','bar',{
+    labels:DATAS_MAPA,
+    datasets:[{
+      label:'Variação L12',data:varL12,
+      backgroundColor:varL12.map(v=>v>0?'rgba(226,75,74,.75)':'rgba(29,158,117,.75)'),
+      borderRadius:4,
+    }]
+  },{scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  // Gráfico variação por linha (stacked)
+  const varLinhas=[3,4,7,8].map(k=>({
+    label:`L${k}`,
+    data:L[k].map((v,i)=>i>0?v-L[k][i-1]:0),
+    borderColor:k<=4?'#3266AD':k===5||k===6?'#1D9E75':'#BA7517',
+    backgroundColor:(k<=4?'rgba(50,102,173,.15)':k<7?'rgba(29,158,117,.15)':'rgba(186,117,23,.15)'),
+    borderWidth:2,pointRadius:2,fill:false,tension:.1,
+  }));
+  mkChart('ch-var-linhas','line',{labels:DATAS_MAPA,datasets:varLinhas},{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  // Tabela variações
+  const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
+  document.getElementById('tb-var').innerHTML=DATAS_MAPA.slice(1).map((dt,i)=>{
+    const j=i+1;
+    const dL=[3,4,5,6,7,8].map(k=>L[k][j]-L[k][i]);
+    const dL10=l10arr[j]-l10arr[i];
+    const dL12=l12arr[j]-l12arr[i];
+    return`<tr>
+      <td><strong>D${i+1}→D${j+1}</strong> <span style="font-size:10px;color:var(--tx2)">${DATAS_MAPA[i]}→${dt}</span></td>
+      ${dL.map(d=>`<td style="font-weight:600;color:${d>0?'var(--vm)':d<0?'var(--vd)':'var(--tx2)'}">${d>0?'+':''}${d!==0?d:'—'}</td>`).join('')}
+      <td style="font-weight:600;color:${dL10>0?'var(--vm)':dL10<0?'var(--vd)':'var(--tx2)'}">${dL10>0?'+':''}${dL10}</td>
+      <td style="font-weight:700;color:${dL12>0?'var(--vm)':dL12<0?'var(--vd)':'var(--tx2)'}">${dL12>0?'+':''}${dL12}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// DETALHE POR LINHA
+// ════════════════════════════════
+function selLinha(linha,btn){
+  document.querySelectorAll('#detalhe-tabs .stab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const k=parseInt(linha.slice(1));
+  const data=L[k];
+  const lb=LB[linha];
+  const max=Math.max(...data), min=Math.min(...data);
+  const avg=Math.round(data.reduce((a,b)=>a+b,0)/data.length);
+  const tendencia=data[data.length-1]-data[data.length-2];
+
+  document.getElementById('kpi-linha').innerHTML=`
+    <div class="kc"><div class="kc-l">Valor atual (LB)</div><div class="kc-v xl" style="color:${lb.cor}">${lb.val.toLocaleString('pt-BR')}</div><div class="kc-s">Level Board</div></div>
+    <div class="kc ok"><div class="kc-l">Máximo (aba Din.)</div><div class="kc-v">${max.toLocaleString('pt-BR')}</div><div class="kc-s">Dia ${data.indexOf(max)+1}</div></div>
+    <div class="kc warn"><div class="kc-l">Mínimo (aba Din.)</div><div class="kc-v">${min.toLocaleString('pt-BR')}</div><div class="kc-s">Dia ${data.indexOf(min)+1}</div></div>
+    <div class="kc"><div class="kc-l">Média (aba Din.)</div><div class="kc-v" style="color:var(--az)">${avg.toLocaleString('pt-BR')}</div><div class="kc-s">9 dias</div></div>
+    <div class="kc ${tendencia>0?'bad':tendencia<0?'ok':''}"><div class="kc-l">Última variação</div><div class="kc-v">${tendencia>0?'▲ +':tendencia<0?'▼ ':''}${Math.abs(tendencia)}</div><div class="kc-s">D9 vs D8</div></div>
+  `;
+
+  document.getElementById('detalhe-chart-title').textContent=`${linha} — ${lb.fila_mapa} (histórico 9 dias)`;
+  document.getElementById('detalhe-tb-title').textContent=`Histórico diário — ${linha}`;
+
+  const bc=data.map((v,i)=>i>0?(v>data[i-1]?'rgba(226,75,74,.75)':'rgba(29,158,117,.75)'):lb.cor);
+  mkChart('ch-detalhe','bar',{
+    labels:DATAS_MAPA,
+    datasets:[
+      {label:linha,data,backgroundColor:bc,borderRadius:4},
+      {label:'Média',data:Array(9).fill(avg),type:'line',borderColor:'#888',borderWidth:1.5,borderDash:[4,3],pointRadius:0},
+    ]
+  },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:Math.max(0,min-10)},x:{grid:{display:false},ticks:{font:{size:9}}}}});
+
+  document.getElementById('detalhe-info').innerHTML=`
+    <div class="cd-t">${linha} — Informações</div>
+    <div style="font-size:12px;line-height:2;color:var(--tx2)">
+      <div><strong style="color:var(--tx)">Fila MAPA:</strong> ${lb.fila_mapa}</div>
+      <div><strong style="color:var(--tx)">Fila Level Board:</strong> ${lb.fila}</div>
+      <div><strong style="color:var(--tx)">Valor Level Board:</strong> <span style="font-size:16px;font-weight:700;color:${lb.cor}">${lb.val.toLocaleString('pt-BR')}</span></div>
+      <div><strong style="color:var(--tx)">Incluso no L12?</strong> ${k<=6?pill('Sim — L12','pl-ok'):pill('Não — apenas L10','pl-w')}</div>
+      <div style="margin-top:.75rem;padding:.75rem;background:var(--cin);border-radius:7px;border:1px solid var(--brd)">
+        <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:6px">AMPLITUDE (aba Dinâmica)</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <div><span style="color:var(--tx2);font-size:10px">MÍN</span><br><strong>${min}</strong></div>
+          <div style="text-align:center"><span style="color:var(--tx2);font-size:10px">MÉDIA</span><br><strong>${avg}</strong></div>
+          <div style="text-align:right"><span style="color:var(--tx2);font-size:10px">MÁX</span><br><strong>${max}</strong></div>
+        </div>
+        <div style="height:6px;background:#EEE;border-radius:3px;margin-top:8px;overflow:hidden">
+          <div style="height:100%;background:${lb.cor};border-radius:3px;width:${pct(data[data.length-1]-min,max-min)}%;margin-left:${pct(min,max)}%"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('tb-detalhe').innerHTML=data.map((v,i)=>{
+    const dif=i>0?v-data[i-1]:0;
+    const tend=i>0?(dif>20?'📈 Alta forte':dif>0?'↗ Alta':dif<-20?'📉 Queda forte':dif<0?'↘ Queda':'→ Estável'):'—';
+    return`<tr>
+      <td><strong>Dia ${i+1}</strong> <span style="font-size:10px;color:var(--tx2)">${DATAS_MAPA[i]}</span></td>
+      <td style="font-size:15px;font-weight:700;color:${lb.cor}">${v.toLocaleString('pt-BR')}</td>
+      <td>${i>0?varSpan(dif):'—'}</td>
+      <td>${pill(pct(v,max)+'%',v===max?'pl-ok':v===min?'pl-b':'pl-g')}</td>
+      <td style="font-size:11px">${tend}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── INIT ──
+renderVariacao();
+renderHistorico();
+selLinha('L3',null);
+
+// INIT
+document.getElementById('tdt').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+</script>
+</body>
+</html>
