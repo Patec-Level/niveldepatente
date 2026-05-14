@@ -318,6 +318,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(13,35,71,.15);border-radius:4px}
+
+/* ── INTELIGÊNCIA DE MERCADO ── */
+@keyframes mkt-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(14,158,106,.5)}50%{opacity:.8;box-shadow:0 0 0 6px rgba(14,158,106,0)}}
+.mkt-noticia{background:#fff;border-radius:10px;padding:.75rem 1rem;margin-bottom:.625rem;border:1px solid rgba(221,227,238,.8);cursor:pointer;transition:border-color .15s,transform .15s;text-decoration:none;display:block}
+.mkt-noticia:hover{border-color:var(--azm);transform:translateY(-1px);box-shadow:0 4px 12px rgba(13,35,71,.08)}
+.mkt-noticia-fonte{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--tx2);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.mkt-noticia-titulo{font-size:12px;font-weight:500;color:var(--tx);line-height:1.5;margin-bottom:3px}
+.mkt-noticia-tempo{font-size:10px;color:var(--tx2)}
+.mkt-loading{padding:1.5rem;text-align:center;color:var(--tx2);font-size:12px}
+.mkt-var-up{color:#0A7A51;background:#E5F7F0;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.mkt-var-dn{color:#B02020;background:#FDEAEA;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.mkt-var-neu{color:var(--tx2);background:var(--cin);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
 </style>
 </head>
 <body>
@@ -341,6 +354,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
   <div class="sb-mod">◈ ESTRATÉGICO</div>
   <div class="sb-it active" onclick="go('vg-visao',this)">📊 Visão Executiva</div>
+  <div class="sb-it" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
   <div class="sb-it" onclick="go('vg-validade',this)">⏱ Validade Oportunidades</div>
   <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ EXECUÇÃO</div>
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
@@ -606,6 +620,201 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     </div>
 <!-- ══════════════════ POR COLABORADOR ══════════════════ -->
     <!-- ══════════════════ VALIDADE ══════════════════ -->
+    <!-- ══════════════════════════════════════════
+         INTELIGÊNCIA DE MERCADO
+    ══════════════════════════════════════════ -->
+    <div id="p-vg-mercado" class="page">
+
+      <!-- TOPBAR INFO (atualização) -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:11px;color:var(--tx2)">Fontes: Reuters · BBC · AP News · G1 · Agência Brasil · Yahoo Finance · AwesomeAPI</div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:2px">Atualização automática a cada <strong>5 minutos</strong> · Apenas fontes de alto padrão jornalístico</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div id="mkt-live-dot" style="width:8px;height:8px;border-radius:50%;background:var(--vd);animation:pulse-dot 2s infinite"></div>
+            <span style="font-size:11px;color:var(--vd);font-weight:600">AO VIVO</span>
+          </div>
+          <div id="mkt-update-time" style="font-size:11px;color:var(--tx2);background:var(--cin);padding:4px 12px;border-radius:20px">carregando...</div>
+          <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="mktCarregarTudo()">↻ Atualizar</button>
+        </div>
+      </div>
+
+      <!-- TICKER animado -->
+      <div id="mkt-ticker-wrap" style="background:var(--az);border-radius:8px;overflow:hidden;margin-bottom:1.5rem;height:38px;display:flex;align-items:center">
+        <div style="background:rgba(255,255,255,.15);padding:0 16px;height:100%;display:flex;align-items:center;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;white-space:nowrap;flex-shrink:0">MERCADOS</div>
+        <div style="overflow:hidden;flex:1">
+          <div id="mkt-ticker" style="display:flex;gap:40px;white-space:nowrap;animation:mkt-scroll 35s linear infinite;font-size:12px;padding:0 16px">
+            <span id="tk1" style="color:rgba(255,255,255,.7)">Carregando...</span>
+            <span id="tk2" style="color:rgba(255,255,255,.7)">—</span>
+            <span id="tk3" style="color:rgba(255,255,255,.7)">—</span>
+            <span id="tk4" style="color:rgba(255,255,255,.7)">—</span>
+            <span id="tk5" style="color:rgba(255,255,255,.7)">—</span>
+            <span id="tk1b" style="color:rgba(255,255,255,.7)">—</span>
+            <span id="tk2b" style="color:rgba(255,255,255,.7)">—</span>
+            <span id="tk3b" style="color:rgba(255,255,255,.7)">—</span>
+            <span id="tk4b" style="color:rgba(255,255,255,.7)">—</span>
+            <span id="tk5b" style="color:rgba(255,255,255,.7)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- COTAÇÕES PRINCIPAIS -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;margin-bottom:1.5rem">
+
+        <!-- USD/BRL -->
+        <div style="background:#fff;border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(221,227,238,.8);border-top:3px solid #2563EB;box-shadow:0 1px 6px rgba(13,35,71,.06)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">
+            <span style="font-size:20px">🇺🇸</span>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase">Dólar Americano</div>
+              <div style="font-size:9px;color:var(--tx2)">USD / BRL</div>
+            </div>
+          </div>
+          <div id="mkt-usd-val" style="font-size:28px;font-weight:700;color:var(--az);letter-spacing:-.5px;line-height:1">—</div>
+          <div id="mkt-usd-var" style="font-size:11px;font-weight:600;margin-top:4px">—</div>
+          <div id="mkt-usd-sub" style="font-size:9px;color:var(--tx2);margin-top:3px">AwesomeAPI · Banco Central BR</div>
+        </div>
+
+        <!-- EUR/BRL -->
+        <div style="background:#fff;border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(221,227,238,.8);border-top:3px solid #7C3AED;box-shadow:0 1px 6px rgba(13,35,71,.06)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">
+            <span style="font-size:20px">🇪🇺</span>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase">Euro</div>
+              <div style="font-size:9px;color:var(--tx2)">EUR / BRL</div>
+            </div>
+          </div>
+          <div id="mkt-eur-val" style="font-size:28px;font-weight:700;color:var(--az);letter-spacing:-.5px;line-height:1">—</div>
+          <div id="mkt-eur-var" style="font-size:11px;font-weight:600;margin-top:4px">—</div>
+          <div id="mkt-eur-sub" style="font-size:9px;color:var(--tx2);margin-top:3px">AwesomeAPI · Banco Central BR</div>
+        </div>
+
+        <!-- BRENT -->
+        <div style="background:#fff;border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(221,227,238,.8);border-top:3px solid var(--vd);box-shadow:0 1px 6px rgba(13,35,71,.06)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">
+            <span style="font-size:20px">🛢️</span>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase">Petróleo Brent</div>
+              <div style="font-size:9px;color:var(--tx2)">USD/barril · ICE Futures</div>
+            </div>
+          </div>
+          <div id="mkt-brent-val" style="font-size:28px;font-weight:700;color:var(--az);letter-spacing:-.5px;line-height:1">—</div>
+          <div id="mkt-brent-var" style="font-size:11px;font-weight:600;margin-top:4px">—</div>
+          <div id="mkt-brent-sub" style="font-size:9px;color:var(--tx2);margin-top:3px">Yahoo Finance · ICE</div>
+        </div>
+
+        <!-- WTI -->
+        <div style="background:#fff;border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(221,227,238,.8);border-top:3px solid var(--am);box-shadow:0 1px 6px rgba(13,35,71,.06)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">
+            <span style="font-size:20px">⛽</span>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase">Petróleo WTI</div>
+              <div style="font-size:9px;color:var(--tx2)">USD/barril · NYMEX</div>
+            </div>
+          </div>
+          <div id="mkt-wti-val" style="font-size:28px;font-weight:700;color:var(--az);letter-spacing:-.5px;line-height:1">—</div>
+          <div id="mkt-wti-var" style="font-size:11px;font-weight:600;margin-top:4px">—</div>
+          <div id="mkt-wti-sub" style="font-size:9px;color:var(--tx2);margin-top:3px">Yahoo Finance · NYMEX</div>
+        </div>
+
+        <!-- PETR4 -->
+        <div style="background:#fff;border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(221,227,238,.8);border-top:3px solid var(--vm);box-shadow:0 1px 6px rgba(13,35,71,.06)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">
+            <span style="font-size:20px">🏭</span>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--tx2);letter-spacing:.5px;text-transform:uppercase">Petrobras</div>
+              <div style="font-size:9px;color:var(--tx2)">PETR4 · B3</div>
+            </div>
+          </div>
+          <div id="mkt-petr-val" style="font-size:28px;font-weight:700;color:var(--az);letter-spacing:-.5px;line-height:1">—</div>
+          <div id="mkt-petr-var" style="font-size:11px;font-weight:600;margin-top:4px">—</div>
+          <div id="mkt-petr-sub" style="font-size:9px;color:var(--tx2);margin-top:3px">Yahoo Finance · B3</div>
+        </div>
+
+        <!-- SPREAD + BRL -->
+        <div style="background:var(--az);border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(26,74,138,.3);box-shadow:0 1px 6px rgba(13,35,71,.12);color:#fff">
+          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.5px;text-transform:uppercase;margin-bottom:.5rem">Brent em R$</div>
+          <div id="mkt-brent-brl" style="font-size:28px;font-weight:700;letter-spacing:-.5px;line-height:1">—</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:4px">Brent × USD/BRL</div>
+          <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid rgba(255,255,255,.12)">
+            <div style="font-size:9px;color:rgba(255,255,255,.45);margin-bottom:2px">Spread Brent-WTI</div>
+            <div id="mkt-spread" style="font-size:16px;font-weight:700">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANÁLISE DE IMPACTO -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+        <div id="mkt-card-br" style="background:#fff;border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(221,227,238,.8);box-shadow:0 1px 6px rgba(13,35,71,.05)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+            <span style="font-size:22px">🇧🇷</span>
+            <div style="font-size:13px;font-weight:700;color:var(--az)">Impacto no Brasil</div>
+          </div>
+          <div id="mkt-txt-br" style="font-size:12px;color:var(--tx2);line-height:1.7">Carregando análise...</div>
+          <div id="mkt-tag-br" style="display:inline-block;margin-top:8px;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;background:var(--amc);color:var(--am)">Analisando</div>
+        </div>
+        <div id="mkt-card-am" style="background:#fff;border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(221,227,238,.8);box-shadow:0 1px 6px rgba(13,35,71,.05)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+            <span style="font-size:22px">🌎</span>
+            <div style="font-size:13px;font-weight:700;color:var(--az)">Impacto nas Américas</div>
+          </div>
+          <div id="mkt-txt-am" style="font-size:12px;color:var(--tx2);line-height:1.7">Carregando análise...</div>
+          <div id="mkt-tag-am" style="display:inline-block;margin-top:8px;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;background:var(--cin);color:var(--tx2)">Analisando</div>
+        </div>
+        <div id="mkt-card-world" style="background:#fff;border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(221,227,238,.8);box-shadow:0 1px 6px rgba(13,35,71,.05)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+            <span style="font-size:22px">🌍</span>
+            <div style="font-size:13px;font-weight:700;color:var(--az)">Impacto Global</div>
+          </div>
+          <div id="mkt-txt-world" style="font-size:12px;color:var(--tx2);line-height:1.7">Carregando análise...</div>
+          <div id="mkt-tag-world" style="display:inline-block;margin-top:8px;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;background:var(--cin);color:var(--tx2)">Analisando</div>
+        </div>
+      </div>
+
+      <!-- NOTÍCIAS em 3 colunas -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+
+        <!-- Reuters / Internacional -->
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+            <span style="font-size:10px;font-weight:700;background:#D63031;color:#fff;padding:2px 8px;border-radius:4px;letter-spacing:.5px">REUTERS</span>
+            <span style="font-size:10px;color:var(--tx2);font-weight:600">Energia & Petróleo</span>
+          </div>
+          <div id="mkt-news-reuters"></div>
+        </div>
+
+        <!-- BBC / AP News -->
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+            <span style="font-size:10px;font-weight:700;background:#000;color:#fff;padding:2px 8px;border-radius:4px;letter-spacing:.5px">BBC</span>
+            <span style="font-size:10px;color:var(--tx2);font-weight:600">Business & Conflitos</span>
+          </div>
+          <div id="mkt-news-bbc"></div>
+        </div>
+
+        <!-- Brasil -->
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+            <span style="font-size:10px;font-weight:700;background:#009B3A;color:#fff;padding:2px 8px;border-radius:4px;letter-spacing:.5px">BRASIL</span>
+            <span style="font-size:10px;color:var(--tx2);font-weight:600">G1 & Ag. Brasil</span>
+          </div>
+          <div id="mkt-news-br"></div>
+        </div>
+      </div>
+
+      <!-- FONTE E DISCLAIMER -->
+      <div style="padding:.875rem 1.1rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd);display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:16px;flex-shrink:0">ℹ️</span>
+        <div style="font-size:11px;color:var(--tx2);line-height:1.6">
+          <strong style="color:var(--tx)">Fontes utilizadas:</strong> Reuters (agência de notícias global), BBC News (Reino Unido), AP News (EUA), G1/Globo, Agência Brasil (EBC/Governo Federal), Yahoo Finance (cotações Brent/WTI/PETR4), AwesomeAPI (câmbio baseado no Banco Central do Brasil).
+          Nenhum blog, site de terceiros ou fonte sem credencial jornalística reconhecida é utilizado.
+          Dados de mercado podem ter defasagem de até 15 minutos em relação ao tempo real das bolsas.
+        </div>
+      </div>
+    </div>
+
     <div id="p-vg-validade" class="page">
       <div class="al al-b">ℹ Regra: <strong>≤ 59 dias = dentro do prazo · 60–90 dias = próximo do vencimento · ≥ 91 dias = vencida</strong> · Cálculo: hoje − DATA_ENCERRAMENTO_OPORTUNIDADE (col AK do Level Board)</div>
       <div class="g2">
@@ -1518,7 +1727,7 @@ function go(id, el) {
   const centroIco = document.querySelector('.topbar [style*="translateX"] div');
   if(centroIco) centroIco.textContent = ico;
   const titles = {
-    'vg-visao':'Visão Executiva','vg-validade':'Validade Oportunidades',
+    'vg-visao':'Visão Executiva','vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
     'adm':'Administração',
@@ -1526,6 +1735,8 @@ function go(id, el) {
     };
   document.getElementById('ttl').textContent = titles[id] || id;
   document.getElementById('sb').classList.remove('mob-open');
+  // Carregar Inteligência de Mercado quando aba é aberta
+  if(id==='vg-mercado') mktCarregarTudo();
   // Auto-login em módulos sem senha
   if(id==='adm') setTimeout(()=>{
     const login=document.getElementById('adm-login');
@@ -3046,6 +3257,283 @@ function cicloLimpar() {
   }
 })();
 
+
+// ════════════════════════════════════════════
+// INTELIGÊNCIA DE MERCADO
+// ════════════════════════════════════════════
+const MKT_PROXY = 'https://api.allorigins.win/get?url=';
+let _mktUsd = null, _mktBrent = null, _mktWti = null;
+let _mktTimer = null;
+
+function mktFmt(n, dec=2) {
+  if(n === null || isNaN(n)) return '—';
+  return n.toLocaleString('pt-BR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function mktFmtUsd(n, dec=2) {
+  if(n === null || isNaN(n)) return '—';
+  return n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function mktSetVar(el, pct, abs, prefixo) {
+  if(!el) return;
+  if(pct === null || isNaN(pct)) { el.className='mkt-var-neu'; el.textContent='—'; return; }
+  const up = pct > 0;
+  el.className = up ? 'mkt-var-up' : pct < 0 ? 'mkt-var-dn' : 'mkt-var-neu';
+  const arrow = up ? '▲' : pct < 0 ? '▼' : '—';
+  const sign  = up ? '+' : '';
+  el.textContent = arrow + ' ' + sign + mktFmt(pct) + '%' + (abs !== null ? ' (' + sign + prefixo + mktFmt(Math.abs(abs)) + ')' : '');
+}
+function mktTempoAtras(dateStr) {
+  try {
+    const d = new Date(dateStr);
+    const diff = (Date.now() - d) / 1000;
+    if(diff < 3600)  return Math.floor(diff/60) + 'min atrás';
+    if(diff < 86400) return Math.floor(diff/3600) + 'h atrás';
+    return Math.floor(diff/86400) + 'd atrás';
+  } catch { return ''; }
+}
+
+// ── CÂMBIO ──
+async function mktCarregarCambio() {
+  try {
+    const r = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL');
+    const d = await r.json();
+    const usd = d['USDBRL'], eur = d['EURBRL'];
+    _mktUsd = parseFloat(usd.bid);
+    const usdVar = parseFloat(usd.pctChange);
+    const usdAbs = parseFloat(usd.varBid);
+    const el = id => document.getElementById(id);
+    if(el('mkt-usd-val')) el('mkt-usd-val').textContent = 'R$ ' + mktFmt(_mktUsd);
+    mktSetVar(el('mkt-usd-var'), usdVar, usdAbs, 'R$');
+    if(el('mkt-usd-sub')) el('mkt-usd-sub').textContent = 'AwesomeAPI · atualizado ' + mktTempoAtras(usd.timestamp * 1000);
+    const eurVal = parseFloat(eur.bid);
+    const eurVar = parseFloat(eur.pctChange);
+    if(el('mkt-eur-val')) el('mkt-eur-val').textContent = 'R$ ' + mktFmt(eurVal);
+    mktSetVar(el('mkt-eur-var'), eurVar, parseFloat(eur.varBid), 'R$');
+    // Ticker
+    mktAtualizarTicker();
+    mktAtualizarDerivados();
+  } catch(e) { console.warn('Cambio falhou:', e.message); }
+}
+
+// ── PETRÓLEO ──
+async function mktCarregarPetroleo() {
+  const fetchYahoo = async (ticker) => {
+    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '?interval=1d&range=5d';
+    const r = await fetch(MKT_PROXY + encodeURIComponent(url));
+    const d = await r.json();
+    const data = JSON.parse(d.contents);
+    const q = data?.chart?.result?.[0];
+    if(!q) return null;
+    const closes = q.indicators?.quote?.[0]?.close?.filter(v => v != null) || [];
+    const val  = closes[closes.length-1];
+    const prev = closes[closes.length-2];
+    return { val, prev, varAbs: val-prev, varPct: ((val-prev)/prev)*100 };
+  };
+
+  const el = id => document.getElementById(id);
+
+  // Brent
+  try {
+    const b = await fetchYahoo('BZ=F');
+    if(b) {
+      _mktBrent = b.val;
+      if(el('mkt-brent-val')) el('mkt-brent-val').textContent = 'US$ ' + mktFmtUsd(b.val);
+      mktSetVar(el('mkt-brent-var'), b.varPct, b.varAbs, '$');
+      if(el('mkt-brent-sub')) el('mkt-brent-sub').textContent = 'Yahoo Finance · ICE Futures · ' + mktTempoAtras(new Date());
+      mktAtualizarDerivados();
+      mktAtualizarAnalise();
+    }
+  } catch(e) { console.warn('Brent falhou:', e.message); }
+
+  // WTI
+  try {
+    const w = await fetchYahoo('CL=F');
+    if(w) {
+      _mktWti = w.val;
+      if(el('mkt-wti-val')) el('mkt-wti-val').textContent = 'US$ ' + mktFmtUsd(w.val);
+      mktSetVar(el('mkt-wti-var'), w.varPct, w.varAbs, '$');
+      mktAtualizarDerivados();
+    }
+  } catch(e) { console.warn('WTI falhou:', e.message); }
+
+  // PETR4
+  try {
+    const p = await fetchYahoo('PETR4.SA');
+    if(p) {
+      if(el('mkt-petr-val')) el('mkt-petr-val').textContent = 'R$ ' + mktFmt(p.val);
+      mktSetVar(el('mkt-petr-var'), p.varPct, p.varAbs, 'R$');
+    }
+  } catch(e) { console.warn('PETR4 falhou:', e.message); }
+}
+
+function mktAtualizarDerivados() {
+  const el = id => document.getElementById(id);
+  if(_mktBrent && _mktUsd) {
+    const brl = _mktBrent * _mktUsd;
+    if(el('mkt-brent-brl')) el('mkt-brent-brl').textContent = 'R$ ' + mktFmt(brl);
+  }
+  if(_mktBrent && _mktWti) {
+    const spread = _mktBrent - _mktWti;
+    if(el('mkt-spread')) el('mkt-spread').textContent = 'US$ ' + mktFmtUsd(spread) + ' premium';
+  }
+  mktAtualizarTicker();
+}
+
+function mktAtualizarTicker() {
+  const el = id => document.getElementById(id);
+  const usdTxt = _mktUsd ? 'USD/BRL R$ ' + mktFmt(_mktUsd) : 'USD/BRL —';
+  const brentTxt = _mktBrent ? 'BRENT US$ ' + mktFmtUsd(_mktBrent) : 'BRENT —';
+  const wtiTxt = _mktWti ? 'WTI US$ ' + mktFmtUsd(_mktWti) : 'WTI —';
+  const brlTxt = (_mktBrent && _mktUsd) ? 'BRENT R$ ' + mktFmt(_mktBrent * _mktUsd) : '';
+  const spreadTxt = (_mktBrent && _mktWti) ? 'SPREAD ' + mktFmtUsd(_mktBrent-_mktWti) : '';
+  const items = [usdTxt, brentTxt, wtiTxt, brlTxt, spreadTxt];
+  ['tk1','tk2','tk3','tk4','tk5'].forEach((id,i) => {
+    const e = el(id); if(e) e.textContent = items[i] || '';
+    const eb = el(id+'b'); if(eb) eb.textContent = items[i] || '';
+  });
+}
+
+function mktAtualizarAnalise() {
+  if(!_mktBrent) return;
+  const el = id => document.getElementById(id);
+  const b = _mktBrent;
+
+  // Brasil
+  let txtBR, tagBR, corBR;
+  if(b > 90) {
+    txtBR = 'Brent acima de US$' + mktFmtUsd(b) + ' pressiona custos industriais e de logística. A Petrobras monitora paridade de importação. Combustíveis tendem a ser reajustados, impactando IPCA. O câmbio elevado amplifica o efeito no custo das importações.';
+    tagBR = '🔴 Pressão inflacionária alta'; corBR = 'var(--vm)'; bg='var(--vmc)';
+  } else if(b > 70) {
+    txtBR = 'Brent em patamar moderado de US$' + mktFmtUsd(b) + '. Petrobras mantém política de preços estável. Impacto inflacionário controlado. Câmbio permanece como principal fator de risco para o mercado doméstico de combustíveis.';
+    tagBR = '⚠️ Impacto moderado'; corBR = 'var(--am)'; bg='var(--amc)';
+  } else {
+    txtBR = 'Petróleo abaixo de US$' + mktFmtUsd(b) + ' alivia pressão nos combustíveis. Tendência favorável para controle da inflação. Receita de exportação da Petrobras reduzida, mas mercado interno se beneficia.';
+    tagBR = '✅ Cenário favorável'; corBR = 'var(--vd)'; bg='var(--vdc)';
+  }
+  if(el('mkt-txt-br')) el('mkt-txt-br').textContent = txtBR;
+  if(el('mkt-tag-br')) { el('mkt-tag-br').textContent = tagBR; el('mkt-tag-br').style.cssText = 'display:inline-block;margin-top:8px;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;color:'+corBR+';background:'+bg; }
+
+  // Américas
+  let txtAM, tagAM;
+  if(b > 85) {
+    txtAM = 'Preço elevado beneficia produtores norte-americanos de shale oil. EUA mantém produção recorde. Venezuela e México enfrentam desafios de custo. OPEP+ avalia manutenção de cortes. Fed monitora impacto energético na inflação americana.';
+    tagAM = '⬆️ Produtores beneficiados';
+  } else {
+    txtAM = 'Ambiente de preço moderado. EUA mantém equilíbrio entre produção doméstica e importações. OPEP+ considera ajustes na oferta. Mercados aguardam decisões sobre estoques estratégicos americanos.';
+    tagAM = '⚖️ Mercado equilibrado';
+  }
+  if(el('mkt-txt-am')) el('mkt-txt-am').textContent = txtAM;
+  if(el('mkt-tag-am')) { el('mkt-tag-am').textContent = tagAM; el('mkt-tag-am').style.cssText = 'display:inline-block;margin-top:8px;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;color:var(--azm);background:var(--azc)'; }
+
+  // Mundo
+  let txtWorld, tagWorld;
+  if(b > 80) {
+    txtWorld = 'Tensões geopolíticas no Oriente Médio sustentam prêmio de risco no Brent. Conflitos na Rússia/Ucrânia restringem exportações russas. OPEP+ mantém disciplina de cortes. Rota do Mar Vermelho sob pressão de conflito, elevando custos de frete global.';
+    tagWorld = '🔴 Tensão geopolítica elevada';
+  } else {
+    txtWorld = 'Preço do petróleo em ajuste. Oferta e demanda global em equilíbrio. Transição energética avança com investimentos em renováveis. Países da OCDE reduzem dependência do petróleo russo. Estoques da AIE em nível estável.';
+    tagWorld = '🟡 Atenção em conflitos regionais';
+  }
+  if(el('mkt-txt-world')) el('mkt-txt-world').textContent = txtWorld;
+  if(el('mkt-tag-world')) { el('mkt-tag-world').textContent = tagWorld; el('mkt-tag-world').style.cssText = 'display:inline-block;margin-top:8px;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;color:var(--vm);background:var(--vmc)'; }
+}
+
+// ── NOTÍCIAS ──
+function mktNoticiaHTML(item, badgeTxt, badgeColor) {
+  return '<a class="mkt-noticia" href="' + item.link + '" target="_blank" rel="noopener">' +
+    '<div class="mkt-noticia-fonte">' +
+      '<span style="background:' + badgeColor + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:8px">' + badgeTxt + '</span>' +
+      '<span>' + mktTempoAtras(item.pubDate) + '</span>' +
+    '</div>' +
+    '<div class="mkt-noticia-titulo">' + (item.title||'').replace(/</g,'&lt;') + '</div>' +
+  '</a>';
+}
+
+async function mktCarregarNoticias() {
+  const el = id => document.getElementById(id);
+  const loadEl = (id, html) => { if(el(id)) el(id).innerHTML = html; };
+  const errEl  = (id, link, nome) => loadEl(id, '<div class="mkt-loading">Feed indisponível — <a href="' + link + '" target="_blank" style="color:var(--azm)">' + nome + ' →</a></div>');
+
+  // Reuters Energy
+  try {
+    const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://feeds.reuters.com/reuters/energyNews') + '&count=5&api_key=');
+    const d = await r.json();
+    if(d.status === 'ok' && d.items?.length) {
+      loadEl('mkt-news-reuters', d.items.map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
+    } else { throw new Error('empty'); }
+  } catch {
+    // Fallback: Reuters World
+    try {
+      const r2 = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://feeds.reuters.com/reuters/worldNews') + '&count=5');
+      const d2 = await r2.json();
+      if(d2.status === 'ok' && d2.items?.length) {
+        loadEl('mkt-news-reuters', d2.items.filter(i => {
+          const t = (i.title+' '+(i.description||'')).toLowerCase();
+          return ['oil','energy','petroleum','opec','war','conflict','geopolit','ukraine','russia'].some(k => t.includes(k));
+        }).slice(0,5).map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join('') || d2.items.slice(0,5).map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
+      } else errEl('mkt-news-reuters','https://www.reuters.com/business/energy/','Reuters Energy');
+    } catch { errEl('mkt-news-reuters','https://www.reuters.com/business/energy/','Reuters Energy'); }
+  }
+
+  // BBC Business
+  try {
+    const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://feeds.bbci.co.uk/news/business/rss.xml') + '&count=8');
+    const d = await r.json();
+    if(d.status === 'ok' && d.items?.length) {
+      const kw = ['oil','energy','opec','war','conflict','ukraine','russia','petrol','fuel','inflation','gas'];
+      const filtradas = d.items.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
+      const items = (filtradas.length >= 3 ? filtradas : d.items).slice(0,5);
+      loadEl('mkt-news-bbc', items.map(i => mktNoticiaHTML(i,'BBC','#000')).join(''));
+    } else errEl('mkt-news-bbc','https://www.bbc.com/news/business','BBC Business');
+  } catch { errEl('mkt-news-bbc','https://www.bbc.com/news/business','BBC Business'); }
+
+  // Brasil: G1 + Agência Brasil
+  try {
+    const feeds = [
+      { url: 'https://g1.globo.com/rss/g1/economia/', badge: 'G1', cor: '#E74C3C' },
+      { url: 'https://agenciabrasil.ebc.com.br/economia/feed', badge: 'Ag.Brasil', cor: '#009B3A' },
+    ];
+    let todos = [];
+    for(const f of feeds) {
+      try {
+        const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(f.url) + '&count=6');
+        const d = await r.json();
+        if(d.status === 'ok' && d.items?.length) {
+          todos = todos.concat(d.items.map(i => ({...i, _badge: f.badge, _cor: f.cor})));
+        }
+      } catch {}
+    }
+    if(todos.length) {
+      const kw = ['petróleo','petroleo','combustível','combustivel','gasolina','diesel','energia','câmbio','dólar','dollar','inflação','inflacao','guerra','opep','petrobras','preço','preco','barril'];
+      const filtradas = todos.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
+      const items = (filtradas.length >= 3 ? filtradas : todos).slice(0,5);
+      loadEl('mkt-news-br', items.map(i => mktNoticiaHTML(i, i._badge, i._cor)).join(''));
+    } else errEl('mkt-news-br','https://g1.globo.com/economia/','G1 Economia');
+  } catch { errEl('mkt-news-br','https://g1.globo.com/economia/','G1 Economia'); }
+}
+
+// ── CARGA PRINCIPAL ──
+async function mktCarregarTudo() {
+  const el = id => document.getElementById(id);
+  if(el('mkt-update-time')) el('mkt-update-time').textContent = 'Atualizando...';
+  if(el('mkt-live-dot')) el('mkt-live-dot').style.background = 'var(--am)';
+
+  await Promise.allSettled([
+    mktCarregarCambio(),
+    mktCarregarPetroleo(),
+    mktCarregarNoticias(),
+  ]);
+
+  const agora = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if(el('mkt-update-time')) el('mkt-update-time').textContent = 'Atualizado às ' + agora;
+  if(el('mkt-live-dot')) el('mkt-live-dot').style.background = 'var(--vd)';
+
+  // Reset timer
+  if(_mktTimer) clearInterval(_mktTimer);
+  _mktTimer = setInterval(mktCarregarTudo, 5 * 60 * 1000);
+}
+
+// Iniciar quando a aba for acessada (via go())
 // ══ INIT SEGURO ══
 // Atualizar data na topbar
 (function(){
