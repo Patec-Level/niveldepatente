@@ -69,6 +69,17 @@ body{
   display:flex;align-items:center;
   padding:0 1.5rem;gap:1rem;
   box-shadow:0 2px 12px rgba(13,35,71,.2);
+  overflow:visible;
+}
+/* Data — estilo integrado na topbar (sem caixa branca) */
+.top-dt{
+  font-size:12px;font-weight:500;
+  color:rgba(255,255,255,.75);
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.15);
+  padding:5px 14px;border-radius:20px;
+  white-space:nowrap;flex-shrink:0;
+  letter-spacing:.2px;
 }
 
 /* ── MAIN ── */
@@ -285,13 +296,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 #hbg{display:none;position:fixed;top:12px;left:12px;z-index:300;background:var(--az);color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:16px;cursor:pointer}
 
 /* ── RESPONSIVE ── */
-@media(max-width:900px){
+@media(max-width:768px){
   #hbg{display:block}
   #sb{transform:translateX(-100%);transition:.25s}
   #sb.mob-open{transform:translateX(0)}
   #mn{margin-left:0}
   .topbar{left:0}
-  .kgrid{grid-template-columns:repeat(2,1fr)}
+  .kgrid{grid-template-columns:repeat(3,1fr)}
   .g2,.g3,.g24,.destaque-grid{grid-template-columns:1fr}
   .faixa-grid{grid-template-columns:1fr 1fr 1fr}
   .prod-grid{grid-template-columns:1fr}
@@ -314,6 +325,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 <nav id="sb">
   <div class="sb-logo"><h1>PATEC</h1><p>Sistema de Gestão de Compras</p></div>
 
+  <!-- Mini Meta/Gap no sidebar -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:.625rem .75rem;border-bottom:1px solid rgba(255,255,255,.07)">
+    <div style="background:rgba(14,158,106,.15);border:1px solid rgba(14,158,106,.2);border-radius:7px;padding:6px 8px;text-align:center">
+      <div style="font-size:8px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px">META DO<br>PROJETO</div>
+      <div style="font-size:17px;font-weight:700;color:#fff;line-height:1" id="sb-meta">1.980</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:1px">itens · ciclo</div>
+    </div>
+    <div id="sb-gap-box" style="background:rgba(192,122,18,.18);border:1px solid rgba(192,122,18,.3);border-radius:7px;padding:6px 8px;text-align:center">
+      <div style="font-size:8px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px">GAP<br>ATUAL</div>
+      <div style="font-size:17px;font-weight:700;color:#FAC775;line-height:1" id="sb-gap">−157</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:1px" id="sb-gap-sub">vs programado</div>
+    </div>
+  </div>
+
   <div class="sb-mod">◈ Visão Geral</div>
   <div class="sb-it active" onclick="go('vg-visao',this)">📊 Painel Geral</div>
   <div class="sb-it" onclick="go('vg-validade',this)">⏱ Validade Oportunidades</div>
@@ -333,23 +358,27 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <!-- Data à esquerda -->
   <div class="top-dt" id="tdt"></div>
 
-  <!-- Título no centro -->
-  <div style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;pointer-events:none">
-    <div style="width:28px;height:28px;background:rgba(255,255,255,.15);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px">📊</div>
-    <h2 id="ttl" style="font-size:16px;font-weight:600;color:#fff;white-space:nowrap;letter-spacing:.3px">Painel Geral</h2>
+  <!-- Título no centro (posição absoluta para ficar sempre no meio da barra) -->
+  <div style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="ttl-ico" style="font-size:18px">📊</span>
+      <h2 id="ttl" style="font-size:17px;font-weight:600;color:#fff;white-space:nowrap;letter-spacing:.2px">Painel Geral</h2>
+    </div>
   </div>
 
   <!-- Meta e Gap à direita -->
-  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
-    <div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:5px 14px;text-align:center;min-width:88px">
-      <div style="font-size:8px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:1px">Meta do Projeto</div>
-      <div style="font-size:18px;font-weight:700;color:#fff;line-height:1" id="top-meta">1.980</div>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;position:relative;z-index:2">
+    <!-- META DO PROJETO -->
+    <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:4px 14px;text-align:center;min-width:90px">
+      <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase">META DO PROJETO</div>
+      <div style="font-size:20px;font-weight:700;color:#fff;line-height:1.1" id="top-meta">1.980</div>
       <div style="font-size:9px;color:rgba(255,255,255,.4)">itens · ciclo</div>
     </div>
-    <div id="top-gap-box" style="background:rgba(186,117,23,.2);border:1px solid rgba(186,117,23,.35);border-radius:8px;padding:5px 14px;text-align:center;min-width:88px">
-      <div style="font-size:8px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:1px">Gap Atual</div>
-      <div style="font-size:18px;font-weight:700;color:#FAC775;line-height:1" id="top-gap">−157</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.4)" id="top-gap-sub">vs programado</div>
+    <!-- GAP ATUAL -->
+    <div id="top-gap-box" style="background:rgba(192,122,18,.25);border:1px solid rgba(192,122,18,.4);border-radius:8px;padding:4px 14px;text-align:center;min-width:90px">
+      <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase">GAP ATUAL</div>
+      <div style="font-size:20px;font-weight:700;color:#FAC775;line-height:1.1" id="top-gap">−157</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.45)" id="top-gap-sub">vs programado</div>
     </div>
   </div>
 </div>
@@ -358,16 +387,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 <!-- ══ VISÃO GERAL ══ -->
 <!-- SIDEBAR -->
 <!-- MAIN -->
-<main id="mn">
-  <div class="topbar">
-    <div class="topbar-l">
-      <h2 id="ttl">Visão Geral</h2>
-      <p>Ciclo Maio 2026 · 22 dias úteis · Meta 90 itens/dia · Referência: <span id="ref-data"></span></p>
-    </div>
-    <div class="top-dt" id="tdt"></div>
-  </div>
+<div class="ct">
 
-  <div class="ct">
 
     <!-- ══════════════════ VISÃO GERAL ══════════════════ -->
     <div id="p-vg-visao" class="page active">
@@ -948,23 +969,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   </div><!-- /p-adm -->
 
   </div><!-- /ct -->
-</main>
 
-
-
-<!-- ══ PRODUÇÃO ══ -->
-<!-- SIDEBAR -->
-<!-- MAIN -->
-<main id="mn">
-  <div class="topbar">
-    <div class="topbar-l">
-      <h2 id="ttl">Lançar Produção</h2>
-      <p id="tsub">Ciclo Maio 2026 · 22 dias úteis · Meta 90 itens/dia</p>
-    </div>
-    <div class="top-dt" id="tdt"></div>
-  </div>
-
-  <div class="ct">
 
     <!-- ══════ LANÇAR PRODUÇÃO ══════ -->
     <!-- ══════════════════════════════
@@ -1349,32 +1354,28 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     </div>
 
   </div><!-- /ct -->
+
+</div><!-- /ct -->
 </main>
 
-</main>
+<script>// ── CHART HELPER (declarado primeiro para evitar hoisting issues) ──
+let chartsMap = {};
+function mkChart(id,type,data,opts={}){
+  if(chartsMap[id]) chartsMap[id].destroy();
+  const el = document.getElementById(id);
+  if(!el) return null;
+  chartsMap[id] = new Chart(el,{
+    type, data,
+    options:{
+      responsive:true,
+      plugins:{legend:{display:opts.legend??false},...(opts.plugins||{})},
+      scales:opts.scales||{},
+      ...(opts.extra||{})
+    }
+  });
+  return chartsMap[id];
+}
 
-
-
-<!-- ══ MAPA ══ -->
-<!-- SIDEBAR -->
-<!-- MAIN -->
-<main id="mn">
-  <div class="topbar">
-    <div class="topbar-l">
-      <h2 id="ttl">Posição Atual — Mapa PATEC</h2>
-      <p>Ciclo Maio 2026 · Level Board atualizado em <strong>14/05/2026</strong> · 9 dias registrados na aba Dinâmica</p>
-    </div>
-    <div class="top-dt" id="tdt"></div>
-  </div>
-
-  <div class="ct">
-<!-- ════════════════ LANÇAMENTO ════════════════ --><!-- ════════════════ VARIAÇÃO DIA A DIA ════════════════ --></div><!-- /ct -->
-</main>
-
-
-
-</div></main>
-<script>
 // ══ NAVEGAÇÃO UNIFICADA ══
 
 function go(id, el) {
@@ -1395,10 +1396,10 @@ function go(id, el) {
   const centroIco = document.querySelector('.topbar [style*="translateX"] div');
   if(centroIco) centroIco.textContent = ico;
   const titles = {
-    'vg-visao':'Painel Geral','vg-mapa':'Mapa — L10/L12',
-    'vg-validade':'Validade Oportunidades',
-    'pr-lancar':'Lançar Produção','pr-equipe':'Visão da Equipe','pr-porcolab':'Por Colaborador',
-    'pr-porlinha':'Por Linha','pr-pcp':'Dados PCP','pr-exportar':'Exportar',
+    'vg-visao':'Painel Geral','vg-validade':'Validade Oportunidades',
+    'pr-lancar':'Lançar Produção','pr-equipe':'Visão por Equipe',
+    'pr-producao':'Produção da Equipe','pr-bancoferias':'Banco de Horas e Férias',
+    'adm':'Administração',
     
     };
   document.getElementById('ttl').textContent = titles[id] || id;
@@ -1406,9 +1407,7 @@ function go(id, el) {
   // Triggers de render
   if (id==='vg-validade') renderValidade();
   if (id==='pr-equipe') { renderEquipe(); renderEquipeAcum(); }
-  if (id==='pr-porlinha') renderLinhas();
-  if (id==='pr-exportar') renderExport();
-  if (id==='pr-pcp') renderPCP();
+
 }
 
 // ══ VISÃO GERAL ══
@@ -2175,14 +2174,15 @@ function renderBanco(){
 // PCP
 // ════════════════════════════════════════════
 const SENHA_PCP2 = 'patec2026';
-function checkPwd(){if(document.getElementById('pcp-pwd').value===SENHA_PCP2){document.getElementById('pcp-lock').style.display='none';document.getElementById('pcp-data').style.display='block';renderPCP();}else{const e=document.getElementById('pcp-err');e.style.display='block';setTimeout(()=>e.style.display='none',2500);}}
-function logoutPCP(){document.getElementById('pcp-lock').style.display='block';document.getElementById('pcp-data').style.display='none';document.getElementById('pcp-pwd').value='';}
-function renderPCP(){if(document.getElementById('pcp-data')?.style.display==='none')return;const tot={f1:0,f2:0,f3:0,f4:0};pcpData.forEach(r=>{tot.f1+=r.f1;tot.f2+=r.f2;tot.f3+=r.f3;tot.f4+=r.f4;});['1','2','3','4'].forEach(i=>document.getElementById('pcp-v'+i).textContent=tot['f'+i].toLocaleString('pt-BR'));const s=pcpData.slice().sort((a,b)=>a.data.localeCompare(b.data));document.getElementById('pcp-tb').innerHTML=s.map(r=>{const t=r.f1+r.f2+r.f3+r.f4;return`<tr><td>${fmtDt(r.data)}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.f3}</td><td>${r.f4}</td><td style="font-weight:700">${t}</td></tr>`;}).join('');const gt=tot.f1+tot.f2+tot.f3+tot.f4;document.getElementById('pcp-tf').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>${tot.f1}</td><td>${tot.f2}</td><td>${tot.f3}</td><td>${tot.f4}</td><td style="font-weight:700">${gt}</td></tr>`;}
+function checkPwd(){if((document.getElementById('pcp-pwd')||{}).value===SENHA_PCP2){(document.getElementById('pcp-lock')||document.createElement('div')).style.display='none';(document.getElementById('pcp-data')||document.createElement('div')).style.display='block';renderPCP();}else{const e=document.getElementById('pcp-err');e.style.display='block';setTimeout(()=>e.style.display='none',2500);}}
+function logoutPCP(){(document.getElementById('pcp-lock')||document.createElement('div')).style.display='block';(document.getElementById('pcp-data')||document.createElement('div')).style.display='none';(document.getElementById('pcp-pwd')||{}).value='';}
+function renderPCP(){
+  if(!document.getElementById('pcp-tb')) return;if(document.getElementById('pcp-data')?.style.display==='none')return;const tot={f1:0,f2:0,f3:0,f4:0};pcpData.forEach(r=>{tot.f1+=r.f1;tot.f2+=r.f2;tot.f3+=r.f3;tot.f4+=r.f4;});['1','2','3','4'].forEach(i=>document.getElementById('pcp-v'+i).textContent=tot['f'+i].toLocaleString('pt-BR'));const s=pcpData.slice().sort((a,b)=>a.data.localeCompare(b.data));(document.getElementById('pcp-tb')||{}).innerHTML=s.map(r=>{const t=r.f1+r.f2+r.f3+r.f4;return`<tr><td>${fmtDt(r.data)}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.f3}</td><td>${r.f4}</td><td style="font-weight:700">${t}</td></tr>`;}).join('');const gt=tot.f1+tot.f2+tot.f3+tot.f4;(document.getElementById('pcp-tf')||{}).innerHTML=`<tr><td><strong>TOTAL</strong></td><td>${tot.f1}</td><td>${tot.f2}</td><td>${tot.f3}</td><td>${tot.f4}</td><td style="font-weight:700">${gt}</td></tr>`;}
 function salvarPCP(){const d=document.getElementById('pcp-dt').value;if(!d){alert('Informe a data.');return;}pcpData.push({data:d,f1:parseInt(document.getElementById('pcp-f1').value)||0,f2:parseInt(document.getElementById('pcp-f2').value)||0,f3:parseInt(document.getElementById('pcp-f3').value)||0,f4:parseInt(document.getElementById('pcp-f4').value)||0});['pcp-f1','pcp-f2','pcp-f3','pcp-f4'].forEach(id=>document.getElementById(id).value='');renderPCP();}
 function exportPCP(){var hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Dev.,Total\n';var rows=pcpData.map(function(r){return fmtDt(r.data)+','+r.f1+','+r.f2+','+r.f3+','+r.f4+','+(r.f1+r.f2+r.f3+r.f4);}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();}
 
 // ── EXPORTAR ──
-function renderExport(){document.getElementById('exp-count').textContent=registros.length;document.getElementById('exp-tb').innerHTML=registros.slice().sort((a,b)=>b.data.localeCompare(a.data)).map((r,_)=>`<tr><td>${fmtDt(r.data)}</td><td>${r.colab}</td><td>${r.f.reduce((a,b)=>a+b,0)}</td><td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="delReg(${registros.indexOf(r)})">✕</button></td></tr>`).join('');}
+function renderExport(){document.getElementById('exp-count').textContent=registros.length;(document.getElementById('exp-tb')||{}).innerHTML=registros.slice().sort((a,b)=>b.data.localeCompare(a.data)).map((r,_)=>`<tr><td>${fmtDt(r.data)}</td><td>${r.colab}</td><td>${r.f.reduce((a,b)=>a+b,0)}</td><td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="delReg(${registros.indexOf(r)})">✕</button></td></tr>`).join('');}
 function delReg(i){if(confirm('Excluir?')){registros.splice(i,1);renderExport();}}
 function buildData(regs){return[['Colaborador','Data','Presença',...LINHAS_PROD,'Total'],...regs.map(r=>[r.colab,fmtDt(r.data),r.pres,...r.f,r.f.reduce((a,b)=>a+b,0)])];}
 function exportExcel(){const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(buildData(registros.slice().sort((a,b)=>a.data.localeCompare(b.data))));XLSX.utils.book_append_sheet(wb,ws,'Produção');COLABS.forEach(c=>{const regs=registros.filter(r=>r.colab===c);if(regs.length){const ws2=XLSX.utils.aoa_to_sheet(buildData(regs.sort((a,b)=>a.data.localeCompare(b.data))));XLSX.utils.book_append_sheet(wb,ws2,c);}});XLSX.writeFile(wb,'Producao_PATEC.xlsx');}
@@ -2196,20 +2196,6 @@ renderBanco();
 
 // ══ MAPA ══
 // ── SIDEBAR ──
-let chartsMap = {};
-function mkChart(id,type,data,opts={}){
-  if(chartsMap[id]) chartsMap[id].destroy();
-  chartsMap[id] = new Chart(document.getElementById(id),{
-    type, data,
-    options:{
-      responsive:true,
-      plugins:{legend:{display:opts.legend??false},...(opts.plugins||{})},
-      scales:opts.scales||{},
-      ...(opts.extra||{})
-    }
-  });
-  return chartsMap[id];
-}
 
 
 // ── UTILS ──
@@ -2979,9 +2965,17 @@ function pill2(t){
 // Atualizar PAGE_TITLES para incluir ADM
 PAGE_TITLES['adm'] = '🔐 Administração';
 
-// INIT
-const _hoje = new Date();
-document.getElementById('tdt').textContent = _hoje.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'});
+// ══ INIT SEGURO ══
+// Atualizar data na topbar
+(function(){
+  const tdt = document.getElementById('tdt');
+  if(tdt) tdt.textContent = new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'});
+  // Datas dos campos de formulário
+  const hoje = new Date().toISOString().split('T')[0];
+  ['pr-data-ref','mp-data','adm-pcp-dt','pcp-dt','eq-data-unica','eq-data-de','eq-data-ate'].forEach(id=>{
+    const el=document.getElementById(id);if(el&&el.type==='date')el.value=hoje;
+  });
+})();
 
 // ── META E GAP — atualização dinâmica ──
 // Valores editáveis pelo ADM (futuramente via localStorage/API)
