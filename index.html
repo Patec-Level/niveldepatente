@@ -10,33 +10,65 @@
 
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --az:#1A3A6B;--azm:#3266AD;--azc:#E6F1FB;
-  --vd:#1D9E75;--vdc:#EAF3DE;
-  --am:#BA7517;--amc:#FAEEDA;
-  --vm:#E24B4A;--vmc:#FCEBEB;
-  --bg:#F4F6FA;--brd:#E0E0E0;--cin:#F7F7F7;
-  --tx:#1A1A1A;--tx2:#666;--sw:220px;
+  --az:#0D2347;--azm:#1A4A8A;--azc:#E8F0FB;
+  --vd:#0E9E6A;--vdc:#E6F7F1;
+  --am:#C07A12;--amc:#FDF3E3;
+  --vm:#D94040;--vmc:#FDEAEA;
+  --bg:#F0F2F7;--brd:#DDE3EE;--cin:#F5F7FB;
+  --tx:#0D1B2A;--tx2:#5A6A7E;
+  --sw:220px;
+  --topbar-h:56px;
+  --font-display:'DM Sans',sans-serif;
+  --shadow-sm:0 1px 3px rgba(13,35,71,.08);
+  --shadow-md:0 4px 16px rgba(13,35,71,.10);
+  --radius:10px;
 }
-body{font-family:Arial,sans-serif;font-size:14px;color:var(--tx);background:var(--bg);display:flex;min-height:100vh}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font-display);
+  font-size:13px;
+  color:var(--tx);
+  background:var(--bg);
+  display:flex;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
 
 /* ── SIDEBAR ── */
-#sb{width:var(--sw);background:var(--az);min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
-.sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,.12)}
-.sb-logo h1{font-size:15px;font-weight:700;color:#fff;letter-spacing:.3px}
-.sb-logo p{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
-.sb-sec{padding:.75rem 1rem .2rem;font-size:9px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase}
-.sb-it{display:flex;align-items:center;gap:8px;padding:.6rem 1rem;cursor:pointer;font-size:12px;color:rgba(255,255,255,.65);border-left:3px solid transparent;transition:all .15s;user-select:none}
-.sb-it:hover{background:rgba(255,255,255,.08);color:#fff}
-.sb-it.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:var(--vd)}
-.sb-badge{margin-left:auto;font-size:9px;background:rgba(186,117,23,.35);color:#FAC775;padding:1px 6px;border-radius:8px}
+/* ── SIDEBAR ── */
+#sb{width:var(--sw);background:linear-gradient(180deg,#0D2347 0%,#112B57 100%);min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:200;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;box-shadow:2px 0 16px rgba(13,35,71,.2)}
+#sb::-webkit-scrollbar{width:3px}
+#sb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
+.sb-logo{padding:1rem;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.sb-logo h1{font-size:16px;font-weight:700;color:#fff;letter-spacing:.4px}
+.sb-logo p{font-size:10px;color:rgba(255,255,255,.32);margin-top:1px}
+.sb-sec{padding:.7rem 1rem .2rem;font-size:9px;font-weight:600;color:rgba(255,255,255,.28);letter-spacing:1.2px;text-transform:uppercase;flex-shrink:0}
+.sb-it{display:flex;align-items:center;gap:8px;padding:.5rem .875rem;cursor:pointer;font-size:11.5px;font-weight:500;color:rgba(255,255,255,.58);border-left:2px solid transparent;transition:all .18s;user-select:none;flex-shrink:0;margin:1px 6px 1px 0;border-radius:0 7px 7px 0}
+.sb-it:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.88);border-left-color:rgba(255,255,255,.2)}
+.sb-it.active{background:rgba(26,74,138,.45);color:#fff;border-left-color:#0E9E6A;font-weight:600}
+.sb-badge{margin-left:auto;font-size:8px;background:rgba(192,122,18,.28);color:#F4C16A;padding:1px 6px;border-radius:6px;font-weight:600}
+.sb-mod{font-size:9px;font-weight:700;color:rgba(255,255,255,.22);padding:.6rem 1rem .15rem;letter-spacing:1.4px;text-transform:uppercase;margin-top:4px}
 
 /* ── MAIN ── */
-#mn{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-width:0}
-.topbar{background:#fff;border-bottom:1px solid var(--brd);padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:1rem}
-.topbar-l h2{font-size:15px;font-weight:700;color:var(--az)}
-.topbar-l p{font-size:11px;color:var(--tx2);margin-top:1px}
-.top-dt{font-size:11px;color:var(--tx2);background:var(--cin);padding:4px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0}
-.ct{padding:1.5rem;flex:1}
+#mn{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-width:0;min-height:100vh}
+.topbar{
+  background:linear-gradient(90deg,#0D2347 0%,#1A4A8A 100%);
+  border-bottom:none;
+  padding:0 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  position:fixed;
+  top:0;left:var(--sw);right:0;
+  z-index:100;
+  height:var(--topbar-h);
+  box-shadow:0 2px 12px rgba(13,35,71,.18);
+  gap:1rem;
+}
+.topbar-l h2{font-size:16px;font-weight:600;color:#fff;letter-spacing:.3px}
+.topbar-l p{display:none}
+.top-dt{font-size:12px;color:rgba(255,255,255,.7);background:rgba(255,255,255,.1);padding:5px 14px;border-radius:20px;white-space:nowrap;font-weight:500;border:1px solid rgba(255,255,255,.12)}
+.ct{padding:1.25rem 1.5rem;flex:1;margin-top:var(--topbar-h)}
+
 
 /* ── PÁGINAS ── */
 .page{display:none}.page.active{display:block}
@@ -159,14 +191,30 @@ tfoot td{background:#F0F4FA;font-weight:700;position:sticky;bottom:0;border-top:
 
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --az:#1A3A6B;--azm:#3266AD;--azc:#E6F1FB;
-  --vd:#1D9E75;--vdc:#EAF3DE;
-  --am:#BA7517;--amc:#FAEEDA;
-  --vm:#E24B4A;--vmc:#FCEBEB;
-  --bg:#F4F6FA;--brd:#E0E0E0;--cin:#F7F7F7;
-  --tx:#1A1A1A;--tx2:#666;--sw:220px;
+  --az:#0D2347;--azm:#1A4A8A;--azc:#E8F0FB;
+  --vd:#0E9E6A;--vdc:#E6F7F1;
+  --am:#C07A12;--amc:#FDF3E3;
+  --vm:#D94040;--vmc:#FDEAEA;
+  --bg:#F0F2F7;--brd:#DDE3EE;--cin:#F5F7FB;
+  --tx:#0D1B2A;--tx2:#5A6A7E;
+  --sw:220px;
+  --topbar-h:56px;
+  --font-display:'DM Sans',sans-serif;
+  --shadow-sm:0 1px 3px rgba(13,35,71,.08);
+  --shadow-md:0 4px 16px rgba(13,35,71,.10);
+  --radius:10px;
 }
-body{font-family:Arial,sans-serif;font-size:14px;color:var(--tx);background:var(--bg);display:flex;min-height:100vh}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font-display);
+  font-size:13px;
+  color:var(--tx);
+  background:var(--bg);
+  display:flex;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
 
 /* ── SIDEBAR ── */
 #sb{width:var(--sw);background:var(--az);min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column}
@@ -293,14 +341,30 @@ input[type=number]::-webkit-inner-spin-button{opacity:.5}
 
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --az:#1A3A6B;--azm:#3266AD;--azc:#E6F1FB;
-  --vd:#1D9E75;--vdc:#EAF3DE;
-  --am:#BA7517;--amc:#FAEEDA;
-  --vm:#E24B4A;--vmc:#FCEBEB;
-  --bg:#F4F6FA;--brd:#E0E0E0;--cin:#F7F7F7;
-  --tx:#1A1A1A;--tx2:#666;--sw:220px;
+  --az:#0D2347;--azm:#1A4A8A;--azc:#E8F0FB;
+  --vd:#0E9E6A;--vdc:#E6F7F1;
+  --am:#C07A12;--amc:#FDF3E3;
+  --vm:#D94040;--vmc:#FDEAEA;
+  --bg:#F0F2F7;--brd:#DDE3EE;--cin:#F5F7FB;
+  --tx:#0D1B2A;--tx2:#5A6A7E;
+  --sw:220px;
+  --topbar-h:56px;
+  --font-display:'DM Sans',sans-serif;
+  --shadow-sm:0 1px 3px rgba(13,35,71,.08);
+  --shadow-md:0 4px 16px rgba(13,35,71,.10);
+  --radius:10px;
 }
-body{font-family:Arial,sans-serif;font-size:14px;color:var(--tx);background:var(--bg);display:flex;min-height:100vh}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font-display);
+  font-size:13px;
+  color:var(--tx);
+  background:var(--bg);
+  display:flex;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
 
 /* ── SIDEBAR ── */
 #sb{width:var(--sw);background:var(--az);min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;overflow-y:auto}
@@ -434,6 +498,32 @@ tfoot td{background:#F0F4FA;font-weight:700;position:sticky;bottom:0;border-top:
 .sb-gap-ok{background:rgba(29,158,117,.15)!important;border-color:rgba(29,158,117,.25)!important}
 .sb-gap-warn{background:rgba(186,117,23,.15)!important;border-color:rgba(186,117,23,.25)!important}
 .sb-gap-bad{background:rgba(226,75,74,.15)!important;border-color:rgba(226,75,74,.25)!important}
+/* ── LAYOUT EXECUTIVO EXTRA ── */
+#mn{padding-top:0}
+.ct{max-width:100%;width:100%}
+/* Alertas refinados */
+.al{border-radius:9px;padding:.75rem 1rem;margin-bottom:1rem;font-size:12px;display:flex;align-items:flex-start;gap:10px;line-height:1.5;border:1px solid transparent}
+.al-v{background:#E8F7F2;color:#0A6E47;border-color:#B8E8D5}
+.al-a{background:#FDF3E3;color:#8A5200;border-color:#F5D898}
+.al-b{background:#EAF0FB;color:#1A4A8A;border-color:#B8CEED}
+/* Ciclo box refinado */
+.ciclo-box{border-radius:12px;padding:1rem 1.25rem;border:1px solid var(--brd);margin-bottom:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.ciclo-amarelo{background:#FDF3E3;border-color:#F5D898}
+.ciclo-box h3{font-size:13px;font-weight:700;margin-bottom:2px;color:#7A4500}
+.ciclo-box p{font-size:12px;color:#9A6200;line-height:1.5}
+/* Lock box refinado */
+.lock-box{text-align:center;padding:3rem 2rem;max-width:400px;margin:2rem auto}
+/* ADM tab refinada */
+.adm-tab{padding:0}
+/* Mobile */
+@media(max-width:820px){
+  #sb{transform:translateX(-100%);transition:.25s}
+  #sb.mob-open{transform:translateX(0)}
+  #mn{margin-left:0}
+  .topbar{left:0}
+  .g2,.g3,.g24,.destaque-grid{grid-template-columns:1fr}
+  .faixa-grid{grid-template-columns:1fr 1fr 1fr}
+}
 /* ── LANÇAMENTO SEQUENCIAL ── */
 .colab-btn{padding:10px 16px;border:1.5px solid var(--brd);border-radius:8px;background:var(--cin);color:var(--tx);cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;width:100%}
 .colab-btn:hover{border-color:var(--azm);background:var(--azc);color:var(--azm)}
@@ -447,6 +537,33 @@ tfoot td{background:#F0F4FA;font-weight:700;position:sticky;bottom:0;border-top:
 .bf-row-prox{background:rgba(29,158,117,.06)!important}
 .bf-row-hoje{background:rgba(186,117,23,.08)!important}
 
+
+/* ── REFINAMENTOS EXECUTIVOS ── */
+.kc{box-shadow:0 1px 6px rgba(13,35,71,.06)!important;transition:box-shadow .2s!important}
+.kc:hover{box-shadow:0 4px 14px rgba(13,35,71,.10)!important}
+.cd{box-shadow:0 1px 6px rgba(13,35,71,.05)!important}
+.pl{border-radius:20px!important;letter-spacing:.2px!important}
+.pl-ok{background:#E5F7F0!important;color:#0A7A51!important;border:1px solid #B8E8D5!important}
+.pl-w{background:#FDF3E3!important;color:#9A5F00!important;border:1px solid #F5D898!important}
+.pl-b{background:#FDEAEA!important;color:#B02020!important;border:1px solid #F5BABA!important}
+.pl-az{background:#E8F0FB!important;color:#1A4A8A!important;border:1px solid #B8CEED!important}
+.pl-g{border:1px solid var(--brd)!important}
+.btn-p{background:linear-gradient(135deg,#1A4A8A,#0D3470)!important;box-shadow:0 2px 8px rgba(26,74,138,.3)!important}
+.btn-p:hover{box-shadow:0 4px 12px rgba(26,74,138,.4)!important;transform:translateY(-1px)!important}
+.btn-g{background:linear-gradient(135deg,#0E9E6A,#0B7A52)!important;box-shadow:0 2px 8px rgba(14,158,106,.25)!important}
+.btn-g:hover{transform:translateY(-1px)!important}
+.stabs{background:rgba(13,35,71,.04)!important;padding:3px!important;border-radius:10px!important;width:fit-content!important;border:none!important;gap:4px!important}
+.stab{background:transparent!important;border:none!important}
+.stab:hover{background:rgba(255,255,255,.7)!important;color:var(--tx)!important}
+.stab.active{background:#fff!important;color:var(--azm)!important;font-weight:700!important;box-shadow:0 1px 6px rgba(13,35,71,.12)!important;border:none!important}
+/* Campos de input refinados */
+input,select,textarea{border-radius:8px!important;border-color:rgba(221,227,238,.9)!important;transition:border-color .18s,box-shadow .18s!important}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(26,74,138,.12)!important}
+/* Scrollbar global */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(13,35,71,.15);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(13,35,71,.25)}
 </style>
 </head>
 <body>
@@ -454,21 +571,7 @@ tfoot td{background:#F0F4FA;font-weight:700;position:sticky;bottom:0;border-top:
 <nav id="sb">
   <div class="sb-logo"><h1>PATEC</h1><p>Sistema de Gestão de Compras</p></div>
 
-  <!-- META E GAP DO PROJETO -->
-  <div style="padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.1);display:grid;grid-template-columns:1fr 1fr;gap:6px">
-    <div style="background:rgba(29,158,117,.15);border:1px solid rgba(29,158,117,.25);border-radius:7px;padding:7px 10px">
-      <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px">Meta do projeto</div>
-      <div style="font-size:18px;font-weight:700;color:#fff;line-height:1" id="sb-meta">1.980</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px">itens · ciclo</div>
-    </div>
-    <div id="sb-gap-box" style="background:rgba(186,117,23,.15);border:1px solid rgba(186,117,23,.25);border-radius:7px;padding:7px 10px">
-      <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px">Gap atual</div>
-      <div style="font-size:18px;font-weight:700;color:#FAC775;line-height:1" id="sb-gap">−157</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px" id="sb-gap-sub">vs programado</div>
-    </div>
-  </div>
-
-  <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">◈ VISÃO GERAL</div>
+  <div class="sb-mod">◈ Visão Geral</div>
   <div class="sb-it active" onclick="go('vg-visao',this)">📊 Painel Geral</div>
   <div class="sb-it" onclick="go('vg-validade',this)">⏱ Validade Oportunidades</div>
   <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ OPERAÇÃO</div>
@@ -484,8 +587,28 @@ tfoot td{background:#F0F4FA;font-weight:700;position:sticky;bottom:0;border-top:
 </nav>
 <main id="mn">
 <div class="topbar">
-  <div class="topbar-l"><h2 id="ttl">Painel Geral</h2><p>Ciclo Maio 2026 · 22 dias úteis · Meta 90 itens/dia</p></div>
+  <!-- Data à esquerda -->
   <div class="top-dt" id="tdt"></div>
+
+  <!-- Título no centro -->
+  <div style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;pointer-events:none">
+    <div style="width:28px;height:28px;background:rgba(255,255,255,.15);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px">📊</div>
+    <h2 id="ttl" style="font-size:16px;font-weight:600;color:#fff;white-space:nowrap;letter-spacing:.3px">Painel Geral</h2>
+  </div>
+
+  <!-- Meta e Gap à direita -->
+  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
+    <div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:5px 14px;text-align:center;min-width:88px">
+      <div style="font-size:8px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:1px">Meta do Projeto</div>
+      <div style="font-size:18px;font-weight:700;color:#fff;line-height:1" id="top-meta">1.980</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.4)">itens · ciclo</div>
+    </div>
+    <div id="top-gap-box" style="background:rgba(186,117,23,.2);border:1px solid rgba(186,117,23,.35);border-radius:8px;padding:5px 14px;text-align:center;min-width:88px">
+      <div style="font-size:8px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:1px">Gap Atual</div>
+      <div style="font-size:18px;font-weight:700;color:#FAC775;line-height:1" id="top-gap">−157</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.4)" id="top-gap-sub">vs programado</div>
+    </div>
+  </div>
 </div>
 <div class="ct">
 
@@ -1084,393 +1207,7 @@ tfoot td{background:#F0F4FA;font-weight:700;position:sticky;bottom:0;border-top:
   </div><!-- /ct -->
 </main>
 
-<script>
-// ════════════════════════════════════════════
-// DADOS REAIS — Ciclo Maio 2026
-// ════════════════════════════════════════════
-const PROD  = [79,90,93,46,70,64,131,88,56,26];
-const SAIDA = [55,44,80,27,58,38,35,54,18,30];
-const DATAS = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai','14/mai'];
-const DATAS_FULL = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai','14/mai','15/mai','16/mai','19/mai','20/mai','21/mai','22/mai','23/mai','26/mai','27/mai','28/mai','29/mai','30/mai'];
-const META = 90;
-const DIAS_UTEIS = 22;
-const HOJE = new Date();
 
-const COLABS_PROD = {
-  André:  [26,0,0,0,0,0,0,26,0,0],
-  Aline:  [0,0,0,0,0,0,0,0,0,0],
-  Lory:   [21,35,35,8,19,29,46,40,20,0],
-  Ludy:   [17,8,3,0,8,16,52,6,8,10],
-  Wanessa:[0,0,0,0,0,0,0,0,0,0],
-};
-
-const L = {
-  3:[727,712,722,679,711,703,679,687,592],
-  4:[218,228,241,234,190,189,285,347,359],
-  5:[5,6,6,0,22,9,8,5,8],
-  6:[0,1,1,0,0,0,0,1,0],
-  7:[190,191,273,301,303,320,278,233,168],
-  8:[154,148,185,218,216,252,221,216,153],
-};
-
-const ROSCAS = [
-  {id:'rc1',total:1467,dentro:1285,prox:157,venc:19,sem:6},
-  {id:'rc2',total:1215,dentro:1215,prox:0,venc:0,sem:0},
-  {id:'rc3',total:1834,dentro:82,prox:53,venc:25,sem:1674},
-  {id:'rc4',total:2682,dentro:2500,prox:157,venc:19,sem:6},
-];
-
-const SLA_TABLE = [
-  {linha:'L3',fila:'Analisar PATEC Finalizado',sla:174,total:1019,fora:0,pct:0},
-  {linha:'L4',fila:'Aguardar PATEC ser Finalizado',sla:136,total:1215,fora:0,pct:0},
-  {linha:'L5',fila:'PATEC s/ fornecedores aprovados',sla:122,total:43,fora:0,pct:0},
-  {linha:'L6',fila:'Analisar PATEC Cancelado',sla:297,total:405,fora:44,pct:10.9},
-  {linha:'L7',fila:'Abrir PATEC Idêntico Não',sla:126,total:1694,fora:78,pct:4.6},
-  {linha:'L8',fila:'Abrir PATEC Grupo Mercadoria Obrig.',sla:154,total:140,fora:25,pct:17.9},
-];
-
-// ── INIT ──
-const dtStr = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-document.getElementById('tdt').textContent = dtStr;
-document.getElementById('ref-data').textContent = '14/05/2026';
-
-// ── SIDEBAR ──
-function go(id, el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
-  document.getElementById('p-'+id).classList.add('active');
-  if(el) el.classList.add('active');
-  const titles={visao:'Visão Geral',mapa:'Mapa — L10 / L12',medicao:'Gráfico de Medição',colab:'Por Colaborador',validade:'Validade Oportunidades'};
-  document.getElementById('ttl').textContent = titles[id]||id;
-  if(id==='medicao') renderMedicao();
-  if(id==='mapa')    renderMapa();
-  if(id==='colab')   selColab('André', document.querySelector('#colab-tabs .stab'));
-  if(id==='validade') renderValidade();
-  document.getElementById('sb').classList.remove('mob-open');
-}
-
-// ── UTILS ──
-let charts = {};
-function mkChart(id,type,data,opts={}){
-  if(charts[id]) charts[id].destroy();
-  charts[id] = new Chart(document.getElementById(id),{
-    type, data,
-    options:{
-      responsive:true,
-      plugins:{legend:{display:opts.legend??false},...(opts.plugins||{})},
-      scales:opts.scales??{},
-      ...(opts.extra||{})
-    }
-  });
-  return charts[id];
-}
-function pct(v,base){ return base>0?Math.round(v/base*100):0; }
-function pill(txt,cls){ return `<span class="pl ${cls}">${txt}</span>`; }
-function perfPill(val){
-  const p=pct(val,META);
-  if(p>=100) return pill(`${p}%`,'pl-ok');
-  if(p>=80)  return pill(`${p}%`,'pl-w');
-  return pill(`${p}%`,'pl-b');
-}
-function exportSheet(data, sheetName, filename){
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb,ws,sheetName);
-  XLSX.writeFile(wb,filename);
-}
-
-// ════════════════════════════════
-// RENDER VISÃO GERAL
-// ════════════════════════════════
-(function renderVisao(){
-  // Acumulados
-  const acProg = DATAS_FULL.map((_,i)=>META*(i+1));
-  const acReal = [];
-  let s=0; PROD.forEach(v=>{s+=v; acReal.push(s);});
-  // Projeção (ritmo atual)
-  const rate = 743/10;
-  const proj  = acReal.map(v=>v); // cópia dos 10 primeiros
-  for(let i=10;i<DIAS_UTEIS;i++) proj.push(Math.round(743+(i-9)*rate));
-
-  mkChart('ch-acum','line',{
-    labels: DATAS_FULL,
-    datasets:[
-      {label:'Programado',data:acProg,borderColor:'#3266AD',backgroundColor:'rgba(50,102,173,.07)',borderWidth:2,pointRadius:0,fill:true,tension:.1},
-      {label:'Realizado', data:[...acReal,...Array(12).fill(null)],borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#1D9E75',fill:false},
-      {label:'Projeção',  data:proj,borderColor:'#BA7517',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
-    ]
-  },{legend:true,scales:{
-    y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},
-    x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:8}}
-  }});
-
-  // Barras diárias
-  const bcolors = PROD.map(v=>v>=META?'#1D9E75':v>=META*.8?'#EF9F27':'#E24B4A');
-  mkChart('ch-diario','bar',{
-    labels: DATAS,
-    datasets:[
-      {label:'Realizado',data:PROD,backgroundColor:bcolors,borderRadius:4},
-      {label:'Meta (90)', data:Array(10).fill(META),type:'line',borderColor:'#3266AD',borderWidth:1.5,borderDash:[5,3],pointRadius:0},
-    ]
-  },{legend:true,scales:{
-    y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:0},
-    x:{grid:{display:false},ticks:{font:{size:9}}}
-  }});
-
-  // Barras colaborador
-  const colabData = Object.entries(COLABS_PROD).map(([n,v])=>{
-    const dias = v.filter(x=>x>0).length;
-    const tot  = v.reduce((a,b)=>a+b,0);
-    const med  = dias>0?Math.round(tot/dias):0;
-    return {n,med,dias,tot};
-  });
-  document.getElementById('colab-bars').innerHTML = colabData.map(({n,med,dias})=>{
-    const p = pct(med,META);
-    const col = p>=100?'var(--vd)':p>=80?'var(--am)':'var(--vm)';
-    return `<div class="colab-row">
-      <span class="colab-nome">${n}</span>
-      <div class="colab-bar-wrap">
-        <div class="colab-bar"><div class="colab-fill" style="width:${Math.min(p,120)}%;background:${col}"></div></div>
-        <div class="colab-meta">${dias} dia${dias!==1?'s':''} registrado${dias!==1?'s':''}</div>
-      </div>
-      <span class="colab-num" style="color:${col}">${med}</span>
-      <span class="colab-pct" style="color:${col}">${p}%</span>
-    </div>`;
-  }).join('');
-
-  // Mapa mini
-  const mapaLinhas = [
-    {lnum:'L3',nome:'Analisar PATEC Fin.',val:592,max:727,cor:'#3266AD'},
-    {lnum:'L4',nome:'Aguardar PATEC',val:359,max:285,cor:'#3266AD'},
-    {lnum:'L5',nome:'PATEC s/ forn.',val:8,max:22,cor:'#1D9E75'},
-    {lnum:'L6',nome:'PATEC Cancelado',val:0,max:1,cor:'#1D9E75'},
-    {lnum:'L7',nome:'Abrir PATEC Idêntico',val:168,max:320,cor:'#BA7517'},
-    {lnum:'L8',nome:'Abrir PATEC Grupo',val:153,max:252,cor:'#BA7517'},
-  ];
-  document.getElementById('mapa-mini').innerHTML = mapaLinhas.map(({lnum,nome,val,max,cor})=>{
-    const p = max>0?Math.round(val/max*100):0;
-    return `<div class="mapa-row">
-      <span class="lnum">${lnum}</span>
-      <div style="flex:1">
-        <div class="mapa-nome">${nome}</div>
-        <div class="mapa-bar"><div class="mapa-fill" style="width:${Math.min(p,100)}%;background:${cor}"></div></div>
-      </div>
-      <span class="mapa-val">${val.toLocaleString('pt-BR')}</span>
-    </div>`;
-  }).join('');
-  document.getElementById('mapa-mini').innerHTML += `
-    <div style="margin-top:.75rem;padding-top:.75rem;border-top:2px solid var(--azc);display:flex;justify-content:space-between">
-      <span style="font-size:11px;font-weight:700">L12 (PATEC)</span>
-      <span style="font-size:18px;font-weight:700;color:var(--azm)">2.682</span>
-    </div>`;
-
-  // Tabela resumo
-  let ap=0,ar=0;
-  document.getElementById('tb-resumo').innerHTML = PROD.map((v,i)=>{
-    ap+=META; ar+=v; const g=ar-ap;
-    return `<tr>
-      <td>${i+1}</td><td>${DATAS[i]}</td>
-      <td>${META}</td>
-      <td style="font-weight:600;color:${v>=META?'var(--vd)':v>=META*.8?'var(--am)':'var(--vm)'}">${v}</td>
-      <td>${ap}</td><td>${ar}</td>
-      <td style="font-weight:600;color:${g<0?'var(--vm)':'var(--vd)'}">${g>0?'+':''}${g}</td>
-      <td>${perfPill(v)}</td>
-      <td>${SAIDA[i]}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('tf-resumo').innerHTML = `<tr>
-    <td colspan="2">TOTAL / MÉDIA</td>
-    <td>${META*10}</td><td style="font-weight:700">743</td>
-    <td>${META*10}</td><td style="font-weight:700">743</td>
-    <td style="font-weight:700;color:var(--vm)">−157</td>
-    <td>${perfPill(74)}</td>
-    <td style="font-weight:700">439</td>
-  </tr>`;
-})();
-
-// ════════════════════════════════
-// RENDER MEDIÇÃO
-// ════════════════════════════════
-function renderMedicao(){
-  const acProg=DATAS_FULL.map((_,i)=>META*(i+1));
-  const acReal=[]; let s=0; PROD.forEach(v=>{s+=v;acReal.push(s);});
-  const rate=743/10;
-  const proj=acReal.slice();
-  for(let i=10;i<DIAS_UTEIS;i++) proj.push(Math.round(743+(i-9)*rate));
-
-  mkChart('ch-med-acum','line',{
-    labels:DATAS_FULL,
-    datasets:[
-      {label:'Programado',data:acProg,borderColor:'#3266AD',borderWidth:2,pointRadius:0,fill:false},
-      {label:'Realizado',data:[...acReal,...Array(12).fill(null)],borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#1D9E75',fill:false},
-      {label:'Projeção',data:proj,borderColor:'#BA7517',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
-    ]
-  },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:8}}}});
-
-  const bc=PROD.map(v=>v>=META?'#1D9E75':v>=META*.8?'#EF9F27':'#E24B4A');
-  mkChart('ch-med-bar','bar',{
-    labels:DATAS,
-    datasets:[{label:'Realizado',data:PROD,backgroundColor:bc,borderRadius:4}]
-  },{scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:0},x:{grid:{display:false},ticks:{font:{size:9}}}}});
-
-  let ap2=0,ar2=0;
-  document.getElementById('tb-medicao').innerHTML=DATAS_FULL.map((dt,i)=>{
-    const v=PROD[i]??0; const s=SAIDA[i]??0;
-    ap2+=META; if(v>0)ar2+=v;
-    const g=ar2-ap2; const p=v>0?pct(v,META):0;
-    if(i<10) return`<tr><td>${i+1}</td><td>${dt}</td><td>${META}</td><td style="font-weight:600;color:${v>=META?'var(--vd)':v>=META*.8?'var(--am)':'var(--vm)'}">${v}</td><td>${ap2}</td><td>${ar2}</td><td style="color:${g<0?'var(--vm)':'var(--vd)'};font-weight:600">${g>0?'+':''}${g}</td><td>${perfPill(v)}</td><td>${s||'—'}</td></tr>`;
-    return`<tr style="opacity:.5"><td>${i+1}</td><td>${dt}</td><td>${META}</td><td>—</td><td>${ap2}</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>`;
-  }).join('');
-}
-
-// ════════════════════════════════
-// RENDER MAPA
-// ════════════════════════════════
-function renderMapa(){
-  const mapaL12=[
-    {lnum:'L3',nome:'Analisar PATEC Finalizado',val:592,cor:'#3266AD'},
-    {lnum:'L4',nome:'Aguardar PATEC ser Finalizado',val:359,cor:'#3266AD'},
-    {lnum:'L5',nome:'PATEC Finalizado sem fornecedores',val:8,cor:'#1D9E75'},
-    {lnum:'L6',nome:'Analisar PATEC Cancelado',val:0,cor:'#BA7517'},
-  ];
-  const mapaL78=[
-    {lnum:'L7',nome:'Abrir PATEC Idêntico Não',val:168,cor:'#BA7517'},
-    {lnum:'L8',nome:'Abrir PATEC Grupo Mercadoria Obrig.',val:153,cor:'#BA7517'},
-  ];
-  const mapaRow=({lnum,nome,val,cor},total)=>{
-    const p=total>0?Math.round(val/total*100):0;
-    return`<div class="mapa-row"><span class="lnum">${lnum}</span><div style="flex:1"><div class="mapa-nome">${nome}</div><div class="mapa-bar"><div class="mapa-fill" style="width:${p}%;background:${cor}"></div></div></div><span class="mapa-val">${val.toLocaleString('pt-BR')}</span></div>`;
-  };
-  document.getElementById('mapa-l12').innerHTML=mapaL12.map(r=>mapaRow(r,592+359+8+0)).join('');
-  document.getElementById('mapa-l78').innerHTML=mapaL78.map(r=>mapaRow(r,168+153)).join('');
-
-  // Gráfico histórico L12
-  const l12hist=L[3].map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
-  const l10hist=l12hist.map((v,i)=>v+L[7][i]+L[8][i]);
-  const dHist=Array.from({length:9},(_,i)=>'Dia '+(i+1));
-  mkChart('ch-l12','line',{labels:dHist,datasets:[
-    {label:'L10',data:l10hist,borderColor:'#3266AD',borderWidth:2,pointRadius:3,fill:false,tension:.1},
-    {label:'L12',data:l12hist,borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,fill:false,tension:.1},
-    {label:'L3', data:L[3],borderColor:'#BA7517',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
-    {label:'L4', data:L[4],borderColor:'#E24B4A',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
-  ]},{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}}});
-
-  // Tabela histórico
-  document.getElementById('tb-hist-mapa').innerHTML=L[3].map((_,i)=>{
-    const l10=L[3][i]+L[4][i]+L[5][i]+L[6][i]+L[7][i]+L[8][i];
-    const l12=L[3][i]+L[4][i]+L[5][i]+L[6][i];
-    const prev_l12=i>0?L[3][i-1]+L[4][i-1]+L[5][i-1]+L[6][i-1]:l12;
-    const dif=l12-prev_l12;
-    return`<tr>
-      <td>${i+1}</td><td>${L[3][i]}</td><td>${L[4][i]}</td><td>${L[5][i]}</td>
-      <td>${L[6][i]}</td><td>${L[7][i]}</td><td>${L[8][i]}</td>
-      <td style="font-weight:600">${l10.toLocaleString('pt-BR')}</td>
-      <td style="font-weight:600;color:var(--azm)">${l12.toLocaleString('pt-BR')}</td>
-      <td style="font-weight:600;color:${dif>0?'var(--vd)':dif<0?'var(--vm)':'var(--tx2)'}">${i>0?(dif>0?'▲ +':'▼ ')+Math.abs(dif):'—'}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ════════════════════════════════
-// RENDER POR COLABORADOR
-// ════════════════════════════════
-function selColab(nome, btn){
-  document.querySelectorAll('#colab-tabs .stab').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  const v = COLABS_PROD[nome] || Array(10).fill(0);
-  const dias = v.filter(x=>x>0).length;
-  const tot  = v.reduce((a,b)=>a+b,0);
-  const med  = dias>0?Math.round(tot/dias):0;
-  const max  = Math.max(...v);
-
-  document.getElementById('kpi-colab').innerHTML=`
-    <div class="kc"><div class="kc-l">Dias registrados</div><div class="kc-v" style="color:var(--az)">${dias}</div><div class="kc-s">de 10 registrados</div></div>
-    <div class="kc ok"><div class="kc-l">Total analisados</div><div class="kc-v">${tot}</div></div>
-    <div class="kc ${med>=META?'ok':med>=META*.8?'warn':'bad'}"><div class="kc-l">Média diária</div><div class="kc-v">${med}</div><div class="kc-s">meta: ${META}/dia</div></div>
-    <div class="kc"><div class="kc-l">Melhor dia</div><div class="kc-v" style="color:var(--az)">${max}</div></div>
-  `;
-
-  document.getElementById('colab-chart-title').textContent=`Produção diária — ${nome}`;
-  const bc=v.map(x=>x>=META?'#1D9E75':x>=META*.8?'#EF9F27':x>0?'#E24B4A':'#E0E0E0');
-  mkChart('ch-colab','bar',{
-    labels:DATAS,
-    datasets:[
-      {label:'Realizado',data:v,backgroundColor:bc,borderRadius:4},
-      {label:'Meta (90)',data:Array(10).fill(META),type:'line',borderColor:'#3266AD',borderWidth:1.5,borderDash:[5,3],pointRadius:0},
-    ]
-  },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:0},x:{grid:{display:false},ticks:{font:{size:9}}}}});
-
-  // Linhas (só para histórico)
-  const linhas=['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
-  document.getElementById('colab-linhas').innerHTML=linhas.map((l,i)=>{
-    const val=i===0?tot:0; // só temos dado de analisados por colaborador
-    const p=tot>0?Math.round(val/tot*100):0;
-    return`<div class="mapa-row"><span style="font-size:11px;flex:1">${l}</span><div class="mapa-bar" style="width:80px;display:inline-block;margin:0 8px;height:5px;background:#eee;border-radius:3px;vertical-align:middle"><div class="mapa-fill" style="width:${p}%;background:var(--azm)"></div></div><span style="font-size:12px;font-weight:600;width:40px;text-align:right">${i===0?tot:'—'}</span></div>`;
-  }).join('');
-}
-
-// ════════════════════════════════
-// RENDER VALIDADE
-// ════════════════════════════════
-function renderValidade(){
-  const rcCharts={};
-  ROSCAS.forEach(r=>{
-    const el=document.getElementById(r.id);if(!el)return;
-    if(rcCharts[r.id])rcCharts[r.id].destroy();
-    const data=[r.dentro,r.prox,r.venc].concat(r.sem>0?[r.sem]:[]);
-    const colors=['#1D9E75','#EF9F27','#E24B4A'].concat(r.sem>0?['#C4C4C4']:[]);
-    new Chart(el,{type:'doughnut',data:{datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:false,cutout:'63%',plugins:{legend:{display:false}}}});
-    // legenda
-    const legEl=document.getElementById(r.id+'-leg');
-    if(legEl) legEl.innerHTML=`
-      <div style="font-size:10px">
-        <div class="mapa-row" style="padding:4px 0"><span class="rl-d" style="width:8px;height:8px;border-radius:2px;background:#1D9E75;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Dentro do prazo</span><strong style="color:var(--vd)">${r.dentro.toLocaleString('pt-BR')}</strong></div>
-        <div class="mapa-row" style="padding:4px 0"><span style="width:8px;height:8px;border-radius:2px;background:#EF9F27;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Próx. vencimento</span><strong style="color:var(--am)">${r.prox.toLocaleString('pt-BR')}</strong></div>
-        <div class="mapa-row" style="padding:4px 0"><span style="width:8px;height:8px;border-radius:2px;background:#E24B4A;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Vencida</span><strong style="color:var(--vm)">${r.venc.toLocaleString('pt-BR')}</strong></div>
-        ${r.sem>0?`<div class="mapa-row" style="padding:4px 0"><span style="width:8px;height:8px;border-radius:2px;background:#C4C4C4;flex-shrink:0;display:inline-block;margin-right:5px"></span><span style="flex:1;color:var(--tx2)">Sem data</span><strong>${r.sem.toLocaleString('pt-BR')}</strong></div>`:''}
-      </div>`;
-  });
-
-  // SLA tabela
-  document.getElementById('tb-sla').innerHTML=SLA_TABLE.map(r=>{
-    const cls=r.sla>=200?'pl-b':r.sla>=100?'pl-w':'pl-ok';
-    const pfora=r.pct>10?'pl-b':r.pct>0?'pl-w':'pl-ok';
-    return`<tr>
-      <td><span class="lnum">${r.linha}</span></td>
-      <td style="font-size:11px">${r.fila}</td>
-      <td style="font-weight:700;color:${r.sla>=200?'var(--vm)':r.sla>=100?'var(--am)':'var(--vd)'}"><span class="pl ${cls}">${r.sla} dias</span></td>
-      <td>${r.total.toLocaleString('pt-BR')}</td>
-      <td><span class="pl ${pfora}">${r.pct.toFixed(1)}%</span></td>
-      <td>${r.fora>0?`<span class="pl pl-b">${r.fora} críticos</span>`:`<span class="pl pl-ok">OK</span>`}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ════════════════════════════════
-// EXPORTAÇÕES
-// ════════════════════════════════
-function exportResumo(){
-  const hd=['Dia','Data','Programado','Realizado','Acum.Prog.','Acum.Real.','Gap','%','Saídas'];
-  let ap=0,ar=0;
-  const rows=PROD.map((v,i)=>{ap+=META;ar+=v;return[i+1,DATAS[i],META,v,ap,ar,ar-ap,pct(v,META)+'%',SAIDA[i]];});
-  exportSheet([hd,...rows],'Resumo',`PATEC_VisaoGeral_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
-}
-function exportMedicao(){
-  const hd=['Dia','Data','Programado','Realizado','Acum.Prog.','Acum.Real.','Gap','%','Saídas'];
-  let ap=0,ar=0;
-  const rows=DATAS_FULL.map((dt,i)=>{
-    const v=PROD[i]??0;ap+=META;if(v>0)ar+=v;
-    return[i+1,dt,META,v||'',ap,v>0?ar:'',v>0?ar-ap:'',v>0?pct(v,META)+'%':'',SAIDA[i]??''];
-  });
-  exportSheet([hd,...rows],'Medição',`PATEC_Medicao_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
-}
-
-// ── INIT RENDERS ──
-renderValidade();
-renderMapa();
-renderMedicao();
-selColab('André',null);
-</script>
 
 <!-- ══ PRODUÇÃO ══ -->
 <!-- SIDEBAR -->
@@ -1873,337 +1610,7 @@ selColab('André',null);
 
 </main>
 
-<script>
-// ════════════════════════════════════════════
-// DADOS HISTÓRICOS REAIS (ciclo Maio 2026)
-// ════════════════════════════════════════════
-const HISTORICO_INICIAL = [
-  // André
-  {colab:'André',data:'2026-05-12',pres:'Presencial',f:[26,0,19,1,0,0,0,10,2,5]},
-  // Lory
-  {colab:'Lory',data:'2026-05-01',pres:'Presencial',f:[21,1,1,0,0,0,0,0,21,0]},
-  {colab:'Lory',data:'2026-05-02',pres:'Presencial',f:[35,3,0,0,0,0,0,6,1,0]},
-  {colab:'Lory',data:'2026-05-05',pres:'Presencial',f:[35,0,0,0,0,0,0,0,35,0]},
-  {colab:'Lory',data:'2026-05-06',pres:'Presencial',f:[8,17,15,0,0,0,0,8,1,1]},
-  {colab:'Lory',data:'2026-05-07',pres:'Home Office',f:[19,11,7,1,0,1,1,9,9,2]},
-  {colab:'Lory',data:'2026-05-08',pres:'Presencial',f:[29,5,16,0,1,0,0,0,0,2]},
-  {colab:'Lory',data:'2026-05-09',pres:'Presencial',f:[46,0,46,0,0,0,0,15,0,0]},
-  {colab:'Lory',data:'2026-05-12',pres:'Presencial',f:[40,3,12,0,0,0,0,0,12,0]},
-  {colab:'Lory',data:'2026-05-13',pres:'Home Office',f:[20,6,18,3,2,1,0,16,12,2]},
-  // Ludy
-  {colab:'Ludy',data:'2026-05-01',pres:'Home Office',f:[17,16,15,0,0,1,1,7,5,4]},
-  {colab:'Ludy',data:'2026-05-02',pres:'Home Office',f:[8,24,7,4,0,2,0,8,1,10]},
-  {colab:'Ludy',data:'2026-05-05',pres:'Home Office',f:[3,33,12,4,0,2,1,3,3,11]},
-  {colab:'Ludy',data:'2026-05-07',pres:'Home Office',f:[8,32,19,4,0,2,2,6,2,5]},
-  {colab:'Ludy',data:'2026-05-08',pres:'Home Office',f:[16,14,9,7,0,2,1,0,6,5]},
-  {colab:'Ludy',data:'2026-05-09',pres:'Home Office',f:[52,7,33,2,0,3,0,3,17,1]},
-  {colab:'Ludy',data:'2026-05-12',pres:'Home Office',f:[6,39,16,4,0,0,0,8,11,1]},
-  {colab:'Ludy',data:'2026-05-13',pres:'Home Office',f:[10,16,8,0,1,0,0,8,2,10]},
-  // Wanessa
-  {colab:'Wanessa',data:'2026-05-06',pres:'Presencial',f:[0,24,11,0,0,3,1,5,3,1]},
-  {colab:'Wanessa',data:'2026-05-07',pres:'Presencial',f:[0,20,0,0,0,2,1,8,2,7]},
-  {colab:'Wanessa',data:'2026-05-08',pres:'Presencial',f:[0,22,3,3,1,1,3,5,3,3]},
-  {colab:'Wanessa',data:'2026-05-09',pres:'Presencial',f:[0,21,5,4,1,1,1,7,3,3]},
-];
-const PCP_INICIAL = [
-  {data:'2026-05-01',f1:79,f2:2,f3:29,f4:7},
-  {data:'2026-05-02',f1:90,f2:1,f3:4,f4:17},
-  {data:'2026-05-05',f1:93,f2:5,f3:41,f4:27},
-  {data:'2026-05-06',f1:46,f2:1,f3:1,f4:10},
-  {data:'2026-05-07',f1:70,f2:3,f3:11,f4:22},
-  {data:'2026-05-08',f1:64,f2:2,f3:6,f4:11},
-  {data:'2026-05-09',f1:131,f2:0,f3:19,f4:7},
-  {data:'2026-05-12',f1:88,f2:0,f3:23,f4:5},
-  {data:'2026-05-13',f1:56,f2:3,f3:0,f4:8},
-];
 
-const LINHAS = ['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
-const COLABS = ['André','Aline','Lory','Ludy','Wanessa'];
-const SENHA_PCP = 'patec2026';
-const HOJE = new Date();
-
-// Estado
-let registros = [...HISTORICO_INICIAL];
-let pcpData   = [...PCP_INICIAL];
-let presAtual = 'Presencial';
-let colabAtual = 'André';
-
-// ── INIT ──
-document.getElementById('tdt').textContent = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-document.getElementById('sel-data').value  = HOJE.toISOString().split('T')[0];
-document.getElementById('pcp-dt').value    = HOJE.toISOString().split('T')[0];
-document.getElementById('eq-data-label').textContent = HOJE.toLocaleDateString('pt-BR');
-
-// ── SIDEBAR ──
-function toggleSb(){document.getElementById('sb').classList.toggle('mob-open');}
-function goPage(id,el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
-  document.getElementById('p-'+id).classList.add('active');
-  if(el)el.classList.add('active');
-  const titles={lancar:'Lançar Produção',equipe:'Visão da Equipe',porcolab:'Por Colaborador',porlinha:'Por Linha',pcp:'Dados PCP',exportar:'Exportar'};
-  document.getElementById('ttl').textContent = titles[id]||id;
-  if(id==='equipe'){renderEquipe();renderEquipeAcum();}
-  if(id==='porcolab'){renderColab('André');}
-  if(id==='porlinha')renderLinhas();
-  if(id==='exportar')renderExport();
-  if(id==='pcp')renderPCP();
-  document.getElementById('sb').classList.remove('mob-open');
-}
-
-// ── PRESENÇA ──
-function selPres(v,el){
-  presAtual=v;
-  document.querySelectorAll('.pres-opt').forEach(o=>{o.className='pres-opt';});
-  el.classList.add(v==='Presencial'?'sel-P':v==='Home Office'?'sel-H':'sel-F');
-}
-
-// ── TOTAL DINÂMICO ──
-function updateTotal(){
-  let t=0;
-  for(let i=0;i<10;i++){const v=parseInt(document.getElementById('f'+i).value)||0;t+=v;}
-  document.getElementById('total-badge').textContent=t.toLocaleString('pt-BR');
-  document.getElementById('total-badge').style.color=t>=90?'var(--vd)':t>=72?'var(--am)':'var(--az)';
-}
-function updateHeader(){
-  colabAtual=document.getElementById('sel-colab').value;
-  document.getElementById('colab-display').textContent=colabAtual;
-}
-
-// ── SALVAR ──
-function salvar(){
-  const colab=document.getElementById('sel-colab').value;
-  const data =document.getElementById('sel-data').value;
-  if(!data){alert('Informe a data.');return;}
-  const f=[];for(let i=0;i<10;i++)f.push(parseInt(document.getElementById('f'+i).value)||0);
-  registros.push({colab,data,pres:presAtual,f});
-  const msg=document.getElementById('msg-salvo');
-  msg.style.display='inline';setTimeout(()=>msg.style.display='none',3000);
-  // não limpa — usuário pode querer ajustar e salvar de novo
-}
-function limpar(){
-  for(let i=0;i<10;i++)document.getElementById('f'+i).value='';
-  updateTotal();
-}
-
-// ── UTIL ──
-function fmtData(d){
-  if(!d)return'—';
-  const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];
-}
-function pill(txt,cls){return`<span class="pl ${cls}">${txt}</span>`;}
-function presPill(p){
-  if(p==='Presencial')return pill('🏢 Presencial','pl-az');
-  if(p==='Home Office')return pill('🏠 Home Office','pl-ok');
-  if(p==='Folga')return pill('🌴 Folga','pl-f');
-  return pill(p,'pl-g');
-}
-function metaPill(t){
-  const pct=Math.round(t/90*100);
-  if(pct>=100)return`<span style="color:var(--vd);font-weight:700">${pct}%</span>`;
-  if(pct>=80)return`<span style="color:var(--am);font-weight:700">${pct}%</span>`;
-  return`<span style="color:var(--vm);font-weight:700">${pct}%</span>`;
-}
-
-// ── SUBTAB EQUIPE ──
-function setEquipeTab(id,btn){
-  document.querySelectorAll('#p-equipe .stab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('eq-hoje').style.display=id==='hoje'?'block':'none';
-  document.getElementById('eq-acum').style.display=id==='acum'?'block':'none';
-}
-
-// ── RENDER EQUIPE (hoje) ──
-function renderEquipe(){
-  const dataHoje=document.getElementById('sel-data').value||HOJE.toISOString().split('T')[0];
-  const regs=registros.filter(r=>r.data===dataHoje);
-  // KPIs
-  const totAnalisados=regs.reduce((a,r)=>a+r.f[0],0);
-  const totGeral=regs.reduce((a,r)=>a+r.f.reduce((s,v)=>s+v,0),0);
-  const presentes=regs.filter(r=>r.pres!=='Folga').length;
-  document.getElementById('kpi-equipe').innerHTML=`
-    <div class="kc ok"><div class="kc-l">Itens analisados (novos)</div><div class="kc-v">${totAnalisados}</div><div class="kc-s">equipe hoje</div></div>
-    <div class="kc"><div class="kc-l">Total de ações</div><div class="kc-v" style="color:var(--az)">${totGeral}</div><div class="kc-s">todas as linhas</div></div>
-    <div class="kc"><div class="kc-l">Colaboradores ativos</div><div class="kc-v" style="color:var(--az)">${presentes}</div><div class="kc-s">de ${COLABS.length}</div></div>
-    <div class="kc ${totAnalisados>=90?'ok':totAnalisados>=72?'warn':'bad'}"><div class="kc-l">% da meta (analisados)</div><div class="kc-v">${Math.round(totAnalisados/90*100)}%</div><div class="kc-s">meta: 90/dia</div></div>
-  `;
-  if(regs.length===0){
-    document.getElementById('eq-tb-hoje').innerHTML='<tr><td colspan="14" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum registro para hoje. Lance a produção na aba anterior.</td></tr>';
-    document.getElementById('eq-tfoot-hoje').innerHTML='';return;
-  }
-  // Totais por coluna para tfoot
-  const sums=Array(10).fill(0);
-  let totT=0;
-  document.getElementById('eq-tb-hoje').innerHTML=regs.map(r=>{
-    const t=r.f.reduce((a,b)=>a+b,0);totT+=t;
-    r.f.forEach((v,i)=>sums[i]+=v);
-    return`<tr>
-      <td><strong>${r.colab}</strong></td>
-      <td>${presPill(r.pres)}</td>
-      ${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}
-      <td style="font-weight:700">${t}</td>
-      <td>${metaPill(r.f[0])}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('eq-tfoot-hoje').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>—</td>${sums.map(v=>`<td style="font-weight:700">${v||'—'}</td>`).join('')}<td style="font-weight:700">${totT}</td><td>${metaPill(sums[0])}</td></tr>`;
-}
-
-// ── RENDER EQUIPE ACUMULADO ──
-function renderEquipeAcum(){
-  const acum={};
-  COLABS.forEach(c=>{acum[c]={dias:0,f:Array(10).fill(0)};});
-  registros.forEach(r=>{
-    if(!acum[r.colab])acum[r.colab]={dias:0,f:Array(10).fill(0)};
-    acum[r.colab].dias++;
-    r.f.forEach((v,i)=>acum[r.colab].f[i]+=v);
-  });
-  document.getElementById('eq-tb-acum').innerHTML=Object.entries(acum).map(([c,d])=>{
-    const t=d.f.reduce((a,b)=>a+b,0);
-    const med=d.dias>0?Math.round(d.f[0]/d.dias):0;
-    return`<tr><td><strong>${c}</strong></td><td>${d.dias}</td>${d.f.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${t}</td><td style="font-weight:700;color:${med>=90?'var(--vd)':med>=72?'var(--am)':'var(--vm)'}">${med}/dia</td></tr>`;
-  }).join('');
-}
-
-// ── RENDER POR COLABORADOR ──
-function setColab(c,btn){
-  document.querySelectorAll('#colab-tabs .stab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderColab(c);
-}
-function renderColab(c){
-  document.getElementById('colab-title').textContent='Histórico de produção — '+c;
-  const regs=registros.filter(r=>r.colab===c).sort((a,b)=>a.data.localeCompare(b.data));
-  const totF=Array(10).fill(0);
-  let totT=0;
-  const rows=regs.map(r=>{
-    const t=r.f.reduce((a,b)=>a+b,0);totT+=t;
-    r.f.forEach((v,i)=>totF[i]+=v);
-    return`<tr><td>${fmtData(r.data)}</td><td>${presPill(r.pres)}</td>${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${t}</td></tr>`;
-  }).join('');
-  const dias=regs.length;
-  const med=dias>0?Math.round(regs.reduce((a,r)=>a+r.f[0],0)/dias):0;
-  document.getElementById('kpi-colab').innerHTML=`
-    <div class="kc"><div class="kc-l">Dias registrados</div><div class="kc-v" style="color:var(--az)">${dias}</div></div>
-    <div class="kc ok"><div class="kc-l">Total analisados</div><div class="kc-v">${totF[0]}</div></div>
-    <div class="kc ${med>=90?'ok':med>=72?'warn':'bad'}"><div class="kc-l">Média diária</div><div class="kc-v">${med}</div><div class="kc-s">meta: 90/dia</div></div>
-    <div class="kc"><div class="kc-l">Total ações</div><div class="kc-v" style="color:var(--az)">${totT}</div></div>
-  `;
-  document.getElementById('colab-tb').innerHTML=rows||'<tr><td colspan="13" style="text-align:center;color:var(--tx2);padding:1.5rem">Sem registros para '+c+'</td></tr>';
-}
-
-// ── RENDER POR LINHA ──
-function renderLinhas(){
-  const sums=Array(10).fill(0);
-  registros.forEach(r=>r.f.forEach((v,i)=>sums[i]+=v));
-  const total=sums.reduce((a,b)=>a+b,0);
-  document.getElementById('linhas-cards').innerHTML=LINHAS.map((l,i)=>{
-    const pct=total>0?Math.round(sums[i]/total*100):0;
-    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--brd)">
-      <span style="width:120px;font-size:12px;font-weight:600">${l}</span>
-      <div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${i===0?'var(--vd)':i<4?'var(--azm)':i<7?'var(--am)':'var(--tx2)'}"></div></div>
-      <span style="font-size:13px;font-weight:700;width:50px;text-align:right;color:var(--az)">${sums[i]}</span>
-      <span style="font-size:10px;color:var(--tx2);width:35px">${pct}%</span>
-    </div>`;
-  }).join('');
-  document.getElementById('linha-tb').innerHTML=registros.sort((a,b)=>a.data.localeCompare(b.data)).map(r=>`<tr><td>${fmtData(r.data)}</td><td><strong>${r.colab}</strong></td>${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}</tr>`).join('');
-}
-
-// ── PCP ──
-function checkPwd(){
-  if(document.getElementById('pcp-pwd').value===SENHA_PCP){
-    document.getElementById('pcp-lock').style.display='none';
-    document.getElementById('pcp-data').style.display='block';
-    renderPCP();
-  }else{
-    const err=document.getElementById('pcp-err');err.style.display='block';
-    setTimeout(()=>err.style.display='none',2500);
-  }
-}
-function logoutPCP(){
-  document.getElementById('pcp-lock').style.display='block';
-  document.getElementById('pcp-data').style.display='none';
-  document.getElementById('pcp-pwd').value='';
-}
-function renderPCP(){
-  if(document.getElementById('pcp-data').style.display==='none')return;
-  const tot={f1:0,f2:0,f3:0,f4:0};
-  pcpData.forEach(r=>{tot.f1+=r.f1;tot.f2+=r.f2;tot.f3+=r.f3;tot.f4+=r.f4;});
-  document.getElementById('pcp-v1').textContent=tot.f1.toLocaleString('pt-BR');
-  document.getElementById('pcp-v2').textContent=tot.f2.toLocaleString('pt-BR');
-  document.getElementById('pcp-v3').textContent=tot.f3.toLocaleString('pt-BR');
-  document.getElementById('pcp-v4').textContent=tot.f4.toLocaleString('pt-BR');
-  const sorted=pcpData.slice().sort((a,b)=>a.data.localeCompare(b.data));
-  document.getElementById('pcp-tb').innerHTML=sorted.map(r=>{
-    const t=r.f1+r.f2+r.f3+r.f4;
-    return`<tr><td>${fmtData(r.data)}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.f3}</td><td>${r.f4}</td><td style="font-weight:700">${t}</td></tr>`;
-  }).join('');
-  const gt=tot.f1+tot.f2+tot.f3+tot.f4;
-  document.getElementById('pcp-tfoot').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>${tot.f1}</td><td>${tot.f2}</td><td>${tot.f3}</td><td>${tot.f4}</td><td style="font-weight:700">${gt}</td></tr>`;
-}
-function salvarPCP(){
-  const d=document.getElementById('pcp-dt').value;
-  if(!d){alert('Informe a data.');return;}
-  pcpData.push({data:d,f1:parseInt(document.getElementById('pcp-f1').value)||0,f2:parseInt(document.getElementById('pcp-f2').value)||0,f3:parseInt(document.getElementById('pcp-f3').value)||0,f4:parseInt(document.getElementById('pcp-f4').value)||0});
-  ['pcp-f1','pcp-f2','pcp-f3','pcp-f4'].forEach(id=>document.getElementById(id).value='');
-  renderPCP();
-}
-function exportPCP(){
-  const hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Devoluções,Total\n';
-  const rows=pcpData.map(r=>`${fmtData(r.data)},${r.f1},${r.f2},${r.f3},${r.f4},${r.f1+r.f2+r.f3+r.f4}`).join('\n');
-  dlFile('PCP_PATEC.csv','text/csv','\uFEFF'+hd+rows);
-}
-
-// ── EXPORTAR ──
-function renderExport(){
-  document.getElementById('exp-count').textContent=registros.length;
-  document.getElementById('exp-tb').innerHTML=registros.slice().sort((a,b)=>b.data.localeCompare(a.data)).map((r,i)=>`<tr><td>${fmtData(r.data)}</td><td>${r.colab}</td><td>${r.f.reduce((a,b)=>a+b,0)}</td><td><button class="btn btn-r" style="padding:3px 8px;font-size:10px" onclick="delReg(${registros.indexOf(r)})">✕</button></td></tr>`).join('');
-}
-function delReg(i){if(confirm('Excluir registro?')){registros.splice(i,1);renderExport();}}
-function buildData(regs){
-  return[
-    ['Colaborador','Data','Presença',...LINHAS,'Total Geral'],
-    ...regs.map(r=>[r.colab,fmtData(r.data),r.pres,...r.f,r.f.reduce((a,b)=>a+b,0)])
-  ];
-}
-function exportExcel(){
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet(buildData(registros.slice().sort((a,b)=>a.data.localeCompare(b.data))));
-  ws['!cols']=[{wch:10},{wch:11},{wch:12},...LINHAS.map(()=>({wch:10})),{wch:10}];
-  XLSX.utils.book_append_sheet(wb,ws,'Produção');
-  // Aba por colaborador
-  COLABS.forEach(c=>{
-    const regs=registros.filter(r=>r.colab===c);
-    if(regs.length){
-      const ws2=XLSX.utils.aoa_to_sheet(buildData(regs.sort((a,b)=>a.data.localeCompare(b.data))));
-      XLSX.utils.book_append_sheet(wb,ws2,c.substring(0,20));
-    }
-  });
-  XLSX.writeFile(wb,`Producao_PATEC_${HOJE.toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
-}
-function exportCSV(){
-  const hd='Colaborador,Data,Presença,'+LINHAS.join(',')+',Total\n';
-  const rows=registros.map(r=>`${r.colab},${fmtData(r.data)},${r.pres},${r.f.join(',')},${r.f.reduce((a,b)=>a+b,0)}`).join('\n');
-  dlFile('Producao_PATEC.csv','text/csv','\uFEFF'+hd+rows);
-}
-function exportHoje(){
-  const d=HOJE.toISOString().split('T')[0];
-  const regs=registros.filter(r=>r.data===d);
-  if(!regs.length){alert('Nenhum registro para hoje.');return;}
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet(buildData(regs));
-  XLSX.utils.book_append_sheet(wb,ws,'Hoje');
-  XLSX.writeFile(wb,`Producao_PATEC_Hoje.xlsx`);
-}
-function dlFile(name,type,content){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([content],{type}));
-  a.download=name;a.click();
-}
-
-// ── INIT renders ──
-renderEquipe();
-renderEquipeAcum();
-</script>
 
 <!-- ══ MAPA ══ -->
 <!-- SIDEBAR -->
@@ -2221,417 +1628,7 @@ renderEquipeAcum();
 <!-- ════════════════ LANÇAMENTO ════════════════ --><!-- ════════════════ VARIAÇÃO DIA A DIA ════════════════ --></div><!-- /ct -->
 </main>
 
-<script>
-// ════════════════════════════════════════════
-// DADOS REAIS — Ciclo Maio 2026
-// ════════════════════════════════════════════
-const HOJE = new Date();
-const DATAS_MAPA = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai'];
-const DATAS_ISO  = ['2026-05-01','2026-05-02','2026-05-05','2026-05-06','2026-05-07','2026-05-08','2026-05-09','2026-05-12','2026-05-13'];
 
-// Dados históricos da aba Dinâmica MAPA
-const L = {
-  3:[727,712,722,679,711,703,679,687,592],
-  4:[218,228,241,234,190,189,285,347,359],
-  5:[5,6,6,0,22,9,8,5,8],
-  6:[0,1,1,0,0,0,0,1,0],
-  7:[190,191,273,301,303,320,278,233,168],
-  8:[154,148,185,218,216,252,221,216,153],
-};
-
-// Dados do Level Board (posição atual)
-const LB = {
-  L3:{val:1019,fila:'PATEC',fila_mapa:'Analisar PATEC Finalizado',cor:'#3266AD',corFill:'rgba(50,102,173,.12)'},
-  L4:{val:1215,fila:'Oportunidade em Andamento',fila_mapa:'Aguardar PATEC ser Finalizado',cor:'#3266AD',corFill:'rgba(50,102,173,.12)'},
-  L5:{val:43,fila:'Emitir Pedido PATEC',fila_mapa:'PATEC Finalizado sem fornecedores aprovados',cor:'#1D9E75',corFill:'rgba(29,158,117,.12)'},
-  L6:{val:405,fila:'Análise de Oportunidade',fila_mapa:'Analisar PATEC Cancelado',cor:'#1D9E75',corFill:'rgba(29,158,117,.12)'},
-  L7:{val:1694,fila:'Fila de publicação',fila_mapa:'Abrir PATEC Idêntico Não',cor:'#BA7517',corFill:'rgba(186,117,23,.12)'},
-  L8:{val:140,fila:'Item em Parada',fila_mapa:'Abrir PATEC Grupo de Mercadoria Obrigatório',cor:'#BA7517',corFill:'rgba(186,117,23,.12)'},
-};
-const L12_LB = 1019+1215+43+405; // 2682
-const L10_LB = L12_LB+1694+140;  // 4516
-
-// Histórico de lançamentos desta sessão
-let lancamentos = [];
-
-// ── INIT ──
-document.getElementById('tdt').textContent = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-document.getElementById('lanc-data').value = HOJE.toISOString().split('T')[0];
-
-// ── SIDEBAR ──
-let chartsMap = {};
-function mkChart(id,type,data,opts={}){
-  if(chartsMap[id]) chartsMap[id].destroy();
-  chartsMap[id] = new Chart(document.getElementById(id),{
-    type, data,
-    options:{
-      responsive:true,
-      plugins:{legend:{display:opts.legend??false},...(opts.plugins||{})},
-      scales:opts.scales||{},
-      ...(opts.extra||{})
-    }
-  });
-  return chartsMap[id];
-}
-
-function go(id,el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
-  document.getElementById('p-'+id).classList.add('active');
-  if(el) el.classList.add('active');
-  const titles={posicao:'Posição Atual — Mapa PATEC',lancamento:'Lançamento do Mapa',historico:'Histórico do Ciclo',variacao:'Variação Dia a Dia',detalhe:'Detalhe por Linha'};
-  document.getElementById('ttl').textContent = titles[id]||id;
-  if(id==='historico') renderHistorico();
-  if(id==='variacao')  renderVariacao();
-  if(id==='detalhe')   selLinha('L3', document.querySelector('#detalhe-tabs .stab'));
-  document.getElementById('sb').classList.remove('mob-open');
-}
-
-// ── UTILS ──
-function varSpan(d){
-  if(d===0) return '<span style="color:var(--tx2)">—</span>';
-  return d>0
-    ? `<span style="color:var(--vm);font-weight:600">▲ +${d}</span>`
-    : `<span style="color:var(--vd);font-weight:600">▼ ${d}</span>`;
-}
-function pct(v,base){ return base>0?Math.round(v/base*100):0; }
-function pill(txt,cls){ return `<span class="pl ${cls}">${txt}</span>`; }
-
-// ════════════════════════════════
-// POSIÇÃO ATUAL — render
-// ════════════════════════════════
-(function renderPosicao(){
-  // Linhas L12
-  const lL12=[
-    {k:'L3',nome:'Analisar PATEC Finalizado',fila:'PATEC (col BN)',val:1019,cor:'#3266AD'},
-    {k:'L4',nome:'Aguardar PATEC ser Finalizado',fila:'Oportunidade em Andamento',val:1215,cor:'#3266AD'},
-    {k:'L5',nome:'PATEC Finalizado sem fornecedores',fila:'Emitir Pedido PATEC',val:43,cor:'#1D9E75'},
-    {k:'L6',nome:'Analisar PATEC Cancelado',fila:'Análise de Oportunidade',val:405,cor:'#1D9E75'},
-  ];
-  const lL78=[
-    {k:'L7',nome:'Abrir PATEC Idêntico Não',fila:'Fila de publicação',val:1694,cor:'#BA7517'},
-    {k:'L8',nome:'Abrir PATEC Grupo de Mercadoria Obrigatório',fila:'Item em Parada',val:140,cor:'#BA7517'},
-  ];
-  const maxL12=Math.max(...lL12.map(l=>l.val));
-  const maxL78=Math.max(...lL78.map(l=>l.val));
-
-  function linhaHTML(l,maxVal){
-    const p = Math.round(l.val/maxVal*100);
-    const d9 = L[parseInt(l.k.slice(1))];
-    const varD = d9[d9.length-1]-d9[d9.length-2];
-    const varCls = varD>0?'lv-up':varD<0?'lv-dn':'lv-eq';
-    const varSym = varD>0?'▲ +':varD<0?'▼ ':'';
-    return `<div class="linha-card">
-      <span class="lnum">${l.k}</span>
-      <div class="linha-info">
-        <div class="linha-nome">${l.nome}</div>
-        <div class="linha-fila">Fila LB: ${l.fila}</div>
-        <div class="linha-bar"><div class="linha-fill" style="width:${p}%;background:${l.cor}"></div></div>
-      </div>
-      <span class="linha-val" style="color:${l.cor}">${l.val.toLocaleString('pt-BR')}</span>
-      <span class="linha-var ${varCls}">${varD!==0?varSym+Math.abs(varD):'—'}<br><span style="font-size:9px;color:var(--tx2)">vs D8</span></span>
-    </div>`;
-  }
-  document.getElementById('linhas-l12').innerHTML=lL12.map(l=>linhaHTML(l,maxL12)).join('');
-  document.getElementById('linhas-l78').innerHTML=lL78.map(l=>linhaHTML(l,maxL78)).join('');
-
-  // Pizza L12
-  mkChart('ch-pizza-l12','doughnut',{
-    labels:['L3 — Analisar PATEC','L4 — Aguardar PATEC','L5 — s/ fornec.','L6 — Cancelado'],
-    datasets:[{data:[1019,1215,43,405],backgroundColor:['#3266AD','#5A8DD9','#1D9E75','#8BC4B2'],borderWidth:2,borderColor:'#fff'}]
-  },{legend:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}},extra:{cutout:'50%'}});
-
-  // Pizza L10
-  mkChart('ch-pizza-l10','doughnut',{
-    labels:['L3','L4','L5','L6','L7 — Abrir Idêntico','L8 — Grupo Merc.'],
-    datasets:[{data:[1019,1215,43,405,1694,140],backgroundColor:['#3266AD','#5A8DD9','#1D9E75','#8BC4B2','#BA7517','#E8A030'],borderWidth:2,borderColor:'#fff'}]
-  },{legend:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}},extra:{cutout:'50%'}});
-})();
-
-// ════════════════════════════════
-// LANÇAMENTO
-// ════════════════════════════════
-function recalcL(){
-  const g=id=>parseInt(document.getElementById(id).value)||0;
-  const l10=g('lv3')+g('lv4')+g('lv5')+g('lv6')+g('lv7')+g('lv8');
-  const l12=g('lv3')+g('lv4')+g('lv5')+g('lv6');
-  document.getElementById('l10-calc').textContent=l10.toLocaleString('pt-BR');
-  document.getElementById('l12-calc').textContent=l12.toLocaleString('pt-BR');
-}
-function salvarLancamento(){
-  const g=id=>parseInt(document.getElementById(id).value)||0;
-  const dt=document.getElementById('lanc-data').value;
-  if(!dt){alert('Informe a data.');return;}
-  const row={data:dt,obs:document.getElementById('lanc-obs').value,
-    L3:g('lv3'),L4:g('lv4'),L5:g('lv5'),L6:g('lv6'),L7:g('lv7'),L8:g('lv8')};
-  row.L10=row.L3+row.L4+row.L5+row.L6+row.L7+row.L8;
-  row.L12=row.L3+row.L4+row.L5+row.L6;
-  lancamentos.push(row);
-  document.getElementById('lanc-hist-card').style.display='block';
-  document.getElementById('lanc-tb').innerHTML=lancamentos.map(r=>
-    `<tr><td>${r.data.split('-').reverse().join('/')}</td>
-    <td>${r.L3}</td><td>${r.L4}</td><td>${r.L5}</td><td>${r.L6}</td><td>${r.L7}</td><td>${r.L8}</td>
-    <td style="font-weight:700">${r.L10.toLocaleString('pt-BR')}</td>
-    <td style="font-weight:700;color:var(--azm)">${r.L12.toLocaleString('pt-BR')}</td>
-    <td style="font-size:10px;color:var(--tx2)">${r.obs||'—'}</td></tr>`
-  ).join('');
-  const msg=document.getElementById('lanc-msg');
-  msg.style.display='inline';setTimeout(()=>msg.style.display='none',3000);
-}
-function exportLancamento(){
-  const g=id=>parseInt(document.getElementById(id).value)||0;
-  const dt=document.getElementById('lanc-data').value.split('-').reverse().join('/');
-  const l3=g('lv3'),l4=g('lv4'),l5=g('lv5'),l6=g('lv6'),l7=g('lv7'),l8=g('lv8');
-  const rows=[
-    ['Data referência',dt],['',''],
-    ['Linha','Fila do MAPA (aba Dinâmica)','Fila Level Board','Quantidade'],
-    ['L3','Analisar PATEC Finalizado','PATEC',l3],
-    ['L4','Aguardar PATEC ser Finalizado','Oportunidade em Andamento',l4],
-    ['L5','PATEC Fin. sem fornec. aprovados','Emitir Pedido PATEC',l5],
-    ['L6','Analisar PATEC Cancelado','Análise de Oportunidade',l6],
-    ['L7','Abrir PATEC Idêntico Não','Fila de publicação',l7],
-    ['L8','Abrir PATEC Grupo Merc. Obrig.','Item em Parada',l8],
-    ['','','',''],
-    ['L10 (soma total)','','',l3+l4+l5+l6+l7+l8],
-    ['L12 (somente PATEC)','','',l3+l4+l5+l6],
-  ];
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:8},{wch:42},{wch:34},{wch:12}];
-  XLSX.utils.book_append_sheet(wb,ws,'Lançamento MAPA');
-  XLSX.writeFile(wb,`Lancamento_MAPA_${dt.replace(/\//g,'-')}.xlsx`);
-}
-
-// ════════════════════════════════
-// HISTÓRICO
-// ════════════════════════════════
-const HIST_DATASETS = {
-  todas:[
-    {label:'L10',data:DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0)),borderColor:'#3266AD',borderWidth:2.5,pointRadius:3,fill:false,tension:.1},
-    {label:'L12',data:DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]),borderColor:'#1D9E75',borderWidth:2.5,pointRadius:3,fill:false,tension:.1},
-    {label:'L3',data:L[3],borderColor:'#5A8DD9',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
-    {label:'L4',data:L[4],borderColor:'#8BD9C5',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
-    {label:'L7',data:L[7],borderColor:'#EF9F27',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
-    {label:'L8',data:L[8],borderColor:'#E8C072',borderWidth:1.5,borderDash:[4,3],pointRadius:2,fill:false},
-  ],
-  l12:[{label:'L12 (PATEC)',data:DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]),borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,.08)',borderWidth:2.5,pointRadius:4,fill:true,tension:.15}],
-  l34:[
-    {label:'L3',data:L[3],borderColor:'#3266AD',borderWidth:2,pointRadius:3,fill:false,tension:.1},
-    {label:'L4',data:L[4],borderColor:'#1D9E75',borderWidth:2,pointRadius:3,fill:false,tension:.1},
-  ],
-  l78:[
-    {label:'L7',data:L[7],borderColor:'#BA7517',borderWidth:2,pointRadius:3,fill:false,tension:.1},
-    {label:'L8',data:L[8],borderColor:'#E24B4A',borderWidth:2,pointRadius:3,fill:false,tension:.1},
-  ],
-};
-const SCALE_HIST={y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}};
-
-function renderHistorico(){
-  mkChart('ch-hist','line',{labels:DATAS_MAPA,datasets:HIST_DATASETS.todas},{legend:true,scales:SCALE_HIST});
-
-  // Mini-gráficos por linha
-  [[3,'#3266AD'],[4,'#3266AD'],[5,'#1D9E75'],[6,'#1D9E75'],[7,'#BA7517'],[8,'#BA7517']].forEach(([k,cor])=>{
-    const prev=L[k].slice(0,-1);const last=L[k].slice(1);
-    const cols=DATAS_MAPA.map((_,i)=>i>0?(L[k][i]>L[k][i-1]?'rgba(226,75,74,.7)':'rgba(29,158,117,.7)'):cor);
-    mkChart(`ch-l${k}`,'bar',{labels:DATAS_MAPA,datasets:[{data:L[k],backgroundColor:cols,borderRadius:3}]},
-      {scales:{y:{grid:{display:false},ticks:{font:{size:8},maxTicksLimit:4}},x:{grid:{display:false},ticks:{font:{size:8}}}}});
-  });
-
-  // Tabela
-  const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
-  const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
-  const maxL12=Math.max(...l12arr);
-  document.getElementById('tb-hist').innerHTML=DATAS_MAPA.map((dt,i)=>{
-    const l12=l12arr[i],l10=l10arr[i];
-    const dif=i>0?l12-l12arr[i-1]:0;
-    return`<tr>
-      <td><strong>Dia ${i+1}</strong> <span style="font-size:10px;color:var(--tx2)">${dt}</span></td>
-      <td>${L[3][i]}</td><td>${L[4][i]}</td><td>${L[5][i]}</td><td>${L[6][i]}</td>
-      <td>${L[7][i]}</td><td>${L[8][i]}</td>
-      <td style="font-weight:600">${l10.toLocaleString('pt-BR')}</td>
-      <td style="font-weight:700;color:var(--azm)">${l12.toLocaleString('pt-BR')}</td>
-      <td>${i>0?varSpan(dif):'—'}</td>
-      <td>${pill(pct(l12,maxL12)+'%',l12===maxL12?'pl-ok':'pl-g')}</td>
-    </tr>`;
-  }).join('');
-  // Tfoot médias
-  const avgL=k=>Math.round(L[k].reduce((a,b)=>a+b,0)/9);
-  const avgL12=Math.round(l12arr.reduce((a,b)=>a+b,0)/9);
-  const avgL10=Math.round(l10arr.reduce((a,b)=>a+b,0)/9);
-  document.getElementById('tf-hist').innerHTML=`<tr>
-    <td>MÉDIA</td>
-    <td>${avgL(3)}</td><td>${avgL(4)}</td><td>${avgL(5)}</td><td>${avgL(6)}</td>
-    <td>${avgL(7)}</td><td>${avgL(8)}</td>
-    <td>${avgL10.toLocaleString('pt-BR')}</td>
-    <td style="color:var(--azm)">${avgL12.toLocaleString('pt-BR')}</td>
-    <td>—</td><td>—</td>
-  </tr>`;
-}
-function setHistChart(tipo,btn){
-  document.querySelectorAll('#p-historico .stab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  mkChart('ch-hist','line',{labels:DATAS_MAPA,datasets:HIST_DATASETS[tipo]},{legend:true,scales:SCALE_HIST});
-}
-function exportHistorico(){
-  const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
-  const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
-  const hd=['Dia','Data','L3','L4','L5','L6','L7','L8','L10','L12','Var.L12'];
-  const rows=DATAS_MAPA.map((dt,i)=>{
-    const dif=i>0?l12arr[i]-l12arr[i-1]:0;
-    return[i+1,dt,L[3][i],L[4][i],L[5][i],L[6][i],L[7][i],L[8][i],l10arr[i],l12arr[i],i>0?dif:''];
-  });
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet([hd,...rows]);
-  ws['!cols']=[{wch:6},{wch:9},...Array(9).fill({wch:8})];
-  XLSX.utils.book_append_sheet(wb,ws,'Histórico Mapa');
-  XLSX.writeFile(wb,'Historico_MAPA_PATEC.xlsx');
-}
-
-// ════════════════════════════════
-// VARIAÇÃO
-// ════════════════════════════════
-function renderVariacao(){
-  // Cards variação dia 9 vs dia 8
-  const linhasVar=[
-    {k:3,nom:'L3',cor:'#3266AD'},{k:4,nom:'L4',cor:'#3266AD'},
-    {k:5,nom:'L5',cor:'#1D9E75'},{k:6,nom:'L6',cor:'#1D9E75'},
-    {k:7,nom:'L7',cor:'#BA7517'},{k:8,nom:'L8',cor:'#BA7517'},
-  ];
-  const l12d8=L[3][7]+L[4][7]+L[5][7]+L[6][7];
-  const l12d9=L[3][8]+L[4][8]+L[5][8]+L[6][8];
-  const l10d8=Object.keys(L).reduce((s,k)=>s+L[k][7],0);
-  const l10d9=Object.keys(L).reduce((s,k)=>s+L[k][8],0);
-  const varCards=[...linhasVar.map(({k,nom,cor})=>{
-    const d=L[k][8]-L[k][7];
-    const cls=d>0?'vc-up':d<0?'vc-dn':'vc-eq';
-    return`<div class="var-card ${cls}">
-      <div class="var-card-l">${nom}</div>
-      <div class="var-card-v" style="color:${cor}">${L[k][8].toLocaleString('pt-BR')}</div>
-      <div class="var-card-d" style="color:${d>0?'var(--vm)':d<0?'var(--vd)':'var(--tx2)'}">${d>0?'▲ +':d<0?'▼ ':''}${d!==0?Math.abs(d):'—'}</div>
-    </div>`;
-  }),
-  `<div class="var-card ${(l10d9-l10d8)>0?'vc-up':(l10d9-l10d8)<0?'vc-dn':'vc-eq'}" style="border:2px solid var(--azm)">
-    <div class="var-card-l">L10</div>
-    <div class="var-card-v">${l10d9.toLocaleString('pt-BR')}</div>
-    <div class="var-card-d" style="color:${(l10d9-l10d8)>0?'var(--vm)':'var(--vd)'}">${(l10d9-l10d8)>0?'▲ +':'▼ '}${Math.abs(l10d9-l10d8)}</div>
-  </div>`,
-  `<div class="var-card ${(l12d9-l12d8)>0?'vc-up':'vc-dn'}" style="border:2px solid var(--vd)">
-    <div class="var-card-l">L12 (PATEC)</div>
-    <div class="var-card-v" style="color:var(--azm)">${l12d9.toLocaleString('pt-BR')}</div>
-    <div class="var-card-d" style="color:${(l12d9-l12d8)>0?'var(--vm)':'var(--vd)'}">${(l12d9-l12d8)>0?'▲ +':'▼ '}${Math.abs(l12d9-l12d8)}</div>
-  </div>`];
-  document.getElementById('var-cards').innerHTML=varCards.join('');
-
-  // Gráfico variação L12
-  const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
-  const varL12=l12arr.map((v,i)=>i>0?v-l12arr[i-1]:0);
-  mkChart('ch-var-l12','bar',{
-    labels:DATAS_MAPA,
-    datasets:[{
-      label:'Variação L12',data:varL12,
-      backgroundColor:varL12.map(v=>v>0?'rgba(226,75,74,.75)':'rgba(29,158,117,.75)'),
-      borderRadius:4,
-    }]
-  },{scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}}});
-
-  // Gráfico variação por linha (stacked)
-  const varLinhas=[3,4,7,8].map(k=>({
-    label:`L${k}`,
-    data:L[k].map((v,i)=>i>0?v-L[k][i-1]:0),
-    borderColor:k<=4?'#3266AD':k===5||k===6?'#1D9E75':'#BA7517',
-    backgroundColor:(k<=4?'rgba(50,102,173,.15)':k<7?'rgba(29,158,117,.15)':'rgba(186,117,23,.15)'),
-    borderWidth:2,pointRadius:2,fill:false,tension:.1,
-  }));
-  mkChart('ch-var-linhas','line',{labels:DATAS_MAPA,datasets:varLinhas},{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:9}}}}});
-
-  // Tabela variações
-  const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
-  document.getElementById('tb-var').innerHTML=DATAS_MAPA.slice(1).map((dt,i)=>{
-    const j=i+1;
-    const dL=[3,4,5,6,7,8].map(k=>L[k][j]-L[k][i]);
-    const dL10=l10arr[j]-l10arr[i];
-    const dL12=l12arr[j]-l12arr[i];
-    return`<tr>
-      <td><strong>D${i+1}→D${j+1}</strong> <span style="font-size:10px;color:var(--tx2)">${DATAS_MAPA[i]}→${dt}</span></td>
-      ${dL.map(d=>`<td style="font-weight:600;color:${d>0?'var(--vm)':d<0?'var(--vd)':'var(--tx2)'}">${d>0?'+':''}${d!==0?d:'—'}</td>`).join('')}
-      <td style="font-weight:600;color:${dL10>0?'var(--vm)':dL10<0?'var(--vd)':'var(--tx2)'}">${dL10>0?'+':''}${dL10}</td>
-      <td style="font-weight:700;color:${dL12>0?'var(--vm)':dL12<0?'var(--vd)':'var(--tx2)'}">${dL12>0?'+':''}${dL12}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ════════════════════════════════
-// DETALHE POR LINHA
-// ════════════════════════════════
-function selLinha(linha,btn){
-  document.querySelectorAll('#detalhe-tabs .stab').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  const k=parseInt(linha.slice(1));
-  const data=L[k];
-  const lb=LB[linha];
-  const max=Math.max(...data), min=Math.min(...data);
-  const avg=Math.round(data.reduce((a,b)=>a+b,0)/data.length);
-  const tendencia=data[data.length-1]-data[data.length-2];
-
-  document.getElementById('kpi-linha').innerHTML=`
-    <div class="kc"><div class="kc-l">Valor atual (LB)</div><div class="kc-v xl" style="color:${lb.cor}">${lb.val.toLocaleString('pt-BR')}</div><div class="kc-s">Level Board</div></div>
-    <div class="kc ok"><div class="kc-l">Máximo (aba Din.)</div><div class="kc-v">${max.toLocaleString('pt-BR')}</div><div class="kc-s">Dia ${data.indexOf(max)+1}</div></div>
-    <div class="kc warn"><div class="kc-l">Mínimo (aba Din.)</div><div class="kc-v">${min.toLocaleString('pt-BR')}</div><div class="kc-s">Dia ${data.indexOf(min)+1}</div></div>
-    <div class="kc"><div class="kc-l">Média (aba Din.)</div><div class="kc-v" style="color:var(--az)">${avg.toLocaleString('pt-BR')}</div><div class="kc-s">9 dias</div></div>
-    <div class="kc ${tendencia>0?'bad':tendencia<0?'ok':''}"><div class="kc-l">Última variação</div><div class="kc-v">${tendencia>0?'▲ +':tendencia<0?'▼ ':''}${Math.abs(tendencia)}</div><div class="kc-s">D9 vs D8</div></div>
-  `;
-
-  document.getElementById('detalhe-chart-title').textContent=`${linha} — ${lb.fila_mapa} (histórico 9 dias)`;
-  document.getElementById('detalhe-tb-title').textContent=`Histórico diário — ${linha}`;
-
-  const bc=data.map((v,i)=>i>0?(v>data[i-1]?'rgba(226,75,74,.75)':'rgba(29,158,117,.75)'):lb.cor);
-  mkChart('ch-detalhe','bar',{
-    labels:DATAS_MAPA,
-    datasets:[
-      {label:linha,data,backgroundColor:bc,borderRadius:4},
-      {label:'Média',data:Array(9).fill(avg),type:'line',borderColor:'#888',borderWidth:1.5,borderDash:[4,3],pointRadius:0},
-    ]
-  },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:Math.max(0,min-10)},x:{grid:{display:false},ticks:{font:{size:9}}}}});
-
-  document.getElementById('detalhe-info').innerHTML=`
-    <div class="cd-t">${linha} — Informações</div>
-    <div style="font-size:12px;line-height:2;color:var(--tx2)">
-      <div><strong style="color:var(--tx)">Fila MAPA:</strong> ${lb.fila_mapa}</div>
-      <div><strong style="color:var(--tx)">Fila Level Board:</strong> ${lb.fila}</div>
-      <div><strong style="color:var(--tx)">Valor Level Board:</strong> <span style="font-size:16px;font-weight:700;color:${lb.cor}">${lb.val.toLocaleString('pt-BR')}</span></div>
-      <div><strong style="color:var(--tx)">Incluso no L12?</strong> ${k<=6?pill('Sim — L12','pl-ok'):pill('Não — apenas L10','pl-w')}</div>
-      <div style="margin-top:.75rem;padding:.75rem;background:var(--cin);border-radius:7px;border:1px solid var(--brd)">
-        <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:6px">AMPLITUDE (aba Dinâmica)</div>
-        <div style="display:flex;justify-content:space-between;font-size:13px">
-          <div><span style="color:var(--tx2);font-size:10px">MÍN</span><br><strong>${min}</strong></div>
-          <div style="text-align:center"><span style="color:var(--tx2);font-size:10px">MÉDIA</span><br><strong>${avg}</strong></div>
-          <div style="text-align:right"><span style="color:var(--tx2);font-size:10px">MÁX</span><br><strong>${max}</strong></div>
-        </div>
-        <div style="height:6px;background:#EEE;border-radius:3px;margin-top:8px;overflow:hidden">
-          <div style="height:100%;background:${lb.cor};border-radius:3px;width:${pct(data[data.length-1]-min,max-min)}%;margin-left:${pct(min,max)}%"></div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.getElementById('tb-detalhe').innerHTML=data.map((v,i)=>{
-    const dif=i>0?v-data[i-1]:0;
-    const tend=i>0?(dif>20?'📈 Alta forte':dif>0?'↗ Alta':dif<-20?'📉 Queda forte':dif<0?'↘ Queda':'→ Estável'):'—';
-    return`<tr>
-      <td><strong>Dia ${i+1}</strong> <span style="font-size:10px;color:var(--tx2)">${DATAS_MAPA[i]}</span></td>
-      <td style="font-size:15px;font-weight:700;color:${lb.cor}">${v.toLocaleString('pt-BR')}</td>
-      <td>${i>0?varSpan(dif):'—'}</td>
-      <td>${pill(pct(v,max)+'%',v===max?'pl-ok':v===min?'pl-b':'pl-g')}</td>
-      <td style="font-size:11px">${tend}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ── INIT ──
-renderVariacao();
-renderHistorico();
-selLinha('L3',null);
-</script>
 
 </div></main>
 <script>
@@ -2643,6 +1640,17 @@ function go(id, el) {
   const page = document.getElementById('p-' + id);
   if (page) page.classList.add('active');
   if (el) el.classList.add('active');
+  const icons = {
+    'vg-visao':'📊','vg-validade':'⏱',
+    'pr-lancar':'✏️','pr-equipe':'👥','pr-producao':'📋','pr-bancoferias':'🗓',
+    'adm':'🔐'
+  };
+  const ico = icons[id] || '◈';
+  const iconEl = document.querySelector('.topbar .topbar-l + div span');
+  if(iconEl) iconEl.textContent = ico;
+  // Atualizar ícone no centro da topbar
+  const centroIco = document.querySelector('.topbar [style*="translateX"] div');
+  if(centroIco) centroIco.textContent = ico;
   const titles = {
     'vg-visao':'Painel Geral','vg-mapa':'Mapa — L10/L12',
     'vg-validade':'Validade Oportunidades',
@@ -2668,6 +1676,8 @@ const PROD  = [79,90,93,46,70,64,131,88,56,26];
 const SAIDA = [55,44,80,27,58,38,35,54,18,30];
 const DATAS = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai','14/mai'];
 const DATAS_FULL = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai','14/mai','15/mai','16/mai','19/mai','20/mai','21/mai','22/mai','23/mai','26/mai','27/mai','28/mai','29/mai','30/mai'];
+const DATAS_MAPA = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai'];
+const DATAS_ISO  = ['2026-05-01','2026-05-02','2026-05-05','2026-05-06','2026-05-07','2026-05-08','2026-05-09','2026-05-12','2026-05-13'];
 const META = 90;
 const DIAS_UTEIS = 22;
 const HOJE = new Date();
@@ -2688,6 +1698,17 @@ const L = {
   7:[190,191,273,301,303,320,278,233,168],
   8:[154,148,185,218,216,252,221,216,153],
 };
+const LB = {
+  L3:{val:1019,fila:'PATEC',fila_mapa:'Analisar PATEC Finalizado',cor:'#3266AD'},
+  L4:{val:1215,fila:'Oportunidade em Andamento',fila_mapa:'Aguardar PATEC ser Finalizado',cor:'#3266AD'},
+  L5:{val:43,fila:'Emitir Pedido PATEC',fila_mapa:'PATEC Finalizado sem fornecedores aprovados',cor:'#1D9E75'},
+  L6:{val:405,fila:'Análise de Oportunidade',fila_mapa:'Analisar PATEC Cancelado',cor:'#1D9E75'},
+  L7:{val:1694,fila:'Fila de publicação',fila_mapa:'Abrir PATEC Idêntico Não',cor:'#BA7517'},
+  L8:{val:140,fila:'Item em Parada',fila_mapa:'Abrir PATEC Grupo de Mercadoria Obrigatório',cor:'#BA7517'}
+};
+const L12_LB = 1019+1215+43+405;
+const L10_LB = L12_LB+1694+140;
+let lancamentos = [];
 
 const ROSCAS = [
   {id:'rc1',total:1467,dentro:1285,prox:157,venc:19,sem:6},
@@ -2705,41 +1726,6 @@ const SLA_TABLE = [
   {linha:'L8',fila:'Abrir PATEC Grupo Mercadoria Obrig.',sla:154,total:140,fora:25,pct:17.9},
 ];
 
-// ── INIT ──
-const dtStr = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-document.getElementById('tdt').textContent = dtStr;
-document.getElementById('ref-data').textContent = '14/05/2026';
-
-// ── SIDEBAR ──
-function go(id, el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
-  document.getElementById('p-'+id).classList.add('active');
-  if(el) el.classList.add('active');
-  const titles={visao:'Visão Geral',mapa:'Mapa — L10 / L12',medicao:'Gráfico de Medição',colab:'Por Colaborador',validade:'Validade Oportunidades'};
-  document.getElementById('ttl').textContent = titles[id]||id;
-  if(id==='medicao') renderMedicao();
-  if(id==='mapa')    renderMapa();
-  if(id==='colab')   selColab('André', document.querySelector('#colab-tabs .stab'));
-  if(id==='validade') renderValidade();
-  document.getElementById('sb').classList.remove('mob-open');
-}
-
-// ── UTILS ──
-let charts = {};
-function mkChart(id,type,data,opts={}){
-  if(charts[id]) charts[id].destroy();
-  charts[id] = new Chart(document.getElementById(id),{
-    type, data,
-    options:{
-      responsive:true,
-      plugins:{legend:{display:opts.legend??false},...(opts.plugins||{})},
-      scales:opts.scales??{},
-      ...(opts.extra||{})
-    }
-  });
-  return charts[id];
-}
 function pct(v,base){ return base>0?Math.round(v/base*100):0; }
 function pill(txt,cls){ return `<span class="pl ${cls}">${txt}</span>`; }
 function perfPill(val){
@@ -3450,7 +2436,7 @@ function checkPwd(){if(document.getElementById('pcp-pwd').value===SENHA_PCP2){do
 function logoutPCP(){document.getElementById('pcp-lock').style.display='block';document.getElementById('pcp-data').style.display='none';document.getElementById('pcp-pwd').value='';}
 function renderPCP(){if(document.getElementById('pcp-data')?.style.display==='none')return;const tot={f1:0,f2:0,f3:0,f4:0};pcpData.forEach(r=>{tot.f1+=r.f1;tot.f2+=r.f2;tot.f3+=r.f3;tot.f4+=r.f4;});['1','2','3','4'].forEach(i=>document.getElementById('pcp-v'+i).textContent=tot['f'+i].toLocaleString('pt-BR'));const s=pcpData.slice().sort((a,b)=>a.data.localeCompare(b.data));document.getElementById('pcp-tb').innerHTML=s.map(r=>{const t=r.f1+r.f2+r.f3+r.f4;return`<tr><td>${fmtDt(r.data)}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.f3}</td><td>${r.f4}</td><td style="font-weight:700">${t}</td></tr>`;}).join('');const gt=tot.f1+tot.f2+tot.f3+tot.f4;document.getElementById('pcp-tf').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>${tot.f1}</td><td>${tot.f2}</td><td>${tot.f3}</td><td>${tot.f4}</td><td style="font-weight:700">${gt}</td></tr>`;}
 function salvarPCP(){const d=document.getElementById('pcp-dt').value;if(!d){alert('Informe a data.');return;}pcpData.push({data:d,f1:parseInt(document.getElementById('pcp-f1').value)||0,f2:parseInt(document.getElementById('pcp-f2').value)||0,f3:parseInt(document.getElementById('pcp-f3').value)||0,f4:parseInt(document.getElementById('pcp-f4').value)||0});['pcp-f1','pcp-f2','pcp-f3','pcp-f4'].forEach(id=>document.getElementById(id).value='');renderPCP();}
-function exportPCP(){const hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Devoluções,Total\n';const rows=pcpData.map(r=>`${fmtDt(r.data)},${r.f1},${r.f2},${r.f3},${r.f4},${r.f1+r.f2+r.f3+r.f4}`).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();}
+function exportPCP(){var hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Dev.,Total\n';var rows=pcpData.map(function(r){return fmtDt(r.data)+','+r.f1+','+r.f2+','+r.f3+','+r.f4+','+(r.f1+r.f2+r.f3+r.f4);}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();}
 
 // ── EXPORTAR ──
 function renderExport(){document.getElementById('exp-count').textContent=registros.length;document.getElementById('exp-tb').innerHTML=registros.slice().sort((a,b)=>b.data.localeCompare(a.data)).map((r,_)=>`<tr><td>${fmtDt(r.data)}</td><td>${r.colab}</td><td>${r.f.reduce((a,b)=>a+b,0)}</td><td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="delReg(${registros.indexOf(r)})">✕</button></td></tr>`).join('');}
@@ -3466,42 +2452,6 @@ renderFerias();
 renderBanco();
 
 // ══ MAPA ══
-// ════════════════════════════════════════════
-// DADOS REAIS — Ciclo Maio 2026
-// ════════════════════════════════════════════
-const HOJE = new Date();
-const DATAS_MAPA = ['01/mai','02/mai','05/mai','06/mai','07/mai','08/mai','09/mai','12/mai','13/mai'];
-const DATAS_ISO  = ['2026-05-01','2026-05-02','2026-05-05','2026-05-06','2026-05-07','2026-05-08','2026-05-09','2026-05-12','2026-05-13'];
-
-// Dados históricos da aba Dinâmica MAPA
-const L = {
-  3:[727,712,722,679,711,703,679,687,592],
-  4:[218,228,241,234,190,189,285,347,359],
-  5:[5,6,6,0,22,9,8,5,8],
-  6:[0,1,1,0,0,0,0,1,0],
-  7:[190,191,273,301,303,320,278,233,168],
-  8:[154,148,185,218,216,252,221,216,153],
-};
-
-// Dados do Level Board (posição atual)
-const LB = {
-  L3:{val:1019,fila:'PATEC',fila_mapa:'Analisar PATEC Finalizado',cor:'#3266AD',corFill:'rgba(50,102,173,.12)'},
-  L4:{val:1215,fila:'Oportunidade em Andamento',fila_mapa:'Aguardar PATEC ser Finalizado',cor:'#3266AD',corFill:'rgba(50,102,173,.12)'},
-  L5:{val:43,fila:'Emitir Pedido PATEC',fila_mapa:'PATEC Finalizado sem fornecedores aprovados',cor:'#1D9E75',corFill:'rgba(29,158,117,.12)'},
-  L6:{val:405,fila:'Análise de Oportunidade',fila_mapa:'Analisar PATEC Cancelado',cor:'#1D9E75',corFill:'rgba(29,158,117,.12)'},
-  L7:{val:1694,fila:'Fila de publicação',fila_mapa:'Abrir PATEC Idêntico Não',cor:'#BA7517',corFill:'rgba(186,117,23,.12)'},
-  L8:{val:140,fila:'Item em Parada',fila_mapa:'Abrir PATEC Grupo de Mercadoria Obrigatório',cor:'#BA7517',corFill:'rgba(186,117,23,.12)'},
-};
-const L12_LB = 1019+1215+43+405; // 2682
-const L10_LB = L12_LB+1694+140;  // 4516
-
-// Histórico de lançamentos desta sessão
-let lancamentos = [];
-
-// ── INIT ──
-document.getElementById('tdt').textContent = HOJE.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-document.getElementById('lanc-data').value = HOJE.toISOString().split('T')[0];
-
 // ── SIDEBAR ──
 let chartsMap = {};
 function mkChart(id,type,data,opts={}){
@@ -3518,18 +2468,6 @@ function mkChart(id,type,data,opts={}){
   return chartsMap[id];
 }
 
-function go(id,el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('active'));
-  document.getElementById('p-'+id).classList.add('active');
-  if(el) el.classList.add('active');
-  const titles={posicao:'Posição Atual — Mapa PATEC',lancamento:'Lançamento do Mapa',historico:'Histórico do Ciclo',variacao:'Variação Dia a Dia',detalhe:'Detalhe por Linha'};
-  document.getElementById('ttl').textContent = titles[id]||id;
-  if(id==='historico') renderHistorico();
-  if(id==='variacao')  renderVariacao();
-  if(id==='detalhe')   selLinha('L3', document.querySelector('#detalhe-tabs .stab'));
-  document.getElementById('sb').classList.remove('mob-open');
-}
 
 // ── UTILS ──
 function varSpan(d){
@@ -4036,18 +2974,20 @@ async function analisarIA(tipo){
   if(tipo==='mapa'){
     const l12arr=L[3].map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
     const l10arr=L[3].map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
-    contexto=`Dados do Histórico do Mapa PATEC (ciclo Maio 2026, 9 dias registrados):
-${DATAS_MAPA.map((dt,i)=>`Dia ${i+1} (${dt}): L3=${L[3][i]} L4=${L[4][i]} L5=${L[5][i]} L6=${L[6][i]} L7=${L[7][i]} L8=${L[8][i]} | L10=${l10arr[i]} L12=${l12arr[i]} Var.L12=${i>0?l12arr[i]-l12arr[i-1]:'-'}`).join('
-')}
-Level Board atual: L3=1019 L4=1215 L5=43 L6=405 L7=1694 L8=140 | L10=4516 L12=2682`;
+    contexto='Dados do Histórico do Mapa PATEC (ciclo Maio 2026, 9 dias registrados):\n'+
+    DATAS_MAPA.map(function(dt,i){
+      return 'Dia '+(i+1)+' ('+dt+'): L3='+L[3][i]+' L4='+L[4][i]+' L5='+L[5][i]+' L6='+L[6][i]+' L7='+L[7][i]+' L8='+L[8][i]+' | L10='+l10arr[i]+' L12='+l12arr[i]+' Var.L12='+(i>0?l12arr[i]-l12arr[i-1]:'-');
+    }).join('\n')+
+    '\nLevel Board atual: L3=1019 L4=1215 L5=43 L6=405 L7=1694 L8=140 | L10=4516 L12=2682'
   } else {
     const colab=document.getElementById('adm-prod-colab').value||'toda a equipe';
     const regsIA=colab==='toda a equipe'?registros:registros.filter(r=>r.colab===colab);
-    contexto=`Dados de Produção PATEC — ${colab} (ciclo Maio 2026):
-Meta mínima: ${getMeta()} itens/dia
-Linhas: Analisados, Tratativa, Fornecedor, Requisitante, MDG, Val.Thiago, XGL, Republicação, Pedidos, Devoluções
-${regsIA.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r=>`${fmtDt(r.data)} | ${r.colab} | ${r.pres} | Analisados: ${r.f[0]} | Total: ${r.f.reduce((a,b)=>a+b,0)}${r.justif?' | Justif: '+r.justif:''}`).join('
-')}`;
+    contexto='Dados de Produção PATEC — '+colab+' (ciclo Maio 2026):\n'+
+    'Meta mínima: '+getMeta()+' itens/dia\n'+
+    'Linhas: Analisados, Tratativa, Fornecedor, Requisitante, MDG, Val.Thiago, XGL, Republicação, Pedidos, Devoluções\n'+
+    regsIA.slice().sort(function(a,b){return a.data.localeCompare(b.data);}).map(function(r){
+      return fmtDt(r.data)+' | '+r.colab+' | '+r.pres+' | Analisados: '+r.f[0]+' | Total: '+r.f.reduce(function(a,b){return a+b;},0)+(r.justif?' | Justif: '+r.justif:'');
+    }).join('\n')
   }
 
   btn.disabled=true;
@@ -4077,13 +3017,10 @@ Responda de forma estruturada, com insights práticos e sugestões de ação qua
       })
     });
     const data=await resp.json();
-    const texto=data.content?.map(c=>c.text||'').join('
-')||'Não foi possível obter resposta.';
+    const texto=data.content?.map(c=>c.text||'').join('\n')||'Não foi possível obter resposta.';
     txtEl.textContent=texto;
   } catch(err) {
-    txtEl.textContent='Erro ao consultar a IA: '+err.message+'
-
-Verifique a conexão e tente novamente.';
+    txtEl.textContent='Erro ao consultar a IA: '+err.message+'. Verifique a conexão e tente novamente.'
   }
   btn.disabled=false;
   btn.innerHTML='🤖 Analisar com IA';
@@ -4205,13 +3142,7 @@ function salvarAdmPCP(){
   ['adm-pcp-f1','adm-pcp-f2','adm-pcp-f3','adm-pcp-f4'].forEach(id=>document.getElementById(id).value='');
   renderAdmPCP();
 }
-function exportAdmPCP(){
-  const hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Devoluções,Total
-';
-  const rows=pcpData.map(r=>`${fmtDt(r.data)},${r.f1},${r.f2},${r.f3},${r.f4},${r.f1+r.f2+r.f3+r.f4}`).join('
-');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();
-}
+function exportAdmPCP(){var hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Dev.,Total\n';var rows=pcpData.map(function(r){return fmtDt(r.data)+','+r.f1+','+r.f2+','+r.f3+','+r.f4+','+(r.f1+r.f2+r.f3+r.f4);}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();}
 
 // ── UPLOAD MAPA ADM ──
 let admCruzResult=[];
@@ -4275,20 +3206,8 @@ function exportAdmMapa(){
   const rows=DATAS_MAPA.map((dt,i)=>[i+1,dt,L[3][i],L[4][i],L[5][i],L[6][i],L[7][i],L[8][i],Object.keys(L).reduce((s,k)=>s+L[k][i],0),L[3][i]+L[4][i]+L[5][i]+L[6][i]]);
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([hd,...rows]);XLSX.utils.book_append_sheet(wb,ws,'Histórico Mapa');XLSX.writeFile(wb,'Historico_MAPA_PATEC.xlsx');
 }
-function exportAdmFerias(){
-  const hd='Ordem,Colaborador,Data Saída,Dias,Data Retorno,Status
-';
-  const rows=FERIAS_DATA.map((r,i)=>`${i+1},${r.colab},${r.saida||''},${r.dias},${r.retorno||''},${r.status}`).join('
-');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+hd+rows],{type:'text/csv'}));a.download='Ferias_PATEC.csv';a.click();
-}
-function exportAdmBanco(){
-  const hd='Colaborador,Horas Extras,Folgas Usadas,Saldo (h)
-';
-  const rows=BANCO_HORAS.map(r=>`${r.colab},${r.horas_extras},${r.folgas_usadas},${r.horas_extras-r.folgas_usadas*8}`).join('
-');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+hd+rows],{type:'text/csv'}));a.download='BancoHoras_PATEC.csv';a.click();
-}
+function exportAdmFerias(){var hd='Ordem,Colaborador,Data Saida,Dias,Data Retorno,Status\n';var rows=FERIAS_DATA.map(function(r,i){return (i+1)+','+r.colab+','+(r.saida||'')+','+r.dias+','+(r.retorno||'')+','+r.status;}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='Ferias_PATEC.csv';a.click();}
+function exportAdmBanco(){var hd='Colaborador,Horas Extras,Folgas Usadas,Saldo (h)\n';var rows=BANCO_HORAS.map(function(r){return r.colab+','+r.horas_extras+','+r.folgas_usadas+','+(r.horas_extras-r.folgas_usadas*8);}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='BancoHoras_PATEC.csv';a.click();}
 
 // ── HELPER LB_MAP e calcVal (usado no upload mapa) ──
 const LB_MAP = {
@@ -4318,35 +3237,51 @@ function pill2(t){
 PAGE_TITLES['adm'] = '🔐 Administração';
 
 // INIT
-document.getElementById('tdt').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+const _hoje = new Date();
+document.getElementById('tdt').textContent = _hoje.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'});
 
 // ── META E GAP — atualização dinâmica ──
 // Valores editáveis pelo ADM (futuramente via localStorage/API)
 // Por enquanto lê do localStorage se disponível
 function initMetaGap() {
   const meta = parseInt(localStorage.getItem('patec_meta') || '1980');
-  const realizado = 743; // virá dos dados reais futuramente
+  const realizado = parseInt(localStorage.getItem('patec_realizado') || '743');
   const gap = realizado - meta;
+  const gapStr = (gap >= 0 ? '+' : '') + gap.toLocaleString('pt-BR');
 
-  document.getElementById('sb-meta').textContent = meta.toLocaleString('pt-BR');
-  document.getElementById('sb-gap').textContent = (gap >= 0 ? '+' : '') + gap.toLocaleString('pt-BR');
+  // Atualizar topbar
+  const topMeta = document.getElementById('top-meta');
+  const topGap  = document.getElementById('top-gap');
+  const topGapSub = document.getElementById('top-gap-sub');
+  const topGapBox = document.getElementById('top-gap-box');
 
-  const box = document.getElementById('sb-gap-box');
-  box.className = '';
-  box.style.cssText = 'border-radius:7px;padding:7px 10px;transition:all .3s';
-  if (gap >= 0) {
-    box.classList.add('sb-gap-ok');
-    document.getElementById('sb-gap').style.color = '#4FC99A';
-    document.getElementById('sb-gap-sub').textContent = '✓ acima da meta';
-  } else if (gap >= -100) {
-    box.classList.add('sb-gap-warn');
-    document.getElementById('sb-gap').style.color = '#FAC775';
-    document.getElementById('sb-gap-sub').textContent = '⚠ abaixo da meta';
-  } else {
-    box.classList.add('sb-gap-bad');
-    document.getElementById('sb-gap').style.color = '#F07070';
-    document.getElementById('sb-gap-sub').textContent = '✗ atenção necessária';
+  if(topMeta) topMeta.textContent = meta.toLocaleString('pt-BR');
+  if(topGap)  topGap.textContent  = gapStr;
+
+  if(topGapBox) {
+    if(gap >= 0) {
+      topGapBox.style.background = 'rgba(14,158,106,.2)';
+      topGapBox.style.borderColor = 'rgba(14,158,106,.4)';
+      if(topGap) topGap.style.color = '#4FD4A0';
+      if(topGapSub) topGapSub.textContent = '✓ acima da meta';
+    } else if(gap >= -100) {
+      topGapBox.style.background = 'rgba(186,117,23,.2)';
+      topGapBox.style.borderColor = 'rgba(186,117,23,.35)';
+      if(topGap) topGap.style.color = '#FAC775';
+      if(topGapSub) topGapSub.textContent = '⚠ abaixo da meta';
+    } else {
+      topGapBox.style.background = 'rgba(217,64,64,.2)';
+      topGapBox.style.borderColor = 'rgba(217,64,64,.35)';
+      if(topGap) topGap.style.color = '#F08080';
+      if(topGapSub) topGapSub.textContent = '✗ atenção';
+    }
   }
+
+  // Manter sb-meta e sb-gap para compatibilidade (podem não existir)
+  const sbMeta = document.getElementById('sb-meta');
+  const sbGap  = document.getElementById('sb-gap');
+  if(sbMeta) sbMeta.textContent = meta.toLocaleString('pt-BR');
+  if(sbGap)  sbGap.textContent  = gapStr;
 }
 initMetaGap();
 </script>
