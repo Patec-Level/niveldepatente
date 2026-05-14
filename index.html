@@ -1670,11 +1670,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     </div>
 
   </div><!-- /ct -->
-
-</div><!-- /ct -->
 </main>
 
-<script>// ── CHART HELPER (declarado primeiro para evitar hoisting issues) ──
+<script>// ── CHART HELPER ──
 let chartsMap = {};
 function mkChart(id,type,data,opts={}){
   if(chartsMap[id]) chartsMap[id].destroy();
@@ -1691,6 +1689,31 @@ function mkChart(id,type,data,opts={}){
   });
   return chartsMap[id];
 }
+
+// ── Utilitários globais ──
+function presPill(p) {
+  if(p==='Presencial')  return '<span class="pl pl-az">🏢 Presencial</span>';
+  if(p==='Home Office') return '<span class="pl pl-ok">🏠 Home Office</span>';
+  if(p==='Folga')       return '<span class="pl pl-g">🌴 Folga</span>';
+  return '<span class="pl pl-g">' + (p||'—') + '</span>';
+}
+function perfPill(v) {
+  const p = pct(v, parseInt(localStorage.getItem('patec_meta_min')||'30'));
+  if(p>=100) return '<span class="pl pl-ok">'+p+'%</span>';
+  if(p>=80)  return '<span class="pl pl-w">'+p+'%</span>';
+  return '<span class="pl pl-b">'+p+'%</span>';
+}
+function fmtDt(s) {
+  if(!s) return '—';
+  const p = String(s).split('-');
+  if(p.length===3) return p[2]+'/'+p[1]+'/'+p[0];
+  return s;
+}
+
+const MKT_PROXY = 'https://api.allorigins.win/get?url=';
+let _mktUsd = null, _mktBrent = null, _mktWti = null;
+let _mktTimer = null;
+
 
 // ════════════════════════════════════════════
 // DADOS REAIS — Ciclo Abr/Mai 2026 (base: Controle_Medicao.xlsx)
@@ -3261,10 +3284,6 @@ function cicloLimpar() {
 // ════════════════════════════════════════════
 // INTELIGÊNCIA DE MERCADO
 // ════════════════════════════════════════════
-const MKT_PROXY = 'https://api.allorigins.win/get?url=';
-let _mktUsd = null, _mktBrent = null, _mktWti = null;
-let _mktTimer = null;
-
 function mktFmt(n, dec=2) {
   if(n === null || isNaN(n)) return '—';
   return n.toLocaleString('pt-BR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
