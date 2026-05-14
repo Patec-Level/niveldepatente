@@ -339,14 +339,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     </div>
   </div>
 
-  <div class="sb-mod">◈ Visão Geral</div>
-  <div class="sb-it active" onclick="go('vg-visao',this)">📊 Painel Geral</div>
+  <div class="sb-mod">◈ ESTRATÉGICO</div>
+  <div class="sb-it active" onclick="go('vg-visao',this)">📊 Visão Executiva</div>
   <div class="sb-it" onclick="go('vg-validade',this)">⏱ Validade Oportunidades</div>
-  <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ OPERAÇÃO</div>
-  <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Lançar Produção</div>
+  <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ EXECUÇÃO</div>
+  <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('pr-equipe',this)">👥 Visão por Equipe</div>
   <div class="sb-it" onclick="go('pr-producao',this)">📊 Produção da Equipe</div>
-  <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Banco de Horas e Férias</div>
+  <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
   <div class="sb-sec">Em breve</div>
   <div class="sb-it" style="opacity:.45;cursor:default">⚠ Itens Críticos <span class="sb-badge">breve</span></div>
   <div class="sb-it" style="opacity:.45;cursor:default">📊 Status B <span class="sb-badge">breve</span></div>
@@ -362,7 +362,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1">
     <div style="display:flex;align-items:center;gap:10px">
       <span id="ttl-ico" style="font-size:18px">📊</span>
-      <h2 id="ttl" style="font-size:17px;font-weight:600;color:#fff;white-space:nowrap;letter-spacing:.2px">Painel Geral</h2>
+      <h2 id="ttl" style="font-size:17px;font-weight:600;color:#fff;white-space:nowrap;letter-spacing:.2px">Visão Executiva</h2>
     </div>
   </div>
 
@@ -1518,9 +1518,9 @@ function go(id, el) {
   const centroIco = document.querySelector('.topbar [style*="translateX"] div');
   if(centroIco) centroIco.textContent = ico;
   const titles = {
-    'vg-visao':'Painel Geral','vg-validade':'Validade Oportunidades',
-    'pr-lancar':'Lançar Produção','pr-equipe':'Visão por Equipe',
-    'pr-producao':'Produção da Equipe','pr-bancoferias':'Banco de Horas e Férias',
+    'vg-visao':'Visão Executiva','vg-validade':'Validade Oportunidades',
+    'pr-lancar':'Gestão de Produção','pr-equipe':'Visão por Equipe',
+    'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
     'adm':'Administração',
     
     };
