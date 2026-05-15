@@ -7,8 +7,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Firebase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
@@ -4506,8 +4506,9 @@ fbCarregarTudo().then(() => { initMetaGap(); });
 initMetaGap();
 
 
-// ── META E GAP — atualização dinâmica ──
-// Valores editáveis pelo ADM (futuramente via localStorage/API)
-// Por enquanto lê do localStorage se disponível
-// [initMetaGap v2 removida — usar versão com 4 cards acima]
-initMetaGap();
+// Carregar Firebase e aplicar na topbar
+fbCarregarTudo().then(()=>{ initMetaGap(); });
+
+</script>
+</body>
+</html>
