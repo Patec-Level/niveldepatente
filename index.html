@@ -7,8 +7,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
@@ -1858,10 +1858,14 @@ let _db = null;
 function getDB(){
   if(!_db){
     try{
-      if(typeof firebase === 'undefined') return null;
+      if(typeof firebase === 'undefined'){
+        console.warn('Firebase SDK não carregou — verifique conexão');
+        return null;
+      }
       if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
       _db = firebase.firestore();
-    } catch(e){ console.warn('Firebase init falhou:',e.message); }
+      console.log('✓ Firebase conectado ao projeto:', FIREBASE_CONFIG.projectId);
+    } catch(e){ console.error('Firebase init erro:',e.message); }
   }
   return _db;
 }
@@ -1925,7 +1929,7 @@ async function fbSalvarProducao(reg){
 
 async function fbCarregarTudo(){
   const db = getDB();
-  if(!db){ console.warn('Firebase não disponível'); return; }
+  if(!db){ console.error('Firebase: getDB retornou null. SDK carregado?', typeof firebase); return; }
 
   // Topbar
   const topbar = await fbGet('config','topbar');
@@ -2515,6 +2519,7 @@ function setBFTab(id,btn){
   if(id==='banco')  renderBanco();
 }
 function renderFerias(){
+  if(!document.getElementById('ferias-tb')) return;
   const hoje=HOJE.toISOString().split('T')[0];
   let prox=null,emFerias=0,prog=0;
   document.getElementById('bf-ferias-tb').innerHTML=FERIAS_DATA.map((r,i)=>{
@@ -2534,16 +2539,17 @@ function renderFerias(){
   document.getElementById('bf-prog').textContent=prog;
 }
 function renderBanco(){
+  if(!document.getElementById('bh-tb')) return;
   let totH=0,totC=0;
-  document.getElementById('bh-tb').innerHTML=BANCO_HORAS.map(r=>{
+  (document.getElementById('bh-tb')||{}).innerHTML=BANCO_HORAS.map(r=>{
     const saldo=r.horas_extras-r.folgas_usadas*8;
     totH+=r.horas_extras;totC+=r.folgas_usadas;
     const dias=saldo>0?Math.floor(saldo/8)+'d '+saldo%8+'h':'—';
     const destino=saldo>0?'<span class="pl pl-w">A definir</span>':'<span class="pl pl-ok">Zerado</span>';
     return`<tr><td><strong>${r.colab}</strong></td><td>${r.horas_extras}h</td><td>${r.folgas_usadas}</td><td style="font-weight:700">${saldo}h</td><td>${dias}</td><td>${destino}</td></tr>`;
   }).join('');
-  document.getElementById('bh-total').textContent=totH+'h';
-  document.getElementById('bh-comp').textContent=totC+' folgas';
+  (document.getElementById('bh-total')||{}).textContent=totH+'h';
+  (document.getElementById('bh-comp')||{}).textContent=totC+' folgas';
   document.getElementById('bh-saldo').textContent=(totH-totC*8)+'h';
 }
 
