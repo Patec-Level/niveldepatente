@@ -882,6 +882,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div class="stabs" id="adm-tabs">
         <button class="stab active" onclick="setAdmTab('ciclos',this)">🔄 Gestão de Ciclos</button>
         <button class="stab" onclick="setAdmTab('metas',this)">🎯 Metas e Gap</button>
+        <button class="stab" onclick="setAdmTab('meta-gap',this)">📌 Meta & Gap (Topbar)</button>
         <button class="stab" onclick="setAdmTab('senhas',this)">🔑 Senhas</button>
         <button class="stab" onclick="setAdmTab('hist-mapa',this)">📋 Hist. Mapa</button>
         <button class="stab" onclick="setAdmTab('hist-prod',this)">📊 Hist. Produção</button>
@@ -1061,6 +1062,99 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+      <!-- ── META & GAP TOPBAR ── -->
+      <div id="adm-meta-gap" class="adm-tab" style="display:none">
+        <div class="g2">
+          <!-- Editor -->
+          <div class="cd">
+            <div class="cd-t">📌 Meta do projeto e Gap — Topbar</div>
+            <div class="al al-b">ℹ Estes valores aparecem nos cards <strong>META DO PROJETO</strong> e <strong>GAP ATUAL</strong> no canto superior direito da topbar. Atualize manualmente a cada ciclo ou quando houver revisão.</div>
+
+            <div style="display:flex;flex-direction:column;gap:14px;margin-top:.5rem">
+
+              <!-- Meta do projeto -->
+              <div style="background:var(--azc);border-radius:10px;padding:1rem 1.25rem;border:1px solid rgba(26,74,138,.15)">
+                <div style="font-size:11px;font-weight:700;color:var(--azm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">🎯 Meta do Projeto (ciclo)</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <div class="field-wrap">
+                    <span class="field-label">Total de itens (meta do ciclo)</span>
+                    <input type="number" id="mg-meta" min="0" placeholder="Ex: 1980" style="width:100%;font-size:18px;font-weight:700;color:var(--azm);text-align:center">
+                  </div>
+                  <div class="field-wrap">
+                    <span class="field-label">Rótulo (ex: itens · ciclo)</span>
+                    <input type="text" id="mg-meta-label" placeholder="itens · ciclo" style="width:100%">
+                  </div>
+                </div>
+                <div style="margin-top:.75rem;padding:.75rem;background:rgba(26,74,138,.08);border-radius:7px;font-size:11px;color:var(--tx2)">
+                  Prévia: <strong style="font-size:18px;color:var(--azm)" id="mg-meta-preview">—</strong>
+                </div>
+              </div>
+
+              <!-- Gap atual -->
+              <div id="mg-gap-box" style="background:var(--amc);border-radius:10px;padding:1rem 1.25rem;border:1px solid rgba(192,122,18,.2)">
+                <div style="font-size:11px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">📊 Gap Atual</div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.875rem">
+                  <div class="field-wrap">
+                    <span class="field-label">Realizado acumulado</span>
+                    <input type="number" id="mg-realizado" min="0" placeholder="Ex: 743" style="width:100%;font-size:16px;font-weight:700;color:var(--vd);text-align:center" oninput="mgRecalcGap()">
+                  </div>
+                  <div class="field-wrap">
+                    <span class="field-label">Gap calculado (auto)</span>
+                    <div style="padding:10px 14px;background:#fff;border-radius:8px;border:1px solid var(--brd);font-size:20px;font-weight:700;text-align:center" id="mg-gap-calc">—</div>
+                  </div>
+                  <div class="field-wrap">
+                    <span class="field-label">Sublabel do Gap</span>
+                    <input type="text" id="mg-gap-label" placeholder="vs programado" style="width:100%">
+                  </div>
+                </div>
+
+                <!-- Opção: gap manual -->
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+                  <input type="checkbox" id="mg-gap-manual" onchange="mgToggleManual()" style="width:14px;height:14px">
+                  <label for="mg-gap-manual" style="font-size:12px;color:var(--tx2);cursor:pointer">Inserir gap manualmente (sem calcular automaticamente)</label>
+                </div>
+                <div id="mg-gap-manual-box" style="display:none">
+                  <div class="field-wrap">
+                    <span class="field-label">Gap manual (use − para negativo)</span>
+                    <input type="text" id="mg-gap-manual-val" placeholder="Ex: −157" style="width:200px;font-size:16px;font-weight:700;text-align:center">
+                  </div>
+                </div>
+
+                <div style="padding:.75rem;background:rgba(192,122,18,.08);border-radius:7px;font-size:11px;color:var(--tx2)">
+                  Prévia: <strong style="font-size:18px" id="mg-gap-preview">—</strong>
+                  <span style="font-size:10px;margin-left:6px" id="mg-gap-preview-label">—</span>
+                </div>
+              </div>
+
+              <!-- Botão salvar -->
+              <button class="btn btn-g" onclick="salvarMetaGap()" style="align-self:flex-start">✓ Aplicar na topbar</button>
+              <span id="mg-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Topbar atualizada!</span>
+            </div>
+          </div>
+
+          <!-- Valores atuais -->
+          <div class="cd">
+            <div class="cd-t">📋 Valores atuais na topbar</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="padding:1rem;background:var(--azc);border-radius:9px;border:1px solid rgba(26,74,138,.15)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">META DO PROJETO</div>
+                <div style="font-size:28px;font-weight:700;color:var(--azm)" id="mg-cur-meta">—</div>
+                <div style="font-size:10px;color:var(--tx2)" id="mg-cur-meta-label">—</div>
+              </div>
+              <div id="mg-cur-gap-box" style="padding:1rem;background:var(--amc);border-radius:9px;border:1px solid rgba(192,122,18,.15)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">GAP ATUAL</div>
+                <div style="font-size:28px;font-weight:700;color:var(--am)" id="mg-cur-gap">—</div>
+                <div style="font-size:10px;color:var(--tx2)" id="mg-cur-gap-label">—</div>
+              </div>
+              <div style="padding:.75rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd);font-size:11px;color:var(--tx2)">
+                💡 Os valores são salvos no navegador (localStorage) e persistem entre sessões. Para resetar, acesse as configurações do navegador.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── SENHAS ── -->
       <div id="adm-senhas" class="adm-tab" style="display:none">
         <div class="cd">
@@ -1163,15 +1257,25 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div id="adm-ferias-adm" class="adm-tab" style="display:none">
         <div class="cd">
           <div class="cd-t">🌴 Editar quadro de férias</div>
-          <div class="al al-b">ℹ Informe nome, data de saída e quantidade de dias. O retorno é calculado automaticamente. Os dados refletem no módulo Banco de Horas e Férias.</div>
-          <div id="adm-ferias-form" style="display:flex;flex-direction:column;gap:10px;margin-bottom:1rem"></div>
-          <button class="btn btn-g" onclick="salvarFeriasAdm()">✓ Salvar quadro de férias</button>
-          <span id="adm-ferias-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Salvo!</span>
+          <div class="al al-b">ℹ Cada colaborador pode ter <strong>múltiplos períodos</strong> de férias (férias fracionadas). Use o botão <strong>+ Período</strong> para adicionar novas datas. O retorno é calculado automaticamente.</div>
+
+          <!-- Lista dinâmica de colaboradores com períodos -->
+          <div id="adm-ferias-colabs" style="display:flex;flex-direction:column;gap:14px;margin-bottom:1rem"></div>
+
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-g" onclick="salvarFeriasAdm()">✓ Salvar quadro de férias</button>
+            <span id="adm-ferias-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
+          </div>
         </div>
+
+        <!-- Prévia ordenada por data de saída -->
         <div class="cd">
-          <div class="cd-t">Prévia do quadro de férias</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+            <div class="cd-t" style="margin:0">Prévia — todos os períodos (ordem de saída)</div>
+            <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="exportAdmFerias()">💾 Exportar CSV</button>
+          </div>
           <div class="tw"><table>
-            <thead><tr><th>Ordem</th><th>Colaborador</th><th>Saída</th><th>Dias</th><th>Retorno</th><th>Status</th></tr></thead>
+            <thead><tr><th>#</th><th>Colaborador</th><th>Período</th><th>Saída</th><th>Dias</th><th>Retorno</th><th>Status</th></tr></thead>
             <tbody id="adm-ferias-preview"></tbody>
           </table></div>
         </div>
@@ -2602,6 +2706,8 @@ function admLogout(){
 
 function setAdmTab(id,btn){
   if(id==='ciclos') setTimeout(initCicloADM,50);
+  if(id==='meta-gap') setTimeout(initMetaGapADM,50);
+  if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
   document.querySelectorAll('#adm-tabs .stab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.adm-tab').forEach(t=>t.style.display='none');
@@ -2832,6 +2938,139 @@ function salvarFeriasAdm(){
 }
 
 // ── BANCO DE HORAS ADM ──
+// ── FÉRIAS — múltiplos períodos por colaborador ──
+// Estrutura: _feriasState[colab] = [ {saida, dias, retorno}, ... ]
+let _feriasState = {};
+
+function renderFeriasForm(){
+  // Inicializar estado a partir de FERIAS_DATA
+  _feriasState = {};
+  COLABS.forEach(c => { _feriasState[c] = []; });
+  (FERIAS_DATA || []).forEach(r => {
+    if(_feriasState[r.colab]) _feriasState[r.colab].push({saida:r.saida||'',dias:r.dias||30,retorno:r.retorno||''});
+  });
+  // Garantir pelo menos 1 linha por colaborador
+  COLABS.forEach(c => { if(!_feriasState[c].length) _feriasState[c].push({saida:'',dias:30,retorno:''}); });
+  _renderFeriasColabs();
+}
+
+function _renderFeriasColabs(){
+  const container = document.getElementById('adm-ferias-colabs');
+  if(!container) return;
+  container.innerHTML = COLABS.map(c => {
+    const periodos = _feriasState[c];
+    return `<div class="cd" style="padding:1rem;border-left:3px solid var(--azm)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+        <div style="font-size:13px;font-weight:700;color:var(--az)">🧑 ${c}</div>
+        <button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="_addPeriodo('${c}')">+ Período</button>
+      </div>
+      <div id="ferias-periodos-${c.replace(' ','_')}" style="display:flex;flex-direction:column;gap:8px">
+        ${periodos.map((p,pi) => _periodoHTML(c, pi, p)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  _atualizarFeriasPreview();
+}
+
+function _periodoHTML(colab, pi, p){
+  const cid = colab.replace(' ','_');
+  return `<div id="ferias-p-${cid}-${pi}" style="display:grid;grid-template-columns:1fr 80px 1fr auto;gap:8px;align-items:end;background:var(--cin);padding:8px 10px;border-radius:8px;border:1px solid var(--brd)">
+    <div class="field-wrap">
+      <span class="field-label">Período ${pi+1} — Data de saída</span>
+      <input type="date" value="${p.saida||''}" onchange="_updPeriodo('${colab}',${pi},'saida',this.value)" style="width:100%">
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">Dias</span>
+      <input type="number" value="${p.dias||30}" min="1" max="90" onchange="_updPeriodo('${colab}',${pi},'dias',this.value)" style="width:100%;text-align:center;font-weight:700">
+    </div>
+    <div class="field-wrap">
+      <span class="field-label">Retorno (automático)</span>
+      <input type="text" id="ret-${cid}-${pi}" value="${p.retorno||''}" readonly style="width:100%;background:#fff;color:var(--tx2);font-weight:600">
+    </div>
+    ${pi > 0 ? `<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end" onclick="_removePeriodo('${colab}',${pi})" title="Remover período">✕</button>` : '<div></div>'}
+  </div>`;
+}
+
+function _addPeriodo(colab){
+  _feriasState[colab].push({saida:'',dias:30,retorno:''});
+  _renderFeriasColabs();
+}
+
+function _removePeriodo(colab, pi){
+  _feriasState[colab].splice(pi,1);
+  if(!_feriasState[colab].length) _feriasState[colab].push({saida:'',dias:30,retorno:''});
+  _renderFeriasColabs();
+}
+
+function _updPeriodo(colab, pi, campo, val){
+  if(!_feriasState[colab]) return;
+  _feriasState[colab][pi][campo] = campo==='dias' ? parseInt(val)||30 : val;
+  // Calcular retorno
+  const p = _feriasState[colab][pi];
+  if(p.saida){
+    const dt = new Date(p.saida);
+    dt.setDate(dt.getDate() + p.dias);
+    p.retorno = dt.toISOString().split('T')[0].split('-').reverse().join('/');
+    const cid = colab.replace(' ','_');
+    const retEl = document.getElementById('ret-'+cid+'-'+pi);
+    if(retEl) retEl.value = p.retorno;
+  }
+  _atualizarFeriasPreview();
+}
+
+function _atualizarFeriasPreview(){
+  const hoje = HOJE.toISOString().split('T')[0];
+  // Montar lista plana de todos os períodos ordenados por data
+  let todos = [];
+  COLABS.forEach(c => {
+    (_feriasState[c]||[]).forEach((p,pi) => {
+      if(p.saida) todos.push({colab:c, periodo:pi+1, ...p});
+    });
+  });
+  todos.sort((a,b) => a.saida.localeCompare(b.saida));
+  const tb = document.getElementById('adm-ferias-preview');
+  if(!tb) return;
+  if(!todos.length){ tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:1rem">Nenhuma data informada ainda</td></tr>'; return; }
+  tb.innerHTML = todos.map((r,i) => {
+    const saidaFmt = r.saida.split('-').reverse().join('/');
+    const st = r.saida > hoje ? '<span class="pl pl-az">Programado</span>'
+      : (r.retorno && r.saida <= hoje && r.retorno.split('/').reverse().join('-') >= hoje) ? '<span class="pl pl-ok">Em férias</span>'
+      : '<span class="pl pl-g">Concluído</span>';
+    return `<tr>
+      <td>${i+1}</td>
+      <td><strong>${r.colab}</strong></td>
+      <td style="font-size:10px;color:var(--tx2)">Período ${r.periodo}</td>
+      <td>${saidaFmt}</td>
+      <td>${r.dias}</td>
+      <td style="font-weight:600">${r.retorno||'—'}</td>
+      <td>${st}</td>
+    </tr>`;
+  }).join('');
+}
+
+function salvarFeriasAdm(){
+  // Converter _feriasState de volta para array plano FERIAS_DATA
+  FERIAS_DATA.length = 0;
+  COLABS.forEach(c => {
+    (_feriasState[c]||[]).forEach(p => {
+      if(p.saida) FERIAS_DATA.push({colab:c, saida:p.saida, dias:p.dias, retorno:p.retorno, status:'Programado'});
+    });
+  });
+  FERIAS_DATA.sort((a,b) => a.saida.localeCompare(b.saida));
+  localStorage.setItem('patec_ferias', JSON.stringify(FERIAS_DATA));
+  renderFerias(); // Atualiza módulo público
+  const ok = document.getElementById('adm-ferias-ok');
+  if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',3000); }
+}
+
+// Manter calcRetorno compatível
+function calcRetorno(i){
+  const saida=document.getElementById('adm-f-saida-'+i)?.value;
+  const dias=parseInt(document.getElementById('adm-f-dias-'+i)?.value||30);
+  if(saida){const dt=new Date(saida);dt.setDate(dt.getDate()+dias);const r=document.getElementById('adm-f-retorno-'+i);if(r)r.value=dt.toISOString().split('T')[0].split('-').reverse().join('/');}
+}
+function atualizarFeriasPreview(){ _atualizarFeriasPreview(); }
+
 function renderBancoForm(){
   document.getElementById('adm-banco-form').innerHTML=BANCO_HORAS.map((r,i)=>`
     <div class="cd" style="padding:.875rem">
@@ -3001,6 +3240,98 @@ PAGE_TITLES['adm'] = '🔐 Administração';
 // ════════════════════════════════════════════
 
 // Inicializar dados do ciclo ativo na aba ADM
+
+// ════════════════════════════════════════════
+// META & GAP — Edição manual na topbar
+// ════════════════════════════════════════════
+function initMetaGapADM(){
+  const meta   = parseInt(localStorage.getItem('patec_meta')||'1980');
+  const real   = parseInt(localStorage.getItem('patec_realizado')||'743');
+  const metaLbl= localStorage.getItem('patec_meta_label')||'itens · ciclo';
+  const gapLbl = localStorage.getItem('patec_gap_label')||'vs programado';
+  const manual = localStorage.getItem('patec_gap_manual')||'';
+  const gap    = real - meta;
+
+  const el = id => document.getElementById(id);
+  if(el('mg-meta'))        el('mg-meta').value = meta;
+  if(el('mg-meta-label'))  el('mg-meta-label').value = metaLbl;
+  if(el('mg-realizado'))   el('mg-realizado').value = real;
+  if(el('mg-gap-label'))   el('mg-gap-label').value = gapLbl;
+  if(el('mg-gap-manual-val')) el('mg-gap-manual-val').value = manual;
+
+  mgRecalcGap();
+
+  // Valores atuais (prévia)
+  if(el('mg-cur-meta'))       el('mg-cur-meta').textContent = meta.toLocaleString('pt-BR');
+  if(el('mg-cur-meta-label')) el('mg-cur-meta-label').textContent = metaLbl;
+  if(el('mg-cur-gap')){
+    const gapStr = manual || (gap>=0?'+':'')+gap.toLocaleString('pt-BR');
+    el('mg-cur-gap').textContent = gapStr;
+    el('mg-cur-gap').style.color = gap >= 0 ? 'var(--vd)' : gap >= -100 ? 'var(--am)' : 'var(--vm)';
+  }
+  if(el('mg-cur-gap-label')) el('mg-cur-gap-label').textContent = gapLbl;
+}
+
+function mgRecalcGap(){
+  const el = id => document.getElementById(id);
+  const meta = parseInt(el('mg-meta')?.value||'1980');
+  const real = parseInt(el('mg-realizado')?.value||'0');
+  const gap  = real - meta;
+  const gapStr = (gap>=0?'+':'')+gap.toLocaleString('pt-BR');
+  const manual = el('mg-gap-manual')?.checked;
+
+  if(el('mg-gap-calc')){
+    el('mg-gap-calc').textContent = gapStr;
+    el('mg-gap-calc').style.color = gap >= 0 ? 'var(--vd)' : gap >= -100 ? 'var(--am)' : 'var(--vm)';
+  }
+  if(el('mg-meta-preview')) el('mg-meta-preview').textContent = meta.toLocaleString('pt-BR');
+  if(el('mg-gap-preview')){
+    el('mg-gap-preview').textContent = manual && el('mg-gap-manual-val')?.value ? el('mg-gap-manual-val').value : gapStr;
+    el('mg-gap-preview').style.color = gap >= 0 ? 'var(--vd)' : gap >= -100 ? 'var(--am)' : 'var(--vm)';
+  }
+  if(el('mg-gap-preview-label')) el('mg-gap-preview-label').textContent = el('mg-gap-label')?.value||'vs programado';
+}
+
+function mgToggleManual(){
+  const manual = document.getElementById('mg-gap-manual')?.checked;
+  const box = document.getElementById('mg-gap-manual-box');
+  if(box) box.style.display = manual ? 'block' : 'none';
+  mgRecalcGap();
+}
+
+function salvarMetaGap(){
+  const el = id => document.getElementById(id);
+  const meta    = parseInt(el('mg-meta')?.value||'1980');
+  const real    = parseInt(el('mg-realizado')?.value||'0');
+  const metaLbl = el('mg-meta-label')?.value || 'itens · ciclo';
+  const gapLbl  = el('mg-gap-label')?.value  || 'vs programado';
+  const manual  = el('mg-gap-manual')?.checked;
+  const manualVal = el('mg-gap-manual-val')?.value || '';
+  const gap = real - meta;
+
+  localStorage.setItem('patec_meta', String(meta));
+  localStorage.setItem('patec_realizado', String(real));
+  localStorage.setItem('patec_meta_label', metaLbl);
+  localStorage.setItem('patec_gap_label', gapLbl);
+  localStorage.setItem('patec_gap_manual', manual ? manualVal : '');
+
+  // Atualizar topbar imediatamente
+  initMetaGap();
+
+  // Atualizar prévia no ADM
+  if(el('mg-cur-meta'))       el('mg-cur-meta').textContent = meta.toLocaleString('pt-BR');
+  if(el('mg-cur-meta-label')) el('mg-cur-meta-label').textContent = metaLbl;
+  const gapStr = (manual && manualVal) ? manualVal : (gap>=0?'+':'')+gap.toLocaleString('pt-BR');
+  if(el('mg-cur-gap')){
+    el('mg-cur-gap').textContent = gapStr;
+    el('mg-cur-gap').style.color = gap >= 0 ? 'var(--vd)' : gap >= -100 ? 'var(--am)' : 'var(--vm)';
+  }
+  if(el('mg-cur-gap-label')) el('mg-cur-gap-label').textContent = gapLbl;
+
+  const ok = el('mg-ok');
+  if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',3000); }
+}
+
 function initCicloADM() {
   const el = id => document.getElementById(id);
   if(!el('ciclo-nome-ativo')) return;
@@ -3572,7 +3903,8 @@ function initMetaGap() {
   const meta = parseInt(localStorage.getItem('patec_meta') || '1980');
   const realizado = parseInt(localStorage.getItem('patec_realizado') || '743');
   const gap = realizado - meta;
-  const gapStr = (gap >= 0 ? '+' : '') + gap.toLocaleString('pt-BR');
+  const gapManual = localStorage.getItem('patec_gap_manual')||'';
+  const gapStr = gapManual || (gap >= 0 ? '+' : '') + gap.toLocaleString('pt-BR');
 
   // Atualizar topbar
   const topMeta = document.getElementById('top-meta');
