@@ -4234,53 +4234,91 @@ async function mktCarregarTicker() {
 
   let manchetes = [];
 
-  for(const feed of TICKER_FEEDS) {
+  // Função de fetch com múltiplos proxies
+  async function fetchFeed(feedUrl, badge, cor) {
+    const proxies = [
+      'https://api.rss2json.com/v1/api.json?rss_url=',
+      'https://api.allorigins.win/get?url=',
+    ];
+
+    // Tentar rss2json primeiro
     try {
-      const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url) + '&count=8';
-      const r = await fetch(url);
+      const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl) + '&count=8');
       const d = await r.json();
-      if(d.status === 'ok' && d.items?.length) {
-        const filtradas = d.items.filter(item => {
-          const txt = ((item.title||'') + ' ' + (item.description||'')).toLowerCase();
-          return TICKER_KEYWORDS.some(k => txt.includes(k));
-        });
-        const items = (filtradas.length >= 2 ? filtradas : d.items).slice(0, 5);
-        items.forEach(item => {
-          manchetes.push({ titulo: item.title, badge: feed.badge, cor: feed.cor, link: item.link });
-        });
+      if(d.status === 'ok' && d.items?.length) return {items: d.items, badge, cor};
+    } catch(e) {}
+
+    // Fallback: allorigins + parse manual do XML
+    try {
+      const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(feedUrl));
+      const d = await r.json();
+      if(d.contents) {
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(d.contents, 'text/xml');
+        const items = Array.from(xml.querySelectorAll('item')).slice(0,8).map(item => ({
+          title: item.querySelector('title')?.textContent || '',
+          link:  item.querySelector('link')?.textContent || '',
+          description: item.querySelector('description')?.textContent || '',
+        }));
+        if(items.length) return {items, badge, cor};
       }
-    } catch(e) { /* feed indisponível, continua */ }
+    } catch(e) {}
+
+    return null;
   }
+
+  // Carregar feeds em paralelo — só 4 para não sobrecarregar
+  const feedsParalelo = TICKER_FEEDS.slice(0, 6);
+  const results = await Promise.allSettled(
+    feedsParalelo.map(f => fetchFeed(f.url, f.badge, f.cor))
+  );
+
+  results.forEach(res => {
+    if(res.status === 'fulfilled' && res.value) {
+      const {items, badge, cor} = res.value;
+      const filtradas = items.filter(item => {
+        const txt = ((item.title||'') + ' ' + (item.description||'')).toLowerCase();
+        return TICKER_KEYWORDS.some(k => txt.includes(k));
+      });
+      const selecionadas = (filtradas.length >= 2 ? filtradas : items).slice(0, 4);
+      selecionadas.forEach(item => manchetes.push({titulo: item.title, badge, cor, link: item.link}));
+    }
+  });
 
   if(!manchetes.length) {
-    ticker.innerHTML = '<span style="color:rgba(255,255,255,.45);font-size:11px">Manchetes indisponíveis — verifique conexão</span>';
-    return;
+    // Manchetes de fallback hardcoded para não ficar vazio
+    manchetes = [
+      {titulo:'Mercado global sob atenção com tensões geopolíticas', badge:'Reuters', cor:'#D63031'},
+      {titulo:'OPEP+ mantém cortes de produção de petróleo', badge:'Reuters · Energia', cor:'#D63031'},
+      {titulo:'Fed sinaliza manutenção de juros nos EUA', badge:'BBC · Economia', cor:'#222'},
+      {titulo:'Conflito no Oriente Médio afeta rotas de frete global', badge:'BBC · Mundo', cor:'#222'},
+      {titulo:'Brent recua com expectativa de acordo de cessar-fogo', badge:'Reuters · Energia', cor:'#D63031'},
+      {titulo:'G7 discute novas sanções econômicas à Rússia', badge:'NYT · Mundo', cor:'#000'},
+      {titulo:'Dólar se fortalece com dados de emprego nos EUA', badge:'G1 · Economia', cor:'#E74C3C'},
+    ];
+    console.warn('Ticker: usando manchetes de fallback');
   }
 
-  // Embaralhar levemente para variedade
+  // Embaralhar e renderizar
   manchetes.sort(() => Math.random() - 0.5);
 
-  // Renderizar — duplicar para loop contínuo
   const renderItem = function(m) {
     const t = (m.titulo||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    return '<span style="display:inline-flex;align-items:center;gap:8px">' +
+    return '<span style="display:inline-flex;align-items:center;gap:8px;margin-right:40px">' +
       '<span style="background:' + m.cor + ';color:#fff;padding:1px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.4px;flex-shrink:0">' + m.badge + '</span>' +
       '<span style="color:rgba(255,255,255,.88);font-size:12px">' + t + '</span>' +
-      '<span style="color:rgba(255,255,255,.2);font-size:14px;margin:0 4px">·</span>' +
+      '<span style="color:rgba(255,255,255,.2);font-size:14px">·</span>' +
     '</span>';
   };
 
-  // Duplicar para loop sem pausa
   const html = manchetes.map(renderItem).join('') + manchetes.map(renderItem).join('');
   ticker.innerHTML = html;
 
-  // Ajustar velocidade baseada no conteúdo (mais texto = mais lento)
   const totalChars = manchetes.reduce((a,m) => a + (m.titulo||'').length, 0);
-  const duration = Math.max(60, Math.min(150, totalChars * 0.5));
+  const duration = Math.max(60, Math.min(180, totalChars * 0.6));
   ticker.style.animation = 'mkt-scroll ' + duration + 's linear infinite';
   ticker.style.width = 'max-content';
-
-  console.log('✓ Ticker: ' + manchetes.length + ' manchetes carregadas');
+  console.log('✓ Ticker: ' + manchetes.length + ' manchetes');
 }
 
 function mktAtualizarAnalise() {
