@@ -6,6 +6,9 @@
 <title>PATEC — Sistema de Gestão de Compras</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
@@ -1192,6 +1195,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           </div>
         </div>
 
+        <!-- Publicar HTML com valores fixos -->
+        <div class="cd" style="border:2px solid var(--vd);background:var(--vdc)">
+          <div class="cd-t" style="color:var(--vd)">🚀 Publicar alterações permanentemente</div>
+          <div class="al al-v" style="margin-bottom:.875rem">
+            ℹ Os valores salvos acima ficam no <strong>localStorage</strong> deste navegador. Para que <strong>qualquer máquina</strong> veja os valores atualizados, clique abaixo para <strong>baixar o HTML atualizado</strong> e subir no GitHub.
+          </div>
+          <button class="btn btn-g" onclick="gerarHTMLAtualizado()" style="font-size:13px;padding:9px 20px">
+            ⬇ Baixar index.html com valores fixos
+          </button>
+          <div style="margin-top:.625rem;font-size:11px;color:var(--tx2)">
+            💡 Após baixar: vá ao GitHub → repositório → substitua o <code>index.html</code> pelo arquivo baixado → aguarde 1-2 min para publicar.
+          </div>
+        </div>
+
         <!-- Valores atualmente salvos -->
         <div class="cd">
           <div class="cd-t">📋 Resumo — valores atualmente na topbar</div>
@@ -1815,35 +1832,28 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <div class="kc-v" id="bh-comp">0h</div>
             <div class="kc-s">folgas concedidas</div>
           </div>
-          <div class="kc">
-            <div class="kc-l">Saldo a definir</div>
-            <div class="kc-v" style="color:var(--az)" id="bh-saldo">0h</div>
-            <div class="kc-s">pagar ou dar folga</div>
-          </div>
         </div>
-        <div class="cd">
-          <div class="cd-t">⏰ Banco de horas por colaborador</div>
-          <div class="tw">
-            <table>
-              <thead><tr>
-                <th>Colaborador</th><th>Horas extras</th><th>Folgas usadas</th>
-                <th>Saldo (h)</th><th>Equivale a</th><th>Destino</th>
-              </tr></thead>
-              <tbody id="bh-tb"></tbody>
-            </table>
-          </div>
-          <div style="margin-top:.75rem;font-size:11px;color:var(--tx2);padding:.75rem;background:var(--cin);border-radius:7px">
-            🔒 Para editar banco de horas, acesse o módulo ADM.
-          </div>
-        </div>
-      </div>
-    </div>
+      </div><!-- /ct -->
+    </div><!-- /p-pr-bancoferias -->
 
   </div><!-- /ct -->
 </main>
 
 <script>// ── GLOBAIS ──
 const HOJE = new Date();
+
+// ── TOPBAR DEFAULTS (editados pelo ADM) ──
+// Estes valores são os padrões que aparecem em qualquer máquina/navegador.
+// Para atualizar: ADM → Meta & Gap (Topbar) → preencher → "Salvar e publicar HTML"
+const TB_META      = '1.980';       // ESQ1: Meta Operacional (Patec)
+const TB_META_LBL  = 'itens · ciclo';
+const TB_PATEC     = '—';           // ESQ2: Patec Finalizado
+const TB_PATEC_SUB = 'atualizar no ADM';
+const TB_META_PROJ = '—';           // DIR1: Meta do Projeto
+const TB_META_PROJ_LBL = 'itens · ciclo';
+const TB_GAP       = '—';           // DIR2: Gap do Projeto
+const TB_GAP_SUB   = 'vs programado';
+// ────────────────────────────────────────────
 
 // ── CHART HELPER ──
 let chartsMap = {};
@@ -3374,46 +3384,55 @@ PAGE_TITLES['adm'] = '🔐 Administração';
 function initMetaGap(){
   const ls = k => localStorage.getItem(k)||'';
 
-  // ESQ 1 — Meta Operacional
-  const meta    = parseInt(ls('patec_meta')||'1980');
-  const metaLbl = ls('patec_meta_label')||'itens · ciclo';
-  _setEl('top-meta',      meta.toLocaleString('pt-BR'));
+  // ESQ 1 — Meta Operacional (localStorage > TB_* padrão do arquivo)
+  const meta    = ls('patec_meta')    || TB_META;
+  const metaLbl = ls('patec_meta_label') || TB_META_LBL;
+  const metaFmt = isNaN(parseInt(meta)) ? meta : parseInt(meta).toLocaleString('pt-BR');
+  _setEl('top-meta',       metaFmt);
   _setEl('top-meta-label', metaLbl);
-  _setEl('sb-meta',       meta.toLocaleString('pt-BR'));
-  _setEl('sb-meta-label', metaLbl);
+  _setEl('sb-meta',        metaFmt);
+  _setEl('sb-meta-label',  metaLbl);
 
   // ESQ 2 — Patec Finalizado
-  const patecVal = ls('patec_patec_val')||'—';
-  const patecSub = ls('patec_patec_sub')||'ADM';
+  const patecVal = ls('patec_patec_val') || TB_PATEC;
+  const patecSub = ls('patec_patec_sub') || TB_PATEC_SUB;
   _setEl('top-patec-val', patecVal);
   _setEl('top-patec-sub', patecSub);
   _setEl('sb-patec',      patecVal);
   _setEl('sb-patec-sub',  patecSub);
 
   // DIR 1 — Meta do Projeto
-  const metaProj    = parseInt(ls('patec_meta_proj')||'0');
-  const metaProjLbl = ls('patec_meta_proj_label')||'itens · ciclo';
-  _setEl('top-meta-proj',       metaProj>0 ? metaProj.toLocaleString('pt-BR') : '—');
+  const metaProj    = ls('patec_meta_proj')       || TB_META_PROJ;
+  const metaProjLbl = ls('patec_meta_proj_label') || TB_META_PROJ_LBL;
+  const metaProjFmt = isNaN(parseInt(metaProj)) ? metaProj : parseInt(metaProj).toLocaleString('pt-BR');
+  _setEl('top-meta-proj',       metaProjFmt);
   _setEl('top-meta-proj-label', metaProjLbl);
 
   // DIR 2 — Gap do Projeto
-  const gapManual = ls('patec_gap_manual');
+  const gapManual = ls('patec_gap_manual') || TB_GAP;
   const gapReal   = parseInt(ls('patec_realizado')||'0');
   const gapMeta   = parseInt(ls('patec_meta_proj')||'0');
   const gapCalc   = gapReal - gapMeta;
-  const gapStr    = gapManual || (gapReal>0||gapMeta>0 ? (gapCalc>=0?'+':'')+gapCalc.toLocaleString('pt-BR') : '—');
-  const gapSub    = ls('patec_gap_label')||'vs programado';
+  const gapSub    = ls('patec_gap_label') || TB_GAP_SUB;
+  let   gapStr;
+  if(ls('patec_gap_manual')) {
+    gapStr = ls('patec_gap_manual');
+  } else if(ls('patec_meta_proj') || ls('patec_realizado')) {
+    gapStr = (gapCalc>=0?'+':'')+gapCalc.toLocaleString('pt-BR');
+  } else {
+    gapStr = TB_GAP;
+  }
   _setEl('top-gap-proj',     gapStr);
   _setEl('top-gap-proj-sub', gapSub);
   // Cor do gap
   const gapBox = document.getElementById('top-gap-proj-box');
   if(gapBox){
-    const neg = gapStr.startsWith('-') || gapStr.startsWith('−');
-    const posit = gapStr.startsWith('+') || (!neg && gapStr !== '—');
-    gapBox.style.background = neg ? 'rgba(192,122,18,.22)' : posit ? 'rgba(14,158,106,.18)' : 'rgba(255,255,255,.08)';
-    gapBox.style.borderColor = neg ? 'rgba(192,122,18,.4)' : posit ? 'rgba(14,158,106,.35)' : 'rgba(255,255,255,.13)';
+    const neg   = gapStr.startsWith('-')||gapStr.startsWith('−');
+    const posit = !neg && gapStr!=='—' && gapStr!='';
+    gapBox.style.background  = neg?'rgba(192,122,18,.22)':posit?'rgba(14,158,106,.18)':'rgba(255,255,255,.08)';
+    gapBox.style.borderColor = neg?'rgba(192,122,18,.4)' :posit?'rgba(14,158,106,.35)':'rgba(255,255,255,.13)';
     const gapEl = document.getElementById('top-gap-proj');
-    if(gapEl) gapEl.style.color = neg ? '#FAC775' : posit ? '#6FEABD' : '#fff';
+    if(gapEl) gapEl.style.color = neg?'#FAC775':posit?'#6FEABD':'#fff';
   }
 }
 
@@ -4200,6 +4219,71 @@ async function mktCarregarTudo() {
 }
 
 // Iniciar quando a aba for acessada (via go())
+
+// ════════════════════════════════════════════
+// EXPORTAR HTML COM VALORES FIXOS (fix permanente)
+// ════════════════════════════════════════════
+function gerarHTMLAtualizado(){
+  const el = id => document.getElementById(id);
+
+  // Ler valores atuais (do localStorage ou dos campos ADM)
+  const meta       = el('mg-meta')?.value        || localStorage.getItem('patec_meta')       || '1980';
+  const metaLbl    = el('mg-meta-label')?.value  || localStorage.getItem('patec_meta_label') || 'itens · ciclo';
+  const patec      = el('mg-patec-val')?.value   || localStorage.getItem('patec_patec_val')  || '—';
+  const patecSub   = el('mg-patec-sub')?.value   || localStorage.getItem('patec_patec_sub')  || 'atualizar no ADM';
+  const metaProj   = el('mg-metaproj')?.value    || localStorage.getItem('patec_meta_proj')  || '—';
+  const metaProjLbl= el('mg-metaproj-label')?.value || localStorage.getItem('patec_meta_proj_label') || 'itens · ciclo';
+  const gapManual  = el('mg-gap-manual')?.checked && el('mg-gap-manual-val')?.value
+                   ? el('mg-gap-manual-val').value
+                   : localStorage.getItem('patec_gap_manual')||'';
+  const gapReal    = el('mg-gap-real')?.value    || localStorage.getItem('patec_realizado')  || '0';
+  const gapSub     = el('mg-gap-label')?.value   || localStorage.getItem('patec_gap_label')  || 'vs programado';
+  // Calcular gap se não manual
+  let gapFinal = gapManual;
+  if(!gapFinal){
+    const r=parseInt(gapReal)||0, m=parseInt(metaProj)||0;
+    gapFinal = (r||m) ? (r-m>=0?'+':'')+(r-m).toLocaleString('pt-BR') : '—';
+  }
+
+  // Pegar o HTML atual da página
+  let html = document.documentElement.outerHTML;
+
+  // Substituir as constantes TB_* com os novos valores
+  html = html
+    .replace(/const TB_META\s*=\s*'[^']*'/, "const TB_META      = '" + meta + "'")
+    .replace(/const TB_META_LBL\s*=\s*'[^']*'/, "const TB_META_LBL  = '" + metaLbl + "'")
+    .replace(/const TB_PATEC\s*=\s*'[^']*'/, "const TB_PATEC     = '" + patec + "'")
+    .replace(/const TB_PATEC_SUB\s*=\s*'[^']*'/, "const TB_PATEC_SUB = '" + patecSub + "'")
+    .replace(/const TB_META_PROJ\s*=\s*'[^']*'/, "const TB_META_PROJ = '" + metaProj + "'")
+    .replace(/const TB_META_PROJ_LBL\s*=\s*'[^']*'/, "const TB_META_PROJ_LBL = '" + metaProjLbl + "'")
+    .replace(/const TB_GAP\s*=\s*'[^']*'/, "const TB_GAP       = '" + gapFinal + "'")
+    .replace(/const TB_GAP_SUB\s*=\s*'[^']*'/, "const TB_GAP_SUB   = '" + gapSub + "'");
+
+  // Download
+  const blob = new Blob([html], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'index.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ══ INIT SEGURO ══
+// Atualizar data na topbar
+(function(){
+  const tdt = document.getElementById('tdt');
+  if(tdt) tdt.textContent = new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'});
+  // Datas dos campos de formulário
+  const hoje = new Date().toISOString().split('T')[0];
+  ['pr-data-ref','mp-data','adm-pcp-dt','pcp-dt','eq-data-unica','eq-data-de','eq-data-ate'].forEach(id=>{
+    const el=document.getElementById(id);if(el&&el.type==='date')el.value=hoje;
+  });
+})();
+
+// Carregar valores salvos na topbar ao iniciar
+initMetaGap();
+fbCarregarTudo().then(() => { initMetaGap(); });
+
 // ══ INIT SEGURO ══
 // Atualizar data na topbar
 (function(){
