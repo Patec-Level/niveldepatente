@@ -369,10 +369,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 </nav>
 <main id="mn">
 <div class="topbar">
-  <!-- Data à esquerda -->
-  <div class="top-dt" id="tdt"></div>
 
-  <!-- Título no centro (posição absoluta para ficar sempre no meio da barra) -->
+  <!-- ── Apenas data à esquerda (ESQ 1 e ESQ 2 ficam só no sidebar) ── -->
+  <div class="top-dt" id="tdt"></div>
+  <!-- IDs mantidos fora do DOM visível para o JS continuar funcionando -->
+  <span id="top-meta" style="display:none">1.980</span>
+  <span id="top-meta-label" style="display:none">itens · ciclo</span>
+  <span id="top-patec-val" style="display:none">—</span>
+  <span id="top-patec-sub" style="display:none">ADM</span>
+
+  <!-- ── CENTRO: Ícone + Título (absoluto) ── -->
   <div style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1">
     <div style="display:flex;align-items:center;gap:10px">
       <span id="ttl-ico" style="font-size:18px">📊</span>
@@ -380,21 +386,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     </div>
   </div>
 
-  <!-- Lado direito: 2 cards independentes -->
-  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;position:relative;z-index:2">
-    <!-- CARD 1: META OPERACIONAL (PATEC) -->
-    <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:4px 14px;text-align:center;min-width:100px">
-      <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;white-space:nowrap">META OPERACIONAL (PATEC)</div>
-      <div style="font-size:20px;font-weight:700;color:#fff;line-height:1.1" id="top-meta">1.980</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.4)" id="top-meta-label">itens · ciclo</div>
+  <!-- ── DIREITA: 2 cards (Meta do Projeto + Gap do Projeto) ── -->
+  <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;position:relative;z-index:2">
+    <!-- DIR 1: META DO PROJETO -->
+    <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.13);border-radius:8px;padding:4px 12px;text-align:center;min-width:95px">
+      <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.7px;text-transform:uppercase;white-space:nowrap;margin-bottom:1px">META DO PROJETO</div>
+      <div style="font-size:19px;font-weight:700;color:#fff;line-height:1" id="top-meta-proj">—</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.38)" id="top-meta-proj-label">itens · ciclo</div>
     </div>
-    <!-- CARD 2: PATEC FINALIZADO -->
-    <div id="top-patec-box" style="background:rgba(29,158,106,.2);border:1px solid rgba(29,158,106,.4);border-radius:8px;padding:4px 14px;text-align:center;min-width:100px">
-      <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;white-space:nowrap">PATEC FINALIZADO</div>
-      <div style="font-size:20px;font-weight:700;color:#6FEABD;line-height:1.1" id="top-patec-val">—</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.45)" id="top-patec-sub">atualizar no ADM</div>
+    <!-- DIR 2: GAP DO PROJETO -->
+    <div id="top-gap-proj-box" style="background:rgba(192,122,18,.22);border:1px solid rgba(192,122,18,.4);border-radius:8px;padding:4px 12px;text-align:center;min-width:95px">
+      <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.7px;text-transform:uppercase;white-space:nowrap;margin-bottom:1px">GAP DO PROJETO</div>
+      <div style="font-size:19px;font-weight:700;color:#FAC775;line-height:1" id="top-gap-proj">—</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.38)" id="top-gap-proj-sub">ADM</div>
     </div>
   </div>
+
 </div>
 <div class="ct">
 
@@ -1065,89 +1072,154 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- ── META & GAP TOPBAR ── -->
             <!-- ── META & GAP TOPBAR ── -->
       <div id="adm-meta-gap" class="adm-tab" style="display:none">
-        <div class="al al-b" style="margin-bottom:1rem">ℹ Os dois campos são <strong>independentes</strong> — cada um controla um card na topbar. Salve cada um separadamente.</div>
+        <div class="al al-b" style="margin-bottom:1rem">ℹ São <strong>4 cards independentes</strong> na topbar — 2 no lado esquerdo e 2 no lado direito. Cada um tem seu próprio botão de salvar.</div>
 
-        <div class="g2">
+        <!-- LINHA: Esquerda -->
+        <div style="font-size:11px;font-weight:700;color:var(--az);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;padding-left:2px">◀ Lado Esquerdo da Topbar</div>
+        <div class="g2" style="margin-bottom:1.25rem">
 
-          <!-- ─ CARD 1: META OPERACIONAL (PATEC) ─ -->
+          <!-- ESQ 1: META OPERACIONAL (PATEC) -->
           <div class="cd" style="border-top:3px solid var(--azm)">
-            <div class="cd-t">🎯 Card 1 — Meta Operacional (Patec)</div>
-            <div style="font-size:11px;color:var(--tx2);margin-bottom:1rem">Aparece no card <strong>azul</strong> da topbar (lado direito, primeiro card).</div>
-
-            <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="cd-t">🎯 ESQ 1 — Meta Operacional (Patec)</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
               <div class="field-wrap">
-                <span class="field-label">Valor da meta (número)</span>
+                <span class="field-label">Valor (número)</span>
                 <input type="number" id="mg-meta" min="0" placeholder="Ex: 1980"
-                  style="width:100%;font-size:20px;font-weight:700;color:var(--azm);text-align:center"
-                  oninput="mgPreviewMeta()">
+                  style="width:100%;font-size:20px;font-weight:700;color:var(--azm);text-align:center" oninput="mgPreviewMeta()">
               </div>
               <div class="field-wrap">
-                <span class="field-label">Sublabel (texto abaixo do número)</span>
-                <input type="text" id="mg-meta-label" placeholder="itens · ciclo" style="width:100%"
-                  oninput="mgPreviewMeta()">
+                <span class="field-label">Sublabel</span>
+                <input type="text" id="mg-meta-label" placeholder="itens · ciclo" style="width:100%" oninput="mgPreviewMeta()">
               </div>
-
-              <!-- Prévia -->
-              <div style="background:var(--az);border-radius:8px;padding:.875rem;text-align:center">
-                <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">META OPERACIONAL (PATEC)</div>
-                <div style="font-size:26px;font-weight:700;color:#fff;line-height:1" id="mg-meta-preview">—</div>
-                <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px" id="mg-meta-label-preview">itens · ciclo</div>
+              <div style="background:var(--az);border-radius:8px;padding:.75rem;text-align:center">
+                <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.7px;text-transform:uppercase;margin-bottom:2px">META OPERACIONAL (PATEC)</div>
+                <div style="font-size:22px;font-weight:700;color:#fff" id="mg-meta-preview">—</div>
+                <div style="font-size:9px;color:rgba(255,255,255,.4)" id="mg-meta-label-preview">itens · ciclo</div>
               </div>
-
-              <button class="btn btn-p" onclick="salvarMetaCard()" style="align-self:flex-start">✓ Aplicar Card 1 na topbar</button>
+              <button class="btn btn-p" onclick="salvarMetaCard()" style="align-self:flex-start">✓ Salvar ESQ 1</button>
               <span id="mg-meta-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
             </div>
           </div>
 
-          <!-- ─ CARD 2: PATEC FINALIZADO ─ -->
+          <!-- ESQ 2: PATEC FINALIZADO -->
           <div class="cd" style="border-top:3px solid var(--vd)">
-            <div class="cd-t">✅ Card 2 — Patec Finalizado</div>
-            <div style="font-size:11px;color:var(--tx2);margin-bottom:1rem">Aparece no card <strong>verde</strong> da topbar (lado direito, segundo card).</div>
-
-            <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="cd-t">✅ ESQ 2 — Patec Finalizado</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
               <div class="field-wrap">
-                <span class="field-label">Valor (número ou texto)</span>
+                <span class="field-label">Valor (número ou texto livre)</span>
                 <input type="text" id="mg-patec-val" placeholder="Ex: 743 ou 37,5%"
-                  style="width:100%;font-size:20px;font-weight:700;color:var(--vd);text-align:center"
-                  oninput="mgPreviewPatec()">
+                  style="width:100%;font-size:20px;font-weight:700;color:var(--vd);text-align:center" oninput="mgPreviewPatec()">
               </div>
               <div class="field-wrap">
-                <span class="field-label">Sublabel (texto abaixo)</span>
-                <input type="text" id="mg-patec-sub" placeholder="Ex: itens concluídos"
-                  style="width:100%" oninput="mgPreviewPatec()">
+                <span class="field-label">Sublabel</span>
+                <input type="text" id="mg-patec-sub" placeholder="Ex: itens concluídos" style="width:100%" oninput="mgPreviewPatec()">
               </div>
-
-              <!-- Prévia -->
-              <div style="background:linear-gradient(135deg,#0A6E47,#0B8A5C);border-radius:8px;padding:.875rem;text-align:center">
-                <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">PATEC FINALIZADO</div>
-                <div style="font-size:26px;font-weight:700;color:#6FEABD;line-height:1" id="mg-patec-preview">—</div>
-                <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px" id="mg-patec-sub-preview">atualizar no ADM</div>
+              <div style="background:linear-gradient(135deg,#0A6E47,#0B8A5C);border-radius:8px;padding:.75rem;text-align:center">
+                <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.7px;text-transform:uppercase;margin-bottom:2px">PATEC FINALIZADO</div>
+                <div style="font-size:22px;font-weight:700;color:#6FEABD" id="mg-patec-preview">—</div>
+                <div style="font-size:9px;color:rgba(255,255,255,.4)" id="mg-patec-sub-preview">ADM</div>
               </div>
-
-              <button class="btn btn-g" onclick="salvarPatecCard()" style="align-self:flex-start">✓ Aplicar Card 2 na topbar</button>
+              <button class="btn btn-g" onclick="salvarPatecCard()" style="align-self:flex-start">✓ Salvar ESQ 2</button>
               <span id="mg-patec-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
             </div>
           </div>
-
         </div>
 
-        <!-- Valores atuais salvos -->
-        <div class="cd" style="margin-top:1rem">
-          <div class="cd-t">📋 Valores atualmente salvos</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div style="padding:.875rem;background:var(--azc);border-radius:8px;border:1px solid rgba(26,74,138,.15)">
-              <div style="font-size:10px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Card 1 · Meta Operacional</div>
-              <div style="font-size:22px;font-weight:700;color:var(--azm)" id="mg-cur-meta">—</div>
-              <div style="font-size:10px;color:var(--tx2)" id="mg-cur-meta-label">—</div>
+        <!-- LINHA: Direita -->
+        <div style="font-size:11px;font-weight:700;color:var(--az);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;padding-left:2px">▶ Lado Direito da Topbar</div>
+        <div class="g2" style="margin-bottom:1.25rem">
+
+          <!-- DIR 1: META DO PROJETO -->
+          <div class="cd" style="border-top:3px solid rgba(255,255,255,.4);background:linear-gradient(135deg,#f8fafd,#fff)">
+            <div class="cd-t">📌 DIR 1 — Meta do Projeto</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="field-wrap">
+                <span class="field-label">Valor (número)</span>
+                <input type="number" id="mg-metaproj" min="0" placeholder="Ex: 1980"
+                  style="width:100%;font-size:20px;font-weight:700;color:var(--az);text-align:center" oninput="mgPreviewMetaProj()">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Sublabel</span>
+                <input type="text" id="mg-metaproj-label" placeholder="itens · ciclo" style="width:100%" oninput="mgPreviewMetaProj()">
+              </div>
+              <div style="background:var(--az);border-radius:8px;padding:.75rem;text-align:center">
+                <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.7px;text-transform:uppercase;margin-bottom:2px">META DO PROJETO</div>
+                <div style="font-size:22px;font-weight:700;color:#fff" id="mg-metaproj-preview">—</div>
+                <div style="font-size:9px;color:rgba(255,255,255,.4)" id="mg-metaproj-label-preview">itens · ciclo</div>
+              </div>
+              <button class="btn btn-p" onclick="salvarMetaProjCard()" style="align-self:flex-start">✓ Salvar DIR 1</button>
+              <span id="mg-metaproj-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
             </div>
-            <div style="padding:.875rem;background:var(--vdc);border-radius:8px;border:1px solid rgba(14,158,106,.15)">
-              <div style="font-size:10px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Card 2 · Patec Finalizado</div>
-              <div style="font-size:22px;font-weight:700;color:var(--vd)" id="mg-cur-patec">—</div>
-              <div style="font-size:10px;color:var(--tx2)" id="mg-cur-patec-label">—</div>
+          </div>
+
+          <!-- DIR 2: GAP DO PROJETO -->
+          <div class="cd" style="border-top:3px solid var(--am)">
+            <div class="cd-t">📊 DIR 2 — Gap do Projeto</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div class="field-wrap">
+                  <span class="field-label">Realizado acumulado</span>
+                  <input type="number" id="mg-gap-real" min="0" placeholder="Ex: 743"
+                    style="width:100%;font-size:16px;font-weight:700;color:var(--vd);text-align:center" oninput="mgRecalcGapProj()">
+                </div>
+                <div class="field-wrap">
+                  <span class="field-label">Gap (calculado auto)</span>
+                  <div id="mg-gap-calc" style="padding:8px;background:var(--cin);border-radius:7px;border:1px solid var(--brd);font-size:18px;font-weight:700;text-align:center;color:var(--am)">—</div>
+                </div>
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Sublabel</span>
+                <input type="text" id="mg-gap-label" placeholder="vs programado" style="width:100%" oninput="mgRecalcGapProj()">
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="checkbox" id="mg-gap-manual" onchange="mgToggleManual()" style="width:14px;height:14px">
+                <label for="mg-gap-manual" style="font-size:11px;color:var(--tx2);cursor:pointer">Inserir gap manualmente</label>
+              </div>
+              <div id="mg-gap-manual-box" style="display:none">
+                <div class="field-wrap">
+                  <span class="field-label">Valor manual (ex: −157)</span>
+                  <input type="text" id="mg-gap-manual-val" placeholder="−157" style="width:100%;font-size:18px;font-weight:700;text-align:center;color:var(--am)" oninput="mgRecalcGapProj()">
+                </div>
+              </div>
+              <div id="top-gap-proj-box-preview" style="background:rgba(192,122,18,.15);border:1px solid rgba(192,122,18,.3);border-radius:8px;padding:.75rem;text-align:center">
+                <div style="font-size:7px;font-weight:700;color:var(--am);letter-spacing:.7px;text-transform:uppercase;margin-bottom:2px">GAP DO PROJETO</div>
+                <div style="font-size:22px;font-weight:700;color:var(--am)" id="mg-gap-preview">—</div>
+                <div style="font-size:9px;color:var(--tx2)" id="mg-gap-preview-label">vs programado</div>
+              </div>
+              <button class="btn btn-s" onclick="salvarGapProjCard()" style="align-self:flex-start;border-color:var(--am);color:var(--am)">✓ Salvar DIR 2</button>
+              <span id="mg-gap-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Valores atualmente salvos -->
+        <div class="cd">
+          <div class="cd-t">📋 Resumo — valores atualmente na topbar</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+            <div style="padding:.75rem;background:var(--azc);border-radius:8px;text-align:center">
+              <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">ESQ 1 · Meta Oper.</div>
+              <div style="font-size:20px;font-weight:700;color:var(--azm)" id="mg-cur-meta">—</div>
+              <div style="font-size:9px;color:var(--tx2)" id="mg-cur-meta-label">—</div>
+            </div>
+            <div style="padding:.75rem;background:var(--vdc);border-radius:8px;text-align:center">
+              <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">ESQ 2 · Patec Fin.</div>
+              <div style="font-size:20px;font-weight:700;color:var(--vd)" id="mg-cur-patec">—</div>
+              <div style="font-size:9px;color:var(--tx2)" id="mg-cur-patec-label">—</div>
+            </div>
+            <div style="padding:.75rem;background:var(--azc);border-radius:8px;text-align:center">
+              <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">DIR 1 · Meta Proj.</div>
+              <div style="font-size:20px;font-weight:700;color:var(--azm)" id="mg-cur-metaproj">—</div>
+              <div style="font-size:9px;color:var(--tx2)" id="mg-cur-metaproj-label">—</div>
+            </div>
+            <div style="padding:.75rem;background:var(--amc);border-radius:8px;text-align:center">
+              <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">DIR 2 · Gap Proj.</div>
+              <div style="font-size:20px;font-weight:700;color:var(--am)" id="mg-cur-gap">—</div>
+              <div style="font-size:9px;color:var(--tx2)" id="mg-cur-gap-label">—</div>
             </div>
           </div>
         </div>
       </div>
+
 
       <!-- ── SENHAS ── -->
       <div id="adm-senhas" class="adm-tab" style="display:none">
@@ -1770,7 +1842,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   </div><!-- /ct -->
 </main>
 
-<script>// ── CHART HELPER ──
+<script>// ── GLOBAIS ──
+const HOJE = new Date();
+
+// ── CHART HELPER ──
 let chartsMap = {};
 function mkChart(id,type,data,opts={}){
   if(chartsMap[id]) chartsMap[id].destroy();
@@ -1828,6 +1903,45 @@ const CICLO_ATUAL = {
 
 const META  = 90;
 const DIAS_UTEIS = 22;
+
+// ════════════════════════════════════════════
+// DADOS REAIS — Ciclo Abr/Mai 2026
+// ════════════════════════════════════════════
+const DATAS      = ['27/abr','28/abr','29/abr','30/abr','04/mai','05/mai','06/mai','07/mai','08/mai','11/mai'];
+const DATAS_ISO  = ['2026-04-27','2026-04-28','2026-04-29','2026-04-30','2026-05-04','2026-05-05','2026-05-06','2026-05-07','2026-05-08','2026-05-11'];
+const DATAS_FULL = ['2026-04-27','2026-04-28','2026-04-29','2026-04-30','2026-05-04','2026-05-05','2026-05-06','2026-05-07','2026-05-08','2026-05-11','2026-05-12','2026-05-13','2026-05-14','2026-05-15','2026-05-18','2026-05-19','2026-05-20','2026-05-21','2026-05-22','2026-05-25','2026-05-26'];
+const DATAS_MAPA = ['27/abr','28/abr','29/abr','30/abr','04/mai','05/mai','06/mai','07/mai','08/mai','11/mai'];
+const DATAS_ISO_MAPA = ['2026-04-27','2026-04-28','2026-04-29','2026-04-30','2026-05-04','2026-05-05','2026-05-06','2026-05-07','2026-05-08','2026-05-11'];
+
+// Produção diária e acumulada (equipe)
+const PROD       = [38,43,38,8,27,45,124,46,28,10];
+const SAIDA      = [55,44,80,27,58,38,35,54,18,30];
+const PROD_ACUM  = [38,81,119,127,154,199,323,369,397,407];
+const SAIDA_ACUM = [55,99,179,206,264,302,337,391,409,439];
+
+// Mapa L3-L8 (10 dias reais)
+const L = {
+  3:[727,712,722,679,711,703,679,687,592,712],
+  4:[218,228,241,234,190,189,285,347,359,497],
+  5:[5,6,6,0,22,9,8,5,8,15],
+  6:[0,1,1,0,0,0,0,1,0,0],
+  7:[190,191,273,301,303,320,278,233,168,111],
+  8:[154,148,185,218,216,252,221,216,153,113],
+};
+const LB = {
+  L3:{val:1019,fila:'PATEC',fila_mapa:'Analisar PATEC Finalizado',cor:'#3266AD'},
+  L4:{val:1215,fila:'Oportunidade em Andamento',fila_mapa:'Aguardar PATEC ser Finalizado',cor:'#3266AD'},
+  L5:{val:43,fila:'Emitir Pedido PATEC',fila_mapa:'PATEC Fin. sem fornecedores aprovados',cor:'#1D9E75'},
+  L6:{val:405,fila:'Análise de Oportunidade',fila_mapa:'Analisar PATEC Cancelado',cor:'#1D9E75'},
+  L7:{val:1694,fila:'Fila de publicação',fila_mapa:'Abrir PATEC Idêntico Não',cor:'#BA7517'},
+  L8:{val:140,fila:'Item em Parada',fila_mapa:'Abrir PATEC Grupo de Mercadoria Obrigatório',cor:'#BA7517'},
+};
+const L12_LB = 2682;
+const L10_LB = 4516;
+
+// Ciclos históricos
+let ciclos_historico = JSON.parse(localStorage.getItem('patec_ciclos_historico')||'[]');
+
 // ══ NAVEGAÇÃO UNIFICADA ══
 
 function go(id, el) {
@@ -1929,11 +2043,11 @@ let presAtual   = null;
 let dataAtual   = null;
 
 // ── BANCO DE HORAS / FÉRIAS (zerado, editável pelo ADM) ──
-const FERIAS_DATA = COLABS.map((c,i) => ({
+let FERIAS_DATA = COLABS.map((c,i) => ({
   colab: c, ordem: i+1,
   saida: '', dias: 30, retorno: '', status: 'Aguardando definição'
 }));
-const BANCO_HORAS = COLABS.map(c => ({
+let BANCO_HORAS = COLABS.map(c => ({
   colab: c, horas_extras: 0, folgas_usadas: 0
 }));
 
@@ -2304,11 +2418,11 @@ function checkPwd(){if((document.getElementById('pcp-pwd')||{}).value===SENHA_PC
 function logoutPCP(){(document.getElementById('pcp-lock')||document.createElement('div')).style.display='block';(document.getElementById('pcp-data')||document.createElement('div')).style.display='none';(document.getElementById('pcp-pwd')||{}).value='';}
 function renderPCP(){
   if(!document.getElementById('pcp-tb')) return;if(document.getElementById('pcp-data')?.style.display==='none')return;const tot={f1:0,f2:0,f3:0,f4:0};pcpData.forEach(r=>{tot.f1+=r.f1;tot.f2+=r.f2;tot.f3+=r.f3;tot.f4+=r.f4;});['1','2','3','4'].forEach(i=>document.getElementById('pcp-v'+i).textContent=tot['f'+i].toLocaleString('pt-BR'));const s=pcpData.slice().sort((a,b)=>a.data.localeCompare(b.data));(document.getElementById('pcp-tb')||{}).innerHTML=s.map(r=>{const t=r.f1+r.f2+r.f3+r.f4;return`<tr><td>${fmtDt(r.data)}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.f3}</td><td>${r.f4}</td><td style="font-weight:700">${t}</td></tr>`;}).join('');const gt=tot.f1+tot.f2+tot.f3+tot.f4;(document.getElementById('pcp-tf')||{}).innerHTML=`<tr><td><strong>TOTAL</strong></td><td>${tot.f1}</td><td>${tot.f2}</td><td>${tot.f3}</td><td>${tot.f4}</td><td style="font-weight:700">${gt}</td></tr>`;}
-function salvarPCP(){const d=document.getElementById('pcp-dt').value;if(!d){alert('Informe a data.');return;}pcpData.push({data:d,f1:parseInt(document.getElementById('pcp-f1').value)||0,f2:parseInt(document.getElementById('pcp-f2').value)||0,f3:parseInt(document.getElementById('pcp-f3').value)||0,f4:parseInt(document.getElementById('pcp-f4').value)||0});['pcp-f1','pcp-f2','pcp-f3','pcp-f4'].forEach(id=>document.getElementById(id).value='');renderPCP();}
+function salvarPCP(){const d=(document.getElementById('pcp-dt')||{}).value;if(!d){alert('Informe a data.');return;}pcpData.push({data:d,f1:parseInt((document.getElementById('pcp-f1')||{}).value)||0,f2:parseInt((document.getElementById('pcp-f2')||{}).value)||0,f3:parseInt((document.getElementById('pcp-f3')||{}).value)||0,f4:parseInt((document.getElementById('pcp-f4')||{}).value)||0});['pcp-f1','pcp-f2','pcp-f3','pcp-f4'].forEach(id=>document.getElementById(id).value='');renderPCP();}
 function exportPCP(){var hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Dev.,Total\n';var rows=pcpData.map(function(r){return fmtDt(r.data)+','+r.f1+','+r.f2+','+r.f3+','+r.f4+','+(r.f1+r.f2+r.f3+r.f4);}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();}
 
 // ── EXPORTAR ──
-function renderExport(){document.getElementById('exp-count').textContent=registros.length;(document.getElementById('exp-tb')||{}).innerHTML=registros.slice().sort((a,b)=>b.data.localeCompare(a.data)).map((r,_)=>`<tr><td>${fmtDt(r.data)}</td><td>${r.colab}</td><td>${r.f.reduce((a,b)=>a+b,0)}</td><td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="delReg(${registros.indexOf(r)})">✕</button></td></tr>`).join('');}
+function renderExport(){(document.getElementById('exp-count')||{}).textContent=registros.length;(document.getElementById('exp-tb')||{}).innerHTML=registros.slice().sort((a,b)=>b.data.localeCompare(a.data)).map((r,_)=>`<tr><td>${fmtDt(r.data)}</td><td>${r.colab}</td><td>${r.f.reduce((a,b)=>a+b,0)}</td><td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="delReg(${registros.indexOf(r)})">✕</button></td></tr>`).join('');}
 function delReg(i){if(confirm('Excluir?')){registros.splice(i,1);renderExport();}}
 function buildData(regs){return[['Colaborador','Data','Presença',...LINHAS_PROD,'Total'],...regs.map(r=>[r.colab,fmtDt(r.data),r.pres,...r.f,r.f.reduce((a,b)=>a+b,0)])];}
 function exportExcel(){const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(buildData(registros.slice().sort((a,b)=>a.data.localeCompare(b.data))));XLSX.utils.book_append_sheet(wb,ws,'Produção');COLABS.forEach(c=>{const regs=registros.filter(r=>r.colab===c);if(regs.length){const ws2=XLSX.utils.aoa_to_sheet(buildData(regs.sort((a,b)=>a.data.localeCompare(b.data))));XLSX.utils.book_append_sheet(wb,ws2,c);}});XLSX.writeFile(wb,'Producao_PATEC.xlsx');}
@@ -2369,8 +2483,8 @@ function pill(txt,cls){ return `<span class="pl ${cls}">${txt}</span>`; }
       <span class="linha-var ${varCls}">${varD!==0?varSym+Math.abs(varD):'—'}<br><span style="font-size:9px;color:var(--tx2)">vs D8</span></span>
     </div>`;
   }
-  document.getElementById('linhas-l12').innerHTML=lL12.map(l=>linhaHTML(l,maxL12)).join('');
-  document.getElementById('linhas-l78').innerHTML=lL78.map(l=>linhaHTML(l,maxL78)).join('');
+  (document.getElementById('linhas-l12')||{}).innerHTML=lL12.map(l=>linhaHTML(l,maxL12)).join('');
+  (document.getElementById('linhas-l78')||{}).innerHTML=lL78.map(l=>linhaHTML(l,maxL78)).join('');
 
   // Pizza L12
   mkChart('ch-pizza-l12','doughnut',{
@@ -2392,20 +2506,20 @@ function recalcL(){
   const g=id=>parseInt(document.getElementById(id).value)||0;
   const l10=g('lv3')+g('lv4')+g('lv5')+g('lv6')+g('lv7')+g('lv8');
   const l12=g('lv3')+g('lv4')+g('lv5')+g('lv6');
-  document.getElementById('l10-calc').textContent=l10.toLocaleString('pt-BR');
-  document.getElementById('l12-calc').textContent=l12.toLocaleString('pt-BR');
+  (document.getElementById('l10-calc')||{}).textContent=l10.toLocaleString('pt-BR');
+  (document.getElementById('l12-calc')||{}).textContent=l12.toLocaleString('pt-BR');
 }
 function salvarLancamento(){
   const g=id=>parseInt(document.getElementById(id).value)||0;
-  const dt=document.getElementById('lanc-data').value;
+  const dt=(document.getElementById('lanc-data')||{}).value;
   if(!dt){alert('Informe a data.');return;}
-  const row={data:dt,obs:document.getElementById('lanc-obs').value,
+  const row={data:dt,obs:(document.getElementById('lanc-obs')||{}).value,
     L3:g('lv3'),L4:g('lv4'),L5:g('lv5'),L6:g('lv6'),L7:g('lv7'),L8:g('lv8')};
   row.L10=row.L3+row.L4+row.L5+row.L6+row.L7+row.L8;
   row.L12=row.L3+row.L4+row.L5+row.L6;
   lancamentos.push(row);
-  document.getElementById('lanc-hist-card').style.display='block';
-  document.getElementById('lanc-tb').innerHTML=lancamentos.map(r=>
+  (document.getElementById('lanc-hist-card')||document.createElement('div')).style.display='block';
+  (document.getElementById('lanc-tb')||{}).innerHTML=lancamentos.map(r=>
     `<tr><td>${r.data.split('-').reverse().join('/')}</td>
     <td>${r.L3}</td><td>${r.L4}</td><td>${r.L5}</td><td>${r.L6}</td><td>${r.L7}</td><td>${r.L8}</td>
     <td style="font-weight:700">${r.L10.toLocaleString('pt-BR')}</td>
@@ -2417,7 +2531,7 @@ function salvarLancamento(){
 }
 function exportLancamento(){
   const g=id=>parseInt(document.getElementById(id).value)||0;
-  const dt=document.getElementById('lanc-data').value.split('-').reverse().join('/');
+  const dt=(document.getElementById('lanc-data')||{}).value.split('-').reverse().join('/');
   const l3=g('lv3'),l4=g('lv4'),l5=g('lv5'),l6=g('lv6'),l7=g('lv7'),l8=g('lv8');
   const rows=[
     ['Data referência',dt],['',''],
@@ -2478,7 +2592,7 @@ function renderHistorico(){
   const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
   const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
   const maxL12=Math.max(...l12arr);
-  document.getElementById('tb-hist').innerHTML=DATAS_MAPA.map((dt,i)=>{
+  (document.getElementById('tb-hist')||{}).innerHTML=DATAS_MAPA.map((dt,i)=>{
     const l12=l12arr[i],l10=l10arr[i];
     const dif=i>0?l12-l12arr[i-1]:0;
     return`<tr>
@@ -2495,7 +2609,7 @@ function renderHistorico(){
   const avgL=k=>Math.round(L[k].reduce((a,b)=>a+b,0)/9);
   const avgL12=Math.round(l12arr.reduce((a,b)=>a+b,0)/9);
   const avgL10=Math.round(l10arr.reduce((a,b)=>a+b,0)/9);
-  document.getElementById('tf-hist').innerHTML=`<tr>
+  (document.getElementById('tf-hist')||{}).innerHTML=`<tr>
     <td>MÉDIA</td>
     <td>${avgL(3)}</td><td>${avgL(4)}</td><td>${avgL(5)}</td><td>${avgL(6)}</td>
     <td>${avgL(7)}</td><td>${avgL(8)}</td>
@@ -2557,7 +2671,7 @@ function renderVariacao(){
     <div class="var-card-v" style="color:var(--azm)">${l12d9.toLocaleString('pt-BR')}</div>
     <div class="var-card-d" style="color:${(l12d9-l12d8)>0?'var(--vm)':'var(--vd)'}">${(l12d9-l12d8)>0?'▲ +':'▼ '}${Math.abs(l12d9-l12d8)}</div>
   </div>`];
-  document.getElementById('var-cards').innerHTML=varCards.join('');
+  (document.getElementById('var-cards')||{}).innerHTML=varCards.join('');
 
   // Gráfico variação L12
   const l12arr=DATAS_MAPA.map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
@@ -2583,7 +2697,7 @@ function renderVariacao(){
 
   // Tabela variações
   const l10arr=DATAS_MAPA.map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
-  document.getElementById('tb-var').innerHTML=DATAS_MAPA.slice(1).map((dt,i)=>{
+  (document.getElementById('tb-var')||{}).innerHTML=DATAS_MAPA.slice(1).map((dt,i)=>{
     const j=i+1;
     const dL=[3,4,5,6,7,8].map(k=>L[k][j]-L[k][i]);
     const dL10=l10arr[j]-l10arr[i];
@@ -2610,7 +2724,7 @@ function selLinha(linha,btn){
   const avg=Math.round(data.reduce((a,b)=>a+b,0)/data.length);
   const tendencia=data[data.length-1]-data[data.length-2];
 
-  document.getElementById('kpi-linha').innerHTML=`
+  (document.getElementById('kpi-linha')||{}).innerHTML=`
     <div class="kc"><div class="kc-l">Valor atual (LB)</div><div class="kc-v xl" style="color:${lb.cor}">${lb.val.toLocaleString('pt-BR')}</div><div class="kc-s">Level Board</div></div>
     <div class="kc ok"><div class="kc-l">Máximo (aba Din.)</div><div class="kc-v">${max.toLocaleString('pt-BR')}</div><div class="kc-s">Dia ${data.indexOf(max)+1}</div></div>
     <div class="kc warn"><div class="kc-l">Mínimo (aba Din.)</div><div class="kc-v">${min.toLocaleString('pt-BR')}</div><div class="kc-s">Dia ${data.indexOf(min)+1}</div></div>
@@ -2618,8 +2732,8 @@ function selLinha(linha,btn){
     <div class="kc ${tendencia>0?'bad':tendencia<0?'ok':''}"><div class="kc-l">Última variação</div><div class="kc-v">${tendencia>0?'▲ +':tendencia<0?'▼ ':''}${Math.abs(tendencia)}</div><div class="kc-s">D9 vs D8</div></div>
   `;
 
-  document.getElementById('detalhe-chart-title').textContent=`${linha} — ${lb.fila_mapa} (histórico 9 dias)`;
-  document.getElementById('detalhe-tb-title').textContent=`Histórico diário — ${linha}`;
+  (document.getElementById('detalhe-chart-title')||{}).textContent=`${linha} — ${lb.fila_mapa} (histórico 9 dias)`;
+  (document.getElementById('detalhe-tb-title')||{}).textContent=`Histórico diário — ${linha}`;
 
   const bc=data.map((v,i)=>i>0?(v>data[i-1]?'rgba(226,75,74,.75)':'rgba(29,158,117,.75)'):lb.cor);
   mkChart('ch-detalhe','bar',{
@@ -2630,7 +2744,7 @@ function selLinha(linha,btn){
     ]
   },{legend:true,scales:{y:{grid:{color:'#f0f0f0'},ticks:{font:{size:10}},min:Math.max(0,min-10)},x:{grid:{display:false},ticks:{font:{size:9}}}}});
 
-  document.getElementById('detalhe-info').innerHTML=`
+  (document.getElementById('detalhe-info')||{}).innerHTML=`
     <div class="cd-t">${linha} — Informações</div>
     <div style="font-size:12px;line-height:2;color:var(--tx2)">
       <div><strong style="color:var(--tx)">Fila MAPA:</strong> ${lb.fila_mapa}</div>
@@ -2651,7 +2765,7 @@ function selLinha(linha,btn){
     </div>
   `;
 
-  document.getElementById('tb-detalhe').innerHTML=data.map((v,i)=>{
+  (document.getElementById('tb-detalhe')||{}).innerHTML=data.map((v,i)=>{
     const dif=i>0?v-data[i-1]:0;
     const tend=i>0?(dif>20?'📈 Alta forte':dif>0?'↗ Alta':dif<-20?'📉 Queda forte':dif<0?'↘ Queda':'→ Estável'):'—';
     return`<tr>
@@ -2676,7 +2790,7 @@ const SENHA_ADM = 'patec2026';
 
 function admLogin(){
   // Acesso livre — sem senha
-  if(true || document.getElementById('adm-pwd').value===SENHA_ADM){
+  if(true || (document.getElementById('adm-pwd')||{}).value===SENHA_ADM){
     document.getElementById('adm-login').style.display='none';
     document.getElementById('adm-painel').style.display='block';
     admCarregarValores();
@@ -2695,7 +2809,7 @@ function admLogin(){
 function admLogout(){
   document.getElementById('adm-login').style.display='block';
   document.getElementById('adm-painel').style.display='none';
-  document.getElementById('adm-pwd').value='';
+  (document.getElementById('adm-pwd')||{}).value='';
 }
 
 function setAdmTab(id,btn){
@@ -2887,7 +3001,7 @@ Responda de forma estruturada, com insights práticos e sugestões de ação qua
 
 // ── FÉRIAS ADM ──
 function renderFeriasForm(){
-  document.getElementById('adm-ferias-form').innerHTML=FERIAS_DATA.map((r,i)=>`
+  (document.getElementById('adm-ferias-colabs')||{}).innerHTML=FERIAS_DATA.map((r,i)=>`
     <div class="cd" style="padding:.875rem">
       <div style="font-size:12px;font-weight:700;margin-bottom:8px">${i+1}º · ${r.colab}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
@@ -3253,83 +3367,189 @@ PAGE_TITLES['adm'] = '🔐 Administração';
 
 
 // ════════════════════════════════════════════
-// META & GAP — Dois cards independentes na topbar
+// META & GAP — 4 cards independentes na topbar
+// ESQ1: Meta Operacional (Patec) | ESQ2: Patec Finalizado
+// DIR1: Meta do Projeto          | DIR2: Gap do Projeto
 // ════════════════════════════════════════════
-function initMetaGapADM(){
-  const el = id => document.getElementById(id);
-  const meta    = localStorage.getItem('patec_meta')||'1980';
-  const metaLbl = localStorage.getItem('patec_meta_label')||'itens · ciclo';
-  const patecVal = localStorage.getItem('patec_patec_val')||'';
-  const patecSub = localStorage.getItem('patec_patec_sub')||'atualizar no ADM';
+function initMetaGap(){
+  const ls = k => localStorage.getItem(k)||'';
 
-  if(el('mg-meta'))       el('mg-meta').value = meta;
-  if(el('mg-meta-label')) el('mg-meta-label').value = metaLbl;
-  if(el('mg-patec-val'))  el('mg-patec-val').value = patecVal;
-  if(el('mg-patec-sub'))  el('mg-patec-sub').value = patecSub;
+  // ESQ 1 — Meta Operacional
+  const meta    = parseInt(ls('patec_meta')||'1980');
+  const metaLbl = ls('patec_meta_label')||'itens · ciclo';
+  _setEl('top-meta',      meta.toLocaleString('pt-BR'));
+  _setEl('top-meta-label', metaLbl);
+  _setEl('sb-meta',       meta.toLocaleString('pt-BR'));
+  _setEl('sb-meta-label', metaLbl);
 
-  mgPreviewMeta(); mgPreviewPatec();
+  // ESQ 2 — Patec Finalizado
+  const patecVal = ls('patec_patec_val')||'—';
+  const patecSub = ls('patec_patec_sub')||'ADM';
+  _setEl('top-patec-val', patecVal);
+  _setEl('top-patec-sub', patecSub);
+  _setEl('sb-patec',      patecVal);
+  _setEl('sb-patec-sub',  patecSub);
 
-  if(el('mg-cur-meta'))       el('mg-cur-meta').textContent = parseInt(meta).toLocaleString('pt-BR');
-  if(el('mg-cur-meta-label')) el('mg-cur-meta-label').textContent = metaLbl;
-  if(el('mg-cur-patec'))      el('mg-cur-patec').textContent = patecVal||'—';
-  if(el('mg-cur-patec-label'))el('mg-cur-patec-label').textContent = patecSub;
+  // DIR 1 — Meta do Projeto
+  const metaProj    = parseInt(ls('patec_meta_proj')||'0');
+  const metaProjLbl = ls('patec_meta_proj_label')||'itens · ciclo';
+  _setEl('top-meta-proj',       metaProj>0 ? metaProj.toLocaleString('pt-BR') : '—');
+  _setEl('top-meta-proj-label', metaProjLbl);
+
+  // DIR 2 — Gap do Projeto
+  const gapManual = ls('patec_gap_manual');
+  const gapReal   = parseInt(ls('patec_realizado')||'0');
+  const gapMeta   = parseInt(ls('patec_meta_proj')||'0');
+  const gapCalc   = gapReal - gapMeta;
+  const gapStr    = gapManual || (gapReal>0||gapMeta>0 ? (gapCalc>=0?'+':'')+gapCalc.toLocaleString('pt-BR') : '—');
+  const gapSub    = ls('patec_gap_label')||'vs programado';
+  _setEl('top-gap-proj',     gapStr);
+  _setEl('top-gap-proj-sub', gapSub);
+  // Cor do gap
+  const gapBox = document.getElementById('top-gap-proj-box');
+  if(gapBox){
+    const neg = gapStr.startsWith('-') || gapStr.startsWith('−');
+    const posit = gapStr.startsWith('+') || (!neg && gapStr !== '—');
+    gapBox.style.background = neg ? 'rgba(192,122,18,.22)' : posit ? 'rgba(14,158,106,.18)' : 'rgba(255,255,255,.08)';
+    gapBox.style.borderColor = neg ? 'rgba(192,122,18,.4)' : posit ? 'rgba(14,158,106,.35)' : 'rgba(255,255,255,.13)';
+    const gapEl = document.getElementById('top-gap-proj');
+    if(gapEl) gapEl.style.color = neg ? '#FAC775' : posit ? '#6FEABD' : '#fff';
+  }
 }
 
-function mgPreviewMeta(){
+function _setEl(id, val){
+  const el = document.getElementById(id);
+  if(el) el.textContent = val;
+}
+
+// ── initMetaGapADM — carrega formulários ──
+function initMetaGapADM(){
+  const ls = k => localStorage.getItem(k)||'';
   const el = id => document.getElementById(id);
-  const v = el('mg-meta')?.value||'—';
-  const lbl = el('mg-meta-label')?.value||'itens · ciclo';
-  if(el('mg-meta-preview'))       el('mg-meta-preview').textContent = parseInt(v).toLocaleString('pt-BR')||v;
-  if(el('mg-meta-label-preview')) el('mg-meta-label-preview').textContent = lbl;
+
+  const meta    = ls('patec_meta')||'1980';
+  const metaLbl = ls('patec_meta_label')||'itens · ciclo';
+  const patecVal = ls('patec_patec_val')||'';
+  const patecSub = ls('patec_patec_sub')||'';
+  const metaProj    = ls('patec_meta_proj')||'';
+  const metaProjLbl = ls('patec_meta_proj_label')||'itens · ciclo';
+  const gapReal  = ls('patec_realizado')||'';
+  const gapLbl   = ls('patec_gap_label')||'vs programado';
+  const gapMan   = ls('patec_gap_manual')||'';
+
+  if(el('mg-meta'))           el('mg-meta').value = meta;
+  if(el('mg-meta-label'))     el('mg-meta-label').value = metaLbl;
+  if(el('mg-patec-val'))      el('mg-patec-val').value = patecVal;
+  if(el('mg-patec-sub'))      el('mg-patec-sub').value = patecSub;
+  if(el('mg-metaproj'))       el('mg-metaproj').value = metaProj;
+  if(el('mg-metaproj-label')) el('mg-metaproj-label').value = metaProjLbl;
+  if(el('mg-gap-real'))       el('mg-gap-real').value = gapReal;
+  if(el('mg-gap-label'))      el('mg-gap-label').value = gapLbl;
+  if(el('mg-gap-manual-val')) el('mg-gap-manual-val').value = gapMan;
+
+  // Resumo
+  _setEl('mg-cur-meta',           parseInt(meta).toLocaleString('pt-BR'));
+  _setEl('mg-cur-meta-label',     metaLbl);
+  _setEl('mg-cur-patec',          patecVal||'—');
+  _setEl('mg-cur-patec-label',    patecSub||'—');
+  _setEl('mg-cur-metaproj',       parseInt(metaProj).toLocaleString('pt-BR')||'—');
+  _setEl('mg-cur-metaproj-label', metaProjLbl);
+
+  mgRecalcGapProj();
+  mgPreviewMeta(); mgPreviewPatec(); mgPreviewMetaProj();
+}
+
+// ── Previews ──
+function mgPreviewMeta(){
+  const v = document.getElementById('mg-meta')?.value||'';
+  const l = document.getElementById('mg-meta-label')?.value||'itens · ciclo';
+  _setEl('mg-meta-preview', v ? parseInt(v).toLocaleString('pt-BR') : '—');
+  _setEl('mg-meta-label-preview', l);
 }
 function mgPreviewPatec(){
-  const el = id => document.getElementById(id);
-  const v = el('mg-patec-val')?.value||'—';
-  const s = el('mg-patec-sub')?.value||'atualizar no ADM';
-  if(el('mg-patec-preview'))     el('mg-patec-preview').textContent = v;
-  if(el('mg-patec-sub-preview')) el('mg-patec-sub-preview').textContent = s;
+  const v = document.getElementById('mg-patec-val')?.value||'—';
+  const s = document.getElementById('mg-patec-sub')?.value||'ADM';
+  _setEl('mg-patec-preview', v);
+  _setEl('mg-patec-sub-preview', s);
+}
+function mgPreviewMetaProj(){
+  const v = document.getElementById('mg-metaproj')?.value||'';
+  const l = document.getElementById('mg-metaproj-label')?.value||'itens · ciclo';
+  _setEl('mg-metaproj-preview', v ? parseInt(v).toLocaleString('pt-BR') : '—');
+  _setEl('mg-metaproj-label-preview', l);
+}
+function mgRecalcGapProj(){
+  const real    = parseInt(document.getElementById('mg-gap-real')?.value||'0');
+  const metaP   = parseInt(document.getElementById('mg-metaproj')?.value||document.getElementById('mg-meta')?.value||'0');
+  const gap     = real - metaP;
+  const gapStr  = (gap>=0?'+':'')+gap.toLocaleString('pt-BR');
+  const lbl     = document.getElementById('mg-gap-label')?.value||'vs programado';
+  const manual  = document.getElementById('mg-gap-manual')?.checked;
+  const manVal  = document.getElementById('mg-gap-manual-val')?.value||'';
+  const display = manual && manVal ? manVal : (real||metaP ? gapStr : '—');
+  const calcEl  = document.getElementById('mg-gap-calc');
+  if(calcEl){ calcEl.textContent = gapStr; calcEl.style.color = gap>=0?'var(--vd)':gap>=-100?'var(--am)':'var(--vm)'; }
+  _setEl('mg-gap-preview',       display);
+  _setEl('mg-gap-preview-label', lbl);
+  const prev = document.getElementById('mg-cur-gap');
+  if(prev){ prev.textContent = display; prev.style.color = gap>=0?'var(--vd)':gap>=-100?'var(--am)':'var(--vm)'; }
+  _setEl('mg-cur-gap-label', lbl);
+}
+function mgToggleManual(){
+  const b = document.getElementById('mg-gap-manual')?.checked;
+  const box = document.getElementById('mg-gap-manual-box');
+  if(box) box.style.display = b ? 'block' : 'none';
+  mgRecalcGapProj();
 }
 
-// Salvar Card 1 — Meta Operacional
+// ── Salvar individualmente ──
 function salvarMetaCard(){
-  const el = id => document.getElementById(id);
-  const meta    = parseInt(el('mg-meta')?.value||'1980');
-  const metaLbl = el('mg-meta-label')?.value||'itens · ciclo';
+  const meta    = parseInt(document.getElementById('mg-meta')?.value||'1980');
+  const metaLbl = document.getElementById('mg-meta-label')?.value||'itens · ciclo';
   localStorage.setItem('patec_meta', String(meta));
   localStorage.setItem('patec_meta_label', metaLbl);
-  initMetaGap(); // Atualiza topbar e sidebar
-  if(el('mg-cur-meta'))       el('mg-cur-meta').textContent = meta.toLocaleString('pt-BR');
-  if(el('mg-cur-meta-label')) el('mg-cur-meta-label').textContent = metaLbl;
-  const ok = el('mg-meta-ok');
-  if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',3000); }
+  initMetaGap();
+  _setEl('mg-cur-meta',       meta.toLocaleString('pt-BR'));
+  _setEl('mg-cur-meta-label', metaLbl);
+  _flash('mg-meta-ok');
 }
-
-// Salvar Card 2 — Patec Finalizado
 function salvarPatecCard(){
-  const el = id => document.getElementById(id);
-  const val = el('mg-patec-val')?.value||'';
-  const sub = el('mg-patec-sub')?.value||'atualizar no ADM';
+  const val = document.getElementById('mg-patec-val')?.value||'';
+  const sub = document.getElementById('mg-patec-sub')?.value||'ADM';
   localStorage.setItem('patec_patec_val', val);
   localStorage.setItem('patec_patec_sub', sub);
-  // Atualizar topbar e sidebar
-  const topVal = document.getElementById('top-patec-val');
-  const topSub = document.getElementById('top-patec-sub');
-  const sbVal  = document.getElementById('sb-patec');
-  const sbSub  = document.getElementById('sb-patec-sub');
-  if(topVal) topVal.textContent = val||'—';
-  if(topSub) topSub.textContent = sub;
-  if(sbVal)  sbVal.textContent  = val||'—';
-  if(sbSub)  sbSub.textContent  = sub;
-  if(el('mg-cur-patec'))      el('mg-cur-patec').textContent = val||'—';
-  if(el('mg-cur-patec-label'))el('mg-cur-patec-label').textContent = sub;
-  const ok = el('mg-patec-ok');
-  if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',3000); }
+  initMetaGap();
+  _setEl('mg-cur-patec',       val||'—');
+  _setEl('mg-cur-patec-label', sub);
+  _flash('mg-patec-ok');
 }
+function salvarMetaProjCard(){
+  const val = parseInt(document.getElementById('mg-metaproj')?.value||'0');
+  const lbl = document.getElementById('mg-metaproj-label')?.value||'itens · ciclo';
+  localStorage.setItem('patec_meta_proj', String(val));
+  localStorage.setItem('patec_meta_proj_label', lbl);
+  initMetaGap();
+  _setEl('mg-cur-metaproj',       val.toLocaleString('pt-BR'));
+  _setEl('mg-cur-metaproj-label', lbl);
+  mgRecalcGapProj();
+  _flash('mg-metaproj-ok');
+}
+function salvarGapProjCard(){
+  const real   = parseInt(document.getElementById('mg-gap-real')?.value||'0');
+  const lbl    = document.getElementById('mg-gap-label')?.value||'vs programado';
+  const manual = document.getElementById('mg-gap-manual')?.checked;
+  const manVal = document.getElementById('mg-gap-manual-val')?.value||'';
+  localStorage.setItem('patec_realizado', String(real));
+  localStorage.setItem('patec_gap_label', lbl);
+  localStorage.setItem('patec_gap_manual', manual ? manVal : '');
+  initMetaGap();
+  mgRecalcGapProj();
+  _flash('mg-gap-ok');
+}
+function _flash(id){ const el=document.getElementById(id); if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',3000);} }
 
-// Manter compatibilidade (salvarMetaGap pode ser chamado de outros lugares)
-function salvarMetaGap(){ salvarMetaCard(); salvarPatecCard(); }
-function mgRecalcGap(){ mgPreviewMeta(); }
-function mgToggleManual(){}
+// Manter compatibilidade
+function salvarMetaGap(){ salvarMetaCard(); salvarPatecCard(); salvarMetaProjCard(); salvarGapProjCard(); }
 
 // ════════════════════════════════════════════
 // GESTÃO DE CICLOS
