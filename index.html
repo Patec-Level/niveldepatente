@@ -1842,6 +1842,133 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 <script>// ── GLOBAIS ──
 const HOJE = new Date();
 
+// ════════════════════════════════════════════
+// FIREBASE — Persistência multi-máquina
+// ════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAv819h_jLOHzaWolsLVffVEW2RopzM5tE",
+  authDomain: "patec-dashboard.firebaseapp.com",
+  projectId: "patec-dashboard",
+  storageBucket: "patec-dashboard.firebasestorage.app",
+  messagingSenderId: "891328258120",
+  appId: "1:891328258120:web:0da785d0ed2d78eb08f87d"
+};
+
+let _db = null;
+function getDB(){
+  if(!_db){
+    try{
+      if(typeof firebase === 'undefined') return null;
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      _db = firebase.firestore();
+    } catch(e){ console.warn('Firebase init falhou:',e.message); }
+  }
+  return _db;
+}
+
+async function fbSet(col, docId, dados){
+  try{
+    const db = getDB(); if(!db) return false;
+    await db.collection(col).doc(docId).set(dados, {merge:true});
+    console.log('Firebase salvo:', col, docId);
+    return true;
+  } catch(e){ console.warn('fbSet erro:',e.message); return false; }
+}
+
+async function fbGet(col, docId){
+  try{
+    const db = getDB(); if(!db) return null;
+    const doc = await db.collection(col).doc(docId).get();
+    return doc.exists ? doc.data() : null;
+  } catch(e){ console.warn('fbGet erro:',e.message); return null; }
+}
+
+async function fbGetAll(col){
+  try{
+    const db = getDB(); if(!db) return [];
+    const snap = await db.collection(col).get();
+    return snap.docs.map(d => ({id:d.id,...d.data()}));
+  } catch(e){ console.warn('fbGetAll erro:',e.message); return []; }
+}
+
+async function fbSalvarTopbar(){
+  await fbSet('config','topbar',{
+    meta:           localStorage.getItem('patec_meta')||'',
+    meta_label:     localStorage.getItem('patec_meta_label')||'',
+    patec_val:      localStorage.getItem('patec_patec_val')||'',
+    patec_sub:      localStorage.getItem('patec_patec_sub')||'',
+    meta_proj:      localStorage.getItem('patec_meta_proj')||'',
+    meta_proj_lbl:  localStorage.getItem('patec_meta_proj_label')||'',
+    gap_manual:     localStorage.getItem('patec_gap_manual')||'',
+    gap_label:      localStorage.getItem('patec_gap_label')||'',
+    realizado:      localStorage.getItem('patec_realizado')||'',
+    ts:             new Date().toISOString()
+  });
+}
+
+async function fbSalvarFerias(){
+  await fbSet('config','ferias',{lista:JSON.parse(JSON.stringify(FERIAS_DATA)),ts:new Date().toISOString()});
+}
+
+async function fbSalvarBanco(){
+  await fbSet('config','banco_horas',{lista:JSON.parse(JSON.stringify(BANCO_HORAS)),ts:new Date().toISOString()});
+}
+
+async function fbSalvarCiclos(){
+  await fbSet('config','ciclos_historico',{lista:JSON.parse(JSON.stringify(ciclos_historico)),ts:new Date().toISOString()});
+}
+
+async function fbSalvarProducao(reg){
+  const docId = reg.colab.replace(/\s+/g,'_')+'_'+reg.data;
+  await fbSet('producao', docId, reg);
+}
+
+async function fbCarregarTudo(){
+  const db = getDB();
+  if(!db){ console.warn('Firebase não disponível'); return; }
+
+  // Topbar
+  const topbar = await fbGet('config','topbar');
+  if(topbar){
+    const map = {
+      meta:'patec_meta', meta_label:'patec_meta_label',
+      patec_val:'patec_patec_val', patec_sub:'patec_patec_sub',
+      meta_proj:'patec_meta_proj', meta_proj_lbl:'patec_meta_proj_label',
+      gap_manual:'patec_gap_manual', gap_label:'patec_gap_label',
+      realizado:'patec_realizado'
+    };
+    Object.entries(map).forEach(([fb,ls]) => { if(topbar[fb]) localStorage.setItem(ls, topbar[fb]); });
+    initMetaGap();
+    console.log('✓ Topbar carregada do Firebase');
+  }
+
+  // Produção
+  const prods = await fbGetAll('producao');
+  if(prods.length > 0){
+    registros = prods.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
+    console.log('✓ Produção carregada:', registros.length, 'registros');
+  }
+
+  // Férias
+  const ferias = await fbGet('config','ferias');
+  if(ferias && ferias.lista){
+    FERIAS_DATA.length=0; ferias.lista.forEach(f=>FERIAS_DATA.push(f));
+    console.log('✓ Férias carregadas');
+  }
+
+  // Banco de horas
+  const banco = await fbGet('config','banco_horas');
+  if(banco && banco.lista){
+    banco.lista.forEach((b,i)=>{ if(BANCO_HORAS[i]) Object.assign(BANCO_HORAS[i],b); });
+    console.log('✓ Banco de horas carregado');
+  }
+
+  // Ciclos
+  const ciclos = await fbGet('config','ciclos_historico');
+  if(ciclos && ciclos.lista){ ciclos_historico = ciclos.lista; console.log('✓ Ciclos carregados'); }
+}
+
+
 // ── TOPBAR DEFAULTS (editados pelo ADM) ──
 // Estes valores são os padrões que aparecem em qualquer máquina/navegador.
 // Para atualizar: ADM → Meta & Gap (Topbar) → preencher → "Salvar e publicar HTML"
@@ -2519,7 +2646,7 @@ function recalcL(){
   (document.getElementById('l10-calc')||{}).textContent=l10.toLocaleString('pt-BR');
   (document.getElementById('l12-calc')||{}).textContent=l12.toLocaleString('pt-BR');
 }
-function salvarLancamento(){
+async function salvarLancamento(){
   const g=id=>parseInt(document.getElementById(id).value)||0;
   const dt=(document.getElementById('lanc-data')||{}).value;
   if(!dt){alert('Informe a data.');return;}
@@ -3042,7 +3169,7 @@ function atualizarFeriasPreview(){
     return`<tr><td><strong>${i+1}º</strong></td><td>${r.colab}</td><td>${saidaFmt}</td><td>${dias}</td><td>${retorno||'—'}</td><td>${st}</td></tr>`;
   }).join('');
 }
-function salvarFeriasAdm(){
+async function salvarFeriasAdm(){
   FERIAS_DATA.forEach((r,i)=>{
     r.saida=document.getElementById(`adm-f-saida-${i}`)?.value||'';
     r.dias=parseInt(document.getElementById(`adm-f-dias-${i}`)?.value||30);
@@ -3166,7 +3293,7 @@ function _atualizarFeriasPreview(){
   }).join('');
 }
 
-function salvarFeriasAdm(){
+async function salvarFeriasAdm(){
   // Converter _feriasState de volta para array plano FERIAS_DATA
   FERIAS_DATA.length = 0;
   COLABS.forEach(c => {
@@ -3249,7 +3376,7 @@ function atualizarBancoPreview(){
     return`<tr><td><strong>${r.colab}</strong></td><td>${h}h</td><td>${f}</td><td style="font-weight:700;color:${saldo>0?'var(--am)':'var(--tx2)'}">${saldo}h</td><td>${dias}</td><td>${dt}</td></tr>`;
   }).join('');
 }
-function salvarBancoAdm(){
+async function salvarBancoAdm(){
   BANCO_HORAS.forEach((r,i)=>{
     r.horas_extras=parseInt(document.getElementById(`adm-bh-h-${i}`)?.value||0);
     r.folgas_usadas=parseInt(document.getElementById(`adm-bh-f-${i}`)?.value||0);
@@ -3522,7 +3649,7 @@ function mgToggleManual(){
 }
 
 // ── Salvar individualmente ──
-function salvarMetaCard(){
+async function salvarMetaCard(){
   const meta    = parseInt(document.getElementById('mg-meta')?.value||'1980');
   const metaLbl = document.getElementById('mg-meta-label')?.value||'itens · ciclo';
   localStorage.setItem('patec_meta', String(meta));
@@ -3530,9 +3657,10 @@ function salvarMetaCard(){
   initMetaGap();
   _setEl('mg-cur-meta',       meta.toLocaleString('pt-BR'));
   _setEl('mg-cur-meta-label', metaLbl);
+  await fbSalvarTopbar();
   _flash('mg-meta-ok');
 }
-function salvarPatecCard(){
+async function salvarPatecCard(){
   const val = document.getElementById('mg-patec-val')?.value||'';
   const sub = document.getElementById('mg-patec-sub')?.value||'ADM';
   localStorage.setItem('patec_patec_val', val);
@@ -3540,9 +3668,10 @@ function salvarPatecCard(){
   initMetaGap();
   _setEl('mg-cur-patec',       val||'—');
   _setEl('mg-cur-patec-label', sub);
+  await fbSalvarTopbar();
   _flash('mg-patec-ok');
 }
-function salvarMetaProjCard(){
+async function salvarMetaProjCard(){
   const val = parseInt(document.getElementById('mg-metaproj')?.value||'0');
   const lbl = document.getElementById('mg-metaproj-label')?.value||'itens · ciclo';
   localStorage.setItem('patec_meta_proj', String(val));
@@ -3551,9 +3680,10 @@ function salvarMetaProjCard(){
   _setEl('mg-cur-metaproj',       val.toLocaleString('pt-BR'));
   _setEl('mg-cur-metaproj-label', lbl);
   mgRecalcGapProj();
+  await fbSalvarTopbar();
   _flash('mg-metaproj-ok');
 }
-function salvarGapProjCard(){
+async function salvarGapProjCard(){
   const real   = parseInt(document.getElementById('mg-gap-real')?.value||'0');
   const lbl    = document.getElementById('mg-gap-label')?.value||'vs programado';
   const manual = document.getElementById('mg-gap-manual')?.checked;
@@ -3563,6 +3693,7 @@ function salvarGapProjCard(){
   localStorage.setItem('patec_gap_manual', manual ? manVal : '');
   initMetaGap();
   mgRecalcGapProj();
+  await fbSalvarTopbar();
   _flash('mg-gap-ok');
 }
 function _flash(id){ const el=document.getElementById(id); if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',3000);} }
