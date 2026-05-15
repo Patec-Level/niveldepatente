@@ -4206,15 +4206,19 @@ function mktAtualizarTicker() {
 
 // Feeds para o ticker de manchetes — fontes de alto padrão
 const TICKER_FEEDS = [
-  { url: 'https://feeds.reuters.com/reuters/worldNews',         badge: 'Reuters · Mundial',  cor: '#D63031' },
-  { url: 'https://feeds.reuters.com/reuters/energyNews',        badge: 'Reuters · Energia',  cor: '#D63031' },
-  { url: 'https://feeds.bbci.co.uk/news/world/rss.xml',         badge: 'BBC · Mundo',        cor: '#222' },
-  { url: 'https://feeds.bbci.co.uk/sport/rss.xml',              badge: 'BBC · Esporte',      cor: '#222' },
-  { url: 'https://feeds.bbci.co.uk/news/business/rss.xml',      badge: 'BBC · Economia',     cor: '#222' },
-  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', badge: 'NYT · Mundo',     cor: '#000' },
-  { url: 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',         badge: 'WSJ · Mundo',        cor: '#003087' },
-  { url: 'https://g1.globo.com/rss/g1/economia/',               badge: 'G1 · Economia',      cor: '#E74C3C' },
-  { url: 'https://agenciabrasil.ebc.com.br/economia/feed',      badge: 'Ag. Brasil',         cor: '#009B3A' },
+  // Fontes em português — prioridade máxima
+  { url: 'https://g1.globo.com/rss/g1/mundo/',                          badge: 'G1 · Mundo',       cor: '#E74C3C' },
+  { url: 'https://g1.globo.com/rss/g1/economia/',                       badge: 'G1 · Economia',    cor: '#E74C3C' },
+  { url: 'https://g1.globo.com/rss/g1/politica/',                       badge: 'G1 · Política',    cor: '#E74C3C' },
+  { url: 'https://g1.globo.com/rss/g1/esportes/',                       badge: 'G1 · Esporte',     cor: '#E74C3C' },
+  { url: 'https://agenciabrasil.ebc.com.br/economia/feed',              badge: 'Ag. Brasil',       cor: '#009B3A' },
+  { url: 'https://agenciabrasil.ebc.com.br/internacional/feed',         badge: 'Ag. Brasil · Int', cor: '#009B3A' },
+  { url: 'https://www.uol.com.br/esporte/ultimas-noticias/index.xml',   badge: 'UOL · Esporte',    cor: '#0066CC' },
+  { url: 'https://rss.uol.com.br/feed/noticias.xml',                    badge: 'UOL · Notícias',   cor: '#0066CC' },
+  { url: 'https://oglobo.globo.com/rss.xml',                            badge: 'O Globo',          cor: '#1A1A2E' },
+  { url: 'https://www.infomoney.com.br/feed/',                          badge: 'InfoMoney',        cor: '#FF6600' },
+  { url: 'https://exame.com/feed/',                                      badge: 'Exame',            cor: '#C8102E' },
+  { url: 'https://agenciabrasil.ebc.com.br/esportes/feed',              badge: 'Ag. Brasil · Esp', cor: '#009B3A' },
 ];
 
 // Palavras-chave para filtrar notícias relevantes
@@ -4227,6 +4231,27 @@ const TICKER_KEYWORDS = [
   'decisão','acordo','cúpula','embargo','crise','eleição','presidente','ministro',
   'oil','energy','war','conflict','sanctions','economy','market','dollar'
 ];
+
+
+// Tradução automática via MyMemory (gratuito, sem chave)
+async function traduzirTitulo(texto) {
+  if(!texto || texto.length < 5) return texto;
+  // Detectar se já está em português (palavras comuns)
+  const ptWords = ['de','do','da','em','com','para','que','uma','um','por','são','foi','está','mais','sobre','após','contra','entre','pelo','pela'];
+  const words = texto.toLowerCase().split(/\s+/);
+  const ptCount = words.filter(w => ptWords.includes(w)).length;
+  if(ptCount >= 2) return texto; // já em português
+  
+  try {
+    const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(texto.slice(0,200)) + '&langpair=en|pt-BR';
+    const r = await fetch(url);
+    const d = await r.json();
+    if(d.responseStatus === 200 && d.responseData?.translatedText) {
+      return d.responseData.translatedText;
+    }
+  } catch(e) {}
+  return texto; // retorna original se falhar
+}
 
 async function mktCarregarTicker() {
   const ticker = document.getElementById('mkt-ticker');
@@ -4273,7 +4298,7 @@ async function mktCarregarTicker() {
     feedsParalelo.map(f => fetchFeed(f.url, f.badge, f.cor))
   );
 
-  results.forEach(res => {
+  for(const res of results) {
     if(res.status === 'fulfilled' && res.value) {
       const {items, badge, cor} = res.value;
       const filtradas = items.filter(item => {
@@ -4281,20 +4306,23 @@ async function mktCarregarTicker() {
         return TICKER_KEYWORDS.some(k => txt.includes(k));
       });
       const selecionadas = (filtradas.length >= 2 ? filtradas : items).slice(0, 4);
-      selecionadas.forEach(item => manchetes.push({titulo: item.title, badge, cor, link: item.link}));
+      const traduzidos = await Promise.all(selecionadas.map(item => traduzirTitulo(item.title||'')));
+      selecionadas.forEach((item, i) => manchetes.push({titulo: traduzidos[i], badge, cor, link: item.link}));
     }
-  });
+  }
 
   if(!manchetes.length) {
     // Manchetes de fallback hardcoded para não ficar vazio
     manchetes = [
-      {titulo:'Mercado global sob atenção com tensões geopolíticas', badge:'Reuters', cor:'#D63031'},
-      {titulo:'OPEP+ mantém cortes de produção de petróleo', badge:'Reuters · Energia', cor:'#D63031'},
-      {titulo:'Fed sinaliza manutenção de juros nos EUA', badge:'BBC · Economia', cor:'#222'},
-      {titulo:'Conflito no Oriente Médio afeta rotas de frete global', badge:'BBC · Mundo', cor:'#222'},
-      {titulo:'Brent recua com expectativa de acordo de cessar-fogo', badge:'Reuters · Energia', cor:'#D63031'},
-      {titulo:'G7 discute novas sanções econômicas à Rússia', badge:'NYT · Mundo', cor:'#000'},
-      {titulo:'Dólar se fortalece com dados de emprego nos EUA', badge:'G1 · Economia', cor:'#E74C3C'},
+      {titulo:'Tensões geopolíticas pressionam mercado global de petróleo', badge:'G1 · Mundo', cor:'#E74C3C'},
+      {titulo:'OPEP+ mantém cortes de produção — Brent reage', badge:'Ag. Brasil', cor:'#009B3A'},
+      {titulo:'Dólar oscila com decisão do Fed sobre juros americanos', badge:'G1 · Economia', cor:'#E74C3C'},
+      {titulo:'Conflito no Oriente Médio afeta rotas de frete marítimo global', badge:'Ag. Brasil · Int', cor:'#009B3A'},
+      {titulo:'Sanções econômicas à Rússia são ampliadas pelo G7', badge:'G1 · Mundo', cor:'#E74C3C'},
+      {titulo:'Champions League: resultados e classificação atualizada', badge:'G1 · Esporte', cor:'#E74C3C'},
+      {titulo:'Ibovespa fecha em alta com dados positivos de inflação', badge:'InfoMoney', cor:'#FF6600'},
+      {titulo:'Brasil negocia acordo comercial com bloco asiático', badge:'Ag. Brasil', cor:'#009B3A'},
+      {titulo:'Copa do Mundo 2026: seleções confirmam convocações', badge:'UOL · Esporte', cor:'#0066CC'},
     ];
     console.warn('Ticker: usando manchetes de fallback');
   }
