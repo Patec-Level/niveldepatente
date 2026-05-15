@@ -6,9 +6,7 @@
 <title>PATEC — Sistema de Gestão de Compras</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK carregado dinamicamente via JS -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
@@ -1837,8 +1835,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="tw">
             <table>
               <thead><tr>
-                <th>Colaborador</th><th>Horas extras</th><th>Folgas usadas</th>
-                <th>Saldo (h)</th><th>Equivale a</th><th>Destino</th>
+                <th>Colaborador</th><th>Horas extras</th><th>Folgas concedidas</th>
+                <th>Saldo</th><th>Destino</th>
               </tr></thead>
               <tbody id="bh-tb"></tbody>
             </table>
@@ -1874,17 +1872,71 @@ const FIREBASE_CONFIG = {
 };
 
 let _db = null;
+// Carrega o Firebase SDK dinamicamente
+async function loadFirebaseSDK(){
+  if(typeof firebase !== 'undefined') return true;
+
+  // Lista de CDNs para tentar em sequência
+  const CDN_SETS = [
+    // CDN 1: unpkg
+    [
+      'https://unpkg.com/firebase@10.12.0/compat/app/dist/app.browser.esm.js',
+      'https://unpkg.com/firebase@10.12.0/compat/firestore/dist/firestore.browser.esm.js',
+    ],
+    // CDN 2: gstatic oficial
+    [
+      'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
+      'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js',
+    ],
+    // CDN 3: versão mais antiga e estável
+    [
+      'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
+      'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
+    ],
+  ];
+
+  function loadScript(url) {
+    return new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = url;
+      s.crossOrigin = 'anonymous';
+      s.onload  = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.head.appendChild(s);
+    });
+  }
+
+  function loadScriptPair(urls) {
+    return new Promise(async (resolve) => {
+      const ok1 = await loadScript(urls[0]);
+      if(!ok1) { resolve(false); return; }
+      await new Promise(r => setTimeout(r, 200));
+      const ok2 = await loadScript(urls[1]);
+      resolve(ok2 && typeof firebase !== 'undefined');
+    });
+  }
+
+  for(const cdnSet of CDN_SETS) {
+    console.log('Tentando Firebase CDN:', cdnSet[0]);
+    const ok = await loadScriptPair(cdnSet);
+    if(ok) {
+      console.log('✓ Firebase SDK carregado');
+      return true;
+    }
+  }
+
+  console.error('✗ Firebase SDK falhou em todos os CDNs');
+  return false;
+}
+
 function getDB(){
   if(!_db){
     try{
-      if(typeof firebase === 'undefined'){
-        console.warn('Firebase SDK não carregou — verifique conexão');
-        return null;
-      }
+      if(typeof firebase === 'undefined') return null;
       if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
       _db = firebase.firestore();
-      console.log('✓ Firebase conectado ao projeto:', FIREBASE_CONFIG.projectId);
-    } catch(e){ console.error('Firebase init erro:',e.message); }
+      console.log('✓ Firebase conectado:', FIREBASE_CONFIG.projectId);
+    } catch(e){ console.error('Firebase erro:',e.message); }
   }
   return _db;
 }
@@ -1947,8 +1999,13 @@ async function fbSalvarProducao(reg){
 }
 
 async function fbCarregarTudo(){
+  // Garantir que o SDK está carregado antes de usar
+  const sdkOk = await loadFirebaseSDK();
+  if(!sdkOk){ console.warn('Firebase SDK falhou ao carregar'); return; }
+  // Pequena pausa para garantir inicialização
+  await new Promise(r => setTimeout(r, 300));
   const db = getDB();
-  if(!db){ console.error('Firebase: getDB retornou null. SDK carregado?', typeof firebase); return; }
+  if(!db){ console.error('Firebase: getDB retornou null após SDK load'); return; }
 
   // Topbar
   const topbar = await fbGet('config','topbar');
@@ -1989,6 +2046,11 @@ async function fbCarregarTudo(){
   // Ciclos
   const ciclos = await fbGet('config','ciclos_historico');
   if(ciclos && ciclos.lista){ ciclos_historico = ciclos.lista; console.log('✓ Ciclos carregados'); }
+
+  // Re-renderizar módulos com dados carregados
+  renderFerias();
+  renderBanco();
+  console.log('✓ Firebase: todos os dados carregados e renderizados');
 }
 
 
@@ -2208,7 +2270,12 @@ let FERIAS_DATA = COLABS.map((c,i) => ({
   saida: '', dias: 30, retorno: '', status: 'Aguardando definição'
 }));
 let BANCO_HORAS = COLABS.map(c => ({
-  colab: c, horas_extras: 0, folgas_usadas: 0
+  colab: c,
+  horas_h: 0, horas_m: 0, horas_s: 0,   // horas extras em H:M:S
+  horas_extras: 0,                         // total em horas decimais (calculado)
+  folgas_usadas: 0,
+  datas_folgas: [],                        // array de {data, obs}
+  destino: 'A definir'
 }));
 
 // ════════════════════════════════════════════
@@ -2580,38 +2647,51 @@ function renderFerias(){
 }
 function renderBanco(){
   if(!document.getElementById('bh-tb')) return;
-  let totH=0, totC=0, totSaldo=0;
+  let totSeg=0, totFolgas=0;
 
   (document.getElementById('bh-tb')||{}).innerHTML = BANCO_HORAS.map(r => {
-    const saldo  = (r.horas_extras||0) - (r.folgas_usadas||0)*8;
-    totH    += (r.horas_extras||0);
-    totC    += (r.folgas_usadas||0);
-    totSaldo+= saldo;
-    const dias    = saldo>0 ? Math.floor(saldo/8)+'d '+saldo%8+'h' : '—';
-    const corSaldo= saldo>0?'var(--am)':saldo===0?'var(--tx2)':'var(--vd)';
-    const dest    = r.destino==='Pagar hora extra' ? '<span class="pl pl-w">💰 Pagar</span>'
-                  : r.destino==='Dar folga'        ? '<span class="pl pl-az">🌴 Folga</span>'
-                  :                                  '<span class="pl pl-g">A definir</span>';
+    const totalSegColab = (r.horas_h||0)*3600 + (r.horas_m||0)*60 + (r.horas_s||0);
+    const folgasSeg = (r.folgas_usadas||0) * 8 * 3600;
+    const saldoSeg  = totalSegColab - folgasSeg;
+    totSeg    += totalSegColab;
+    totFolgas += (r.folgas_usadas||0);
+    const saldoH = Math.floor(Math.abs(saldoSeg)/3600);
+    const saldoM = Math.floor((Math.abs(saldoSeg)%3600)/60);
+    const saldoS = Math.abs(saldoSeg)%60;
+    const saldoStr = (saldoSeg<0?'-':'') + fmtHMS(saldoH,saldoM,saldoS);
+    const corSaldo = saldoSeg>0?'var(--am)':saldoSeg===0?'var(--tx2)':'var(--vd)';
+    const dest     = r.destino==='Pagar hora extra'?'<span class="pl pl-w">💰 Pagar</span>'
+                   : r.destino==='Dar folga'?'<span class="pl pl-az">🌴 Folga</span>'
+                   : '<span class="pl pl-g">A definir</span>';
+    // Datas das folgas
+    const datasStr = (r.datas_folgas||[]).length
+      ? (r.datas_folgas||[]).map(d => d.data ? '<span style="font-size:10px;background:var(--azc);color:var(--azm);padding:1px 7px;border-radius:4px;margin:1px">' + d.data.split('-').reverse().join('/') + (d.obs?' · '+d.obs:'') + '</span>' : '').join('')
+      : '<span style="font-size:10px;color:var(--tx2)">Nenhuma folga registrada</span>';
+
     return `<tr>
       <td><strong>${r.colab}</strong></td>
-      <td>${r.horas_extras||0}h</td>
-      <td>${r.folgas_usadas||0}</td>
-      <td style="font-weight:700;color:${corSaldo}">${saldo}h</td>
-      <td>${dias}</td>
+      <td style="font-weight:600;color:var(--am)">${fmtHMS(r.horas_h||0,r.horas_m||0,r.horas_s||0)}</td>
+      <td>
+        <div>${r.folgas_usadas||0} folga(s)</div>
+        <div style="margin-top:3px">${datasStr}</div>
+      </td>
+      <td style="font-weight:700;color:${corSaldo}">${saldoStr}</td>
       <td>${dest}</td>
     </tr>`;
-  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:1rem">Banco de horas não preenchido — acesse o ADM</td></tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--tx2);padding:1rem">Banco de horas não preenchido — acesse o ADM</td></tr>';
 
   // KPIs
-  const elTotal  = document.getElementById('bh-total');
-  const elComp   = document.getElementById('bh-comp');
-  const elSaldo  = document.getElementById('bh-saldo-total');
-  if(elTotal) elTotal.textContent  = totH + 'h';
-  if(elComp)  elComp.textContent   = (totC*8) + 'h (' + totC + ' folgas)';
-  if(elSaldo) {
-    elSaldo.textContent = totSaldo + 'h';
-    elSaldo.style.color = totSaldo>0?'var(--am)':totSaldo===0?'var(--tx2)':'var(--vd)';
-  }
+  const totH = Math.floor(totSeg/3600);
+  const totM = Math.floor((totSeg%3600)/60);
+  const elTotal = document.getElementById('bh-total');
+  const elComp  = document.getElementById('bh-comp');
+  const elSaldo = document.getElementById('bh-saldo-total');
+  if(elTotal) elTotal.textContent = fmtHMS(totH,totM,totSeg%60);
+  if(elComp)  elComp.textContent  = totFolgas + ' folga(s) · ' + fmtHMS(totFolgas*8,0,0);
+  const saldoTotal = totSeg - totFolgas*8*3600;
+  const sH = Math.floor(Math.abs(saldoTotal)/3600);
+  const sM = Math.floor((Math.abs(saldoTotal)%3600)/60);
+  if(elSaldo){ elSaldo.textContent = (saldoTotal<0?'-':'') + fmtHMS(sH,sM,0); elSaldo.style.color = saldoTotal>0?'var(--am)':saldoTotal===0?'var(--tx2)':'var(--vd)'; }
 }
 
 // ════════════════════════════════════════════
@@ -3383,46 +3463,111 @@ function calcRetorno(i){
 }
 function atualizarFeriasPreview(){ _atualizarFeriasPreview(); }
 
+
+// ── Banco de Horas — H:M:S e folgas ──
+function fmtHMS(h, m, s){
+  return String(h).padStart(2,'0') + 'h ' + String(m).padStart(2,'0') + 'min ' + String(s||0).padStart(2,'0') + 's';
+}
+function calcBancoHMS(i){
+  const hh = parseInt(document.getElementById('bh-hh-'+i)?.value||0);
+  const mm = parseInt(document.getElementById('bh-mm-'+i)?.value||0);
+  const ss = parseInt(document.getElementById('bh-ss-'+i)?.value||0);
+  // Normalizar (ex: 90min → 1h30min)
+  const totalSeg = hh*3600 + mm*60 + ss;
+  const nh = Math.floor(totalSeg/3600);
+  const nm = Math.floor((totalSeg%3600)/60);
+  const ns = totalSeg%60;
+  if(BANCO_HORAS[i]){
+    BANCO_HORAS[i].horas_h = nh;
+    BANCO_HORAS[i].horas_m = nm;
+    BANCO_HORAS[i].horas_s = ns;
+    BANCO_HORAS[i].horas_extras = +(nh + nm/60 + ns/3600).toFixed(4);
+  }
+  const fmtEl = document.getElementById('bh-total-fmt-'+i);
+  if(fmtEl) fmtEl.textContent = fmtHMS(nh,nm,ns);
+}
+function addFolga(i){
+  if(!BANCO_HORAS[i].datas_folgas) BANCO_HORAS[i].datas_folgas = [];
+  BANCO_HORAS[i].datas_folgas.push({data:'', obs:''});
+  BANCO_HORAS[i].folgas_usadas = BANCO_HORAS[i].datas_folgas.length;
+  renderBancoForm();
+}
+function remFolga(i, di){
+  BANCO_HORAS[i].datas_folgas.splice(di,1);
+  BANCO_HORAS[i].folgas_usadas = BANCO_HORAS[i].datas_folgas.length;
+  renderBancoForm();
+}
+function updFolgaData(i, di, campo, val){
+  if(!BANCO_HORAS[i].datas_folgas) BANCO_HORAS[i].datas_folgas = [];
+  if(!BANCO_HORAS[i].datas_folgas[di]) BANCO_HORAS[i].datas_folgas[di] = {data:'',obs:''};
+  BANCO_HORAS[i].datas_folgas[di][campo] = val;
+}
+
 function renderBancoForm(){
   const container = document.getElementById('adm-banco-form');
   if(!container) return;
-  container.innerHTML = BANCO_HORAS.map((r,i) => `
-    <div class="cd" style="padding:1rem;border-left:3px solid var(--am)">
+
+  container.innerHTML = BANCO_HORAS.map((r,i) => {
+    const datas = (r.datas_folgas||[]);
+    const datasHTML = datas.map((d,di) => `
+      <div id="bh-folga-row-${i}-${di}" style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:end;margin-bottom:4px">
+        <div class="field-wrap">
+          <span class="field-label">Data da folga ${di+1}</span>
+          <input type="date" id="bh-fd-${i}-${di}" value="${d.data||''}" onchange="updFolgaData(${i},${di},'data',this.value)" style="width:100%">
+        </div>
+        <div class="field-wrap">
+          <span class="field-label">Observação</span>
+          <input type="text" id="bh-fo-${i}-${di}" value="${d.obs||''}" placeholder="Ex: compensação hora extra 10/05" onchange="updFolgaData(${i},${di},'obs',this.value)" style="width:100%">
+        </div>
+        <button class="btn btn-r" style="padding:5px 9px;align-self:flex-end" onclick="remFolga(${i},${di})">✕</button>
+      </div>`).join('');
+
+    return `<div class="cd" style="padding:1rem;border-left:3px solid var(--am);margin-bottom:10px">
       <div style="font-size:13px;font-weight:700;color:var(--az);margin-bottom:.875rem">⏰ ${r.colab}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
-        <div class="field-wrap">
-          <span class="field-label">Horas extras acumuladas</span>
-          <input type="number" id="adm-bh-h-${i}" value="${r.horas_extras||0}" min="0"
-            onchange="calcBanco(${i})"
-            style="width:100%;font-size:16px;font-weight:700;color:var(--am);text-align:center">
-        </div>
-        <div class="field-wrap">
-          <span class="field-label">Folgas já concedidas</span>
-          <input type="number" id="adm-bh-f-${i}" value="${r.folgas_usadas||0}" min="0"
-            onchange="calcBanco(${i})"
-            style="width:100%;font-size:16px;font-weight:700;color:var(--azm);text-align:center">
-        </div>
-        <div class="field-wrap">
-          <span class="field-label">Saldo (h) — automático</span>
-          <div id="adm-bh-s-${i}" style="padding:8px;background:var(--cin);border-radius:7px;border:1px solid var(--brd);font-size:18px;font-weight:700;text-align:center;color:var(--am)">
-            ${r.horas_extras - r.folgas_usadas*8}h
+
+      <!-- Horas extras em H:M:S -->
+      <div style="margin-bottom:.875rem">
+        <span class="field-label" style="display:block;margin-bottom:4px">Horas extras acumuladas (HH : MM : SS)</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="bh-hh-${i}" value="${r.horas_h||0}" min="0" max="999"
+            onchange="calcBancoHMS(${i})"
+            style="width:70px;font-size:18px;font-weight:700;color:var(--am);text-align:center;padding:6px">
+          <span style="font-size:18px;font-weight:700;color:var(--tx2)">:</span>
+          <input type="number" id="bh-mm-${i}" value="${r.horas_m||0}" min="0" max="59"
+            onchange="calcBancoHMS(${i})"
+            style="width:60px;font-size:18px;font-weight:700;color:var(--am);text-align:center;padding:6px">
+          <span style="font-size:18px;font-weight:700;color:var(--tx2)">:</span>
+          <input type="number" id="bh-ss-${i}" value="${r.horas_s||0}" min="0" max="59"
+            onchange="calcBancoHMS(${i})"
+            style="width:60px;font-size:18px;font-weight:700;color:var(--am);text-align:center;padding:6px">
+          <div style="margin-left:12px;font-size:11px;color:var(--tx2)">
+            = <strong id="bh-total-fmt-${i}" style="color:var(--am)">${fmtHMS(r.horas_h||0,r.horas_m||0,r.horas_s||0)}</strong>
           </div>
         </div>
-        <div class="field-wrap">
-          <span class="field-label">Destino do saldo</span>
-          <select id="adm-bh-d-${i}" onchange="atualizarBancoPreview()" style="width:100%">
-            <option ${(r.destino||'')==='A definir'||!r.destino?'selected':''}>A definir</option>
-            <option ${(r.destino||'')==='Pagar hora extra'?'selected':''}>Pagar hora extra</option>
-            <option ${(r.destino||'')==='Dar folga'?'selected':''}>Dar folga</option>
-          </select>
+      </div>
+
+      <!-- Destino -->
+      <div class="field-wrap" style="margin-bottom:.875rem">
+        <span class="field-label">Destino do banco</span>
+        <select id="adm-bh-d-${i}" onchange="atualizarBancoPreview()" style="width:220px">
+          <option ${(r.destino||'')==='A definir'||!r.destino?'selected':''}>A definir</option>
+          <option ${(r.destino||'')==='Pagar hora extra'?'selected':''}>Pagar hora extra</option>
+          <option ${(r.destino||'')==='Dar folga'?'selected':''}>Dar folga</option>
+        </select>
+      </div>
+
+      <!-- Datas das folgas -->
+      <div style="margin-bottom:.5rem">
+        <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">
+          📅 Datas de folgas concedidas (${datas.length} folga${datas.length!==1?'s':''})
         </div>
+        <div id="bh-folgas-lista-${i}">${datasHTML||'<div style="font-size:11px;color:var(--tx2);padding:4px 0">Nenhuma folga registrada</div>'}</div>
+        <button class="btn btn-s" style="font-size:11px;padding:4px 10px;margin-top:6px" onclick="addFolga(${i})">+ Adicionar folga</button>
       </div>
-      <div style="margin-top:8px;font-size:10px;color:var(--tx2)">
-        ℹ 1 folga = 8h · Saldo = horas extras − (folgas × 8h) · Prazo para uso: acordo com colaborador
-      </div>
-    </div>`).join('');
-  BANCO_HORAS.forEach((_,i) => calcBanco(i));
-  atualizarBancoPreview();
+    </div>`;
+  }).join('');
+
+  BANCO_HORAS.forEach((_,i) => calcBancoHMS(i));
 }
 function calcBanco(i){
   const h=parseInt(document.getElementById(`adm-bh-h-${i}`)?.value||0);
@@ -3445,14 +3590,15 @@ function atualizarBancoPreview(){
 }
 async function salvarBancoAdm(){
   BANCO_HORAS.forEach((r,i)=>{
-    r.horas_extras=parseInt(document.getElementById(`adm-bh-h-${i}`)?.value||0);
-    r.folgas_usadas=parseInt(document.getElementById(`adm-bh-f-${i}`)?.value||0);
-    r.destino=document.getElementById(`adm-bh-d-${i}`)?.value||'A definir';
+    calcBancoHMS(i);
+    r.destino = document.getElementById('adm-bh-d-'+i)?.value||'A definir';
+    r.folgas_usadas = (r.datas_folgas||[]).length;
   });
-  localStorage.setItem('patec_banco',JSON.stringify(BANCO_HORAS));
-  renderBanco(); // Atualiza módulo
-  const ok=document.getElementById('adm-banco-ok');
-  ok.style.display='inline';setTimeout(()=>ok.style.display='none',3000);
+  localStorage.setItem('patec_banco', JSON.stringify(BANCO_HORAS));
+  await fbSalvarBanco();
+  renderBanco();
+  const ok = document.getElementById('adm-banco-ok');
+  if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',3000);}
 }
 
 // ── DADOS PCP ADM ──
