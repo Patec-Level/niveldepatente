@@ -1815,7 +1815,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- BANCO DE HORAS -->
       <div id="bf-banco" style="display:none">
-        <div class="al al-b">ℹ Banco de horas zerado — a ser preenchido pelo ADM. Folgas concedidas serão abatidas automaticamente do saldo.</div>
         <div class="kgrid" style="margin-bottom:1rem">
           <div class="kc ok">
             <div class="kc-l">Total banco (equipe)</div>
@@ -1826,6 +1825,26 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <div class="kc-l">Já compensado</div>
             <div class="kc-v" id="bh-comp">0h</div>
             <div class="kc-s">folgas concedidas</div>
+          </div>
+          <div class="kc">
+            <div class="kc-l">Saldo líquido</div>
+            <div class="kc-v" id="bh-saldo-total" style="color:var(--am)">0h</div>
+            <div class="kc-s">a compensar</div>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="cd-t">⏰ Banco de horas por colaborador</div>
+          <div class="tw">
+            <table>
+              <thead><tr>
+                <th>Colaborador</th><th>Horas extras</th><th>Folgas usadas</th>
+                <th>Saldo (h)</th><th>Equivale a</th><th>Destino</th>
+              </tr></thead>
+              <tbody id="bh-tb"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:.75rem;font-size:11px;color:var(--tx2);padding:.75rem;background:var(--cin);border-radius:7px">
+            🔒 Para editar banco de horas, acesse o módulo ADM → Banco de Horas.
           </div>
         </div>
       </div><!-- /ct -->
@@ -2519,38 +2538,80 @@ function setBFTab(id,btn){
   if(id==='banco')  renderBanco();
 }
 function renderFerias(){
-  if(!document.getElementById('ferias-tb')) return;
-  const hoje=HOJE.toISOString().split('T')[0];
-  let prox=null,emFerias=0,prog=0;
-  document.getElementById('bf-ferias-tb').innerHTML=FERIAS_DATA.map((r,i)=>{
-    const status=r.saida?
-      (hoje>=r.saida&&hoje<=r.retorno?'<span class="pl pl-ok">Em férias agora</span>':
-       r.saida>hoje?'<span class="pl pl-az">Programado</span>':
-       '<span class="pl pl-g">Concluído</span>')
-      :'<span class="pl pl-g">Aguardando ADM</span>';
-    if(r.saida&&!prox&&r.saida>hoje) prox=r;
-    if(r.saida&&hoje>=r.saida&&hoje<=r.retorno) emFerias++;
-    if(r.saida&&r.saida>hoje) prog++;
-    return`<tr><td><strong>${r.ordem}º</strong></td><td><strong>${r.colab}</strong></td><td>${r.saida?fmtDt(r.saida):'—'}</td><td>${r.dias}</td><td>${r.retorno?fmtDt(r.retorno):'—'}</td><td>${status}</td></tr>`;
-  }).join('');
-  document.getElementById('bf-prox-nome').textContent=prox?prox.colab:'A definir';
-  document.getElementById('bf-prox-dt').textContent=prox?fmtDt(prox.saida):'—';
-  document.getElementById('bf-agora').textContent=emFerias>0?emFerias+' colaborador(es)':'Ninguém';
-  document.getElementById('bf-prog').textContent=prog;
+  const tbId = 'bf-ferias-tb';
+  if(!document.getElementById(tbId)) return;
+  const hoje = HOJE.toISOString().split('T')[0];
+  let prox=null, emFerias=0, prog=0;
+
+  // Ordenar por data de saída
+  const dados = [...FERIAS_DATA].filter(r => r.saida).sort((a,b) => a.saida.localeCompare(b.saida));
+
+  (document.getElementById(tbId)||{}).innerHTML = dados.map((r,i) => {
+    const retIso = r.retorno ? r.retorno.split('/').reverse().join('-') : '';
+    const emF    = r.saida <= hoje && retIso >= hoje;
+    const futuro = r.saida > hoje;
+    const status = emF    ? '<span class="pl pl-ok">✅ Em férias agora</span>'
+                 : futuro ? '<span class="pl pl-az">📅 Programado</span>'
+                 :          '<span class="pl pl-g">✓ Concluído</span>';
+    if(futuro && !prox) prox = r;
+    if(emF) emFerias++;
+    if(futuro && r.saida <= new Date(Date.now()+90*864e5).toISOString().split('T')[0]) prog++;
+    const saidaFmt   = r.saida   ? r.saida.split('-').reverse().join('/') : '—';
+    const retornoFmt = r.retorno || '—';
+    return `<tr>
+      <td><strong>${i+1}º</strong></td>
+      <td><strong>${r.colab}</strong></td>
+      <td>${saidaFmt}</td>
+      <td>${r.dias||'—'}</td>
+      <td style="font-weight:600">${retornoFmt}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:1rem">Nenhuma férias cadastrada — preencha no ADM</td></tr>';
+
+  // Atualizar KPIs
+  const elProxNome = document.getElementById('bf-prox-nome');
+  const elProxDt   = document.getElementById('bf-prox-dt');
+  const elAgora    = document.getElementById('bf-agora');
+  const elProg     = document.getElementById('bf-prog');
+  if(elProxNome) elProxNome.textContent = prox ? prox.colab : '—';
+  if(elProxDt)   elProxDt.textContent   = prox ? prox.saida.split('-').reverse().join('/') : '—';
+  if(elAgora)    elAgora.textContent    = emFerias > 0 ? emFerias + ' pessoa(s)' : 'Ninguém';
+  if(elProg)     elProg.textContent     = prog;
 }
 function renderBanco(){
   if(!document.getElementById('bh-tb')) return;
-  let totH=0,totC=0;
-  (document.getElementById('bh-tb')||{}).innerHTML=BANCO_HORAS.map(r=>{
-    const saldo=r.horas_extras-r.folgas_usadas*8;
-    totH+=r.horas_extras;totC+=r.folgas_usadas;
-    const dias=saldo>0?Math.floor(saldo/8)+'d '+saldo%8+'h':'—';
-    const destino=saldo>0?'<span class="pl pl-w">A definir</span>':'<span class="pl pl-ok">Zerado</span>';
-    return`<tr><td><strong>${r.colab}</strong></td><td>${r.horas_extras}h</td><td>${r.folgas_usadas}</td><td style="font-weight:700">${saldo}h</td><td>${dias}</td><td>${destino}</td></tr>`;
-  }).join('');
-  (document.getElementById('bh-total')||{}).textContent=totH+'h';
-  (document.getElementById('bh-comp')||{}).textContent=totC+' folgas';
-  document.getElementById('bh-saldo').textContent=(totH-totC*8)+'h';
+  let totH=0, totC=0, totSaldo=0;
+
+  (document.getElementById('bh-tb')||{}).innerHTML = BANCO_HORAS.map(r => {
+    const saldo  = (r.horas_extras||0) - (r.folgas_usadas||0)*8;
+    totH    += (r.horas_extras||0);
+    totC    += (r.folgas_usadas||0);
+    totSaldo+= saldo;
+    const dias    = saldo>0 ? Math.floor(saldo/8)+'d '+saldo%8+'h' : '—';
+    const corSaldo= saldo>0?'var(--am)':saldo===0?'var(--tx2)':'var(--vd)';
+    const dest    = r.destino==='Pagar hora extra' ? '<span class="pl pl-w">💰 Pagar</span>'
+                  : r.destino==='Dar folga'        ? '<span class="pl pl-az">🌴 Folga</span>'
+                  :                                  '<span class="pl pl-g">A definir</span>';
+    return `<tr>
+      <td><strong>${r.colab}</strong></td>
+      <td>${r.horas_extras||0}h</td>
+      <td>${r.folgas_usadas||0}</td>
+      <td style="font-weight:700;color:${corSaldo}">${saldo}h</td>
+      <td>${dias}</td>
+      <td>${dest}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:1rem">Banco de horas não preenchido — acesse o ADM</td></tr>';
+
+  // KPIs
+  const elTotal  = document.getElementById('bh-total');
+  const elComp   = document.getElementById('bh-comp');
+  const elSaldo  = document.getElementById('bh-saldo-total');
+  if(elTotal) elTotal.textContent  = totH + 'h';
+  if(elComp)  elComp.textContent   = (totC*8) + 'h (' + totC + ' folgas)';
+  if(elSaldo) {
+    elSaldo.textContent = totSaldo + 'h';
+    elSaldo.style.color = totSaldo>0?'var(--am)':totSaldo===0?'var(--tx2)':'var(--vd)';
+  }
 }
 
 // ════════════════════════════════════════════
