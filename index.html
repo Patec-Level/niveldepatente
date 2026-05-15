@@ -651,23 +651,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- TICKER animado -->
+      <!-- TICKER MANCHETES -->
       <div id="mkt-ticker-wrap" style="background:var(--az);border-radius:8px;overflow:hidden;margin-bottom:1.5rem;height:38px;display:flex;align-items:center">
-        <div style="background:rgba(255,255,255,.15);padding:0 16px;height:100%;display:flex;align-items:center;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;white-space:nowrap;flex-shrink:0">MERCADOS</div>
-        <div style="overflow:hidden;flex:1">
-          <div id="mkt-ticker" style="display:flex;gap:40px;white-space:nowrap;animation:mkt-scroll 35s linear infinite;font-size:12px;padding:0 16px">
-            <span id="tk1" style="color:rgba(255,255,255,.7)">Carregando...</span>
-            <span id="tk2" style="color:rgba(255,255,255,.7)">—</span>
-            <span id="tk3" style="color:rgba(255,255,255,.7)">—</span>
-            <span id="tk4" style="color:rgba(255,255,255,.7)">—</span>
-            <span id="tk5" style="color:rgba(255,255,255,.7)">—</span>
-            <span id="tk1b" style="color:rgba(255,255,255,.7)">—</span>
-            <span id="tk2b" style="color:rgba(255,255,255,.7)">—</span>
-            <span id="tk3b" style="color:rgba(255,255,255,.7)">—</span>
-            <span id="tk4b" style="color:rgba(255,255,255,.7)">—</span>
-            <span id="tk5b" style="color:rgba(255,255,255,.7)">—</span>
+        <div style="background:rgba(255,255,255,.15);padding:0 16px;height:100%;display:flex;align-items:center;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;white-space:nowrap;flex-shrink:0;gap:8px">
+          <span id="mkt-live-ticker-dot" style="width:6px;height:6px;border-radius:50%;background:#4FD4A0;animation:pulse-dot 2s infinite;display:inline-block"></span>
+          MANCHETES
+        </div>
+        <div style="overflow:hidden;flex:1;position:relative">
+          <div id="mkt-ticker" style="display:flex;gap:60px;white-space:nowrap;animation:mkt-scroll 90s linear infinite;font-size:12px;padding:0 24px;align-items:center">
+            <span style="color:rgba(255,255,255,.45);font-size:10px">Carregando manchetes...</span>
           </div>
         </div>
+        <div style="background:rgba(255,255,255,.08);padding:0 12px;height:100%;display:flex;align-items:center;font-size:10px;color:rgba(255,255,255,.45);white-space:nowrap;flex-shrink:0;cursor:pointer" onclick="mktCarregarTudo()" title="Atualizar">↻</div>
       </div>
 
       <!-- COTAÇÕES PRINCIPAIS -->
@@ -1841,6 +1836,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
 <script>// ── GLOBAIS ──
 const HOJE = new Date();
+
+// ════════════════════════════════════════════
+// FIREBASE — Persistência multi-máquina
+/// ── GLOBAIS ──
+
 
 // ════════════════════════════════════════════
 // FIREBASE — Persistência multi-máquina
@@ -4201,17 +4201,86 @@ function mktAtualizarDerivados() {
 }
 
 function mktAtualizarTicker() {
-  const el = id => document.getElementById(id);
-  const usdTxt = _mktUsd ? 'USD/BRL R$ ' + mktFmt(_mktUsd) : 'USD/BRL —';
-  const brentTxt = _mktBrent ? 'BRENT US$ ' + mktFmtUsd(_mktBrent) : 'BRENT —';
-  const wtiTxt = _mktWti ? 'WTI US$ ' + mktFmtUsd(_mktWti) : 'WTI —';
-  const brlTxt = (_mktBrent && _mktUsd) ? 'BRENT R$ ' + mktFmt(_mktBrent * _mktUsd) : '';
-  const spreadTxt = (_mktBrent && _mktWti) ? 'SPREAD ' + mktFmtUsd(_mktBrent-_mktWti) : '';
-  const items = [usdTxt, brentTxt, wtiTxt, brlTxt, spreadTxt];
-  ['tk1','tk2','tk3','tk4','tk5'].forEach((id,i) => {
-    const e = el(id); if(e) e.textContent = items[i] || '';
-    const eb = el(id+'b'); if(eb) eb.textContent = items[i] || '';
-  });
+  // Atualizar dot do ticker com cotações inline
+}
+
+// Feeds para o ticker de manchetes — fontes de alto padrão
+const TICKER_FEEDS = [
+  { url: 'https://feeds.reuters.com/reuters/worldNews',         badge: 'Reuters · Mundial',  cor: '#D63031' },
+  { url: 'https://feeds.reuters.com/reuters/energyNews',        badge: 'Reuters · Energia',  cor: '#D63031' },
+  { url: 'https://feeds.bbci.co.uk/news/world/rss.xml',         badge: 'BBC · Mundo',        cor: '#222' },
+  { url: 'https://feeds.bbci.co.uk/sport/rss.xml',              badge: 'BBC · Esporte',      cor: '#222' },
+  { url: 'https://feeds.bbci.co.uk/news/business/rss.xml',      badge: 'BBC · Economia',     cor: '#222' },
+  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', badge: 'NYT · Mundo',     cor: '#000' },
+  { url: 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',         badge: 'WSJ · Mundo',        cor: '#003087' },
+  { url: 'https://g1.globo.com/rss/g1/economia/',               badge: 'G1 · Economia',      cor: '#E74C3C' },
+  { url: 'https://agenciabrasil.ebc.com.br/economia/feed',      badge: 'Ag. Brasil',         cor: '#009B3A' },
+];
+
+// Palavras-chave para filtrar notícias relevantes
+const TICKER_KEYWORDS = [
+  'guerra','conflito','sanção','sanções','otan','nato','ucrânia','russia','israel','gaza','china',
+  'eua','trump','biden','g7','g20','banco central','fed','juros','inflação','recessão',
+  'petróleo','energia','opep','opec','brent','wti','barril','gás','nuclear',
+  'economia','mercado','dólar','euro','bolsa','pib','exportação',
+  'copa','olimpiada','futebol','champions','nba','fórmula','gp','transferência',
+  'decisão','acordo','cúpula','embargo','crise','eleição','presidente','ministro',
+  'oil','energy','war','conflict','sanctions','economy','market','dollar'
+];
+
+async function mktCarregarTicker() {
+  const ticker = document.getElementById('mkt-ticker');
+  if(!ticker) return;
+
+  let manchetes = [];
+
+  for(const feed of TICKER_FEEDS) {
+    try {
+      const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url) + '&count=8';
+      const r = await fetch(url);
+      const d = await r.json();
+      if(d.status === 'ok' && d.items?.length) {
+        const filtradas = d.items.filter(item => {
+          const txt = ((item.title||'') + ' ' + (item.description||'')).toLowerCase();
+          return TICKER_KEYWORDS.some(k => txt.includes(k));
+        });
+        const items = (filtradas.length >= 2 ? filtradas : d.items).slice(0, 5);
+        items.forEach(item => {
+          manchetes.push({ titulo: item.title, badge: feed.badge, cor: feed.cor, link: item.link });
+        });
+      }
+    } catch(e) { /* feed indisponível, continua */ }
+  }
+
+  if(!manchetes.length) {
+    ticker.innerHTML = '<span style="color:rgba(255,255,255,.45);font-size:11px">Manchetes indisponíveis — verifique conexão</span>';
+    return;
+  }
+
+  // Embaralhar levemente para variedade
+  manchetes.sort(() => Math.random() - 0.5);
+
+  // Renderizar — duplicar para loop contínuo
+  const renderItem = function(m) {
+    const t = (m.titulo||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<span style="display:inline-flex;align-items:center;gap:8px">' +
+      '<span style="background:' + m.cor + ';color:#fff;padding:1px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.4px;flex-shrink:0">' + m.badge + '</span>' +
+      '<span style="color:rgba(255,255,255,.88);font-size:12px">' + t + '</span>' +
+      '<span style="color:rgba(255,255,255,.2);font-size:14px;margin:0 4px">·</span>' +
+    '</span>';
+  };
+
+  // Duplicar para loop sem pausa
+  const html = manchetes.map(renderItem).join('') + manchetes.map(renderItem).join('');
+  ticker.innerHTML = html;
+
+  // Ajustar velocidade baseada no conteúdo (mais texto = mais lento)
+  const totalChars = manchetes.reduce((a,m) => a + (m.titulo||'').length, 0);
+  const duration = Math.max(60, Math.min(150, totalChars * 0.5));
+  ticker.style.animation = 'mkt-scroll ' + duration + 's linear infinite';
+  ticker.style.width = 'max-content';
+
+  console.log('✓ Ticker: ' + manchetes.length + ' manchetes carregadas');
 }
 
 function mktAtualizarAnalise() {
@@ -4343,6 +4412,7 @@ async function mktCarregarTudo() {
     mktCarregarCambio(),
     mktCarregarPetroleo(),
     mktCarregarNoticias(),
+    mktCarregarTicker(),
   ]);
 
   const agora = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -4441,6 +4511,3 @@ initMetaGap();
 // Por enquanto lê do localStorage se disponível
 // [initMetaGap v2 removida — usar versão com 4 cards acima]
 initMetaGap();
-</script>
-</body>
-</html>
