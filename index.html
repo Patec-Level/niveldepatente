@@ -4829,54 +4829,115 @@ function bheRenderPeriodos(colab){
     const corP = saldoMin<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';
     const statusP = saldoMin<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
 
+    // Tabela de usos registrados
     const usosHTML = (p.usos||[]).map((u, ui) => `
       <tr>
         <td>${u.data ? u.data.split('-').reverse().join('/') : '—'}</td>
-        <td style="font-weight:600">${String(u.h||0).padStart(2,'0')}h${String(u.m||0).padStart(2,'0')}min</td>
+        <td style="font-weight:600;color:var(--azm)">${String(u.h||0).padStart(2,'0')}h${String(u.m||0).padStart(2,'0')}min</td>
         <td><span class="pl ${u.tipo==='folga'?'pl-az':'pl-w'}">${u.tipo==='folga'?'🌴 Folga':'💰 Pagamento'}</span></td>
         <td style="font-size:11px;color:var(--tx2)">${u.obs||'—'}</td>
         <td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="bheRemUso('${colab}',${pi},${ui})">✕</button></td>
       </tr>`).join('');
 
+    // Formulário de registro — visual estilo imagem 1 (HH:MM:SS destacado)
     const addUsoForm = saldoMin > 0 ? `
-      <div style="background:var(--cin);border-radius:8px;padding:.875rem;border:1px solid var(--brd);margin-top:.625rem">
-        <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Registrar uso (folga ou pagamento)</div>
-        <div style="display:grid;grid-template-columns:1fr 60px 60px 1fr 1fr auto;gap:8px;align-items:end">
-          <div class="field-wrap"><span class="field-label">Data</span><input type="date" id="bhe-uso-data-${pi}" style="width:100%"></div>
-          <div class="field-wrap"><span class="field-label">Horas</span><input type="number" id="bhe-uso-h-${pi}" min="0" max="24" placeholder="5" style="width:100%;text-align:center;font-weight:700"></div>
-          <div class="field-wrap"><span class="field-label">Min</span><input type="number" id="bhe-uso-m-${pi}" min="0" max="59" placeholder="54" style="width:100%;text-align:center;font-weight:700"></div>
-          <div class="field-wrap"><span class="field-label">Tipo</span><select id="bhe-uso-tipo-${pi}" style="width:100%"><option value="folga">🌴 Folga</option><option value="pagamento">💰 Pagamento</option></select></div>
-          <div class="field-wrap"><span class="field-label">Observação</span><input type="text" id="bhe-uso-obs-${pi}" placeholder="Ex: folga manhã" style="width:100%"></div>
-          <button class="btn btn-g" onclick="bheAddUso('${colab}',${pi})" style="align-self:flex-end">+ Registrar</button>
+      <div style="background:var(--cin);border-radius:10px;padding:1rem;border:1px solid var(--brd);margin-top:.875rem">
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.875rem;text-transform:uppercase;letter-spacing:.5px">
+          📅 Registrar folga / pagamento
         </div>
-      </div>` : '';
+
+        <!-- Data da folga em destaque -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.875rem">
+          <div class="field-wrap">
+            <span class="field-label">Data da folga / pagamento</span>
+            <input type="date" id="bhe-uso-data-${pi}" style="width:100%">
+          </div>
+          <div class="field-wrap">
+            <span class="field-label">Tipo</span>
+            <select id="bhe-uso-tipo-${pi}" style="width:100%">
+              <option value="folga">🌴 Folga</option>
+              <option value="pagamento">💰 Pagamento hora extra</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- HH : MM em destaque (estilo imagem 1) -->
+        <div style="margin-bottom:.875rem">
+          <span class="field-label" style="display:block;margin-bottom:6px">Duração (HH : MM)</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" id="bhe-uso-h-${pi}" min="0" max="24" placeholder="0"
+              style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">
+            <span style="font-size:22px;font-weight:700;color:var(--tx2)">:</span>
+            <input type="number" id="bhe-uso-m-${pi}" min="0" max="59" placeholder="0"
+              style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">
+            <div style="margin-left:8px;padding:6px 14px;background:#fff;border:1px solid var(--brd);border-radius:8px;font-size:13px;color:var(--tx2)">
+              = <strong id="bhe-uso-fmt-${pi}" style="color:var(--azm)">0h 00min</strong>
+            </div>
+            <button class="btn btn-g" onclick="bheAddUso('${colab}',${pi})" style="margin-left:auto;padding:9px 18px">
+              + Registrar
+            </button>
+          </div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:5px">
+            Saldo disponível neste período: <strong style="color:${corP}">${saldoH}h${String(saldoM).padStart(2,'0')}min</strong>
+          </div>
+        </div>
+
+        <!-- Observação -->
+        <div class="field-wrap">
+          <span class="field-label">Observação</span>
+          <input type="text" id="bhe-uso-obs-${pi}" placeholder="Ex: folga manhã 08h / compensação semana de fechamento"
+            style="width:100%">
+        </div>
+      </div>` : `<div style="padding:.625rem .875rem;background:var(--vdc);border-radius:8px;font-size:12px;color:var(--vd);font-weight:600;margin-top:.625rem">✅ Saldo zerado — nenhuma ação pendente</div>`;
 
     return `<div class="cd" style="border-left:4px solid ${corP};margin-bottom:1rem">
+      <!-- Cabeçalho do período -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px">
         <div>
           <div style="font-size:14px;font-weight:700;color:var(--az)">${p.mes_ref||'Período '+(pi+1)}</div>
           <div style="font-size:11px;color:var(--tx2);margin-top:2px">
-            Total HE: <strong>${p.he_h||0}h${String(p.he_m||0).padStart(2,'0')}min</strong>
-            &nbsp;·&nbsp; Vence: <strong>${p.vencimento ? p.vencimento.split('-').reverse().join('/') : '—'}</strong>
-            ${p.obs ? ' &nbsp;·&nbsp; ' + p.obs : ''}
+            Total HE: <strong style="color:var(--am)">${p.he_h||0}h${String(p.he_m||0).padStart(2,'0')}min</strong>
+            &nbsp;·&nbsp; Vence em: <strong>${p.vencimento ? p.vencimento.split('-').reverse().join('/') : '—'}</strong>
+            ${p.obs ? ' &nbsp;·&nbsp; <em>' + p.obs + '</em>' : ''}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="text-align:center;padding:6px 14px;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
-            <div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px">Saldo</div>
-            <div style="font-size:20px;font-weight:700;color:${corP}">${saldoH}h${String(saldoM).padStart(2,'0')}min</div>
-            <div style="font-size:10px;font-weight:600;color:${corP}">${statusP}</div>
+          <!-- Saldo destacado -->
+          <div style="text-align:center;padding:8px 16px;background:${saldoMin<=0?'var(--vdc)':vencido?'var(--vmc)':'var(--amc)'};border-radius:10px;border:1px solid ${saldoMin<=0?'rgba(14,158,106,.2)':vencido?'rgba(217,64,64,.2)':'rgba(192,122,18,.2)'}">
+            <div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Saldo</div>
+            <div style="font-size:22px;font-weight:700;color:${corP};line-height:1">${saldoH}h${String(saldoM).padStart(2,'0')}min</div>
+            <div style="font-size:10px;font-weight:600;color:${corP};margin-top:2px">${statusP}</div>
           </div>
           <button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="bheRemPeriodo('${colab}',${pi})">🗑 Remover</button>
         </div>
       </div>
-      ${(p.usos||[]).length ? `<div class="tw" style="margin-bottom:.5rem;max-height:200px"><table>
-        <thead><tr><th>Data</th><th>Duração</th><th>Tipo</th><th>Obs.</th><th></th></tr></thead>
-        <tbody>${usosHTML}</tbody>
-      </table></div>` : '<div style="font-size:11px;color:var(--tx2);margin-bottom:.5rem;padding:.5rem;background:var(--cin);border-radius:6px">Nenhum uso registrado ainda</div>'}
+
+      <!-- Histórico de usos -->
+      ${(p.usos||[]).length ? `
+        <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Usos registrados:</div>
+        <div class="tw" style="margin-bottom:.5rem;max-height:200px"><table>
+          <thead><tr><th>Data</th><th>Duração</th><th>Tipo</th><th>Obs.</th><th></th></tr></thead>
+          <tbody>${usosHTML}</tbody>
+        </table></div>` :
+        `<div style="font-size:11px;color:var(--tx2);margin-bottom:.5rem;padding:.5rem .75rem;background:var(--cin);border-radius:6px">Nenhum uso registrado ainda</div>`}
+
+      <!-- Formulário de novo uso -->
       ${addUsoForm}
     </div>`;
   }).join('');
+
+  // Adicionar listeners para preview H:M em tempo real
+  dados.periodos.forEach((_,pi) => {
+    ['bhe-uso-h-'+pi, 'bhe-uso-m-'+pi].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('input', () => {
+        const h = parseInt(document.getElementById('bhe-uso-h-'+pi)?.value||0);
+        const m = parseInt(document.getElementById('bhe-uso-m-'+pi)?.value||0);
+        const fmtEl = document.getElementById('bhe-uso-fmt-'+pi);
+        if(fmtEl) fmtEl.textContent = String(h).padStart(2,'0') + 'h ' + String(m).padStart(2,'0') + 'min';
+      });
+    });
+  });
 }
 
 function bheAddPeriodo(){
