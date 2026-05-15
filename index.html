@@ -341,14 +341,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <!-- Mini Meta/Gap no sidebar -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:.625rem .75rem;border-bottom:1px solid rgba(255,255,255,.07)">
     <div style="background:rgba(14,158,106,.15);border:1px solid rgba(14,158,106,.2);border-radius:7px;padding:6px 8px;text-align:center">
-      <div style="font-size:8px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px">META DO<br>PROJETO</div>
+      <div style="font-size:7px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px">META<br>OPERACIONAL</div>
       <div style="font-size:17px;font-weight:700;color:#fff;line-height:1" id="sb-meta">1.980</div>
-      <div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:1px">itens · ciclo</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:1px" id="sb-meta-label">itens · ciclo</div>
     </div>
     <div id="sb-gap-box" style="background:rgba(192,122,18,.18);border:1px solid rgba(192,122,18,.3);border-radius:7px;padding:6px 8px;text-align:center">
-      <div style="font-size:8px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px">GAP<br>ATUAL</div>
-      <div style="font-size:17px;font-weight:700;color:#FAC775;line-height:1" id="sb-gap">−157</div>
-      <div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:1px" id="sb-gap-sub">vs programado</div>
+      <div style="font-size:7px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px">PATEC<br>FINALIZADO</div>
+      <div style="font-size:17px;font-weight:700;color:#6FEABD;line-height:1" id="sb-patec">—</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:1px" id="sb-patec-sub">atualizar no ADM</div>
     </div>
   </div>
 
@@ -380,19 +380,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     </div>
   </div>
 
-  <!-- Meta e Gap à direita -->
+  <!-- Lado direito: 2 cards independentes -->
   <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;position:relative;z-index:2">
-    <!-- META DO PROJETO -->
-    <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:4px 14px;text-align:center;min-width:90px">
-      <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase">META DO PROJETO</div>
+    <!-- CARD 1: META OPERACIONAL (PATEC) -->
+    <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:4px 14px;text-align:center;min-width:100px">
+      <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;white-space:nowrap">META OPERACIONAL (PATEC)</div>
       <div style="font-size:20px;font-weight:700;color:#fff;line-height:1.1" id="top-meta">1.980</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.4)">itens · ciclo</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.4)" id="top-meta-label">itens · ciclo</div>
     </div>
-    <!-- GAP ATUAL -->
-    <div id="top-gap-box" style="background:rgba(192,122,18,.25);border:1px solid rgba(192,122,18,.4);border-radius:8px;padding:4px 14px;text-align:center;min-width:90px">
-      <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase">GAP ATUAL</div>
-      <div style="font-size:20px;font-weight:700;color:#FAC775;line-height:1.1" id="top-gap">−157</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.45)" id="top-gap-sub">vs programado</div>
+    <!-- CARD 2: PATEC FINALIZADO -->
+    <div id="top-patec-box" style="background:rgba(29,158,106,.2);border:1px solid rgba(29,158,106,.4);border-radius:8px;padding:4px 14px;text-align:center;min-width:100px">
+      <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;white-space:nowrap">PATEC FINALIZADO</div>
+      <div style="font-size:20px;font-weight:700;color:#6FEABD;line-height:1.1" id="top-patec-val">—</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.45)" id="top-patec-sub">atualizar no ADM</div>
     </div>
   </div>
 </div>
@@ -1063,93 +1063,87 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       </div>
 
       <!-- ── META & GAP TOPBAR ── -->
+            <!-- ── META & GAP TOPBAR ── -->
       <div id="adm-meta-gap" class="adm-tab" style="display:none">
+        <div class="al al-b" style="margin-bottom:1rem">ℹ Os dois campos são <strong>independentes</strong> — cada um controla um card na topbar. Salve cada um separadamente.</div>
+
         <div class="g2">
-          <!-- Editor -->
-          <div class="cd">
-            <div class="cd-t">📌 Meta do projeto e Gap — Topbar</div>
-            <div class="al al-b">ℹ Estes valores aparecem nos cards <strong>META DO PROJETO</strong> e <strong>GAP ATUAL</strong> no canto superior direito da topbar. Atualize manualmente a cada ciclo ou quando houver revisão.</div>
 
-            <div style="display:flex;flex-direction:column;gap:14px;margin-top:.5rem">
+          <!-- ─ CARD 1: META OPERACIONAL (PATEC) ─ -->
+          <div class="cd" style="border-top:3px solid var(--azm)">
+            <div class="cd-t">🎯 Card 1 — Meta Operacional (Patec)</div>
+            <div style="font-size:11px;color:var(--tx2);margin-bottom:1rem">Aparece no card <strong>azul</strong> da topbar (lado direito, primeiro card).</div>
 
-              <!-- Meta do projeto -->
-              <div style="background:var(--azc);border-radius:10px;padding:1rem 1.25rem;border:1px solid rgba(26,74,138,.15)">
-                <div style="font-size:11px;font-weight:700;color:var(--azm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">🎯 Meta do Projeto (ciclo)</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                  <div class="field-wrap">
-                    <span class="field-label">Total de itens (meta do ciclo)</span>
-                    <input type="number" id="mg-meta" min="0" placeholder="Ex: 1980" style="width:100%;font-size:18px;font-weight:700;color:var(--azm);text-align:center">
-                  </div>
-                  <div class="field-wrap">
-                    <span class="field-label">Rótulo (ex: itens · ciclo)</span>
-                    <input type="text" id="mg-meta-label" placeholder="itens · ciclo" style="width:100%">
-                  </div>
-                </div>
-                <div style="margin-top:.75rem;padding:.75rem;background:rgba(26,74,138,.08);border-radius:7px;font-size:11px;color:var(--tx2)">
-                  Prévia: <strong style="font-size:18px;color:var(--azm)" id="mg-meta-preview">—</strong>
-                </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div class="field-wrap">
+                <span class="field-label">Valor da meta (número)</span>
+                <input type="number" id="mg-meta" min="0" placeholder="Ex: 1980"
+                  style="width:100%;font-size:20px;font-weight:700;color:var(--azm);text-align:center"
+                  oninput="mgPreviewMeta()">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Sublabel (texto abaixo do número)</span>
+                <input type="text" id="mg-meta-label" placeholder="itens · ciclo" style="width:100%"
+                  oninput="mgPreviewMeta()">
               </div>
 
-              <!-- Gap atual -->
-              <div id="mg-gap-box" style="background:var(--amc);border-radius:10px;padding:1rem 1.25rem;border:1px solid rgba(192,122,18,.2)">
-                <div style="font-size:11px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">📊 Gap Atual</div>
-
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.875rem">
-                  <div class="field-wrap">
-                    <span class="field-label">Realizado acumulado</span>
-                    <input type="number" id="mg-realizado" min="0" placeholder="Ex: 743" style="width:100%;font-size:16px;font-weight:700;color:var(--vd);text-align:center" oninput="mgRecalcGap()">
-                  </div>
-                  <div class="field-wrap">
-                    <span class="field-label">Gap calculado (auto)</span>
-                    <div style="padding:10px 14px;background:#fff;border-radius:8px;border:1px solid var(--brd);font-size:20px;font-weight:700;text-align:center" id="mg-gap-calc">—</div>
-                  </div>
-                  <div class="field-wrap">
-                    <span class="field-label">Sublabel do Gap</span>
-                    <input type="text" id="mg-gap-label" placeholder="vs programado" style="width:100%">
-                  </div>
-                </div>
-
-                <!-- Opção: gap manual -->
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
-                  <input type="checkbox" id="mg-gap-manual" onchange="mgToggleManual()" style="width:14px;height:14px">
-                  <label for="mg-gap-manual" style="font-size:12px;color:var(--tx2);cursor:pointer">Inserir gap manualmente (sem calcular automaticamente)</label>
-                </div>
-                <div id="mg-gap-manual-box" style="display:none">
-                  <div class="field-wrap">
-                    <span class="field-label">Gap manual (use − para negativo)</span>
-                    <input type="text" id="mg-gap-manual-val" placeholder="Ex: −157" style="width:200px;font-size:16px;font-weight:700;text-align:center">
-                  </div>
-                </div>
-
-                <div style="padding:.75rem;background:rgba(192,122,18,.08);border-radius:7px;font-size:11px;color:var(--tx2)">
-                  Prévia: <strong style="font-size:18px" id="mg-gap-preview">—</strong>
-                  <span style="font-size:10px;margin-left:6px" id="mg-gap-preview-label">—</span>
-                </div>
+              <!-- Prévia -->
+              <div style="background:var(--az);border-radius:8px;padding:.875rem;text-align:center">
+                <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">META OPERACIONAL (PATEC)</div>
+                <div style="font-size:26px;font-weight:700;color:#fff;line-height:1" id="mg-meta-preview">—</div>
+                <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px" id="mg-meta-label-preview">itens · ciclo</div>
               </div>
 
-              <!-- Botão salvar -->
-              <button class="btn btn-g" onclick="salvarMetaGap()" style="align-self:flex-start">✓ Aplicar na topbar</button>
-              <span id="mg-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Topbar atualizada!</span>
+              <button class="btn btn-p" onclick="salvarMetaCard()" style="align-self:flex-start">✓ Aplicar Card 1 na topbar</button>
+              <span id="mg-meta-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
             </div>
           </div>
 
-          <!-- Valores atuais -->
-          <div class="cd">
-            <div class="cd-t">📋 Valores atuais na topbar</div>
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <div style="padding:1rem;background:var(--azc);border-radius:9px;border:1px solid rgba(26,74,138,.15)">
-                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">META DO PROJETO</div>
-                <div style="font-size:28px;font-weight:700;color:var(--azm)" id="mg-cur-meta">—</div>
-                <div style="font-size:10px;color:var(--tx2)" id="mg-cur-meta-label">—</div>
+          <!-- ─ CARD 2: PATEC FINALIZADO ─ -->
+          <div class="cd" style="border-top:3px solid var(--vd)">
+            <div class="cd-t">✅ Card 2 — Patec Finalizado</div>
+            <div style="font-size:11px;color:var(--tx2);margin-bottom:1rem">Aparece no card <strong>verde</strong> da topbar (lado direito, segundo card).</div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div class="field-wrap">
+                <span class="field-label">Valor (número ou texto)</span>
+                <input type="text" id="mg-patec-val" placeholder="Ex: 743 ou 37,5%"
+                  style="width:100%;font-size:20px;font-weight:700;color:var(--vd);text-align:center"
+                  oninput="mgPreviewPatec()">
               </div>
-              <div id="mg-cur-gap-box" style="padding:1rem;background:var(--amc);border-radius:9px;border:1px solid rgba(192,122,18,.15)">
-                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">GAP ATUAL</div>
-                <div style="font-size:28px;font-weight:700;color:var(--am)" id="mg-cur-gap">—</div>
-                <div style="font-size:10px;color:var(--tx2)" id="mg-cur-gap-label">—</div>
+              <div class="field-wrap">
+                <span class="field-label">Sublabel (texto abaixo)</span>
+                <input type="text" id="mg-patec-sub" placeholder="Ex: itens concluídos"
+                  style="width:100%" oninput="mgPreviewPatec()">
               </div>
-              <div style="padding:.75rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd);font-size:11px;color:var(--tx2)">
-                💡 Os valores são salvos no navegador (localStorage) e persistem entre sessões. Para resetar, acesse as configurações do navegador.
+
+              <!-- Prévia -->
+              <div style="background:linear-gradient(135deg,#0A6E47,#0B8A5C);border-radius:8px;padding:.875rem;text-align:center">
+                <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">PATEC FINALIZADO</div>
+                <div style="font-size:26px;font-weight:700;color:#6FEABD;line-height:1" id="mg-patec-preview">—</div>
+                <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px" id="mg-patec-sub-preview">atualizar no ADM</div>
               </div>
+
+              <button class="btn btn-g" onclick="salvarPatecCard()" style="align-self:flex-start">✓ Aplicar Card 2 na topbar</button>
+              <span id="mg-patec-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Valores atuais salvos -->
+        <div class="cd" style="margin-top:1rem">
+          <div class="cd-t">📋 Valores atualmente salvos</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="padding:.875rem;background:var(--azc);border-radius:8px;border:1px solid rgba(26,74,138,.15)">
+              <div style="font-size:10px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Card 1 · Meta Operacional</div>
+              <div style="font-size:22px;font-weight:700;color:var(--azm)" id="mg-cur-meta">—</div>
+              <div style="font-size:10px;color:var(--tx2)" id="mg-cur-meta-label">—</div>
+            </div>
+            <div style="padding:.875rem;background:var(--vdc);border-radius:8px;border:1px solid rgba(14,158,106,.15)">
+              <div style="font-size:10px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Card 2 · Patec Finalizado</div>
+              <div style="font-size:22px;font-weight:700;color:var(--vd)" id="mg-cur-patec">—</div>
+              <div style="font-size:10px;color:var(--tx2)" id="mg-cur-patec-label">—</div>
             </div>
           </div>
         </div>
@@ -3072,21 +3066,44 @@ function calcRetorno(i){
 function atualizarFeriasPreview(){ _atualizarFeriasPreview(); }
 
 function renderBancoForm(){
-  document.getElementById('adm-banco-form').innerHTML=BANCO_HORAS.map((r,i)=>`
-    <div class="cd" style="padding:.875rem">
-      <div style="font-size:12px;font-weight:700;margin-bottom:8px">${r.colab}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div class="field-wrap"><span class="field-label">Horas extras (total)</span><input type="number" id="adm-bh-h-${i}" value="${r.horas_extras||0}" min="0" onchange="calcBanco(${i})" style="width:100%"></div>
-        <div class="field-wrap"><span class="field-label">Folgas concedidas</span><input type="number" id="adm-bh-f-${i}" value="${r.folgas_usadas||0}" min="0" onchange="calcBanco(${i})" style="width:100%"></div>
-        <div class="field-wrap"><span class="field-label">Saldo (h)</span><input type="text" id="adm-bh-s-${i}" readonly style="width:100%;background:var(--cin);color:var(--tx2)"></div>
-      </div>
-      <div style="margin-top:6px">
-        <div class="field-wrap"><span class="field-label">Destino do saldo</span>
-          <select id="adm-bh-d-${i}" style="width:100%"><option>A definir</option><option>Pagar hora extra</option><option>Dar folga</option></select>
+  const container = document.getElementById('adm-banco-form');
+  if(!container) return;
+  container.innerHTML = BANCO_HORAS.map((r,i) => `
+    <div class="cd" style="padding:1rem;border-left:3px solid var(--am)">
+      <div style="font-size:13px;font-weight:700;color:var(--az);margin-bottom:.875rem">⏰ ${r.colab}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+        <div class="field-wrap">
+          <span class="field-label">Horas extras acumuladas</span>
+          <input type="number" id="adm-bh-h-${i}" value="${r.horas_extras||0}" min="0"
+            onchange="calcBanco(${i})"
+            style="width:100%;font-size:16px;font-weight:700;color:var(--am);text-align:center">
+        </div>
+        <div class="field-wrap">
+          <span class="field-label">Folgas já concedidas</span>
+          <input type="number" id="adm-bh-f-${i}" value="${r.folgas_usadas||0}" min="0"
+            onchange="calcBanco(${i})"
+            style="width:100%;font-size:16px;font-weight:700;color:var(--azm);text-align:center">
+        </div>
+        <div class="field-wrap">
+          <span class="field-label">Saldo (h) — automático</span>
+          <div id="adm-bh-s-${i}" style="padding:8px;background:var(--cin);border-radius:7px;border:1px solid var(--brd);font-size:18px;font-weight:700;text-align:center;color:var(--am)">
+            ${r.horas_extras - r.folgas_usadas*8}h
+          </div>
+        </div>
+        <div class="field-wrap">
+          <span class="field-label">Destino do saldo</span>
+          <select id="adm-bh-d-${i}" onchange="atualizarBancoPreview()" style="width:100%">
+            <option ${(r.destino||'')==='A definir'||!r.destino?'selected':''}>A definir</option>
+            <option ${(r.destino||'')==='Pagar hora extra'?'selected':''}>Pagar hora extra</option>
+            <option ${(r.destino||'')==='Dar folga'?'selected':''}>Dar folga</option>
+          </select>
         </div>
       </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--tx2)">
+        ℹ 1 folga = 8h · Saldo = horas extras − (folgas × 8h) · Prazo para uso: acordo com colaborador
+      </div>
     </div>`).join('');
-  BANCO_HORAS.forEach((_,i)=>calcBanco(i));
+  BANCO_HORAS.forEach((_,i) => calcBanco(i));
   atualizarBancoPreview();
 }
 function calcBanco(i){
@@ -3234,6 +3251,85 @@ function pill2(t){
 // Atualizar PAGE_TITLES para incluir ADM
 PAGE_TITLES['adm'] = '🔐 Administração';
 
+
+// ════════════════════════════════════════════
+// META & GAP — Dois cards independentes na topbar
+// ════════════════════════════════════════════
+function initMetaGapADM(){
+  const el = id => document.getElementById(id);
+  const meta    = localStorage.getItem('patec_meta')||'1980';
+  const metaLbl = localStorage.getItem('patec_meta_label')||'itens · ciclo';
+  const patecVal = localStorage.getItem('patec_patec_val')||'';
+  const patecSub = localStorage.getItem('patec_patec_sub')||'atualizar no ADM';
+
+  if(el('mg-meta'))       el('mg-meta').value = meta;
+  if(el('mg-meta-label')) el('mg-meta-label').value = metaLbl;
+  if(el('mg-patec-val'))  el('mg-patec-val').value = patecVal;
+  if(el('mg-patec-sub'))  el('mg-patec-sub').value = patecSub;
+
+  mgPreviewMeta(); mgPreviewPatec();
+
+  if(el('mg-cur-meta'))       el('mg-cur-meta').textContent = parseInt(meta).toLocaleString('pt-BR');
+  if(el('mg-cur-meta-label')) el('mg-cur-meta-label').textContent = metaLbl;
+  if(el('mg-cur-patec'))      el('mg-cur-patec').textContent = patecVal||'—';
+  if(el('mg-cur-patec-label'))el('mg-cur-patec-label').textContent = patecSub;
+}
+
+function mgPreviewMeta(){
+  const el = id => document.getElementById(id);
+  const v = el('mg-meta')?.value||'—';
+  const lbl = el('mg-meta-label')?.value||'itens · ciclo';
+  if(el('mg-meta-preview'))       el('mg-meta-preview').textContent = parseInt(v).toLocaleString('pt-BR')||v;
+  if(el('mg-meta-label-preview')) el('mg-meta-label-preview').textContent = lbl;
+}
+function mgPreviewPatec(){
+  const el = id => document.getElementById(id);
+  const v = el('mg-patec-val')?.value||'—';
+  const s = el('mg-patec-sub')?.value||'atualizar no ADM';
+  if(el('mg-patec-preview'))     el('mg-patec-preview').textContent = v;
+  if(el('mg-patec-sub-preview')) el('mg-patec-sub-preview').textContent = s;
+}
+
+// Salvar Card 1 — Meta Operacional
+function salvarMetaCard(){
+  const el = id => document.getElementById(id);
+  const meta    = parseInt(el('mg-meta')?.value||'1980');
+  const metaLbl = el('mg-meta-label')?.value||'itens · ciclo';
+  localStorage.setItem('patec_meta', String(meta));
+  localStorage.setItem('patec_meta_label', metaLbl);
+  initMetaGap(); // Atualiza topbar e sidebar
+  if(el('mg-cur-meta'))       el('mg-cur-meta').textContent = meta.toLocaleString('pt-BR');
+  if(el('mg-cur-meta-label')) el('mg-cur-meta-label').textContent = metaLbl;
+  const ok = el('mg-meta-ok');
+  if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',3000); }
+}
+
+// Salvar Card 2 — Patec Finalizado
+function salvarPatecCard(){
+  const el = id => document.getElementById(id);
+  const val = el('mg-patec-val')?.value||'';
+  const sub = el('mg-patec-sub')?.value||'atualizar no ADM';
+  localStorage.setItem('patec_patec_val', val);
+  localStorage.setItem('patec_patec_sub', sub);
+  // Atualizar topbar e sidebar
+  const topVal = document.getElementById('top-patec-val');
+  const topSub = document.getElementById('top-patec-sub');
+  const sbVal  = document.getElementById('sb-patec');
+  const sbSub  = document.getElementById('sb-patec-sub');
+  if(topVal) topVal.textContent = val||'—';
+  if(topSub) topSub.textContent = sub;
+  if(sbVal)  sbVal.textContent  = val||'—';
+  if(sbSub)  sbSub.textContent  = sub;
+  if(el('mg-cur-patec'))      el('mg-cur-patec').textContent = val||'—';
+  if(el('mg-cur-patec-label'))el('mg-cur-patec-label').textContent = sub;
+  const ok = el('mg-patec-ok');
+  if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',3000); }
+}
+
+// Manter compatibilidade (salvarMetaGap pode ser chamado de outros lugares)
+function salvarMetaGap(){ salvarMetaCard(); salvarPatecCard(); }
+function mgRecalcGap(){ mgPreviewMeta(); }
+function mgToggleManual(){}
 
 // ════════════════════════════════════════════
 // GESTÃO DE CICLOS
@@ -3900,45 +3996,30 @@ async function mktCarregarTudo() {
 // Valores editáveis pelo ADM (futuramente via localStorage/API)
 // Por enquanto lê do localStorage se disponível
 function initMetaGap() {
-  const meta = parseInt(localStorage.getItem('patec_meta') || '1980');
-  const realizado = parseInt(localStorage.getItem('patec_realizado') || '743');
-  const gap = realizado - meta;
-  const gapManual = localStorage.getItem('patec_gap_manual')||'';
-  const gapStr = gapManual || (gap >= 0 ? '+' : '') + gap.toLocaleString('pt-BR');
+  const meta    = parseInt(localStorage.getItem('patec_meta')||'1980');
+  const metaLbl = localStorage.getItem('patec_meta_label')||'itens · ciclo';
+  const patecVal = localStorage.getItem('patec_patec_val')||'';
+  const patecSub = localStorage.getItem('patec_patec_sub')||'atualizar no ADM';
 
-  // Atualizar topbar
+  // Card 1 — Meta Operacional (topbar + sidebar)
   const topMeta = document.getElementById('top-meta');
-  const topGap  = document.getElementById('top-gap');
-  const topGapSub = document.getElementById('top-gap-sub');
-  const topGapBox = document.getElementById('top-gap-box');
-
+  const topMetaLbl = document.getElementById('top-meta-label');
+  const sbMeta  = document.getElementById('sb-meta');
+  const sbMetaLbl = document.getElementById('sb-meta-label');
   if(topMeta) topMeta.textContent = meta.toLocaleString('pt-BR');
-  if(topGap)  topGap.textContent  = gapStr;
+  if(topMetaLbl) topMetaLbl.textContent = metaLbl;
+  if(sbMeta)  sbMeta.textContent  = meta.toLocaleString('pt-BR');
+  if(sbMetaLbl) sbMetaLbl.textContent = metaLbl;
 
-  if(topGapBox) {
-    if(gap >= 0) {
-      topGapBox.style.background = 'rgba(14,158,106,.2)';
-      topGapBox.style.borderColor = 'rgba(14,158,106,.4)';
-      if(topGap) topGap.style.color = '#4FD4A0';
-      if(topGapSub) topGapSub.textContent = '✓ acima da meta';
-    } else if(gap >= -100) {
-      topGapBox.style.background = 'rgba(186,117,23,.2)';
-      topGapBox.style.borderColor = 'rgba(186,117,23,.35)';
-      if(topGap) topGap.style.color = '#FAC775';
-      if(topGapSub) topGapSub.textContent = '⚠ abaixo da meta';
-    } else {
-      topGapBox.style.background = 'rgba(217,64,64,.2)';
-      topGapBox.style.borderColor = 'rgba(217,64,64,.35)';
-      if(topGap) topGap.style.color = '#F08080';
-      if(topGapSub) topGapSub.textContent = '✗ atenção';
-    }
-  }
-
-  // Manter sb-meta e sb-gap para compatibilidade (podem não existir)
-  const sbMeta = document.getElementById('sb-meta');
-  const sbGap  = document.getElementById('sb-gap');
-  if(sbMeta) sbMeta.textContent = meta.toLocaleString('pt-BR');
-  if(sbGap)  sbGap.textContent  = gapStr;
+  // Card 2 — Patec Finalizado (topbar + sidebar)
+  const topPatec = document.getElementById('top-patec-val');
+  const topPatecSub = document.getElementById('top-patec-sub');
+  const sbPatec  = document.getElementById('sb-patec');
+  const sbPatecSub = document.getElementById('sb-patec-sub');
+  if(topPatec) topPatec.textContent = patecVal||'—';
+  if(topPatecSub) topPatecSub.textContent = patecSub;
+  if(sbPatec)  sbPatec.textContent  = patecVal||'—';
+  if(sbPatecSub) sbPatecSub.textContent  = patecSub;
 }
 initMetaGap();
 </script>
