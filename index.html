@@ -4212,35 +4212,14 @@ async function mktCarregarTudo() {
   });
 })();
 
+// Carregar valores salvos na topbar ao iniciar
+initMetaGap();
+
+
 // ── META E GAP — atualização dinâmica ──
 // Valores editáveis pelo ADM (futuramente via localStorage/API)
 // Por enquanto lê do localStorage se disponível
-function initMetaGap() {
-  const meta    = parseInt(localStorage.getItem('patec_meta')||'1980');
-  const metaLbl = localStorage.getItem('patec_meta_label')||'itens · ciclo';
-  const patecVal = localStorage.getItem('patec_patec_val')||'';
-  const patecSub = localStorage.getItem('patec_patec_sub')||'atualizar no ADM';
-
-  // Card 1 — Meta Operacional (topbar + sidebar)
-  const topMeta = document.getElementById('top-meta');
-  const topMetaLbl = document.getElementById('top-meta-label');
-  const sbMeta  = document.getElementById('sb-meta');
-  const sbMetaLbl = document.getElementById('sb-meta-label');
-  if(topMeta) topMeta.textContent = meta.toLocaleString('pt-BR');
-  if(topMetaLbl) topMetaLbl.textContent = metaLbl;
-  if(sbMeta)  sbMeta.textContent  = meta.toLocaleString('pt-BR');
-  if(sbMetaLbl) sbMetaLbl.textContent = metaLbl;
-
-  // Card 2 — Patec Finalizado (topbar + sidebar)
-  const topPatec = document.getElementById('top-patec-val');
-  const topPatecSub = document.getElementById('top-patec-sub');
-  const sbPatec  = document.getElementById('sb-patec');
-  const sbPatecSub = document.getElementById('sb-patec-sub');
-  if(topPatec) topPatec.textContent = patecVal||'—';
-  if(topPatecSub) topPatecSub.textContent = patecSub;
-  if(sbPatec)  sbPatec.textContent  = patecVal||'—';
-  if(sbPatecSub) sbPatecSub.textContent  = patecSub;
-}
+// [initMetaGap v2 removida — usar versão com 4 cards acima]
 initMetaGap();
 </script>
 </body>
