@@ -3442,16 +3442,8 @@ async function analisarIA(tipo){
   resultEl.style.display='block';
   txtEl.innerHTML='<span class="ia-loading"><span class="ia-spin">↻</span> Consultando IA...</span>';
 
-  try {
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{
-          role:'user',
-          content:`Você é um analista especializado em gestão de compras e procurement. Analise os dados abaixo e responda à pergunta do gestor de forma clara, objetiva e em português.
+  // Usar iframe para contornar CORS do GitHub Pages
+  const fullPrompt=`Você é um analista especializado em gestão de compras e procurement. Analise os dados abaixo e responda à pergunta do gestor de forma clara, objetiva e em português.
 
 DADOS:
 ${contexto}
@@ -3459,18 +3451,48 @@ ${contexto}
 PERGUNTA DO GESTOR:
 ${prompt}
 
-Responda de forma estruturada, com insights práticos e sugestões de ação quando relevante.`
-        }]
+Responda de forma estruturada com insights práticos e sugestões de ação quando relevante.`;
+
+  const iframeCode=`<!DOCTYPE html><html><body><script>
+    fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1200,
+        messages:[{role:'user',content:${JSON.stringify(fullPrompt)}}]
       })
-    });
-    const data=await resp.json();
-    const texto=data.content?.map(c=>c.text||'').join('\n')||'Não foi possível obter resposta.';
-    txtEl.textContent=texto;
-  } catch(err) {
-    txtEl.textContent='Erro ao consultar a IA: '+err.message+'. Verifique a conexão e tente novamente.'
-  }
-  btn.disabled=false;
-  btn.innerHTML='🤖 Analisar com IA';
+    })
+    .then(r=>r.json())
+    .then(d=>{
+      const txt=d.content?.map(c=>c.text||'').join('\n')||d.error?.message||'Sem resposta.';
+      window.parent.postMessage({type:'ia-resp',texto:txt},'*');
+    })
+    .catch(e=>window.parent.postMessage({type:'ia-resp',texto:'Erro: '+e.message},'*'));
+  <\/script></body></html>`;
+
+  // Listener para receber a resposta do iframe
+  const handler=(ev)=>{
+    if(ev.data&&ev.data.type==='ia-resp'){
+      window.removeEventListener('message',handler);
+      txtEl.textContent=ev.data.texto;
+      btn.disabled=false;
+      btn.innerHTML='🤖 Analisar com IA';
+      // Remover iframe após uso
+      const fr=document.getElementById('ia-frame-tmp');
+      if(fr)fr.remove();
+    }
+  };
+  window.addEventListener('message',handler);
+
+  // Criar iframe temporário
+  let fr=document.getElementById('ia-frame-tmp');
+  if(fr)fr.remove();
+  fr=document.createElement('iframe');
+  fr.id='ia-frame-tmp';
+  fr.style.cssText='display:none;position:fixed;width:1px;height:1px';
+  fr.srcdoc=iframeCode;
+  document.body.appendChild(fr);
 }
 
 // ── FÉRIAS ADM ──
