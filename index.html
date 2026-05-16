@@ -1633,9 +1633,23 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <!-- Mensagem motivacional -->
           <div id="pr-motivacao" style="border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;font-weight:600;display:none;align-items:center;gap:10px"></div>
 
+          <!-- Campos principais — definem a meta -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem">
+            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(primeira análise)</span></label>
+              <input type="number" id="pf0" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
+            </div>
+            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(em tratativa)</span></label>
+              <input type="number" id="pf1" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
+            </div>
+          </div>
+
+          <!-- Divisor -->
+          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;padding-top:.25rem">↓ Composição dos itens acima</div>
+
+          <!-- Campos de composição -->
           <div class="prod-grid">
-            <div class="prod-row"><label>Itens Analisados<br><span style="font-size:10px;color:var(--tx2)">(novos)</span></label><input type="number" id="pf0" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Itens em Tratativa</label><input type="number" id="pf1" min="0" placeholder="0" oninput="updProd()"></div>
             <div class="prod-row"><label>Fornecedor</label><input type="number" id="pf2" min="0" placeholder="0" oninput="updProd()"></div>
             <div class="prod-row"><label>Requisitante</label><input type="number" id="pf3" min="0" placeholder="0" oninput="updProd()"></div>
             <div class="prod-row"><label>MDG</label><input type="number" id="pf4" min="0" placeholder="0" oninput="updProd()"></div>
