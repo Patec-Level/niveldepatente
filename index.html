@@ -1357,20 +1357,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- ── BANCO DE HORAS EXTRAS (BHE) por período ── -->
+      <!-- ── BANCO HE ADM ── -->
       <div id="adm-banco-adm" class="adm-tab" style="display:none">
-        <div class="al al-b" style="margin-bottom:1rem">
-          ℹ Registre as <strong>Horas Extras por mês de referência</strong> conforme informado pelo RH.
-          Cada período tem data de vencimento independente. O saldo é calculado descontando folgas e pagamentos parciais.
-          <br>Exemplo: <strong>HE Março</strong> vence 23/05 · <strong>HE Abril</strong> vence 23/06 · <strong>HE Maio</strong> vence 23/07
-        </div>
 
-        <!-- Limite mensal de HE -->
+        <!-- Limite mensal -->
         <div class="cd" style="border-top:3px solid var(--am);margin-bottom:1.25rem">
-          <div class="cd-t">⚠️ Limite mensal de HE por equipe</div>
-          <div class="al al-a" style="margin-bottom:.875rem">
-            ℹ Defina o teto de horas extras que a equipe pode acumular por mês. Abaixo do limite = pode pagar. Acima do limite = obrigado a dar folga.
-          </div>
+          <div class="cd-t">⚠️ Limite mensal de HE — equipe</div>
+          <div class="al al-a" style="margin-bottom:.875rem">ℹ Abaixo do limite = pode pagar · Acima do limite = obrigado a dar folga</div>
           <div style="display:grid;grid-template-columns:80px 80px 1fr auto;gap:10px;align-items:end">
             <div class="field-wrap">
               <span class="field-label">Limite (h)</span>
@@ -1387,10 +1380,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <div id="bhe-limite-preview" style="font-size:14px;color:var(--am);font-weight:700">Nenhum limite definido</div>
               <div id="bhe-limite-regra" style="font-size:11px;color:var(--tx2);margin-top:2px">Configure acima para ativar</div>
             </div>
-            <button class="btn btn-g" onclick="bheSalvarLimite()" style="align-self:flex-end">✓ Salvar limite</button>
+            <button class="btn btn-g" onclick="bheSalvarLimite()" style="align-self:flex-end">✓ Salvar</button>
           </div>
           <span id="bhe-limite-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-top:6px">✓ Limite salvo!</span>
         </div>
+
+        <!-- Seletor colaborador + adicionar período -->
+        <div class="al al-b" style="margin-bottom:1rem">ℹ Selecione o colaborador, escolha o mês/ano de referência e adicione os períodos de HE informados pelo RH.</div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap">
           <div class="field-wrap" style="min-width:180px">
             <span class="field-label">Colaborador</span>
@@ -1406,7 +1402,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="cd" style="border-top:3px solid var(--vd);margin-bottom:1rem">
             <div class="cd-t">➕ Adicionar período de HE</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px 1fr auto;gap:10px;align-items:end">
-              <div class="field-wrap" style="min-width:200px">
+              <div class="field-wrap">
                 <span class="field-label">Mês de referência</span>
                 <div style="display:flex;gap:6px">
                   <select id="bhe-new-mes-m" style="flex:1">
@@ -1422,11 +1418,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 </div>
               </div>
               <div class="field-wrap">
-                <span class="field-label">Vencimento (prazo folgar/pagar)</span>
+                <span class="field-label">Vencimento (prazo)</span>
                 <input type="date" id="bhe-new-venc" style="width:100%">
               </div>
               <div class="field-wrap">
-                <span class="field-label">Total HE (h)</span>
+                <span class="field-label">Horas</span>
                 <input type="number" id="bhe-new-h" min="0" placeholder="13" style="width:100%;text-align:center;font-weight:700;font-size:16px">
               </div>
               <div class="field-wrap">
@@ -1447,7 +1443,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- ── DADOS PCP ADM ── -->
       <!-- ── DADOS PCP ADM ── -->
       <div id="adm-pcp-adm" class="adm-tab" style="display:none">
         <div class="cd">
@@ -1884,11 +1879,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- BANCO DE HORAS EXTRAS por período -->
+      <!-- BANCO HE por período -->
       <div id="bf-banco" style="display:none">
-
-        <!-- FILTRO POR MÊS DE REFERÊNCIA + PAINEL DE LIMITE -->
-        <div class="cd" style="padding:1rem 1.25rem;margin-bottom:1rem;border-top:3px solid var(--azm)">
+        <div class="cd" style="padding:.875rem 1.25rem;margin-bottom:1rem;border-top:3px solid var(--azm)">
           <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
             <div class="field-wrap">
               <span class="field-label">Filtrar por mês de referência</span>
@@ -1896,22 +1889,33 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <option value="">Todos os meses</option>
               </select>
             </div>
-            <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="document.getElementById('bhe-filtro-mes').value='';renderBHECards()">✕ Limpar filtro</button>
-            <!-- Indicador de limite mensal -->
-            <div id="bhe-limite-badge" style="display:none;margin-left:auto;padding:6px 14px;border-radius:8px;border:1px solid var(--brd);background:var(--cin);font-size:12px"></div>
+            <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="document.getElementById('bhe-filtro-mes').value='';renderBHECards()">✕ Limpar</button>
+            <div id="bhe-limite-badge" style="display:none;margin-left:auto;padding:6px 14px;border-radius:8px;border:1px solid var(--brd);font-size:12px;font-weight:600"></div>
           </div>
         </div>
-
-        <!-- KPIs filtrados -->
         <div id="bhe-resumo-geral" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:1.25rem"></div>
-
-        <!-- Painel de alerta de limite (aparece quando filtro de mês está ativo) -->
         <div id="bhe-limite-painel" style="display:none;margin-bottom:1rem"></div>
-
-        <!-- Seletor de colaborador -->
         <div class="cd" style="padding:.875rem 1.25rem;margin-bottom:1rem">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <div class="field-wrap" style=// ── GLOBAIS ──
+            <div class="field-wrap" style="min-width:200px">
+              <span class="field-label">Selecione o colaborador</span>
+              <select id="bhe-view-colab" onchange="renderBHEColabCard()" style="width:100%">
+                <option value="">— Selecione —</option>
+              </select>
+            </div>
+            <div style="font-size:12px;color:var(--tx2);align-self:flex-end;padding-bottom:6px">
+              Selecione para ver os períodos e histórico detalhado
+            </div>
+          </div>
+        </div>
+        <div id="bhe-card-colab-view"></div>
+      </div><!-- /ct -->
+    </div><!-- /p-pr-bancoferias -->
+
+  </div><!-- /ct -->
+</main>
+
+<script>// ── GLOBAIS ──
 const HOJE = new Date();
 
 // ════════════════════════════════════════════
@@ -2109,11 +2113,9 @@ async function fbCarregarTudo(){
 
   // Banco HE
   await fbCarregarBHE();
-
-  // Automação: arquivar períodos vencidos
   bheArquivarVencidos();
 
-  // Re-renderizar módulos com dados carregados
+  // Re-renderizar
   renderFerias();
   renderBanco();
   renderBHECards();
@@ -3150,7 +3152,6 @@ function admLogin(){
     renderFeriasForm();
     renderBancoForm();
     bheInit();
-    bheCarregarLimiteADM();
     filtrarHistMapa('all');
     filtrarHistProd('all');
     renderAdmPCP();
@@ -4839,128 +4840,111 @@ fbCarregarTudo().then(() => { initMetaGap(); });
 // ════════════════════════════════════════════════════════════
 let BANCO_HE = COLABS.map(c => ({ colab: c, periodos: [] }));
 
-function fmtHM(h, m){ return String(h||0).padStart(2,'0') + 'h ' + String(m||0).padStart(2,'0') + 'min'; }
-
 function bheInit(){
   const sel = document.getElementById('bhe-colab-sel');
   if(!sel) return;
   sel.innerHTML = '<option value="">— Selecione —</option>' +
     COLABS.map(c => `<option value="${c}">${c}</option>`).join('');
-  // Popular anos no select de mês de referência
   const selA = document.getElementById('bhe-new-mes-a');
   if(selA){
-    const anoAtual = new Date().getFullYear();
+    const y = new Date().getFullYear();
     selA.innerHTML = '<option value="">Ano</option>' +
-      [anoAtual-1, anoAtual, anoAtual+1].map(a => `<option value="${a}">${a}</option>`).join('');
-    // Pré-selecionar ano atual
-    selA.value = String(anoAtual);
+      [y-1,y,y+1].map(a=>`<option value="${a}">${a}</option>`).join('');
+    selA.value = String(y);
   }
+  bheCarregarLimiteADM();
 }
 
 function bheGetColab(){ return document.getElementById('bhe-colab-sel')?.value||''; }
 
 function bheRenderColab(){
-  const colab = bheGetColab();
-  const painel = document.getElementById('bhe-painel');
-  const empty  = document.getElementById('bhe-empty');
-  const nomeEl = document.getElementById('bhe-colab-nome');
+  const colab=bheGetColab();
+  const painel=document.getElementById('bhe-painel');
+  const empty=document.getElementById('bhe-empty');
+  const nomeEl=document.getElementById('bhe-colab-nome');
   if(!colab){ if(painel)painel.style.display='none'; if(empty)empty.style.display='block'; return; }
   if(painel)painel.style.display='block';
   if(empty)empty.style.display='none';
-  if(nomeEl)nomeEl.textContent = '👤 ' + colab;
+  if(nomeEl)nomeEl.textContent='👤 '+colab;
   if(!BANCO_HE.find(b=>b.colab===colab)) BANCO_HE.push({colab,periodos:[]});
   bheRenderPeriodos(colab);
 }
 
 function bheRenderPeriodos(colab){
-  const container = document.getElementById('bhe-periodos-lista');
-  if(!container) return;
-  const dados = BANCO_HE.find(b => b.colab===colab);
+  const container=document.getElementById('bhe-periodos-lista');
+  if(!container)return;
+  const dados=BANCO_HE.find(b=>b.colab===colab);
   if(!dados||!dados.periodos.length){
     container.innerHTML='<div class="al al-b">Nenhum período cadastrado. Adicione acima.</div>';
     return;
   }
-  const hoje = HOJE.toISOString().split('T')[0];
-  container.innerHTML = dados.periodos.map((p,pi) => {
+  const hoje=HOJE.toISOString().split('T')[0];
+  container.innerHTML=dados.periodos.map((p,pi)=>{
     const tMin=(p.he_h||0)*60+(p.he_m||0);
     const uMin=(p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);
     const sMin=tMin-uMin;
     const sH=Math.floor(sMin/60),sM=sMin%60;
     const vencido=sMin>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje;
-    const corP=sMin<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';
-    const statusP=p.arquivado?(p.arquivado_motivo==='Zerado'?'✅ Zerado':'💳 Pago/Arquivado'):sMin<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
+    const arquivado=!!p.arquivado;
+    const corP=arquivado&&p.arquivado_motivo!=='Zerado'?'var(--azm)':sMin<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';
+    const statusP=arquivado?(p.arquivado_motivo==='Zerado'?'✅ Zerado':'💳 Pago/Arquivado'):sMin<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
 
     const usosHTML=(p.usos||[]).map((u,ui)=>`
-      <tr>
+      <tr style="${u.automatico?'background:rgba(26,74,138,.04)':''}">
         <td>${u.data?u.data.split('-').reverse().join('/'):'—'}</td>
         <td style="font-weight:600;color:var(--azm)">${String(u.h||0).padStart(2,'0')}h${String(u.m||0).padStart(2,'0')}min</td>
         <td><span class="pl ${u.tipo==='folga'?'pl-az':'pl-w'}">${u.tipo==='folga'?'🌴 Folga':'💰 Pagamento'}</span></td>
         <td style="font-size:11px;color:var(--tx2)">${u.obs||'—'}</td>
-        <td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="bheRemUso('${colab}',${pi},${ui})">✕</button></td>
+        <td>${u.automatico?'<span style="font-size:9px;color:var(--tx2)">⚙️ auto</span>':`<button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="bheRemUso('${colab}',${pi},${ui})">✕</button>`}</td>
       </tr>`).join('');
 
-    const addForm = sMin>0 ? `
+    const addForm=(!arquivado&&sMin>0)?`
       <div style="background:var(--cin);border-radius:10px;padding:1rem;border:1px solid var(--brd);margin-top:.875rem">
         <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.875rem;text-transform:uppercase;letter-spacing:.5px">📅 Registrar folga / pagamento</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.875rem">
-          <div class="field-wrap">
-            <span class="field-label">Data da folga / pagamento</span>
-            <input type="date" id="bhe-uso-data-${pi}" style="width:100%">
-          </div>
-          <div class="field-wrap">
-            <span class="field-label">Tipo</span>
-            <select id="bhe-uso-tipo-${pi}" style="width:100%">
-              <option value="folga">🌴 Folga</option>
-              <option value="pagamento">💰 Pagamento hora extra</option>
-            </select>
-          </div>
+          <div class="field-wrap"><span class="field-label">Data</span><input type="date" id="bhe-uso-data-${pi}" style="width:100%"></div>
+          <div class="field-wrap"><span class="field-label">Tipo</span><select id="bhe-uso-tipo-${pi}" style="width:100%"><option value="folga">🌴 Folga</option><option value="pagamento">💰 Pagamento</option></select></div>
         </div>
         <div style="margin-bottom:.875rem">
           <span class="field-label" style="display:block;margin-bottom:6px">Duração (HH : MM)</span>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <input type="number" id="bhe-uso-h-${pi}" min="0" max="24" placeholder="0"
-              oninput="bheFmtUso(${pi})"
+            <input type="number" id="bhe-uso-h-${pi}" min="0" max="24" placeholder="0" oninput="bheFmtUso(${pi})"
               style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">
             <span style="font-size:22px;font-weight:700;color:var(--tx2)">:</span>
-            <input type="number" id="bhe-uso-m-${pi}" min="0" max="59" placeholder="0"
-              oninput="bheFmtUso(${pi})"
+            <input type="number" id="bhe-uso-m-${pi}" min="0" max="59" placeholder="0" oninput="bheFmtUso(${pi})"
               style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">
             <span id="bhe-uso-fmt-${pi}" style="font-size:13px;color:var(--azm);font-weight:600;padding:6px 12px;background:#fff;border:1px solid var(--brd);border-radius:8px">= 0h 00min</span>
             <button class="btn btn-g" onclick="bheAddUso('${colab}',${pi})" style="margin-left:auto">+ Registrar</button>
           </div>
-          <div style="font-size:10px;color:var(--tx2);margin-top:5px">Saldo disponível: <strong style="color:${corP}">${sH}h${String(sM).padStart(2,'0')}min</strong></div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:5px">Saldo: <strong style="color:${corP}">${sH}h${String(sM).padStart(2,'0')}min</strong></div>
         </div>
-        <div class="field-wrap">
-          <span class="field-label">Observação</span>
-          <input type="text" id="bhe-uso-obs-${pi}" placeholder="Ex: folga manhã / compensação semana de fechamento" style="width:100%">
-        </div>
-      </div>` : `<div style="padding:.625rem;background:var(--vdc);border-radius:8px;font-size:12px;color:var(--vd);font-weight:600;margin-top:.625rem">✅ Saldo zerado neste período</div>`;
+        <div class="field-wrap"><span class="field-label">Observação</span><input type="text" id="bhe-uso-obs-${pi}" placeholder="Ex: folga manhã" style="width:100%"></div>
+      </div>` : (arquivado?`<div style="padding:.625rem .875rem;background:var(--azc);border-radius:8px;font-size:11px;color:var(--azm);font-weight:600;margin-top:.5rem">📁 Período arquivado em ${p.arquivado_em?p.arquivado_em.split('-').reverse().join('/'):'—'} — ${p.arquivado_motivo}</div>`:'<div style="padding:.5rem;background:var(--vdc);border-radius:8px;font-size:12px;color:var(--vd);font-weight:600;margin-top:.5rem">✅ Saldo zerado</div>');
 
-    return `<div class="cd" style="border-left:4px solid ${corP};margin-bottom:1rem">
+    return `<div class="cd" style="border-left:4px solid ${corP};margin-bottom:1rem${arquivado?';opacity:.85':''}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px">
         <div>
-          <div style="font-size:14px;font-weight:700;color:var(--az)">${p.mes_ref||'Período '+(pi+1)}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--az)">${p.mes_ref||'Período '+(pi+1)}${arquivado?' <span style="font-size:10px;background:var(--azc);color:var(--azm);padding:1px 7px;border-radius:4px;margin-left:4px">📁 Arquivado</span>':''}</div>
           <div style="font-size:11px;color:var(--tx2);margin-top:2px">
             Total HE: <strong style="color:var(--am)">${p.he_h||0}h${String(p.he_m||0).padStart(2,'0')}min</strong>
-            &nbsp;·&nbsp; Vence em: <strong>${p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—'}</strong>
+            &nbsp;·&nbsp; Vence: <strong>${p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—'}</strong>
             ${p.obs?' &nbsp;·&nbsp; <em>'+p.obs+'</em>':''}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="text-align:center;padding:8px 16px;background:${sMin<=0?'var(--vdc)':vencido?'var(--vmc)':'var(--amc)'};border-radius:10px;border:1px solid ${sMin<=0?'rgba(14,158,106,.2)':vencido?'rgba(217,64,64,.2)':'rgba(192,122,18,.2)'}">
+          <div style="text-align:center;padding:8px 16px;background:${sMin<=0||arquivado?'var(--vdc)':vencido?'var(--vmc)':'var(--amc)'};border-radius:10px">
             <div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px">Saldo</div>
             <div style="font-size:22px;font-weight:700;color:${corP};line-height:1">${sH}h${String(sM).padStart(2,'0')}min</div>
             <div style="font-size:10px;font-weight:600;color:${corP}">${statusP}</div>
           </div>
-          <button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="bheRemPeriodo('${colab}',${pi})">🗑 Remover</button>
+          ${!arquivado?`<button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="bheRemPeriodo('${colab}',${pi})">🗑</button>`:''}
         </div>
       </div>
       ${(p.usos||[]).length?`<div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Usos registrados:</div>
       <div class="tw" style="margin-bottom:.5rem;max-height:200px"><table>
         <thead><tr><th>Data</th><th>Duração</th><th>Tipo</th><th>Obs.</th><th></th></tr></thead>
-        <tbody>${usosHTML}</tbody>
-      </table></div>`:
-      '<div style="font-size:11px;color:var(--tx2);padding:.5rem .75rem;background:var(--cin);border-radius:6px;margin-bottom:.5rem">Nenhum uso registrado</div>'}
+        <tbody>${usosHTML}</tbody></table></div>`:
+        '<div style="font-size:11px;color:var(--tx2);padding:.5rem .75rem;background:var(--cin);border-radius:6px;margin-bottom:.5rem">Nenhum uso registrado</div>'}
       ${addForm}
     </div>`;
   }).join('');
@@ -4970,11 +4954,11 @@ function bheFmtUso(pi){
   const h=parseInt(document.getElementById('bhe-uso-h-'+pi)?.value||0);
   const m=parseInt(document.getElementById('bhe-uso-m-'+pi)?.value||0);
   const el=document.getElementById('bhe-uso-fmt-'+pi);
-  if(el) el.textContent='= '+String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'min';
+  if(el)el.textContent='= '+String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'min';
 }
 
 function bheAddPeriodo(){
-  const colab=bheGetColab(); if(!colab) return;
+  const colab=bheGetColab(); if(!colab)return;
   const mesM=document.getElementById('bhe-new-mes-m')?.value?.trim();
   const mesA=document.getElementById('bhe-new-mes-a')?.value?.trim();
   const mes=(mesM&&mesA)?mesM+' '+mesA:'';
@@ -4987,9 +4971,10 @@ function bheAddPeriodo(){
   const dados=BANCO_HE.find(b=>b.colab===colab);
   if(!dados)return;
   dados.periodos.push({id:Date.now(),mes_ref:mes,vencimento:venc,he_h:h,he_m:m,obs,usos:[]});
-  ['bhe-new-mes-m','bhe-new-mes-a','bhe-new-venc','bhe-new-h','bhe-new-m','bhe-new-obs'].forEach(id=>{
+  ['bhe-new-mes-m','bhe-new-venc','bhe-new-h','bhe-new-m','bhe-new-obs'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
+  // Não limpar o ano (conveniência)
   bheRenderPeriodos(colab);
 }
 
@@ -5002,7 +4987,7 @@ function bheRemPeriodo(colab,pi){
 
 function bheAddUso(colab,pi){
   const dados=BANCO_HE.find(b=>b.colab===colab);if(!dados)return;
-  const p=dados.periodos[pi];if(!p)return;
+  const p=dados.periodos[pi];if(!p||p.arquivado)return;
   const data=document.getElementById('bhe-uso-data-'+pi)?.value;
   const h=parseInt(document.getElementById('bhe-uso-h-'+pi)?.value||0);
   const m=parseInt(document.getElementById('bhe-uso-m-'+pi)?.value||0);
@@ -5020,7 +5005,7 @@ function bheAddUso(colab,pi){
 
 function bheRemUso(colab,pi,ui){
   const dados=BANCO_HE.find(b=>b.colab===colab);
-  if(dados&&dados.periodos[pi])dados.periodos[pi].usos.splice(ui,1);
+  if(dados&&dados.periodos[pi]&&!dados.periodos[pi].arquivado)dados.periodos[pi].usos.splice(ui,1);
   bheRenderPeriodos(colab);
 }
 
@@ -5037,247 +5022,162 @@ async function fbCarregarBHE(){
   const dados=await fbGet('config','banco_he');
   if(dados&&dados.lista){
     BANCO_HE=dados.lista;
-    console.log('✓ Banco HE carregado:',BANCO_HE.reduce((s,b)=>s+b.periodos.length,0),'períodos');
+    console.log('✓ Banco HE:',BANCO_HE.reduce((s,b)=>s+b.periodos.length,0),'períodos');
   } else {
     const ls=localStorage.getItem('patec_banco_he');
     if(ls)try{BANCO_HE=JSON.parse(ls);}catch(e){}
   }
-  // Carregar limite configurado
   const cfg=await fbGet('config','bhe_config');
   if(cfg&&cfg.limite){
     localStorage.setItem('patec_bhe_limite',JSON.stringify(cfg.limite));
-    console.log('✓ Limite BHE carregado:',cfg.limite.h+'h'+cfg.limite.m+'min');
   }
 }
 
-
-function bheCarregarLimiteADM(){
-  const l = bheGetLimite();
-  const elH = document.getElementById('bhe-limite-h');
-  const elM = document.getElementById('bhe-limite-m');
-  if(elH) elH.value = l.h||'';
-  if(elM) elM.value = l.m||'';
-  bhePrevLimite();
+// ── Automação: arquivar vencidos ──
+function bheArquivarVencidos(){
+  const hoje=HOJE.toISOString().split('T')[0];
+  let mudou=false;
+  BANCO_HE.forEach(b=>b.periodos.forEach(p=>{
+    if(p.arquivado)return;
+    const venc=String(p.vencimento||'').slice(0,10);
+    if(!venc||venc>=hoje)return;
+    const tMin=(p.he_h||0)*60+(p.he_m||0);
+    const uMin=(p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);
+    const sMin=tMin-uMin;
+    if(sMin<=0){ p.arquivado=true;p.arquivado_em=hoje;p.arquivado_motivo='Zerado';mudou=true;return; }
+    const sH=Math.floor(sMin/60),sM=sMin%60;
+    if(!p.usos)p.usos=[];
+    p.usos.push({data:venc,h:sH,m:sM,tipo:'pagamento',obs:'⚙️ Pago automaticamente — prazo vencido em '+venc.split('-').reverse().join('/'),automatico:true});
+    p.arquivado=true;p.arquivado_em=hoje;p.arquivado_motivo='Vencido — pago automaticamente';
+    mudou=true;
+    console.log('⚙️ BHE Auto:',b.colab,'—',p.mes_ref,'→ pago',sH+'h'+String(sM).padStart(2,'0')+'min');
+  }));
+  if(mudou){
+    fbSet('config','banco_he',{lista:JSON.parse(JSON.stringify(BANCO_HE)),ts:new Date().toISOString()});
+    localStorage.setItem('patec_banco_he',JSON.stringify(BANCO_HE));
+    console.log('⚙️ BHE Auto: arquivado e salvo');
+  }
+  return mudou;
 }
 
+// ── Limite mensal ──
+function bheGetLimite(){
+  try{const ls=localStorage.getItem('patec_bhe_limite');if(ls)return JSON.parse(ls);}catch(e){}
+  return{h:0,m:0};
+}
+function bheCarregarLimiteADM(){
+  const l=bheGetLimite();
+  const elH=document.getElementById('bhe-limite-h');
+  const elM=document.getElementById('bhe-limite-m');
+  if(elH)elH.value=l.h||'';
+  if(elM)elM.value=l.m||'';
+  bhePrevLimite();
+}
 function bhePrevLimite(){
   const h=parseInt(document.getElementById('bhe-limite-h')?.value||0);
   const m=parseInt(document.getElementById('bhe-limite-m')?.value||0);
   const prev=document.getElementById('bhe-limite-preview');
   const regra=document.getElementById('bhe-limite-regra');
   if(h||m){
-    if(prev) prev.textContent=h+'h'+String(m).padStart(2,'0')+'min por mês (equipe)';
-    if(regra) regra.textContent='≤ '+h+'h'+String(m).padStart(2,'0')+'min → pode pagar · acima → dar folga';
-  } else {
-    if(prev) prev.textContent='Nenhum limite definido';
-    if(regra) regra.textContent='Configure acima para ativar';
+    if(prev)prev.textContent=h+'h'+String(m).padStart(2,'0')+'min por mês (equipe)';
+    if(regra)regra.textContent='≤ '+h+'h'+String(m).padStart(2,'0')+'min → pode pagar · acima → dar folga';
+  }else{
+    if(prev)prev.textContent='Nenhum limite definido';
+    if(regra)regra.textContent='Configure acima para ativar';
   }
 }
-
 async function bheSalvarLimite(){
   const h=parseInt(document.getElementById('bhe-limite-h')?.value||0);
   const m=parseInt(document.getElementById('bhe-limite-m')?.value||0);
   const limite={h,m};
   localStorage.setItem('patec_bhe_limite',JSON.stringify(limite));
   await fbSet('config','bhe_config',{limite,ts:new Date().toISOString()});
-  bhePrevLimite();
-  renderBHECards();
+  bhePrevLimite();renderBHECards();
   const ok=document.getElementById('bhe-limite-ok');
   if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',3000);}
 }
 
 // ── Gestão de Jornada — BHE ──
 function renderBHECards(){
-  const hoje = HOJE.toISOString().split('T')[0];
-  const mesFiltro = document.getElementById('bhe-filtro-mes')?.value||'';
-
-  // Popular seletor de mês de referência
-  const selMes = document.getElementById('bhe-filtro-mes');
+  const hoje=HOJE.toISOString().split('T')[0];
+  const mesFiltro=document.getElementById('bhe-filtro-mes')?.value||'';
+  const selMes=document.getElementById('bhe-filtro-mes');
   if(selMes){
-    const prev = selMes.value;
-    const meses = [...new Set(BANCO_HE.flatMap(b => b.periodos.map(p => p.mes_ref)).filter(Boolean))].sort();
-    selMes.innerHTML = '<option value="">Todos os meses</option>' +
-      meses.map(m => `<option value="${m}" ${m===prev?'selected':''}>${m}</option>`).join('');
+    const prev=selMes.value;
+    const meses=[...new Set(BANCO_HE.flatMap(b=>b.periodos.map(p=>p.mes_ref)).filter(Boolean))].sort((a,b)=>{
+      const mOrder=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      const [ma,ya]=a.split(' ');const [mb,yb]=b.split(' ');
+      return ya!==yb?ya-yb:mOrder.indexOf(ma)-mOrder.indexOf(mb);
+    });
+    selMes.innerHTML='<option value="">Todos os meses</option>'+meses.map(m=>`<option value="${m}"${m===prev?' selected':''}>${m}</option>`).join('');
   }
-
-  // Popular seletor de colaborador
   const sel=document.getElementById('bhe-view-colab');
   if(sel){
     const prev=sel.value;
     sel.innerHTML='<option value="">— Selecione —</option>'+
-      BANCO_HE.filter(b=>b.periodos.length>0)
-              .map(b=>`<option value="${b.colab}">${b.colab}</option>`).join('');
+      BANCO_HE.filter(b=>b.periodos.length>0).map(b=>`<option value="${b.colab}">${b.colab}</option>`).join('');
     if(prev)sel.value=prev;
   }
-
-  // Filtrar dados pelo mês selecionado
-  function getPeríodos(colabData){
-    if(!mesFiltro) return colabData.periodos;
-    return colabData.periodos.filter(p => p.mes_ref === mesFiltro);
-  }
-
-  // KPIs filtrados
+  function getPeriodos(b){return mesFiltro?b.periodos.filter(p=>p.mes_ref===mesFiltro):b.periodos;}
   const resumoEl=document.getElementById('bhe-resumo-geral');
   if(resumoEl){
-    let tMin=0, uMin=0, venc=0, nColabs=0;
+    let tMin=0,uMin=0,venc=0,nC=0;
     BANCO_HE.forEach(b=>{
-      const periodos = getPeríodos(b);
-      if(!periodos.length) return;
-      nColabs++;
-      periodos.forEach(p=>{
+      const ps=getPeriodos(b);if(!ps.length)return;nC++;
+      ps.forEach(p=>{
         const t=(p.he_h||0)*60+(p.he_m||0);
         const u=(p.usos||[]).reduce((s,x)=>s+(x.h||0)*60+(x.m||0),0);
-        const s=t-u; tMin+=t; uMin+=u;
-        if(s>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje) venc++;
+        const s=t-u;tMin+=t;uMin+=u;
+        if(!p.arquivado&&s>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje)venc++;
       });
     });
     const saldo=tMin-uMin;
-    const label = mesFiltro ? `Mês: <strong>${mesFiltro}</strong>` : 'Todos os meses';
-
     resumoEl.innerHTML=`
-      <div class="kc"><div class="kc-l">Total HE ${mesFiltro?'('+mesFiltro+')':'equipe'}</div><div class="kc-v" style="color:var(--am)">${Math.floor(tMin/60)}h${String(tMin%60).padStart(2,'0')}min</div><div class="kc-s">${mesFiltro?nColabs+' colaborador(es)':'todos os períodos'}</div></div>
+      <div class="kc"><div class="kc-l">Total HE ${mesFiltro?'('+mesFiltro+')':'equipe'}</div><div class="kc-v" style="color:var(--am)">${Math.floor(tMin/60)}h${String(tMin%60).padStart(2,'0')}min</div><div class="kc-s">${mesFiltro?nC+' colaborador(es)':'todos os períodos'}</div></div>
       <div class="kc ok"><div class="kc-l">Já compensado</div><div class="kc-v">${Math.floor(uMin/60)}h${String(uMin%60).padStart(2,'0')}min</div><div class="kc-s">folgas + pagamentos</div></div>
       <div class="kc ${saldo>0?'warn':'ok'}"><div class="kc-l">Saldo pendente</div><div class="kc-v" style="color:${saldo>0?'var(--am)':'var(--vd)'}">${Math.floor(Math.abs(saldo)/60)}h${String(Math.abs(saldo)%60).padStart(2,'0')}min</div><div class="kc-s">a folgar ou pagar</div></div>
       ${venc>0?`<div class="kc bad"><div class="kc-l">Períodos vencidos</div><div class="kc-v">${venc}</div><div class="kc-s">com saldo em aberto</div></div>`:''}
     `;
   }
-
-  // Painel de limite (só quando filtro de mês está ativo)
-  const limitePainel = document.getElementById('bhe-limite-painel');
-  const limiteBadge  = document.getElementById('bhe-limite-badge');
-  const limite = bheGetLimite();
-
-  if(mesFiltro && limitePainel){
-    limitePainel.style.display = 'block';
-    // Calcular total de HE do mês filtrado
+  const limitePainel=document.getElementById('bhe-limite-painel');
+  const limiteBadge=document.getElementById('bhe-limite-badge');
+  const limite=bheGetLimite();
+  if(mesFiltro&&limitePainel){
+    limitePainel.style.display='block';
     let totalMesMin=0;
-    BANCO_HE.forEach(b=>{
-      getPeríodos(b).forEach(p=>{
-        totalMesMin += (p.he_h||0)*60+(p.he_m||0);
-      });
-    });
-    const limiteMin = limite.h*60+limite.m;
-    const excedente = limiteMin>0 ? totalMesMin-limiteMin : 0;
-    const excH = Math.floor(Math.abs(excedente)/60), excM = Math.abs(excedente)%60;
-
-    if(limiteMin>0){
-      const pct = Math.min(Math.round(totalMesMin/limiteMin*100),999);
-      const dentro = totalMesMin<=limiteMin;
-      limitePainel.innerHTML=`
-        <div class="cd" style="border-top:3px solid ${dentro?'var(--vd)':'var(--vm)'}">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;align-items:center">
-            <div>
-              <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">HE feita em <strong>${mesFiltro}</strong></div>
-              <div style="font-size:28px;font-weight:700;color:var(--am);line-height:1">${Math.floor(totalMesMin/60)}h${String(totalMesMin%60).padStart(2,'0')}min</div>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Limite mensal configurado</div>
-              <div style="font-size:28px;font-weight:700;color:var(--az);line-height:1">${limite.h}h${String(limite.m).padStart(2,'0')}min</div>
-              <div style="font-size:10px;color:var(--tx2);margin-top:3px">
-                <div style="height:5px;background:#eee;border-radius:3px;overflow:hidden;margin-top:4px">
-                  <div style="height:100%;background:${dentro?'var(--vd)':'var(--vm)'};border-radius:3px;width:${Math.min(pct,100)}%;transition:width .4s"></div>
-                </div>
-                ${pct}% do limite utilizado
-              </div>
-            </div>
-            <div style="padding:1rem;border-radius:10px;background:${dentro?'var(--vdc)':'var(--vmc)'};border:1px solid ${dentro?'rgba(14,158,106,.2)':'rgba(217,64,64,.2)'}">
-              <div style="font-size:11px;font-weight:700;color:${dentro?'var(--vd)':'var(--vm)'};margin-bottom:4px">${dentro?'✅ Dentro do limite':'⚠️ Acima do limite'}</div>
-              ${dentro
-                ? `<div style="font-size:12px;color:var(--tx2)">Folga ou pagamento: <strong>a critério do gestor</strong></div>
-                   <div style="font-size:11px;color:var(--vd);margin-top:3px">Margem restante: ${Math.floor((limiteMin-totalMesMin)/60)}h${String((limiteMin-totalMesMin)%60).padStart(2,'0')}min</div>`
-                : `<div style="font-size:12px;color:var(--tx2)">Excedente: <strong style="color:var(--vm)">${excH}h${String(excM).padStart(2,'0')}min</strong></div>
-                   <div style="font-size:11px;color:var(--vm);margin-top:3px;font-weight:600">🌴 Obrigado a dar folga!</div>`
-              }
-            </div>
+    BANCO_HE.forEach(b=>getPeriodos(b).forEach(p=>{totalMesMin+=(p.he_h||0)*60+(p.he_m||0);}));
+    const limMin=limite.h*60+limite.m;
+    if(limMin>0){
+      const exc=totalMesMin-limMin;
+      const excH=Math.floor(Math.abs(exc)/60),excM=Math.abs(exc)%60;
+      const pct=Math.min(Math.round(totalMesMin/limMin*100),999);
+      const dentro=totalMesMin<=limMin;
+      limitePainel.innerHTML=`<div class="cd" style="border-top:3px solid ${dentro?'var(--vd)':'var(--vm)'}">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;align-items:center">
+          <div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">HE feita em <strong>${mesFiltro}</strong></div>
+          <div style="font-size:28px;font-weight:700;color:var(--am);line-height:1">${Math.floor(totalMesMin/60)}h${String(totalMesMin%60).padStart(2,'0')}min</div></div>
+          <div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Limite mensal</div>
+          <div style="font-size:28px;font-weight:700;color:var(--az);line-height:1">${limite.h}h${String(limite.m).padStart(2,'0')}min</div>
+          <div style="height:5px;background:#eee;border-radius:3px;overflow:hidden;margin-top:6px"><div style="height:100%;background:${dentro?'var(--vd)':'var(--vm)'};border-radius:3px;width:${Math.min(pct,100)}%"></div></div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:3px">${pct}% utilizado</div></div>
+          <div style="padding:1rem;border-radius:10px;background:${dentro?'var(--vdc)':'var(--vmc)'};border:1px solid ${dentro?'rgba(14,158,106,.2)':'rgba(217,64,64,.2)'}">
+            <div style="font-size:11px;font-weight:700;color:${dentro?'var(--vd)':'var(--vm)'};margin-bottom:4px">${dentro?'✅ Dentro do limite':'⚠️ Acima do limite'}</div>
+            ${dentro?`<div style="font-size:12px;color:var(--tx2)">Folga ou pagamento: <strong>a critério</strong></div><div style="font-size:11px;color:var(--vd);margin-top:3px">Margem: ${Math.floor((limMin-totalMesMin)/60)}h${String((limMin-totalMesMin)%60).padStart(2,'0')}min</div>`
+              :`<div style="font-size:12px;color:var(--tx2)">Excedente: <strong style="color:var(--vm)">${excH}h${String(excM).padStart(2,'0')}min</strong></div><div style="font-size:11px;color:var(--vm);margin-top:3px;font-weight:600">🌴 Obrigado a dar folga!</div>`}
           </div>
-        </div>`;
-
-      if(limiteBadge){
-        limiteBadge.style.display='block';
-        limiteBadge.innerHTML = dentro
-          ? `✅ Limite: ${limite.h}h${String(limite.m).padStart(2,'0')}min — dentro`
-          : `⚠️ Excede limite em ${excH}h${String(excM).padStart(2,'0')}min`;
-        limiteBadge.style.background = dentro?'var(--vdc)':'var(--vmc)';
-        limiteBadge.style.color = dentro?'var(--vd)':'var(--vm)';
-        limiteBadge.style.borderColor = dentro?'rgba(14,158,106,.3)':'rgba(217,64,64,.3)';
-        limiteBadge.style.fontWeight='600';
+        </div></div>`;
+      if(limiteBadge){limiteBadge.style.display='block';limiteBadge.innerHTML=dentro?`✅ Dentro do limite`:`⚠️ Excede em ${excH}h${String(excM).padStart(2,'0')}min`;
+        limiteBadge.style.cssText+=`;background:${dentro?'var(--vdc)':'var(--vmc)'};color:${dentro?'var(--vd)':'var(--vm)'};border-color:${dentro?'rgba(14,158,106,.3)':'rgba(217,64,64,.3)'}`;
       }
-    } else {
-      limitePainel.innerHTML='<div class="al al-a">⚠ Nenhum limite mensal configurado. Acesse ADM → Banco de Horas para definir o teto de horas extras do mês.</div>';
-      if(limiteBadge) limiteBadge.style.display='none';
+    }else{
+      limitePainel.innerHTML='<div class="al al-a">⚠ Nenhum limite mensal configurado. Acesse ADM → Banco de Horas para definir.</div>';
+      if(limiteBadge)limiteBadge.style.display='none';
     }
-  } else {
-    if(limitePainel) limitePainel.style.display='none';
-    if(limiteBadge) limiteBadge.style.display='none';
+  }else{
+    if(limitePainel)limitePainel.style.display='none';
+    if(limiteBadge)limiteBadge.style.display='none';
   }
-
   renderBHEColabCard();
-}
-
-
-// ════════════════════════════════════════════════════════════
-// AUTOMAÇÃO: ao carregar, verificar períodos vencidos sem uso
-// → arquivar restante como "pagamento automático"
-// ════════════════════════════════════════════════════════════
-function bheArquivarVencidos(){
-  const hoje = HOJE.toISOString().split('T')[0];
-  let houveMudanca = false;
-
-  BANCO_HE.forEach(b => {
-    b.periodos.forEach(p => {
-      // Só processar: vencimento já passou, tem saldo, ainda não foi arquivado
-      if(p.arquivado) return;
-      const venc = String(p.vencimento||'').slice(0,10);
-      if(!venc || venc >= hoje) return; // ainda no prazo
-
-      const totalMin = (p.he_h||0)*60+(p.he_m||0);
-      const usadoMin = (p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);
-      const saldoMin = totalMin - usadoMin;
-
-      if(saldoMin <= 0) {
-        // Já zerado — só marcar como arquivado
-        p.arquivado = true;
-        p.arquivado_em = hoje;
-        p.arquivado_motivo = 'Zerado';
-        houveMudanca = true;
-        return;
-      }
-
-      // Tem saldo e venceu → registrar pagamento automático do restante
-      const sH = Math.floor(saldoMin/60), sM = saldoMin%60;
-      if(!p.usos) p.usos = [];
-      p.usos.push({
-        data: venc, // data do vencimento como data do pagamento
-        h: sH,
-        m: sM,
-        tipo: 'pagamento',
-        obs: '⚙️ Pago automaticamente — prazo vencido em ' + venc.split('-').reverse().join('/'),
-        automatico: true
-      });
-      p.arquivado = true;
-      p.arquivado_em = hoje;
-      p.arquivado_motivo = 'Vencido — pago automaticamente';
-      houveMudanca = true;
-
-      console.log(`⚙️ BHE Auto: ${b.colab} — ${p.mes_ref} → pago ${sH}h${String(sM).padStart(2,'0')}min (prazo ${venc})`);
-    });
-  });
-
-  if(houveMudanca){
-    // Salvar silenciosamente
-    fbSet('config','banco_he',{lista:JSON.parse(JSON.stringify(BANCO_HE)),ts:new Date().toISOString()});
-    localStorage.setItem('patec_banco_he',JSON.stringify(BANCO_HE));
-    console.log('⚙️ BHE Auto: períodos vencidos arquivados e salvos');
-  }
-  return houveMudanca;
-}
-
-function bheGetLimite(){
-  try{
-    const ls=localStorage.getItem('patec_bhe_limite');
-    if(ls) return JSON.parse(ls);
-  }catch(e){}
-  return {h:0,m:0};
 }
 
 function renderBHEColabCard(){
@@ -5285,79 +5185,47 @@ function renderBHEColabCard(){
   const colab=document.getElementById('bhe-view-colab')?.value||'';
   if(!colab){colabEl.innerHTML='';return;}
   const b=BANCO_HE.find(x=>x.colab===colab);
-  if(!b||!b.periodos.length){
-    colabEl.innerHTML='<div class="al al-b">Nenhum período cadastrado para '+colab+'. Acesse ADM → Banco de Horas para adicionar.</div>';
-    return;
-  }
+  if(!b||!b.periodos.length){colabEl.innerHTML='<div class="al al-b">Nenhum período cadastrado para '+colab+'.</div>';return;}
   const hoje=HOJE.toISOString().split('T')[0];
   let cTMin=0,cUMin=0;
   b.periodos.forEach(p=>{cTMin+=(p.he_h||0)*60+(p.he_m||0);cUMin+=(p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);});
   const cSaldo=cTMin-cUMin;
-  const corSaldo=cSaldo>0?'var(--am)':'var(--vd)';
-
   const perHTML=b.periodos.map(p=>{
     const tM=(p.he_h||0)*60+(p.he_m||0);
     const uM=(p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);
-    const sM=tM-uM;const sH=Math.floor(sM/60),sMr=sM%60;
-    const vencido=sM>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje;
-    const corP=sM<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';
-    const statusP=p.arquivado?(p.arquivado_motivo==='Zerado'?'✅ Zerado':'💳 Pago/Arquivado'):sM<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
-    const usosHTML=(p.usos||[]).map(u=>
-      `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--cin);border-radius:6px;margin-top:4px;font-size:11px;flex-wrap:wrap">
-        <span style="color:var(--tx2);font-weight:500">${u.data?u.data.split('-').reverse().join('/'):'—'}</span>
-        <span style="font-weight:700;color:var(--azm)">${String(u.h||0).padStart(2,'0')}h${String(u.m||0).padStart(2,'0')}min</span>
-        <span class="pl ${u.tipo==='folga'?'pl-az':'pl-w'}" style="font-size:9px">${u.tipo==='folga'?'🌴 Folga':'💰 Pgto'}</span>
-        ${u.obs?`<span style="color:var(--tx2)">${u.obs}</span>`:''}
-      </div>`).join('');
-    return `<div style="border:1px solid var(--brd);border-left:3px solid ${corP};border-radius:8px;padding:.875rem;margin-bottom:.625rem">
+    const sM=tM-uM;const sH2=Math.floor(sM/60),sM2=sM%60;
+    const vencido=!p.arquivado&&sM>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje;
+    const corP=p.arquivado&&p.arquivado_motivo!=='Zerado'?'var(--azm)':sM<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';
+    const statusP=p.arquivado?(p.arquivado_motivo==='Zerado'?'✅ Zerado':'💳 Pago/Arq.'):sM<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
+    const usosHTML=(p.usos||[]).map(u=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:${u.automatico?'rgba(26,74,138,.06)':'var(--cin)'};border-radius:6px;margin-top:4px;font-size:11px;flex-wrap:wrap">
+      <span style="color:var(--tx2);font-weight:500">${u.data?u.data.split('-').reverse().join('/'):'—'}</span>
+      <span style="font-weight:700;color:var(--azm)">${String(u.h||0).padStart(2,'0')}h${String(u.m||0).padStart(2,'0')}min</span>
+      <span class="pl ${u.tipo==='folga'?'pl-az':'pl-w'}" style="font-size:9px">${u.tipo==='folga'?'🌴 Folga':'💰 Pgto'}</span>
+      ${u.automatico?'<span style="font-size:9px;color:var(--tx2)">⚙️ automático</span>':''}
+      ${u.obs&&!u.automatico?`<span style="color:var(--tx2)">${u.obs}</span>`:''}
+    </div>`).join('');
+    return `<div style="border:1px solid var(--brd);border-left:3px solid ${corP};border-radius:8px;padding:.875rem;margin-bottom:.625rem${p.arquivado?';opacity:.85':''}">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--az)">${p.mes_ref||'Período'}</div>
-          <div style="font-size:10px;color:var(--tx2)">Venc: <strong>${p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—'}</strong> &nbsp;·&nbsp; Total: <strong>${p.he_h||0}h${String(p.he_m||0).padStart(2,'0')}min</strong>${p.obs?' &nbsp;·&nbsp; '+p.obs:''}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:20px;font-weight:700;color:${corP}">${sH}h${String(sMr).padStart(2,'0')}min</div>
-          <div style="font-size:10px;font-weight:600;color:${corP}">${statusP}</div>
-        </div>
+        <div><div style="font-size:13px;font-weight:700;color:var(--az)">${p.mes_ref}${p.arquivado?' <span style="font-size:9px;background:var(--azc);color:var(--azm);padding:1px 6px;border-radius:4px">📁</span>':''}</div>
+        <div style="font-size:10px;color:var(--tx2)">Venc: <strong>${p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—'}</strong> · Total: <strong>${p.he_h||0}h${String(p.he_m||0).padStart(2,'0')}min</strong>${p.obs?' · '+p.obs:''}</div></div>
+        <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:${corP}">${sH2}h${String(sM2).padStart(2,'0')}min</div><div style="font-size:10px;font-weight:600;color:${corP}">${statusP}</div></div>
       </div>
-      <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Histórico:</div>
       ${(p.usos||[]).length?usosHTML:'<div style="font-size:11px;color:var(--tx2);padding:4px 10px">Nenhum uso registrado</div>'}
     </div>`;
   }).join('');
-
   colabEl.innerHTML=`<div class="cd">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.875rem;border-bottom:1px solid var(--brd)">
       <div style="font-size:16px;font-weight:700;color:var(--az)">👤 ${b.colab}</div>
-      <div style="text-align:center;padding:8px 18px;background:${cSaldo>0?'var(--amc)':'var(--vdc)'};border-radius:10px;border:1px solid ${cSaldo>0?'rgba(192,122,18,.2)':'rgba(14,158,106,.2)'}">
+      <div style="text-align:center;padding:8px 18px;background:${cSaldo>0?'var(--amc)':'var(--vdc)'};border-radius:10px">
         <div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Saldo total</div>
-        <div style="font-size:26px;font-weight:700;color:${corSaldo};line-height:1">${Math.floor(cSaldo/60)}h${String(cSaldo%60).padStart(2,'0')}min</div>
+        <div style="font-size:26px;font-weight:700;color:${cSaldo>0?'var(--am)':'var(--vd)'};line-height:1">${Math.floor(cSaldo/60)}h${String(cSaldo%60).padStart(2,'0')}min</div>
         <div style="font-size:10px;color:var(--tx2);margin-top:2px">${b.periodos.length} período(s)</div>
       </div>
-    </div>
-    ${perHTML}
-  </div>`;
+    </div>${perHTML}</div>`;
 }
 
 // ══ INIT SEGURO ══
 // Atualizar data na topbar
-(function(){
-  const tdt = document.getElementById('tdt');
-  if(tdt) tdt.textContent = new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'});
-  // Datas dos campos de formulário
-  const hoje = new Date().toISOString().split('T')[0];
-  ['pr-data-ref','mp-data','adm-pcp-dt','pcp-dt','eq-data-unica','eq-data-de','eq-data-ate'].forEach(id=>{
-    const el=document.getElementById(id);if(el&&el.type==='date')el.value=hoje;
-  });
-})();
-
-// Carregar valores salvos na topbar ao iniciar
-initMetaGap();
-
-
-// Carregar Firebase e aplicar na topbar
-fbCarregarTudo().then(()=>{ initMetaGap(); });
-
-a na topbar
 (function(){
   const tdt = document.getElementById('tdt');
   if(tdt) tdt.textContent = new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'});
