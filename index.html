@@ -1406,9 +1406,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="cd" style="border-top:3px solid var(--vd);margin-bottom:1rem">
             <div class="cd-t">➕ Adicionar período de HE</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px 1fr auto;gap:10px;align-items:end">
-              <div class="field-wrap">
+              <div class="field-wrap" style="min-width:200px">
                 <span class="field-label">Mês de referência</span>
-                <input type="text" id="bhe-new-mes" placeholder="Ex: Março 2026" style="width:100%">
+                <div style="display:flex;gap:6px">
+                  <select id="bhe-new-mes-m" style="flex:1">
+                    <option value="">Mês</option>
+                    <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+                    <option>Abril</option><option>Maio</option><option>Junho</option>
+                    <option>Julho</option><option>Agosto</option><option>Setembro</option>
+                    <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+                  </select>
+                  <select id="bhe-new-mes-a" style="width:80px">
+                    <option value="">Ano</option>
+                  </select>
+                </div>
               </div>
               <div class="field-wrap">
                 <span class="field-label">Vencimento (prazo folgar/pagar)</span>
@@ -1900,25 +1911,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <!-- Seletor de colaborador -->
         <div class="cd" style="padding:.875rem 1.25rem;margin-bottom:1rem">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <div class="field-wrap" style="min-width:200px">
-              <span class="field-label">Selecione o colaborador</span>
-              <select id="bhe-view-colab" onchange="renderBHEColabCard()" style="width:100%">
-                <option value="">— Selecione —</option>
-              </select>
-            </div>
-            <div style="font-size:12px;color:var(--tx2);align-self:flex-end;padding-bottom:6px">
-              Selecione para ver os períodos e histórico detalhado
-            </div>
-          </div>
-        </div>
-        <div id="bhe-card-colab-view"></div>
-      </div><!-- /ct -->
-    </div><!-- /p-pr-bancoferias -->
-
-  </div><!-- /ct -->
-</main>
-
-<script>// ── GLOBAIS ──
+            <div class="field-wrap" style=// ── GLOBAIS ──
 const HOJE = new Date();
 
 // ════════════════════════════════════════════
@@ -2116,6 +2109,9 @@ async function fbCarregarTudo(){
 
   // Banco HE
   await fbCarregarBHE();
+
+  // Automação: arquivar períodos vencidos
+  bheArquivarVencidos();
 
   // Re-renderizar módulos com dados carregados
   renderFerias();
@@ -4850,6 +4846,15 @@ function bheInit(){
   if(!sel) return;
   sel.innerHTML = '<option value="">— Selecione —</option>' +
     COLABS.map(c => `<option value="${c}">${c}</option>`).join('');
+  // Popular anos no select de mês de referência
+  const selA = document.getElementById('bhe-new-mes-a');
+  if(selA){
+    const anoAtual = new Date().getFullYear();
+    selA.innerHTML = '<option value="">Ano</option>' +
+      [anoAtual-1, anoAtual, anoAtual+1].map(a => `<option value="${a}">${a}</option>`).join('');
+    // Pré-selecionar ano atual
+    selA.value = String(anoAtual);
+  }
 }
 
 function bheGetColab(){ return document.getElementById('bhe-colab-sel')?.value||''; }
@@ -4883,7 +4888,7 @@ function bheRenderPeriodos(colab){
     const sH=Math.floor(sMin/60),sM=sMin%60;
     const vencido=sMin>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje;
     const corP=sMin<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';
-    const statusP=sMin<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
+    const statusP=p.arquivado?(p.arquivado_motivo==='Zerado'?'✅ Zerado':'💳 Pago/Arquivado'):sMin<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
 
     const usosHTML=(p.usos||[]).map((u,ui)=>`
       <tr>
@@ -4970,16 +4975,19 @@ function bheFmtUso(pi){
 
 function bheAddPeriodo(){
   const colab=bheGetColab(); if(!colab) return;
-  const mes=document.getElementById('bhe-new-mes')?.value?.trim();
+  const mesM=document.getElementById('bhe-new-mes-m')?.value?.trim();
+  const mesA=document.getElementById('bhe-new-mes-a')?.value?.trim();
+  const mes=(mesM&&mesA)?mesM+' '+mesA:'';
   const venc=document.getElementById('bhe-new-venc')?.value;
   const h=parseInt(document.getElementById('bhe-new-h')?.value||0);
   const m=parseInt(document.getElementById('bhe-new-m')?.value||0);
   const obs=document.getElementById('bhe-new-obs')?.value?.trim()||'';
-  if(!mes||!venc||(!h&&!m)){alert('Preencha: Mês de referência, Vencimento e Total HE.');return;}
+  if(!mesM||!mesA){alert('Selecione o mês e o ano de referência.');return;}
+  if(!venc||(!h&&!m)){alert('Preencha: Vencimento e Total HE.');return;}
   const dados=BANCO_HE.find(b=>b.colab===colab);
   if(!dados)return;
   dados.periodos.push({id:Date.now(),mes_ref:mes,vencimento:venc,he_h:h,he_m:m,obs,usos:[]});
-  ['bhe-new-mes','bhe-new-venc','bhe-new-h','bhe-new-m','bhe-new-obs'].forEach(id=>{
+  ['bhe-new-mes-m','bhe-new-mes-a','bhe-new-venc','bhe-new-h','bhe-new-m','bhe-new-obs'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
   bheRenderPeriodos(colab);
@@ -5206,6 +5214,64 @@ function renderBHECards(){
   renderBHEColabCard();
 }
 
+
+// ════════════════════════════════════════════════════════════
+// AUTOMAÇÃO: ao carregar, verificar períodos vencidos sem uso
+// → arquivar restante como "pagamento automático"
+// ════════════════════════════════════════════════════════════
+function bheArquivarVencidos(){
+  const hoje = HOJE.toISOString().split('T')[0];
+  let houveMudanca = false;
+
+  BANCO_HE.forEach(b => {
+    b.periodos.forEach(p => {
+      // Só processar: vencimento já passou, tem saldo, ainda não foi arquivado
+      if(p.arquivado) return;
+      const venc = String(p.vencimento||'').slice(0,10);
+      if(!venc || venc >= hoje) return; // ainda no prazo
+
+      const totalMin = (p.he_h||0)*60+(p.he_m||0);
+      const usadoMin = (p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);
+      const saldoMin = totalMin - usadoMin;
+
+      if(saldoMin <= 0) {
+        // Já zerado — só marcar como arquivado
+        p.arquivado = true;
+        p.arquivado_em = hoje;
+        p.arquivado_motivo = 'Zerado';
+        houveMudanca = true;
+        return;
+      }
+
+      // Tem saldo e venceu → registrar pagamento automático do restante
+      const sH = Math.floor(saldoMin/60), sM = saldoMin%60;
+      if(!p.usos) p.usos = [];
+      p.usos.push({
+        data: venc, // data do vencimento como data do pagamento
+        h: sH,
+        m: sM,
+        tipo: 'pagamento',
+        obs: '⚙️ Pago automaticamente — prazo vencido em ' + venc.split('-').reverse().join('/'),
+        automatico: true
+      });
+      p.arquivado = true;
+      p.arquivado_em = hoje;
+      p.arquivado_motivo = 'Vencido — pago automaticamente';
+      houveMudanca = true;
+
+      console.log(`⚙️ BHE Auto: ${b.colab} — ${p.mes_ref} → pago ${sH}h${String(sM).padStart(2,'0')}min (prazo ${venc})`);
+    });
+  });
+
+  if(houveMudanca){
+    // Salvar silenciosamente
+    fbSet('config','banco_he',{lista:JSON.parse(JSON.stringify(BANCO_HE)),ts:new Date().toISOString()});
+    localStorage.setItem('patec_banco_he',JSON.stringify(BANCO_HE));
+    console.log('⚙️ BHE Auto: períodos vencidos arquivados e salvos');
+  }
+  return houveMudanca;
+}
+
 function bheGetLimite(){
   try{
     const ls=localStorage.getItem('patec_bhe_limite');
@@ -5235,7 +5301,7 @@ function renderBHEColabCard(){
     const sM=tM-uM;const sH=Math.floor(sM/60),sMr=sM%60;
     const vencido=sM>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje;
     const corP=sM<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';
-    const statusP=sM<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
+    const statusP=p.arquivado?(p.arquivado_motivo==='Zerado'?'✅ Zerado':'💳 Pago/Arquivado'):sM<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
     const usosHTML=(p.usos||[]).map(u=>
       `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--cin);border-radius:6px;margin-top:4px;font-size:11px;flex-wrap:wrap">
         <span style="color:var(--tx2);font-weight:500">${u.data?u.data.split('-').reverse().join('/'):'—'}</span>
@@ -5274,6 +5340,24 @@ function renderBHEColabCard(){
 
 // ══ INIT SEGURO ══
 // Atualizar data na topbar
+(function(){
+  const tdt = document.getElementById('tdt');
+  if(tdt) tdt.textContent = new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'});
+  // Datas dos campos de formulário
+  const hoje = new Date().toISOString().split('T')[0];
+  ['pr-data-ref','mp-data','adm-pcp-dt','pcp-dt','eq-data-unica','eq-data-de','eq-data-ate'].forEach(id=>{
+    const el=document.getElementById(id);if(el&&el.type==='date')el.value=hoje;
+  });
+})();
+
+// Carregar valores salvos na topbar ao iniciar
+initMetaGap();
+
+
+// Carregar Firebase e aplicar na topbar
+fbCarregarTudo().then(()=>{ initMetaGap(); });
+
+a na topbar
 (function(){
   const tdt = document.getElementById('tdt');
   if(tdt) tdt.textContent = new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'});
