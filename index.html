@@ -4982,6 +4982,8 @@ function bheAddPeriodo(){
   });
   // Não limpar o ano (conveniência)
   bheRenderPeriodos(colab);
+  // Auto-salvar no Firebase
+  bheSalvarTudo();
 }
 
 function bheRemPeriodo(colab,pi){
@@ -4989,6 +4991,7 @@ function bheRemPeriodo(colab,pi){
   const dados=BANCO_HE.find(b=>b.colab===colab);
   if(dados)dados.periodos.splice(pi,1);
   bheRenderPeriodos(colab);
+  bheSalvarTudo();
 }
 
 function bheAddUso(colab,pi){
@@ -5007,32 +5010,75 @@ function bheAddUso(colab,pi){
   p.usos.push({data,h,m,tipo,obs});
   p.usos.sort((a,b)=>a.data.localeCompare(b.data));
   bheRenderPeriodos(colab);
+
+  bheSalvarTudo();
 }
 
 function bheRemUso(colab,pi,ui){
   const dados=BANCO_HE.find(b=>b.colab===colab);
   if(dados&&dados.periodos[pi]&&!dados.periodos[pi].arquivado)dados.periodos[pi].usos.splice(ui,1);
   bheRenderPeriodos(colab);
+  bheSalvarTudo();
 }
 
 async function bheSalvarTudo(){
-  await fbSet('config','banco_he',{lista:JSON.parse(JSON.stringify(BANCO_HE)),ts:new Date().toISOString()});
+  const ts = new Date().toISOString();
+  await fbSet('config','banco_he',{lista:JSON.parse(JSON.stringify(BANCO_HE)),ts});
   localStorage.setItem('patec_banco_he',JSON.stringify(BANCO_HE));
-  console.log('Firebase salvo: banco_he');
+  localStorage.setItem('patec_banco_he_ts', String(Date.now()));
+  console.log('✓ Banco HE salvo — Firebase + localStorage');
   renderBHECards();
   const ok=document.getElementById('bhe-ok');
   if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',3000);}
 }
 
 async function fbCarregarBHE(){
+  // Tentar Firebase primeiro
   const dados=await fbGet('config','banco_he');
-  if(dados&&dados.lista){
-    BANCO_HE=dados.lista;
-    console.log('✓ Banco HE:',BANCO_HE.reduce((s,b)=>s+b.periodos.length,0),'períodos');
+  if(dados&&dados.lista&&dados.lista.length>0){
+    // Mesclar — preservar dados locais mais recentes se existirem
+    const lsRaw=localStorage.getItem('patec_banco_he');
+    if(lsRaw){
+      try{
+        const lsDados=JSON.parse(lsRaw);
+        // Usar o mais recente: comparar timestamps
+        const fbTs=dados.ts?new Date(dados.ts).getTime():0;
+        const lsTs=parseInt(localStorage.getItem('patec_banco_he_ts')||'0');
+        if(lsTs>fbTs){
+          BANCO_HE=lsDados;
+          console.log('✓ Banco HE (localStorage mais recente):',BANCO_HE.reduce((s,b)=>s+b.periodos.length,0),'períodos');
+          // Sincronizar localStorage para Firebase
+          await fbSet('config','banco_he',{lista:JSON.parse(JSON.stringify(BANCO_HE)),ts:new Date().toISOString()});
+        } else {
+          BANCO_HE=dados.lista;
+          localStorage.setItem('patec_banco_he',JSON.stringify(BANCO_HE));
+          console.log('✓ Banco HE (Firebase):',BANCO_HE.reduce((s,b)=>s+b.periodos.length,0),'períodos');
+        }
+      }catch(e){ BANCO_HE=dados.lista; }
+    } else {
+      BANCO_HE=dados.lista;
+      localStorage.setItem('patec_banco_he',JSON.stringify(BANCO_HE));
+      console.log('✓ Banco HE (Firebase):',BANCO_HE.reduce((s,b)=>s+b.periodos.length,0),'períodos');
+    }
   } else {
+    // Sem dados no Firebase — tentar localStorage
     const ls=localStorage.getItem('patec_banco_he');
-    if(ls)try{BANCO_HE=JSON.parse(ls);}catch(e){}
+    if(ls){
+      try{
+        BANCO_HE=JSON.parse(ls);
+        const total=BANCO_HE.reduce((s,b)=>s+b.periodos.length,0);
+        console.log('✓ Banco HE (localStorage):',total,'períodos');
+        // Se tem dados locais, sincronizar para Firebase
+        if(total>0){
+          await fbSet('config','banco_he',{lista:JSON.parse(JSON.stringify(BANCO_HE)),ts:new Date().toISOString()});
+          console.log('✓ Banco HE sincronizado para Firebase');
+        }
+      }catch(e){}
+    } else {
+      console.log('ℹ Banco HE: nenhum dado encontrado (Firebase e localStorage vazios)');
+    }
   }
+  // Carregar limite
   const cfg=await fbGet('config','bhe_config');
   if(cfg&&cfg.limite){
     localStorage.setItem('patec_bhe_limite',JSON.stringify(cfg.limite));
