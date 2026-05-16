@@ -1253,7 +1253,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <option value="">Todos os ciclos</option>
                 <option value="fevmar2026">Fev/Mar 2026 (26/02–25/03)</option>
                 <option value="marabr2026">Mar/Abr 2026 (26/03–25/04)</option>
-                <option value="abr_mai2026" selected>Abr/Mai 2026 (27/04–26/05)</option>
+                <option value="abr_mai2026" selected>Abr/Mai 2026 (27/04 – Atual)</option>
               </select>
             </div>
             <div>
@@ -3331,10 +3331,12 @@ async function salvarSenhas(){
 }
 
 // ── HISTÓRICO MAPA ──
-function filtrarHistMapa(modo){
+function filtrarHistMapa(modo, l12Anterior=null){
   let dados=[];
   if(modo==='all'){
     dados=[...L[3].map((_,i)=>({dia:i+1,dt:DATAS_MAPA[i],dtiso:DATAS_ISO_MAPA[i],l3:L[3][i],l4:L[4][i],l5:L[5][i],l6:L[6][i],l7:L[7][i],l8:L[8][i]}))];
+    // Se não foi passado l12Anterior, usar o último dia do Mar/Abr como referência
+    if(l12Anterior===null) l12Anterior=MAPA_ABR2026.L3.slice(-1)[0]+MAPA_ABR2026.L4.slice(-1)[0]+MAPA_ABR2026.L5.slice(-1)[0]+MAPA_ABR2026.L6.slice(-1)[0];
   } else {
     const dia=document.getElementById('adm-mapa-dia').value;
     const de=document.getElementById('adm-mapa-de').value;
@@ -3343,15 +3345,18 @@ function filtrarHistMapa(modo){
     if(dia) dados=dados.filter(d=>d.dtiso===dia);
     else if(de&&ate) dados=dados.filter(d=>d.dtiso>=de&&d.dtiso<=ate);
   }
-  renderMapaTabela(dados);
+  renderMapaTabela(dados, l12Anterior);
 }
 
-function renderMapaTabela(dados){
+function renderMapaTabela(dados, l12Anterior=null){
+  // l12Anterior = último L12 do ciclo anterior (para variação do 1º dia)
   const l12arr=dados.map(d=>d.l3+d.l4+d.l5+d.l6);
   const l10arr=dados.map(d=>d.l3+d.l4+d.l5+d.l6+d.l7+d.l8);
   document.getElementById('adm-mapa-tb').innerHTML=dados.map((d,i)=>{
     const l12=l12arr[i],l10=l10arr[i];
-    const dif=i>0?l12-l12arr[i-1]:null;
+    let dif=null;
+    if(i>0) dif=l12-l12arr[i-1];
+    else if(l12Anterior!==null) dif=l12-l12Anterior;
     return`<tr><td>${d.dia} · ${d.dt}</td><td>${d.l3}</td><td>${d.l4}</td><td>${d.l5}</td><td>${d.l6}</td><td>${d.l7}</td><td>${d.l8}</td><td style="font-weight:600">${l10.toLocaleString('pt-BR')}</td><td style="font-weight:700;color:var(--azm)">${l12.toLocaleString('pt-BR')}</td><td>${dif!==null?varSpan(dif):'—'}</td></tr>`;
   }).join('');
 }
@@ -3359,14 +3364,22 @@ function renderMapaTabela(dados){
 function filtrarHistMapaCiclo(){
   const ciclo=document.getElementById('adm-mapa-ciclo')?.value||'';
   ['adm-mapa-dia','adm-mapa-de','adm-mapa-ate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+
+  // Calcular L12 do último dia de um dataset
+  function ultimoL12(M){ const n=M.L3.length-1; return M.L3[n]+M.L4[n]+M.L5[n]+M.L6[n]; }
+
   if(ciclo==='fevmar2026'){
+    // Fev/Mar: primeiro ciclo histórico — sem anterior, usa null
     const dados=MAPA_FEV2026.datas.map((_,i)=>({dia:i+1,dt:MAPA_FEV2026.datas[i],dtiso:MAPA_FEV2026.datas_iso[i],l3:MAPA_FEV2026.L3[i],l4:MAPA_FEV2026.L4[i],l5:MAPA_FEV2026.L5[i],l6:MAPA_FEV2026.L6[i],l7:MAPA_FEV2026.L7[i],l8:MAPA_FEV2026.L8[i]}));
-    renderMapaTabela(dados);
+    renderMapaTabela(dados, null);
   } else if(ciclo==='marabr2026'){
+    // Mar/Abr: anterior é o último dia do Fev/Mar
     const dados=MAPA_ABR2026.datas.map((_,i)=>({dia:i+1,dt:MAPA_ABR2026.datas[i],dtiso:MAPA_ABR2026.datas_iso[i],l3:MAPA_ABR2026.L3[i],l4:MAPA_ABR2026.L4[i],l5:MAPA_ABR2026.L5[i],l6:MAPA_ABR2026.L6[i],l7:MAPA_ABR2026.L7[i],l8:MAPA_ABR2026.L8[i]}));
-    renderMapaTabela(dados);
+    renderMapaTabela(dados, ultimoL12(MAPA_FEV2026));
   } else {
-    filtrarHistMapa('all');
+    // Abr/Mai (atual): anterior é o último dia do Mar/Abr
+    const ultimoABR = ultimoL12(MAPA_ABR2026);
+    filtrarHistMapa('all', ultimoABR);
   }
 }
 
