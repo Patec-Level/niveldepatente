@@ -3389,18 +3389,7 @@ Responda de forma estruturada, com insights práticos e sugestões de ação qua
 }
 
 // ── FÉRIAS ADM ──
-function renderFeriasForm(){
-  (document.getElementById('adm-ferias-colabs')||{}).innerHTML=FERIAS_DATA.map((r,i)=>`
-    <div class="cd" style="padding:.875rem">
-      <div style="font-size:12px;font-weight:700;margin-bottom:8px">${i+1}º · ${r.colab}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div class="field-wrap"><span class="field-label">Data de saída</span><input type="date" id="adm-f-saida-${i}" value="${r.saida||''}" onchange="calcRetorno(${i})" style="width:100%"></div>
-        <div class="field-wrap"><span class="field-label">Dias de férias</span><input type="number" id="adm-f-dias-${i}" value="${r.dias||30}" min="1" onchange="calcRetorno(${i})" style="width:100%"></div>
-        <div class="field-wrap"><span class="field-label">Retorno (automático)</span><input type="text" id="adm-f-retorno-${i}" value="${r.retorno||''}" readonly style="width:100%;background:var(--cin);color:var(--tx2)"></div>
-      </div>
-    </div>`).join('');
-  atualizarFeriasPreview();
-}
+
 function calcRetorno(i){
   const saida=document.getElementById(`adm-f-saida-${i}`)?.value;
   const dias=parseInt(document.getElementById(`adm-f-dias-${i}`)?.value||30);
@@ -3421,18 +3410,7 @@ function atualizarFeriasPreview(){
     return`<tr><td><strong>${i+1}º</strong></td><td>${r.colab}</td><td>${saidaFmt}</td><td>${dias}</td><td>${retorno||'—'}</td><td>${st}</td></tr>`;
   }).join('');
 }
-async function salvarFeriasAdm(){
-  FERIAS_DATA.forEach((r,i)=>{
-    r.saida=document.getElementById(`adm-f-saida-${i}`)?.value||'';
-    r.dias=parseInt(document.getElementById(`adm-f-dias-${i}`)?.value||30);
-    r.retorno=document.getElementById(`adm-f-retorno-${i}`)?.value||'';
-    r.status=r.saida?'Programado':'Aguardando definição';
-  });
-  localStorage.setItem('patec_ferias',JSON.stringify(FERIAS_DATA));
-  renderFerias(); // Atualiza módulo banco de horas
-  const ok=document.getElementById('adm-ferias-ok');
-  ok.style.display='inline';setTimeout(()=>ok.style.display='none',3000);
-}
+async 
 
 // ── BANCO DE HORAS ADM ──
 // ── FÉRIAS — múltiplos períodos por colaborador ──
