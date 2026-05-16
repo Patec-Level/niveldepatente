@@ -3438,12 +3438,11 @@ async function analisarIA(tipo){
   resultEl.style.display='block';
   txtEl.innerHTML='<span class="ia-loading"><span class="ia-spin">↻</span> Consultando IA...</span>';
 
-  // Proxy CORS que suporta POST — contorna bloqueio do GitHub Pages
-  const PROXY='https://corsproxy.io/?';
-  const API_URL='https://api.anthropic.com/v1/messages';
+  // Worker Cloudflare — continuação do sistema PATEC — Worker URL: patec-ia.amazzali.workers.dev
+  const WORKER_URL='https://patec-ia.amazzali.workers.dev';
 
   try{
-    const resp=await fetch(PROXY+encodeURIComponent(API_URL),{
+    const resp=await fetch(WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
