@@ -1937,8 +1937,19 @@ const FIREBASE_CONFIG = {
 
 let _db = null;
 // Carrega o Firebase SDK dinamicamente
+let _firebaseLoading = false;
+let _firebaseLoaded  = false;
 async function loadFirebaseSDK(){
-  if(typeof firebase !== 'undefined') return true;
+  if(typeof firebase !== 'undefined' || _firebaseLoaded) return true;
+  if(_firebaseLoading) {
+    // Aguardar o carregamento em andamento
+    for(let i=0;i<30;i++){
+      await new Promise(r=>setTimeout(r,200));
+      if(typeof firebase !== 'undefined'){_firebaseLoaded=true;return true;}
+    }
+    return false;
+  }
+  _firebaseLoading = true;
 
   // Lista de CDNs para tentar em sequência
   const CDN_SETS = [
@@ -1984,12 +1995,15 @@ async function loadFirebaseSDK(){
     console.log('Tentando Firebase CDN:', cdnSet[0]);
     const ok = await loadScriptPair(cdnSet);
     if(ok) {
+      _firebaseLoaded = true;
+      _firebaseLoading = false;
       console.log('✓ Firebase SDK carregado');
       return true;
     }
   }
 
   console.error('✗ Firebase SDK falhou em todos os CDNs');
+  _firebaseLoading = false;
   return false;
 }
 
@@ -4832,7 +4846,6 @@ function gerarHTMLAtualizado(){
 
 // Carregar valores salvos na topbar ao iniciar
 initMetaGap();
-fbCarregarTudo().then(() => { initMetaGap(); });
 
 
 // ════════════════════════════════════════════════════════════
