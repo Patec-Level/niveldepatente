@@ -2100,11 +2100,38 @@ async function fbCarregarTudo(){
     console.log('✓ Produção carregada:', registros.length, 'registros');
   }
 
-  // Férias
+  // Férias — sync bidirecional Firebase ↔ localStorage
   const ferias = await fbGet('config','ferias');
-  if(ferias && ferias.lista){
+  const feriasLs = localStorage.getItem('patec_ferias');
+  const feriasFbTs = ferias?.ts ? new Date(ferias.ts).getTime() : 0;
+  const feriasLsTs = parseInt(localStorage.getItem('patec_ferias_ts')||'0');
+  if(ferias && ferias.lista && ferias.lista.length > 0 && feriasFbTs >= feriasLsTs){
+    // Firebase mais recente
     FERIAS_DATA.length=0; ferias.lista.forEach(f=>FERIAS_DATA.push(f));
-    console.log('✓ Férias carregadas');
+    localStorage.setItem('patec_ferias', JSON.stringify(FERIAS_DATA));
+    console.log('✓ Férias carregadas (Firebase):', FERIAS_DATA.length, 'períodos');
+  } else if(feriasLs && feriasLsTs > feriasFbTs){
+    // localStorage mais recente — subir para Firebase
+    try{
+      const lsDados = JSON.parse(feriasLs);
+      if(lsDados.length > 0){
+        FERIAS_DATA.length=0; lsDados.forEach(f=>FERIAS_DATA.push(f));
+        await fbSalvarFerias();
+        console.log('✓ Férias sincronizadas para Firebase:', FERIAS_DATA.length, 'períodos');
+      }
+    }catch(e){}
+  } else if(ferias && ferias.lista && ferias.lista.length > 0){
+    FERIAS_DATA.length=0; ferias.lista.forEach(f=>FERIAS_DATA.push(f));
+    console.log('✓ Férias carregadas (Firebase fallback):', FERIAS_DATA.length, 'períodos');
+  }
+  // Reconstruir _feriasState para o formulário ADM
+  if(FERIAS_DATA.length > 0){
+    _feriasState = {};
+    COLABS.forEach(c => { _feriasState[c] = []; });
+    FERIAS_DATA.forEach(r => {
+      if(_feriasState[r.colab]) _feriasState[r.colab].push({saida:r.saida||'',dias:r.dias||30,retorno:r.retorno||''});
+    });
+    COLABS.forEach(c => { if(!_feriasState[c].length) _feriasState[c]=[{saida:'',dias:30,retorno:''}]; });
   }
 
   // Banco de horas
@@ -3527,8 +3554,13 @@ async function salvarFeriasAdm(){
     });
   });
   FERIAS_DATA.sort((a,b) => a.saida.localeCompare(b.saida));
+  // Salvar localStorage E Firebase
   localStorage.setItem('patec_ferias', JSON.stringify(FERIAS_DATA));
-  renderFerias(); // Atualiza módulo público
+  localStorage.setItem('patec_ferias_ts', String(Date.now()));
+  await fbSalvarFerias();
+  console.log('✓ Férias salvas — Firebase + localStorage:', FERIAS_DATA.length, 'períodos');
+  renderFerias();
+  _atualizarFeriasPreview();
   const ok = document.getElementById('adm-ferias-ok');
   if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',3000); }
 }
