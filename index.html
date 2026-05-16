@@ -1558,8 +1558,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <span class="field-label">Colaborador</span>
             <select id="pr-login-nome" onchange="if(this.value)fazerLogin()" style="width:100%">
               <option value="">— selecione —</option>
-              <option>André</option><option>Aline</option><option>Lory</option>
-              <option>Ludy</option><option>Wanessa</option>
             </select>
           </div>
           <button class="btn btn-p" onclick="fazerLogin()" style="justify-content:center;width:100%;margin-top:4px">Entrar</button>
@@ -2416,6 +2414,16 @@ const COLABS_SEM_META = ['André','Ajuda de outros times'];
 const COLABS = ['André','Lory','Ludy','Wanessa','Ajuda de outros times']; // Aline transferida Mai/2026
 BANCO_HE = COLABS.map(c => ({ colab: c, periodos: [] })); // inicializa BANCO_HE
 const SENHA_PCP = 'patec2026';
+
+// Preencher dropdown de colaboradores dinamicamente
+(function(){
+  const sel = document.getElementById('pr-login-nome');
+  if(sel) COLABS.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+})();
 
 let registros = [...HISTORICO_INICIAL];
 let pcpData   = [...PCP_INICIAL];
