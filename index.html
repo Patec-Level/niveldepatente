@@ -1637,11 +1637,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </div>
           </div>
 
+          <!-- Badge sem meta (André / Ajuda de outros times) -->
+          <div id="pr-sem-meta-msg" style="display:none;background:var(--azc);border:1px solid var(--azm);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;color:var(--azm);align-items:center;gap:8px">
+            ℹ️ <span>Este colaborador <strong>não possui meta individual</strong>. Os lançamentos somam ao resultado da equipe.</span>
+          </div>
+
           <!-- Mensagem motivacional -->
           <div id="pr-motivacao" style="border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;font-weight:600;display:none;align-items:center;gap:10px"></div>
 
-          <!-- Campos principais — definem a meta -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem">
+          <!-- Campos principais — definem a meta (pf0, pf1, pf2=StatusB) -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.75rem">
             <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
               <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(primeira análise)</span></label>
               <input type="number" id="pf0" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
@@ -1650,21 +1655,37 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(em tratativa)</span></label>
               <input type="number" id="pf1" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
             </div>
+            <div class="prod-row" style="background:#EFF8F5;border:1.5px solid var(--vd);border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:var(--vd)">Status B<br><span style="font-size:10px;font-weight:500;color:var(--vd)">(entra na meta)</span></label>
+              <input type="number" id="pf2" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--vd);width:80px">
+            </div>
           </div>
 
-          <!-- Divisor -->
+          <!-- Outros — não entram na meta individual -->
+          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;padding-top:.25rem;display:flex;align-items:center;gap:8px">
+            <span>📋 Outros</span>
+            <span style="font-size:9px;font-weight:500;color:var(--tx2);text-transform:none;letter-spacing:0">(Republicação, Devoluções etc — somam ao resultado da equipe, não à meta individual)</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem">
+            <div class="prod-row" style="background:#FFF3E0;border:1.5px solid #CC6600;border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:#884400">Outros<br><span style="font-size:10px;font-weight:500;color:#884400">(Repub. + Devol. + outros)</span></label>
+              <input type="number" id="pf11" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:#884400;width:80px">
+            </div>
+          </div>
+
+          <!-- Divisor composição -->
           <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;padding-top:.25rem">↓ Composição dos itens acima</div>
 
-          <!-- Campos de composição -->
+          <!-- Campos de composição (pf3 a pf10) -->
           <div class="prod-grid">
-            <div class="prod-row"><label>Fornecedor</label><input type="number" id="pf2" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Requisitante</label><input type="number" id="pf3" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>MDG</label><input type="number" id="pf4" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Validação Thiago</label><input type="number" id="pf5" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>XGL</label><input type="number" id="pf6" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Republicação</label><input type="number" id="pf7" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>RCs para Pedidos</label><input type="number" id="pf8" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>RCs para Devoluções</label><input type="number" id="pf9" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Fornecedor</label><input type="number" id="pf3" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Requisitante</label><input type="number" id="pf4" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>MDG</label><input type="number" id="pf5" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Validação Thiago</label><input type="number" id="pf6" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>XGL</label><input type="number" id="pf7" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Republicação</label><input type="number" id="pf8" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>RCs para Pedidos</label><input type="number" id="pf9" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>RCs para Devoluções</label><input type="number" id="pf10" min="0" placeholder="0" oninput="updProd()"></div>
           </div>
 
           <!-- Justificativa (aparece se abaixo da meta) -->
@@ -2389,7 +2410,9 @@ function getMeta(){
   catch{return 30;}
 }
 
-const LINHAS_PROD = ['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
+const LINHAS_PROD = ['Analisados','Tratativa','Status B','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções','Outros'];
+// Colaboradores sem meta individual (somam à equipe)
+const COLABS_SEM_META = ['André','Ajuda de outros times'];
 const COLABS = ['André','Lory','Ludy','Wanessa','Ajuda de outros times']; // Aline transferida Mai/2026
 BANCO_HE = COLABS.map(c => ({ colab: c, periodos: [] })); // inicializa BANCO_HE
 const SENHA_PCP = 'patec2026';
@@ -2576,13 +2599,15 @@ function salvarFolga(){
 
 // ── PRODUÇÃO: TOTAL E MOTIVAÇÃO ──
 function updProd(){
-  const meta = getMeta();
-  // Total principal = apenas pf0 + pf1 (define a meta)
+  const semMeta = COLABS_SEM_META.includes(colabLogado);
+  const meta = semMeta ? 0 : getMeta();
+  // Total principal = pf0 + pf1 + pf2 (StatusB) — define a meta
   const principal = parseInt(document.getElementById('pf0')?.value||0)
-                  + parseInt(document.getElementById('pf1')?.value||0);
-  // Total composição = pf2 a pf9
+                  + parseInt(document.getElementById('pf1')?.value||0)
+                  + parseInt(document.getElementById('pf2')?.value||0);
+  // Total composição = pf3 a pf10
   let composicao = 0;
-  for(let i=2;i<10;i++) composicao += parseInt(document.getElementById('pf'+i)?.value||0);
+  for(let i=3;i<=10;i++) composicao += parseInt(document.getElementById('pf'+i)?.value||0);
 
   // Total badge — mostra apenas o total principal
   const badge=document.getElementById('pr-total-badge');
@@ -2600,13 +2625,16 @@ function updProd(){
   document.getElementById('pr-pct-meta').textContent=pctVal+'%';
 
   // Validação composição — deve ser igual ao total principal (só valida se composição > 0)
-  const composicaoOk = composicao === 0 || composicao === principal;
+  const totalPrincipal = parseInt(document.getElementById('pf0')?.value||0)
+                       + parseInt(document.getElementById('pf1')?.value||0)
+                       + parseInt(document.getElementById('pf2')?.value||0)
+                       + parseInt(document.getElementById('pf11')?.value||0);
   const aviso = document.getElementById('pr-composicao-aviso');
   const btnSalvar = document.querySelector('[onclick="salvarProducao()"]');
   if(aviso){
-    if(composicao > 0 && composicao !== principal){
+    if(composicao > 0 && composicao !== totalPrincipal){
       aviso.style.display='flex';
-      aviso.innerHTML='⚠ A soma da composição (<strong>'+composicao+'</strong>) deve ser igual ao total de itens analisados (<strong>'+principal+'</strong>). Diferença: '+(composicao-principal > 0 ? '+' : '')+(composicao-principal)+' itens.';
+      aviso.innerHTML='⚠ A soma da composição (<strong>'+composicao+'</strong>) deve ser igual ao total de todos os campos principais (<strong>'+totalPrincipal+'</strong>). Diferença: '+(composicao-totalPrincipal > 0 ? '+' : '')+(composicao-totalPrincipal)+' itens.';
       if(btnSalvar) btnSalvar.disabled=true;
     } else {
       aviso.style.display='none';
@@ -2631,12 +2659,16 @@ function updProd(){
   } else if(motiv){
     motiv.style.display='none';
   }
-  // Justificativa
+  // Justificativa — só para colaboradores com meta
   const justBox=document.getElementById('pr-justif-box');
-  if(justBox) justBox.style.display=(principal>0&&principal<meta)?'block':'none';
+  if(justBox) justBox.style.display=(!semMeta&&principal>0&&principal<meta)?'block':'none';
+
+  // Badge sem meta
+  const semMetaMsg = document.getElementById('pr-sem-meta-msg');
+  if(semMetaMsg) semMetaMsg.style.display = semMeta ? 'flex' : 'none';
 }
 function limparProd(){
-  for(let i=0;i<10;i++){const e=document.getElementById('pf'+i);if(e)e.value='';}
+  for(let i=0;i<=11;i++){const e=document.getElementById('pf'+i);if(e)e.value='';}
   window._metaAjustadaTemp = null;
   window._folgaParcialInfo = null;
   updProd();
@@ -2647,17 +2679,19 @@ function limparProd(){
 function salvarProducao(){
   if(!colabLogado||!dataAtual||!presAtual){alert('Preencha todos os campos.');return;}
   const meta=getMeta();
+  const semMeta = COLABS_SEM_META.includes(colabLogado);
   const f=[];
-  for(let i=0;i<10;i++) f.push(parseInt(document.getElementById('pf'+i)?.value||0));
-  const principal = f[0]+f[1];
-  const composicao = f.slice(2).reduce((a,b)=>a+b,0);
-  // Validar composição
-  if(composicao > 0 && composicao !== principal){
-    alert('A soma da composição ('+composicao+') deve ser igual ao total de itens analisados ('+principal+'). Corrija antes de salvar.');
+  for(let i=0;i<=11;i++) f.push(parseInt(document.getElementById('pf'+i)?.value||0));
+  const principal = f[0]+f[1]+f[2]; // pf0+pf1+StatusB
+  const composicao = f.slice(3,11).reduce((a,b)=>a+b,0); // pf3 a pf10
+  // Validar composição (pf0+pf1 devem bater com composição, StatusB e Outros são separados)
+  const baseComposicao = f[0]+f[1]+f[2]+f[11]; // pf0+pf1+StatusB+Outros
+  if(composicao > 0 && composicao !== baseComposicao){
+    alert('A soma da composição ('+composicao+') deve ser igual ao total de todos os campos principais ('+baseComposicao+'). Corrija antes de salvar.');
     return;
   }
-  const total=principal; // meta baseada apenas nos dois campos principais
-  if(total<meta){
+  const total=principal;
+  if(!semMeta && total<meta){
     const justif=document.getElementById('pr-justif')?.value?.trim();
     if(!justif){alert('Justificativa obrigatória quando abaixo da meta.');document.getElementById('pr-justif')?.focus();return;}
   }
