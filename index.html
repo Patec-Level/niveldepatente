@@ -620,7 +620,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div class="cd-t">Histórico diário — todas as linhas</div>
         <div class="tw">
           <table>
-            <thead><tr><th>Dia</th><th>L3</th><th>L4</th><th>L5</th><th>L6</th><th>L7</th><th>L8</th><th>L10</th><th>L12</th><th>Var.L12</th></tr></thead>
+            <thead><tr><th>Dia</th><th>PATEC Finalizado</th><th>Ag. PATEC Finalizar</th><th>PATEC 100% Reprovado</th><th>PATEC Cancelado</th><th>Abrir ID NÃO</th><th>Abrir PATEC Obrigatório</th><th>Total Geral</th><th>Total PATEC</th><th>Var. PATEC</th></tr></thead>
             <tbody id="tb-hist-mapa"></tbody>
           </table>
         </div>
@@ -1246,21 +1246,37 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div id="adm-hist-mapa" class="adm-tab" style="display:none">
         <div class="cd">
           <div class="cd-t">📋 Histórico do Mapa — filtros</div>
-          <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
-            <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-size:12px;color:var(--tx2)">Dia específico:</span>
-              <input type="date" id="adm-mapa-dia" style="width:155px;font-size:12px;padding:5px 10px">
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.875rem">
+            <!-- Filtro por ciclo -->
+            <div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Ciclo de medição</div>
+              <select id="adm-mapa-ciclo" onchange="filtrarHistMapaCiclo()" style="font-size:12px;padding:5px 10px;min-width:180px">
+                <option value="">Todos os ciclos</option>
+                <option value="marabr2026">Mar/Abr 2026 (26/03–25/04)</option>
+                <option value="abr_mai2026" selected>Abr/Mai 2026 (27/04–26/05)</option>
+              </select>
             </div>
-            <span style="font-size:11px;color:var(--tx2);align-self:center">ou período:</span>
-            <input type="date" id="adm-mapa-de" style="width:145px;font-size:12px;padding:5px 10px">
-            <span style="font-size:11px;color:var(--tx2);align-self:center">até</span>
-            <input type="date" id="adm-mapa-ate" style="width:145px;font-size:12px;padding:5px 10px">
-            <button class="btn btn-s" style="padding:5px 12px;font-size:11px" onclick="filtrarHistMapa()">Filtrar</button>
-            <button class="btn btn-s" style="padding:5px 12px;font-size:11px" onclick="filtrarHistMapa('all')">Todos</button>
+            <!-- Filtro por dia específico -->
+            <div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Dia específico</div>
+              <input type="date" id="adm-mapa-dia" style="font-size:12px;padding:5px 10px">
+            </div>
+            <div style="font-size:11px;color:var(--tx2);align-self:center;padding-bottom:2px">ou período:</div>
+            <div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">De</div>
+              <input type="date" id="adm-mapa-de" style="font-size:12px;padding:5px 10px">
+            </div>
+            <div style="font-size:11px;color:var(--tx2);align-self:center;padding-bottom:2px">até</div>
+            <div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Até</div>
+              <input type="date" id="adm-mapa-ate" style="font-size:12px;padding:5px 10px">
+            </div>
+            <button class="btn btn-s" style="padding:5px 12px;font-size:11px;align-self:flex-end" onclick="filtrarHistMapa()">Filtrar</button>
+            <button class="btn btn-s" style="padding:5px 12px;font-size:11px;align-self:flex-end" onclick="filtrarHistMapaCiclo()">Todos</button>
           </div>
           <div class="tw" style="margin-bottom:1rem">
             <table>
-              <thead><tr><th>Dia</th><th>L3</th><th>L4</th><th>L5</th><th>L6</th><th>L7</th><th>L8</th><th>L10</th><th>L12</th><th>Var.L12</th></tr></thead>
+              <thead><tr><th>Dia</th><th>PATEC Finalizado</th><th>Ag. PATEC Finalizar</th><th>PATEC 100% Reprovado</th><th>PATEC Cancelado</th><th>Abrir ID NÃO</th><th>Abrir PATEC Obrigatório</th><th>Total Geral</th><th>Total PATEC</th><th>Var. PATEC</th></tr></thead>
               <tbody id="adm-mapa-tb"></tbody>
             </table>
           </div>
@@ -3363,10 +3379,50 @@ function filtrarHistMapa(modo){
     const dia=document.getElementById('adm-mapa-dia').value;
     const de=document.getElementById('adm-mapa-de').value;
     const ate=document.getElementById('adm-mapa-ate').value;
-    dados=L[3].map((_,i)=>({dia:i+1,dt:DATAS_MAPA[i],dtiso:DATAS_ISO[i],l3:L[3][i],l4:L[4][i],l5:L[5][i],l6:L[6][i],l7:L[7][i],l8:L[8][i]}));
+    dados=L[3].map((_,i)=>({dia:i+1,dt:DATAS_MAPA[i],dtiso:DATAS_ISO_MAPA[i],l3:L[3][i],l4:L[4][i],l5:L[5][i],l6:L[6][i],l7:L[7][i],l8:L[8][i]}));
     if(dia) dados=dados.filter(d=>d.dtiso===dia);
     else if(de&&ate) dados=dados.filter(d=>d.dtiso>=de&&d.dtiso<=ate);
   }
+  renderMapaTabela(dados);
+}
+// ── Dados históricos do MAPA — Ciclo Mar/Abr 2026 ──
+const MAPA_ABR2026 = {
+  datas:     ['26/mar', '27/mar', '30/mar', '31/mar', '01/abr', '02/abr', '06/abr', '07/abr', '08/abr', '09/abr', '10/abr', '13/abr', '14/abr', '15/abr', '16/abr', '17/abr', '20/abr', '22/abr', '23/abr', '24/abr'],
+  datas_iso: ['2026-03-26', '2026-03-27', '2026-03-30', '2026-03-31', '2026-04-01', '2026-04-02', '2026-04-06', '2026-04-07', '2026-04-08', '2026-04-09', '2026-04-10', '2026-04-13', '2026-04-14', '2026-04-15', '2026-04-16', '2026-04-17', '2026-04-20', '2026-04-22', '2026-04-23', '2026-04-24'],
+  L3: [1020, 1111, 1034, 988, 1006, 1025, 975, 980, 987, 924, 961, 921, 959, 980, 961, 926, 954, 968, 961, 940],
+  L4: [142, 116, 117, 138, 240, 253, 276, 293, 185, 259, 257, 298, 294, 291, 250, 291, 291, 287, 318, 312],
+  L5: [30, 32, 17, 18, 27, 20, 17, 14, 24, 12, 16, 17, 20, 22, 27, 18, 18, 22, 19, 22],
+  L6: [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+  L7: [83, 78, 116, 81, 107, 115, 100, 84, 94, 110, 89, 103, 108, 97, 83, 76, 77, 92, 82, 70],
+  L8: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+};
+
+function filtrarHistMapaCiclo(){
+  const ciclo = document.getElementById('adm-mapa-ciclo')?.value||'';
+  // Limpar filtros de data ao trocar ciclo
+  const diaEl=document.getElementById('adm-mapa-dia');
+  const deEl=document.getElementById('adm-mapa-de');
+  const ateEl=document.getElementById('adm-mapa-ate');
+  if(diaEl)diaEl.value='';
+  if(deEl)deEl.value='';
+  if(ateEl)ateEl.value='';
+
+  if(ciclo==='marabr2026'){
+    // Mostrar dados do ciclo Mar/Abr 2026
+    const dados=MAPA_ABR2026.datas.map((_,i)=>{
+      const l3=MAPA_ABR2026.L3[i]||0, l4=MAPA_ABR2026.L4[i]||0,
+            l5=MAPA_ABR2026.L5[i]||0, l6=MAPA_ABR2026.L6[i]||0,
+            l7=MAPA_ABR2026.L7[i]||0, l8=MAPA_ABR2026.L8[i]||0;
+      return {dia:i+1,dt:MAPA_ABR2026.datas[i],dtiso:MAPA_ABR2026.datas_iso[i],l3,l4,l5,l6,l7,l8};
+    });
+    renderMapaTabela(dados);
+  } else {
+    // Ciclo atual (Abr/Mai) ou todos
+    filtrarHistMapa('all');
+  }
+}
+
+function renderMapaTabela(dados){
   const l12arr=dados.map(d=>d.l3+d.l4+d.l5+d.l6);
   const l10arr=dados.map(d=>d.l3+d.l4+d.l5+d.l6+d.l7+d.l8);
   document.getElementById('adm-mapa-tb').innerHTML=dados.map((d,i)=>{
@@ -3375,6 +3431,7 @@ function filtrarHistMapa(modo){
     return`<tr><td>${d.dia} · ${d.dt}</td><td>${d.l3}</td><td>${d.l4}</td><td>${d.l5}</td><td>${d.l6}</td><td>${d.l7}</td><td>${d.l8}</td><td style="font-weight:600">${l10.toLocaleString('pt-BR')}</td><td style="font-weight:700;color:var(--azm)">${l12.toLocaleString('pt-BR')}</td><td>${dif!==null?varSpan(dif):'—'}</td></tr>`;
   }).join('');
 }
+
 
 // ── HISTÓRICO PRODUÇÃO ──
 function filtrarHistProd(modo){
