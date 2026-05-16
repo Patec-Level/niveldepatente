@@ -1586,6 +1586,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           </div>
         </div>
 
+        <!-- AVISO: Férias / Folga automática / Folga parcial -->
+        <div id="pr-aviso-ferias" style="display:none;background:var(--amc);border:1px solid var(--am);border-radius:9px;padding:.875rem 1rem;margin-bottom:.75rem;font-size:13px;color:#7A4500;align-items:center;gap:10px;line-height:1.5"></div>
+
         <!-- PASSO 2: Presença (aparece após data) -->
         <div class="cd" id="pr-s2" style="display:none">
           <div class="cd-t">🏢 Como você está trabalhando hoje?</div>
@@ -2403,6 +2406,8 @@ function getSenhas(){
 
 // Meta mínima (editável pelo ADM)
 function getMeta(){
+  // Se há folga parcial ativa, retorna meta ajustada
+  if(window._metaAjustadaTemp) return window._metaAjustadaTemp;
   try{return parseInt(localStorage.getItem('patec_meta_min')||'30');}
   catch{return 30;}
 }
@@ -2465,11 +2470,110 @@ function fazerLogout(){
 function selecionarData(val){
   dataAtual = val;
   if(!val) return;
+
+  // ── Verificar férias ──
+  const emFerias = (FERIAS_DATA||[]).some(f => {
+    if(f.colab !== colabLogado || !f.saida) return false;
+    const saida = f.saida; // yyyy-mm-dd
+    // retorno pode ser dd/mm/yyyy
+    const retStr = (f.retorno||'').includes('/') ? f.retorno.split('/').reverse().join('-') : f.retorno;
+    return val >= saida && val <= retStr;
+  });
+
+  if(emFerias){
+    // Lançar férias automaticamente
+    presAtual = 'Férias';
+    document.getElementById('pr-s2').style.display='none';
+    document.getElementById('pr-s3').style.display='none';
+    document.getElementById('pr-folga').style.display='none';
+    // Mostrar aviso e salvar automaticamente
+    const avFerias = document.getElementById('pr-aviso-ferias');
+    if(avFerias){
+      avFerias.style.display='flex';
+      avFerias.innerHTML='🌴 <span><strong>'+colabLogado+'</strong> está de férias nesta data. O lançamento será registrado automaticamente como <strong>Férias</strong>.</span>';
+    }
+    // Registrar automaticamente se ainda não existir
+    const jaReg = registros.some(r=>r.colab===colabLogado&&r.data===val);
+    if(!jaReg){
+      registros.push({colab:colabLogado,data:val,pres:'Férias',f:Array(10).fill(0),justif:'Férias programadas'});
+      renderMiniHist();
+    }
+    return;
+  }
+
+  // ── Verificar folga no Banco HE ──
+  const dadosHE = (BANCO_HE||[]).find(b=>b.colab===colabLogado);
+  let folgaDia = null; // {h, m} da folga neste dia
+  if(dadosHE){
+    dadosHE.periodos.forEach(p=>{
+      (p.usos||[]).forEach(u=>{
+        if(u.tipo==='folga' && u.data===val){
+          folgaDia = {h: u.h||0, m: u.m||0};
+        }
+      });
+    });
+  }
+
+  // Limpar aviso de férias se existir
+  const avFerias2 = document.getElementById('pr-aviso-ferias');
+  if(avFerias2) avFerias2.style.display='none';
+
+  if(folgaDia){
+    const totalMin = folgaDia.h * 60 + folgaDia.m;
+    const jornadaMin = 8 * 60; // 8h = jornada completa
+
+    if(totalMin >= jornadaMin){
+      // Folga dia inteiro — lançar automaticamente
+      presAtual = 'Folga';
+      document.getElementById('pr-s2').style.display='none';
+      document.getElementById('pr-s3').style.display='none';
+      const avFolga = document.getElementById('pr-aviso-ferias');
+      if(avFolga){
+        avFolga.style.display='flex';
+        avFolga.innerHTML='🌴 <span><strong>'+colabLogado+'</strong> tem folga de banco de horas (dia inteiro) nesta data. Lançado automaticamente como <strong>Folga</strong>.</span>';
+      }
+      const jaReg = registros.some(r=>r.colab===colabLogado&&r.data===val);
+      if(!jaReg){
+        registros.push({colab:colabLogado,data:val,pres:'Folga',f:Array(10).fill(0),justif:'Folga — banco de horas (dia inteiro)'});
+        renderMiniHist();
+      }
+      return;
+    } else {
+      // Folga parcial — recalcular meta e preencher justificativa
+      const trabMin = jornadaMin - totalMin;
+      const metaOriginal = getMeta();
+      const metaAjustada = Math.round(metaOriginal * trabMin / jornadaMin);
+      const hFolga = folgaDia.h;
+      const mFolga = String(folgaDia.m).padStart(2,'0');
+      // Guardar meta ajustada temporariamente
+      window._metaAjustadaTemp = metaAjustada;
+      window._folgaParcialInfo = `Folga parcial de banco de horas: ${hFolga}h${mFolga}min. Meta reduzida de ${metaOriginal} para ${metaAjustada} itens (${Math.round(trabMin/60*10)/10}h trabalhadas).`;
+      // Mostrar aviso
+      const avFolga = document.getElementById('pr-aviso-ferias');
+      if(avFolga){
+        avFolga.style.display='flex';
+        avFolga.innerHTML='⚡ <span><strong>'+colabLogado+'</strong> tem folga parcial de <strong>'+hFolga+'h'+mFolga+'min</strong>. Meta do dia ajustada para <strong>'+metaAjustada+' itens</strong>.</span>';
+      }
+    }
+  } else {
+    window._metaAjustadaTemp = null;
+    window._folgaParcialInfo = null;
+  }
+
   document.getElementById('pr-s2').style.display='block';
   document.getElementById('pr-s3').style.display='none';
   document.getElementById('pr-folga').style.display='none';
   presAtual=null;
   ['popt-P','popt-H','popt-F'].forEach(id=>document.getElementById(id).className='pres-opt');
+
+  // Preencher justificativa automática se folga parcial
+  if(window._folgaParcialInfo){
+    setTimeout(()=>{
+      const justif = document.getElementById('pr-justif');
+      if(justif) justif.value = window._folgaParcialInfo;
+      updProd();
+    }, 100);
+  }
 }
 function selecionarPresenca(v,el){
   presAtual=v;
@@ -2556,6 +2660,8 @@ function updProd(){
 }
 function limparProd(){
   for(let i=0;i<10;i++){const e=document.getElementById('pf'+i);if(e)e.value='';}
+  window._metaAjustadaTemp = null;
+  window._folgaParcialInfo = null;
   updProd();
   const m=document.getElementById('pr-motivacao');if(m)m.style.display='none';
 }
