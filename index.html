@@ -3442,56 +3442,54 @@ async function analisarIA(tipo){
   resultEl.style.display='block';
   txtEl.innerHTML='<span class="ia-loading"><span class="ia-spin">↻</span> Consultando IA...</span>';
 
-  // Usar iframe para contornar CORS do GitHub Pages
-  const fullPrompt=`Você é um analista especializado em gestão de compras e procurement. Analise os dados abaixo e responda à pergunta do gestor de forma clara, objetiva e em português.
+  // Montar prompt e codificar em base64 para passar ao iframe via window.name
+  const fullPrompt='Você é um analista especializado em gestão de compras e procurement. Analise os dados abaixo e responda à pergunta do gestor de forma clara, objetiva e em português.\n\nDADOS:\n'+contexto+'\n\nPERGUNTA DO GESTOR:\n'+prompt+'\n\nResponda de forma estruturada com insights práticos e sugestões de ação quando relevante.';
 
-DADOS:
-${contexto}
-
-PERGUNTA DO GESTOR:
-${prompt}
-
-Responda de forma estruturada com insights práticos e sugestões de ação quando relevante.`;
-
-  const iframeCode=`<!DOCTYPE html><html><body><script>
-    fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1200,
-        messages:[{role:'user',content:${JSON.stringify(fullPrompt)}}]
-      })
-    })
-    .then(r=>r.json())
-    .then(d=>{
-      const txt=d.content?.map(c=>c.text||'').join('\n')||d.error?.message||'Sem resposta.';
-      window.parent.postMessage({type:'ia-resp',texto:txt},'*');
-    })
-    .catch(e=>window.parent.postMessage({type:'ia-resp',texto:'Erro: '+e.message},'*'));
-  <\/script></body></html>`;
-
-  // Listener para receber a resposta do iframe
+  // Listener antes de criar o iframe
   const handler=(ev)=>{
     if(ev.data&&ev.data.type==='ia-resp'){
       window.removeEventListener('message',handler);
       txtEl.textContent=ev.data.texto;
       btn.disabled=false;
       btn.innerHTML='🤖 Analisar com IA';
-      // Remover iframe após uso
       const fr=document.getElementById('ia-frame-tmp');
       if(fr)fr.remove();
     }
   };
   window.addEventListener('message',handler);
 
-  // Criar iframe temporário
+  // Criar iframe — passa o prompt via postMessage após load
   let fr=document.getElementById('ia-frame-tmp');
   if(fr)fr.remove();
   fr=document.createElement('iframe');
   fr.id='ia-frame-tmp';
   fr.style.cssText='display:none;position:fixed;width:1px;height:1px';
-  fr.srcdoc=iframeCode;
+  fr.srcdoc='<!DOCTYPE html><html><body><script>'+
+    'window.addEventListener(\'message\',function(ev){'+
+    '  if(ev.data&&ev.data.type===\'ia-run\'){'+
+    '    fetch(\'https://api.anthropic.com/v1/messages\',{'+
+    '      method:\'POST\','+
+    '      headers:{\'Content-Type\':\'application/json\'},'+
+    '      body:JSON.stringify({model:\'claude-sonnet-4-20250514\',max_tokens:1200,messages:[{role:\'user\',content:ev.data.prompt}]})'+
+    '    }).then(function(r){return r.json();})'+
+    '    .then(function(d){'+
+    '      var t=(d.content||[]).map(function(c){return c.text||\'\'}).join(\'\\n\')||(d.error&&d.error.message)||\'Sem resposta.\';'+
+    '      ev.source.postMessage({type:\'ia-resp\',texto:t},\'*\');'+
+    '    })'+
+    '    .catch(function(e){ev.source.postMessage({type:\'ia-resp\',texto:\'Erro: \'+e.message},\'*\');});'+
+    '  }'+
+    '});'+
+    'window.parent.postMessage({type:\'ia-ready\'},\'*\');'+
+    '<\/script></body></html>';
+
+  // Quando iframe estiver pronto, enviar o prompt
+  const readyHandler=(ev)=>{
+    if(ev.data&&ev.data.type==='ia-ready'){
+      window.removeEventListener('message',readyHandler);
+      fr.contentWindow.postMessage({type:'ia-run',prompt:fullPrompt},'*');
+    }
+  };
+  window.addEventListener('message',readyHandler);
   document.body.appendChild(fr);
 }
 
