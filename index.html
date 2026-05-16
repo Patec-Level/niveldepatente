@@ -4859,6 +4859,8 @@ function bheInit(){
   bheCarregarLimiteADM();
 }
 function bheGetColab(){return document.getElementById('bhe-colab-sel')?.value||'';}
+function bheGetFiltroStatus(){ return document.getElementById('bhe-filtro-status')?.value||'todos'; }
+
 function bheRenderColab(){
   const colab=bheGetColab();
   const painel=document.getElementById('bhe-painel');
@@ -4866,7 +4868,21 @@ function bheRenderColab(){
   const nomeEl=document.getElementById('bhe-colab-nome');
   if(!colab){if(painel)painel.style.display='none';if(empty)empty.style.display='block';return;}
   if(painel)painel.style.display='block';if(empty)empty.style.display='none';
-  if(nomeEl)nomeEl.textContent='👤 '+colab;
+  // Cabeçalho com nome + filtro de status
+  if(nomeEl){
+    nomeEl.innerHTML=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span>👤 ${colab}</span>
+      <div class="field-wrap" style="min-width:160px;margin:0">
+        <span class="field-label">Filtrar por status</span>
+        <select id="bhe-filtro-status" onchange="bheRenderPeriodos('${colab}')" style="width:100%">
+          <option value="todos">Todos os períodos</option>
+          <option value="andamento">⏳ Em andamento</option>
+          <option value="concluido">✅ Concluídos (folgados)</option>
+          <option value="pago">💳 Pagos</option>
+        </select>
+      </div>
+    </div>`;
+  }
   if(!BANCO_HE.find(b=>b.colab===colab))BANCO_HE.push({colab,periodos:[]});
   bheRenderPeriodos(colab);
 }
@@ -4875,7 +4891,35 @@ function bheRenderPeriodos(colab){
   const dados=BANCO_HE.find(b=>b.colab===colab);
   if(!dados||!dados.periodos.length){container.innerHTML='<div class="al al-b">Nenhum período cadastrado. Adicione acima.</div>';return;}
   const hoje=HOJE.toISOString().split('T')[0];
-  container.innerHTML=dados.periodos.map((p,pi)=>{
+  const filtro=bheGetFiltroStatus();
+
+  // Função para classificar status do período
+  function getStatus(p){
+    if(!p.arquivado){
+      const tMin=(p.he_h||0)*60+(p.he_m||0);
+      const uMin=(p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);
+      return tMin-uMin>0?'andamento':'concluido';
+    }
+    const temPagoAuto=(p.usos||[]).some(u=>u.automatico);
+    const temFolga=(p.usos||[]).some(u=>u.tipo==='folga'&&!u.automatico);
+    if(temPagoAuto) return 'pago';
+    if(p.arquivado_motivo&&p.arquivado_motivo.includes('automaticamente')) return 'pago';
+    return 'concluido';
+  }
+
+  // Filtrar períodos por status
+  const periodosFiltrados = dados.periodos.filter((p,pi)=>{
+    if(filtro==='todos') return true;
+    return getStatus(p)===filtro;
+  });
+
+  if(!periodosFiltrados.length){
+    container.innerHTML='<div class="al al-b">Nenhum período com este status.</div>';
+    return;
+  }
+
+  container.innerHTML=periodosFiltrados.map((p)=>{
+    const pi=dados.periodos.indexOf(p);
     const tMin=(p.he_h||0)*60+(p.he_m||0);
     const uMin=(p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);
     const sMin=tMin-uMin;const sH=Math.floor(sMin/60),sM=sMin%60;
@@ -4885,7 +4929,7 @@ function bheRenderPeriodos(colab){
     const statusP=arq?(p.arquivado_motivo==='Zerado'?'✅ Zerado':'💳 Pago/Arquivado'):sMin<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
     const usosHTML=(p.usos||[]).map((u,ui)=>`<tr style="${u.automatico?'background:rgba(26,74,138,.04)':''}"><td>${u.data?u.data.split('-').reverse().join('/'):'—'}</td><td style="font-weight:600;color:var(--azm)">${String(u.h||0).padStart(2,'0')}h${String(u.m||0).padStart(2,'0')}min</td><td><span class="pl ${u.tipo==='folga'?'pl-az':'pl-w'}">${u.tipo==='folga'?'🌴 Folga':'💰 Pagamento'}</span></td><td style="font-size:11px;color:var(--tx2)">${u.obs||'—'}</td><td>${u.automatico?'<span style="font-size:9px;color:var(--tx2)">⚙️</span>':`<button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="bheRemUso('${colab}',${pi},${ui})">✕</button>`}</td></tr>`).join('');
     const addForm=(!arq&&sMin>0)?`<div style="background:var(--cin);border-radius:10px;padding:1rem;border:1px solid var(--brd);margin-top:.875rem"><div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.875rem;text-transform:uppercase;letter-spacing:.5px">📅 Registrar folga / pagamento</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.875rem"><div class="field-wrap"><span class="field-label">Data</span><input type="date" id="bhe-uso-data-${pi}" style="width:100%"></div><div class="field-wrap"><span class="field-label">Tipo</span><select id="bhe-uso-tipo-${pi}" style="width:100%"><option value="folga">🌴 Folga</option><option value="pagamento">💰 Pagamento</option></select></div></div><div style="margin-bottom:.875rem"><span class="field-label" style="display:block;margin-bottom:6px">Duração (HH : MM)</span><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><input type="number" id="bhe-uso-h-${pi}" min="0" max="24" placeholder="0" oninput="bheFmtUso(${pi})" style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff"><span style="font-size:22px;font-weight:700;color:var(--tx2)">:</span><input type="number" id="bhe-uso-m-${pi}" min="0" max="59" placeholder="0" oninput="bheFmtUso(${pi})" style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff"><span id="bhe-uso-fmt-${pi}" style="font-size:13px;color:var(--azm);font-weight:600;padding:6px 12px;background:#fff;border:1px solid var(--brd);border-radius:8px">= 0h 00min</span><button class="btn btn-g" onclick="bheAddUso('${colab}',${pi})" style="margin-left:auto">+ Registrar</button></div><div style="font-size:10px;color:var(--tx2);margin-top:5px">Saldo: <strong style="color:${corP}">${sH}h${String(sM).padStart(2,'0')}min</strong></div></div><div class="field-wrap"><span class="field-label">Observação</span><input type="text" id="bhe-uso-obs-${pi}" placeholder="Ex: folga manhã" style="width:100%"></div></div>`:(arq?`<div style="padding:.625rem .875rem;background:var(--azc);border-radius:8px;font-size:11px;color:var(--azm);font-weight:600;margin-top:.5rem">📁 Arquivado em ${p.arquivado_em?p.arquivado_em.split('-').reverse().join('/'):'—'} — ${p.arquivado_motivo}</div>`:'<div style="padding:.5rem;background:var(--vdc);border-radius:8px;font-size:12px;color:var(--vd);font-weight:600;margin-top:.5rem">✅ Saldo zerado</div>');
-    return `<div class="cd" style="border-left:4px solid ${corP};margin-bottom:1rem${arq?';opacity:.85':''}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px"><div><div style="font-size:14px;font-weight:700;color:var(--az)">${p.mes_ref||'Período '+(pi+1)}${arq?' <span style="font-size:10px;background:var(--azc);color:var(--azm);padding:1px 7px;border-radius:4px">📁 Arquivado</span>':''}</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">Total HE: <strong style="color:var(--am)">${p.he_h||0}h${String(p.he_m||0).padStart(2,'0')}min</strong> &nbsp;·&nbsp; Vence: <strong>${p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—'}</strong>${p.obs?' &nbsp;·&nbsp; <em>'+p.obs+'</em>':''}</div></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:center;padding:8px 16px;background:${sMin<=0||arq?'var(--vdc)':vencido?'var(--vmc)':'var(--amc)'};border-radius:10px"><div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px">Saldo</div><div style="font-size:22px;font-weight:700;color:${corP};line-height:1">${sH}h${String(sM).padStart(2,'0')}min</div><div style="font-size:10px;font-weight:600;color:${corP}">${statusP}</div></div>${!arq?`<button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="bheRemPeriodo('${colab}',${pi})">🗑</button>`:''}</div></div>${(p.usos||[]).length?`<div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Usos registrados:</div><div class="tw" style="margin-bottom:.5rem;max-height:200px"><table><thead><tr><th>Data</th><th>Duração</th><th>Tipo</th><th>Obs.</th><th></th></tr></thead><tbody>${usosHTML}</tbody></table></div>`:'<div style="font-size:11px;color:var(--tx2);padding:.5rem .75rem;background:var(--cin);border-radius:6px;margin-bottom:.5rem">Nenhum uso registrado</div>'}${addForm}</div>`;
+    return `<div class="cd" style="border-left:4px solid ${corP};margin-bottom:1rem${arq?';opacity:.85':''}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px"><div><div style="font-size:14px;font-weight:700;color:var(--az)">${p.mes_ref||'Período '+(pi+1)}${arq?' <span style="font-size:10px;background:var(--azc);color:var(--azm);padding:1px 7px;border-radius:4px">📁 Arquivado</span>':''}</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">Total HE: <strong style="color:var(--am)">${p.he_h||0}h${String(p.he_m||0).padStart(2,'0')}min</strong> &nbsp;·&nbsp; Vence: <strong>${p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—'}</strong>${p.obs?' &nbsp;·&nbsp; <em>'+p.obs+'</em>':''}</div></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:center;padding:8px 16px;background:${sMin<=0||arq?'var(--vdc)':vencido?'var(--vmc)':'var(--amc)'};border-radius:10px"><div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px">Saldo</div><div style="font-size:22px;font-weight:700;color:${corP};line-height:1">${sH}h${String(sM).padStart(2,'0')}min</div><div style="font-size:10px;font-weight:600;color:${corP}">${statusP}</div></div><button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="bheRemPeriodo('${colab}',${pi})" title="Remover período">🗑</button></div></div>${(p.usos||[]).length?`<div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Usos registrados:</div><div class="tw" style="margin-bottom:.5rem;max-height:200px"><table><thead><tr><th>Data</th><th>Duração</th><th>Tipo</th><th>Obs.</th><th></th></tr></thead><tbody>${usosHTML}</tbody></table></div>`:'<div style="font-size:11px;color:var(--tx2);padding:.5rem .75rem;background:var(--cin);border-radius:6px;margin-bottom:.5rem">Nenhum uso registrado</div>'}${addForm}</div>`;
   }).join('');
 }
 function bheFmtUso(pi){const h=parseInt(document.getElementById('bhe-uso-h-'+pi)?.value||0);const m=parseInt(document.getElementById('bhe-uso-m-'+pi)?.value||0);const el=document.getElementById('bhe-uso-fmt-'+pi);if(el)el.textContent='= '+String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'min';}
@@ -4976,7 +5020,43 @@ function renderBHECards(){
   const resumoEl=document.getElementById('bhe-resumo-geral');
   if(resumoEl){let tMin=0,uMin=0,venc=0,nC=0;BANCO_HE.forEach(b=>{const ps=getPs(b);if(!ps.length)return;nC++;ps.forEach(p=>{const t=(p.he_h||0)*60+(p.he_m||0);const u=(p.usos||[]).reduce((s,x)=>s+(x.h||0)*60+(x.m||0),0);const s=t-u;tMin+=t;uMin+=u;if(!p.arquivado&&s>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje)venc++;});});const saldo=tMin-uMin;resumoEl.innerHTML=`<div class="kc"><div class="kc-l">Total HE ${mesFiltro?'('+mesFiltro+')':'equipe'}</div><div class="kc-v" style="color:var(--am)">${Math.floor(tMin/60)}h${String(tMin%60).padStart(2,'0')}min</div><div class="kc-s">${mesFiltro?nC+' colaborador(es)':'todos os períodos'}</div></div><div class="kc ok"><div class="kc-l">Já compensado</div><div class="kc-v">${Math.floor(uMin/60)}h${String(uMin%60).padStart(2,'0')}min</div><div class="kc-s">folgas + pagamentos</div></div><div class="kc ${saldo>0?'warn':'ok'}"><div class="kc-l">Saldo pendente</div><div class="kc-v" style="color:${saldo>0?'var(--am)':'var(--vd)'}">${Math.floor(Math.abs(saldo)/60)}h${String(Math.abs(saldo)%60).padStart(2,'0')}min</div><div class="kc-s">a folgar ou pagar</div></div>${venc>0?`<div class="kc bad"><div class="kc-l">Períodos vencidos</div><div class="kc-v">${venc}</div><div class="kc-s">com saldo em aberto</div></div>`:''}`;}
   const limitePainel=document.getElementById('bhe-limite-painel');const limiteBadge=document.getElementById('bhe-limite-badge');const limite=bheGetLimite();
-  if(mesFiltro&&limitePainel){limitePainel.style.display='block';let totalMesMin=0;BANCO_HE.forEach(b=>getPs(b).forEach(p=>{totalMesMin+=(p.he_h||0)*60+(p.he_m||0);}));const limMin=limite.h*60+limite.m;if(limMin>0){const exc=totalMesMin-limMin;const excH=Math.floor(Math.abs(exc)/60),excM=Math.abs(exc)%60;const pct=Math.min(Math.round(totalMesMin/limMin*100),999);const dentro=totalMesMin<=limMin;limitePainel.innerHTML=`<div class="cd" style="border-top:3px solid ${dentro?'var(--vd)':'var(--vm)'}"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;align-items:center"><div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">HE feita em <strong>${mesFiltro}</strong></div><div style="font-size:28px;font-weight:700;color:var(--am);line-height:1">${Math.floor(totalMesMin/60)}h${String(totalMesMin%60).padStart(2,'0')}min</div></div><div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Limite mensal</div><div style="font-size:28px;font-weight:700;color:var(--az);line-height:1">${limite.h}h${String(limite.m).padStart(2,'0')}min</div><div style="height:5px;background:#eee;border-radius:3px;overflow:hidden;margin-top:6px"><div style="height:100%;background:${dentro?'var(--vd)':'var(--vm)'};border-radius:3px;width:${Math.min(pct,100)}%"></div></div><div style="font-size:10px;color:var(--tx2);margin-top:3px">${pct}% utilizado</div></div><div style="padding:1rem;border-radius:10px;background:${dentro?'var(--vdc)':'var(--vmc)'};border:1px solid ${dentro?'rgba(14,158,106,.2)':'rgba(217,64,64,.2)'}"><div style="font-size:11px;font-weight:700;color:${dentro?'var(--vd)':'var(--vm)'};margin-bottom:4px">${dentro?'✅ Dentro do limite':'⚠️ Acima do limite'}</div>${dentro?`<div style="font-size:12px;color:var(--tx2)">Folga ou pagamento: <strong>a critério</strong></div><div style="font-size:11px;color:var(--vd);margin-top:3px">Margem: ${Math.floor((limMin-totalMesMin)/60)}h${String((limMin-totalMesMin)%60).padStart(2,'0')}min</div>`:`<div style="font-size:12px;color:var(--tx2)">Excedente: <strong style="color:var(--vm)">${excH}h${String(excM).padStart(2,'0')}min</strong></div><div style="font-size:11px;color:var(--vm);margin-top:3px;font-weight:600">🌴 Obrigado a dar folga!</div>`}</div></div></div>`;if(limiteBadge){limiteBadge.style.display='block';limiteBadge.innerHTML=dentro?'✅ Dentro do limite':`⚠️ Excede em ${excH}h${String(excM).padStart(2,'0')}min`;limiteBadge.style.cssText+=`;background:${dentro?'var(--vdc)':'var(--vmc)'};color:${dentro?'var(--vd)':'var(--vm)'};border-color:${dentro?'rgba(14,158,106,.3)':'rgba(217,64,64,.3)'};font-weight:600`;}}else{limitePainel.innerHTML='<div class="al al-a">⚠ Nenhum limite mensal configurado. Acesse ADM → Banco de Horas para definir.</div>';if(limiteBadge)limiteBadge.style.display='none';}}else{if(limitePainel)limitePainel.style.display='none';if(limiteBadge)limiteBadge.style.display='none';}
+  if(mesFiltro&&limitePainel){limitePainel.style.display='block';
+    // Calcular totais detalhados do mês filtrado
+    let totalMesMin=0, folgaMin=0, pagoMin=0;
+    BANCO_HE.forEach(b=>{
+      getPs(b).forEach(p=>{
+        totalMesMin+=(p.he_h||0)*60+(p.he_m||0);
+        (p.usos||[]).forEach(u=>{
+          const uMin=(u.h||0)*60+(u.m||0);
+          if(u.tipo==='folga') folgaMin+=uMin;
+          else pagoMin+=uMin;
+        });
+      });
+    });
+    // Cards de resumo do mês
+    const cardsMes=document.createElement('div');
+    cardsMes.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem';
+    cardsMes.innerHTML=`
+      <div class="kc" style="border-top-color:var(--am)">
+        <div class="kc-l">Total HE (${mesFiltro})</div>
+        <div class="kc-v" style="color:var(--am)">${Math.floor(totalMesMin/60)}h${String(totalMesMin%60).padStart(2,'0')}min</div>
+        <div class="kc-s">horas extras feitas</div>
+      </div>
+      <div class="kc ok">
+        <div class="kc-l">Compensado (folgas)</div>
+        <div class="kc-v">${Math.floor(folgaMin/60)}h${String(folgaMin%60).padStart(2,'0')}min</div>
+        <div class="kc-s">dias de folga concedidos</div>
+      </div>
+      <div class="kc" style="border-top-color:var(--azm)">
+        <div class="kc-l">Horas pagas</div>
+        <div class="kc-v" style="color:var(--azm)">${Math.floor(pagoMin/60)}h${String(pagoMin%60).padStart(2,'0')}min</div>
+        <div class="kc-s">pagamento hora extra</div>
+      </div>
+    `;
+    limitePainel.innerHTML='';
+    limitePainel.appendChild(cardsMes);
+
+    const limMin=limite.h*60+limite.m;if(limMin>0){const exc=totalMesMin-limMin;const excH=Math.floor(Math.abs(exc)/60),excM=Math.abs(exc)%60;const pct=Math.min(Math.round(totalMesMin/limMin*100),999);const dentro=totalMesMin<=limMin;limitePainel.innerHTML=`<div class="cd" style="border-top:3px solid ${dentro?'var(--vd)':'var(--vm)'}"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;align-items:center"><div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">HE feita em <strong>${mesFiltro}</strong></div><div style="font-size:28px;font-weight:700;color:var(--am);line-height:1">${Math.floor(totalMesMin/60)}h${String(totalMesMin%60).padStart(2,'0')}min</div></div><div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Limite mensal</div><div style="font-size:28px;font-weight:700;color:var(--az);line-height:1">${limite.h}h${String(limite.m).padStart(2,'0')}min</div><div style="height:5px;background:#eee;border-radius:3px;overflow:hidden;margin-top:6px"><div style="height:100%;background:${dentro?'var(--vd)':'var(--vm)'};border-radius:3px;width:${Math.min(pct,100)}%"></div></div><div style="font-size:10px;color:var(--tx2);margin-top:3px">${pct}% utilizado</div></div><div style="padding:1rem;border-radius:10px;background:${dentro?'var(--vdc)':'var(--vmc)'};border:1px solid ${dentro?'rgba(14,158,106,.2)':'rgba(217,64,64,.2)'}"><div style="font-size:11px;font-weight:700;color:${dentro?'var(--vd)':'var(--vm)'};margin-bottom:4px">${dentro?'✅ Dentro do limite':'⚠️ Acima do limite'}</div>${dentro?`<div style="font-size:12px;color:var(--tx2)">Folga ou pagamento: <strong>a critério</strong></div><div style="font-size:11px;color:var(--vd);margin-top:3px">Margem: ${Math.floor((limMin-totalMesMin)/60)}h${String((limMin-totalMesMin)%60).padStart(2,'0')}min</div>`:`<div style="font-size:12px;color:var(--tx2)">Excedente: <strong style="color:var(--vm)">${excH}h${String(excM).padStart(2,'0')}min</strong></div><div style="font-size:11px;color:var(--vm);margin-top:3px;font-weight:600">🌴 Obrigado a dar folga!</div>`}</div></div></div>`;if(limiteBadge){limiteBadge.style.display='block';limiteBadge.innerHTML=dentro?'✅ Dentro do limite':`⚠️ Excede em ${excH}h${String(excM).padStart(2,'0')}min`;limiteBadge.style.cssText+=`;background:${dentro?'var(--vdc)':'var(--vmc)'};color:${dentro?'var(--vd)':'var(--vm)'};border-color:${dentro?'rgba(14,158,106,.3)':'rgba(217,64,64,.3)'};font-weight:600`;}}else{limitePainel.innerHTML='<div class="al al-a">⚠ Nenhum limite mensal configurado. Acesse ADM → Banco de Horas para definir.</div>';if(limiteBadge)limiteBadge.style.display='none';}}else{if(limitePainel)limitePainel.style.display='none';if(limiteBadge)limiteBadge.style.display='none';}
   renderBHEColabCard();
 }
 function renderBHEColabCard(){
