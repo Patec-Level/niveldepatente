@@ -1516,6 +1516,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <div style="margin-top:1rem;font-size:12px;color:var(--tx2)">
               Registros de produção: <strong id="adm-exp-count" style="font-size:15px;color:var(--azm)">—</strong>
             </div>
+            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--brd)">
+              <button class="btn btn-r" onclick="zerarProducaoFirebase()" style="justify-content:center;width:100%">🗑 Zerar TODA a produção do Firebase</button>
+              <div style="font-size:10px;color:var(--tx2);margin-top:5px;text-align:center">⚠ Apaga todos os registros permanentemente</div>
+            </div>
           </div>
           <div class="cd">
             <div class="cd-t">🗑 Gerenciar registros de produção</div>
@@ -2361,34 +2365,7 @@ function go(id, el) {
 // ════════════════════════════════════════════
 // DADOS REAIS — Ciclo Maio 2026
 // ════════════════════════════════════════════
-const HISTORICO_INICIAL = [
-  {colab:'André',data:'2026-05-06',pres:'Presencial',f:[26,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-04-27',pres:'Presencial',f:[21,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-04-28',pres:'Presencial',f:[35,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-04-29',pres:'Presencial',f:[35,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-04-30',pres:'Presencial',f:[8,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-05-04',pres:'Presencial',f:[19,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-05-05',pres:'Presencial',f:[29,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-05-06',pres:'Presencial',f:[46,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-05-07',pres:'Presencial',f:[40,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-05-08',pres:'Presencial',f:[20,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-05-11',pres:'Presencial',f:[30,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-05-13',pres:'Presencial',f:[62,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-05-14',pres:'Presencial',f:[14,0,0,0,0,0,0,0,0,0]},
-  {colab:'Lory',data:'2026-05-15',pres:'Presencial',f:[35,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-04-27',pres:'Presencial',f:[17,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-04-28',pres:'Presencial',f:[8,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-04-29',pres:'Presencial',f:[3,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-05-04',pres:'Presencial',f:[8,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-05-05',pres:'Presencial',f:[16,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-05-06',pres:'Presencial',f:[52,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-05-07',pres:'Presencial',f:[6,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-05-08',pres:'Presencial',f:[8,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-05-11',pres:'Presencial',f:[19,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-05-12',pres:'Presencial',f:[14,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-05-13',pres:'Presencial',f:[20,0,0,0,0,0,0,0,0,0]},
-  {colab:'Ludy',data:'2026-05-15',pres:'Presencial',f:[16,0,0,0,0,0,0,0,0,0]}
-]
+const HISTORICO_INICIAL = []
 const PCP_INICIAL = [
   {data:'2026-05-01',f1:79,f2:2,f3:29,f4:7},{data:'2026-05-02',f1:90,f2:1,f3:4,f4:17},
   {data:'2026-05-05',f1:93,f2:5,f3:41,f4:27},{data:'2026-05-06',f1:46,f2:1,f3:1,f4:10},
@@ -2398,7 +2375,7 @@ const PCP_INICIAL = [
 ];
 
 // Senhas dos colaboradores (editáveis pelo ADM via localStorage)
-const SENHAS_DEFAULT = {André:'andre123',Aline:'aline123',Lory:'lory123',Ludy:'ludy123',Wanessa:'wanessa123'};
+const SENHAS_DEFAULT = {André:'andre123',Aline:'aline123',Lory:'lory123',Ludy:'ludy123',Wanessa:'wanessa123','Ajuda de outros times':'ajuda123'};
 function getSenhas(){
   try{const s=localStorage.getItem('patec_senhas');return s?JSON.parse(s):SENHAS_DEFAULT;}
   catch{return SENHAS_DEFAULT;}
@@ -2413,7 +2390,7 @@ function getMeta(){
 }
 
 const LINHAS_PROD = ['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
-const COLABS = ['André','Lory','Ludy','Wanessa']; // Aline transferida Mai/2026
+const COLABS = ['André','Lory','Ludy','Wanessa','Ajuda de outros times']; // Aline transferida Mai/2026
 BANCO_HE = COLABS.map(c => ({ colab: c, periodos: [] })); // inicializa BANCO_HE
 const SENHA_PCP = 'patec2026';
 
@@ -3986,6 +3963,29 @@ function admExportCruz(){
 function admDlModelo(){
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([['RC','ITEM_RC','OPORTUNIDADE','ITEM_OP'],['35638735','10','7004592687','1']]);
   ws['!cols']=[{wch:14},{wch:10},{wch:20},{wch:12}];XLSX.utils.book_append_sheet(wb,ws,'MAPA_PATEC');XLSX.writeFile(wb,'MAPA_PATEC_modelo.xlsx');
+}
+
+// ── ZERAR PRODUÇÃO FIREBASE ──
+async function zerarProducaoFirebase(){
+  if(!confirm('Tem certeza? Isso vai apagar TODOS os registros de produção do Firebase permanentemente!')) return;
+  if(!confirm('Confirma mesmo? Esta ação não pode ser desfeita.')) return;
+  try {
+    // Buscar todos os documentos da coleção producao e deletar
+    const db = getDB();
+    if(!db){ alert('Firebase não conectado.'); return; }
+    const snap = await db.collection('producao').get();
+    const batch = db.batch();
+    snap.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    // Zerar também localmente
+    registros.length = 0;
+    localStorage.removeItem('patec_registros');
+    renderAdmExport();
+    renderExport();
+    alert('✅ Produção zerada com sucesso! ' + snap.docs.length + ' registros removidos.');
+  } catch(e) {
+    alert('Erro ao zerar: ' + e.message);
+  }
 }
 
 // ── EXPORTAR ADM ──
