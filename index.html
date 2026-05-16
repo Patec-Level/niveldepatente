@@ -1669,6 +1669,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </div>
           </div>
 
+          <!-- Aviso composição -->
+          <div id="pr-composicao-aviso" style="display:none;background:var(--vmc);color:var(--vm);border:1px solid #f5b8b8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;align-items:center;gap:8px">⚠ </div>
+
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-p" onclick="salvarProducao()">✓ Salvar produção</button>
             <button class="btn btn-s" onclick="limparProd()">↺ Limpar</button>
@@ -2493,30 +2496,51 @@ function salvarFolga(){
 // ── PRODUÇÃO: TOTAL E MOTIVAÇÃO ──
 function updProd(){
   const meta = getMeta();
-  let total=0;
-  for(let i=0;i<10;i++) total+=parseInt(document.getElementById('pf'+i)?.value||0);
-  // Total badge
+  // Total principal = apenas pf0 + pf1 (define a meta)
+  const principal = parseInt(document.getElementById('pf0')?.value||0)
+                  + parseInt(document.getElementById('pf1')?.value||0);
+  // Total composição = pf2 a pf9
+  let composicao = 0;
+  for(let i=2;i<10;i++) composicao += parseInt(document.getElementById('pf'+i)?.value||0);
+
+  // Total badge — mostra apenas o total principal
   const badge=document.getElementById('pr-total-badge');
   if(badge){
-    badge.textContent=total.toLocaleString('pt-BR');
-    badge.style.color=total>=meta?'var(--vd)':total>=meta*.8?'var(--am)':'var(--az)';
+    badge.textContent=principal.toLocaleString('pt-BR');
+    badge.style.color=principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--az)';
   }
-  // Barra de progresso
-  const pctVal=Math.min(Math.round(total/meta*100),100);
+  // Barra de progresso baseada no total principal
+  const pctVal=Math.min(Math.round(principal/meta*100),100);
   const barra=document.getElementById('pr-barra-meta');
   if(barra){
     barra.style.width=pctVal+'%';
-    barra.style.background=total>=meta?'var(--vd)':total>=meta*.8?'var(--am)':'var(--vm)';
+    barra.style.background=principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--vm)';
   }
   document.getElementById('pr-pct-meta').textContent=pctVal+'%';
+
+  // Validação composição — deve ser igual ao total principal (só valida se composição > 0)
+  const composicaoOk = composicao === 0 || composicao === principal;
+  const aviso = document.getElementById('pr-composicao-aviso');
+  const btnSalvar = document.querySelector('[onclick="salvarProducao()"]');
+  if(aviso){
+    if(composicao > 0 && composicao !== principal){
+      aviso.style.display='flex';
+      aviso.innerHTML='⚠ A soma da composição (<strong>'+composicao+'</strong>) deve ser igual ao total de itens analisados (<strong>'+principal+'</strong>). Diferença: '+(composicao-principal > 0 ? '+' : '')+(composicao-principal)+' itens.';
+      if(btnSalvar) btnSalvar.disabled=true;
+    } else {
+      aviso.style.display='none';
+      if(btnSalvar) btnSalvar.disabled=false;
+    }
+  }
+
   // Mensagem motivacional
   const motiv=document.getElementById('pr-motivacao');
-  if(motiv && total>0){
+  if(motiv && principal>0){
     motiv.style.display='flex';
-    if(total>=meta){
+    if(principal>=meta){
       motiv.style.background='var(--vdc)';motiv.style.color='#3B6D11';
       motiv.innerHTML='🎯 <span>Excelente resultado! Você atingiu a meta do dia. Continue mantendo esse nível de performance!</span>';
-    } else if(total>=meta*.8){
+    } else if(principal>=meta*.8){
       motiv.style.background='var(--amc)';motiv.style.color='#854F0B';
       motiv.innerHTML='⚡ <span>Você está muito perto da meta! Vamos dar mais um gás que você chega lá!</span>';
     } else {
@@ -2528,7 +2552,7 @@ function updProd(){
   }
   // Justificativa
   const justBox=document.getElementById('pr-justif-box');
-  if(justBox) justBox.style.display=(total>0&&total<meta)?'block':'none';
+  if(justBox) justBox.style.display=(principal>0&&principal<meta)?'block':'none';
 }
 function limparProd(){
   for(let i=0;i<10;i++){const e=document.getElementById('pf'+i);if(e)e.value='';}
@@ -2542,7 +2566,14 @@ function salvarProducao(){
   const meta=getMeta();
   const f=[];
   for(let i=0;i<10;i++) f.push(parseInt(document.getElementById('pf'+i)?.value||0));
-  const total=f.reduce((a,b)=>a+b,0);
+  const principal = f[0]+f[1];
+  const composicao = f.slice(2).reduce((a,b)=>a+b,0);
+  // Validar composição
+  if(composicao > 0 && composicao !== principal){
+    alert('A soma da composição ('+composicao+') deve ser igual ao total de itens analisados ('+principal+'). Corrija antes de salvar.');
+    return;
+  }
+  const total=principal; // meta baseada apenas nos dois campos principais
   if(total<meta){
     const justif=document.getElementById('pr-justif')?.value?.trim();
     if(!justif){alert('Justificativa obrigatória quando abaixo da meta.');document.getElementById('pr-justif')?.focus();return;}
