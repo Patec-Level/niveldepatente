@@ -941,6 +941,44 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           </div>
         </div>
 
+        <!-- Configurar novo ciclo -->
+        <div class="cd" style="border-top:3px solid var(--azm);margin-bottom:1rem">
+          <div class="cd-t">🔄 Configurar novo ciclo</div>
+          <div class="al al-b" style="margin-bottom:.875rem">
+            ℹ Informe a data de início do novo ciclo. O sistema conta automaticamente os dias úteis (seg-sex) excluindo feriados informados.
+            Deixe "Data final" em branco enquanto o ciclo estiver ativo — preencha somente ao fechar.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:.875rem">
+            <div class="field-wrap">
+              <span class="field-label">Nome do ciclo</span>
+              <input type="text" id="novo-ciclo-nome" placeholder="Ex: Ciclo Mai/Jun 2026" style="width:100%">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label">Data de início</span>
+              <input type="date" id="novo-ciclo-inicio" oninput="calcNovoCiclo()" style="width:100%">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label">Data final (só ao fechar)</span>
+              <input type="date" id="novo-ciclo-fim" oninput="calcNovoCiclo()" style="width:100%">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label">Meta individual / dia</span>
+              <input type="number" id="novo-ciclo-meta" value="90" min="1" oninput="calcNovoCiclo()" style="width:100%;text-align:center;font-weight:700;font-size:16px">
+            </div>
+            <button class="btn btn-g" onclick="aplicarNovoCiclo()" style="align-self:flex-end">✓ Aplicar</button>
+          </div>
+          <!-- Preview calculado -->
+          <div id="novo-ciclo-preview" style="display:none;padding:.875rem;background:var(--cin);border-radius:8px;font-size:12px">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap">
+              <span>Dias úteis: <strong id="ncp-dias" style="color:var(--azm)">—</strong></span>
+              <span>Dias corridos: <strong id="ncp-corridos">—</strong></span>
+              <span>Meta do ciclo: <strong id="ncp-meta" style="color:var(--vd)">—</strong></span>
+              <span>Equipe (4 pessoas): <strong id="ncp-equipe">—</strong></span>
+            </div>
+          </div>
+          <span id="novo-ciclo-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-top:6px">✓ Novo ciclo configurado!</span>
+        </div>
+
         <!-- Upload nova base -->
         <div class="cd" style="border-top:3px solid var(--vd)">
           <div class="cd-t">⬆ Upload nova base de medição</div>
@@ -1274,9 +1312,53 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <button class="btn btn-s" style="padding:5px 12px;font-size:11px;align-self:flex-end" onclick="filtrarHistMapa()">Filtrar</button>
             <button class="btn btn-s" style="padding:5px 12px;font-size:11px;align-self:flex-end" onclick="filtrarHistMapaCiclo()">Todos</button>
           </div>
+          <!-- Entrada manual de dados do mapa -->
+          <div class="cd" style="border-top:3px solid var(--vd);margin-bottom:1rem">
+            <div class="cd-t">➕ Registrar dados do mapa</div>
+            <div class="al al-b" style="margin-bottom:.875rem">ℹ Informe os dados diários do mapa. Total Geral e Total PATEC são calculados automaticamente.</div>
+            <div style="display:grid;grid-template-columns:140px repeat(6,1fr) auto;gap:8px;align-items:end;margin-bottom:.75rem">
+              <div class="field-wrap">
+                <span class="field-label">Data</span>
+                <input type="date" id="mapa-new-data" style="width:100%">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">PATEC Finalizado</span>
+                <input type="number" id="mapa-new-l3" min="0" placeholder="0" oninput="mapaCalcTotais()" style="width:100%;text-align:center">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Ag. PATEC Finalizar</span>
+                <input type="number" id="mapa-new-l4" min="0" placeholder="0" oninput="mapaCalcTotais()" style="width:100%;text-align:center">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">PATEC 100% Reprovado</span>
+                <input type="number" id="mapa-new-l5" min="0" placeholder="0" oninput="mapaCalcTotais()" style="width:100%;text-align:center">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">PATEC Cancelado</span>
+                <input type="number" id="mapa-new-l6" min="0" placeholder="0" oninput="mapaCalcTotais()" style="width:100%;text-align:center">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Abrir ID NÃO</span>
+                <input type="number" id="mapa-new-l7" min="0" placeholder="0" oninput="mapaCalcTotais()" style="width:100%;text-align:center">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Abrir PATEC Obrig.</span>
+                <input type="number" id="mapa-new-l8" min="0" placeholder="0" oninput="mapaCalcTotais()" style="width:100%;text-align:center">
+              </div>
+              <button class="btn btn-g" onclick="mapaAddDia()" style="align-self:flex-end;white-space:nowrap">+ Adicionar</button>
+            </div>
+            <!-- Totais calculados automaticamente -->
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;padding:.75rem;background:var(--cin);border-radius:8px;font-size:12px">
+              <span>Total Geral: <strong id="mapa-prev-l10" style="color:var(--az)">—</strong></span>
+              <span style="margin-left:1rem">Total PATEC: <strong id="mapa-prev-l12" style="color:var(--azm)">—</strong></span>
+              <span id="mapa-new-ok" style="color:var(--vd);font-weight:600;display:none;margin-left:auto">✓ Dia adicionado!</span>
+            </div>
+          </div>
+
           <div class="tw" style="margin-bottom:1rem">
+         
             <table>
-              <thead><tr><th>Dia</th><th>PATEC Finalizado</th><th>Ag. PATEC Finalizar</th><th>PATEC 100% Reprovado</th><th>PATEC Cancelado</th><th>Abrir ID NÃO</th><th>Abrir PATEC Obrigatório</th><th>Total Geral</th><th>Total PATEC</th><th>Var. PATEC</th></tr></thead>
+              <thead><tr><th>Dia</th><th>PATEC Finalizado</th><th>Ag. PATEC Finalizar</th><th>PATEC 100% Reprovado</th><th>PATEC Cancelado</th><th>Abrir ID NÃO</th><th>Abrir PATEC Obrigatório</th><th>Total Geral</th><th>Total PATEC</th><th>Var. PATEC</th><th></th></tr></thead>
               <tbody id="adm-mapa-tb"></tbody>
             </table>
           </div>
@@ -1908,6 +1990,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 <script>// ── GLOBAIS ──
 const HOJE = new Date();
 let BANCO_HE = []; // inicializado após COLABS
+let MAPA_MANUAL = []; // dados manuais do mapa por dia
 
 // ════════════════════════════════════════════
 // FIREBASE — Persistência multi-máquina
@@ -2141,6 +2224,8 @@ async function fbCarregarTudo(){
   // Banco HE
   await fbCarregarBHE();
   bheArquivarVencidos();
+  // Mapa manual
+  await fbCarregarMapaManual();
   // Re-renderizar
   renderFerias();
   renderBanco();
@@ -5276,6 +5361,183 @@ function renderBHEColabCard(){
   const perHTML=b.periodos.map(p=>{const tM=(p.he_h||0)*60+(p.he_m||0);const uM=(p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);const sM=tM-uM;const sH2=Math.floor(sM/60),sM2=sM%60;const vencido=!p.arquivado&&sM>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje;const corP=p.arquivado&&p.arquivado_motivo!=='Zerado'?'var(--azm)':sM<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';const statusP=p.arquivado?(p.arquivado_motivo==='Zerado'?'✅ Zerado':'💳 Pago/Arq.'):sM<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';const usosHTML=(p.usos||[]).map(u=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:${u.automatico?'rgba(26,74,138,.06)':'var(--cin)'};border-radius:6px;margin-top:4px;font-size:11px;flex-wrap:wrap"><span style="color:var(--tx2);font-weight:500">${u.data?u.data.split('-').reverse().join('/'):'—'}</span><span style="font-weight:700;color:var(--azm)">${String(u.h||0).padStart(2,'0')}h${String(u.m||0).padStart(2,'0')}min</span><span class="pl ${u.tipo==='folga'?'pl-az':'pl-w'}" style="font-size:9px">${u.tipo==='folga'?'🌴 Folga':'💰 Pgto'}</span>${u.automatico?'<span style="font-size:9px;color:var(--tx2)">⚙️ automático</span>':(u.obs?`<span style="color:var(--tx2)">${u.obs}</span>`:'')}</div>`).join('');return `<div style="border:1px solid var(--brd);border-left:3px solid ${corP};border-radius:8px;padding:.875rem;margin-bottom:.625rem${p.arquivado?';opacity:.85':''}"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px"><div><div style="font-size:13px;font-weight:700;color:var(--az)">${p.mes_ref}${p.arquivado?' <span style="font-size:9px;background:var(--azc);color:var(--azm);padding:1px 6px;border-radius:4px">📁</span>':''}</div><div style="font-size:10px;color:var(--tx2)">Venc: <strong>${p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—'}</strong> · Total: <strong>${p.he_h||0}h${String(p.he_m||0).padStart(2,'0')}min</strong>${p.obs?' · '+p.obs:''}</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:700;color:${corP}">${sH2}h${String(sM2).padStart(2,'0')}min</div><div style="font-size:10px;font-weight:600;color:${corP}">${statusP}</div></div></div>${(p.usos||[]).length?usosHTML:'<div style="font-size:11px;color:var(--tx2);padding:4px 10px">Nenhum uso registrado</div>'}</div>`;}).join('');
   colabEl.innerHTML=`<div class="cd"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.875rem;border-bottom:1px solid var(--brd)"><div style="font-size:16px;font-weight:700;color:var(--az)">👤 ${b.colab}</div><div style="text-align:center;padding:8px 18px;background:${cSaldo>0?'var(--amc)':'var(--vdc)'};border-radius:10px"><div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Saldo total</div><div style="font-size:26px;font-weight:700;color:${corSaldo};line-height:1">${Math.floor(cSaldo/60)}h${String(cSaldo%60).padStart(2,'0')}min</div><div style="font-size:10px;color:var(--tx2);margin-top:2px">${b.periodos.length} período(s)</div></div></div>${perHTML}</div>`;
 }
+
+// ════ MAPA MANUAL — entrada diária de dados ════
+async function fbSalvarMapaManual(){
+  await fbSet('config','mapa_manual',{lista:JSON.parse(JSON.stringify(MAPA_MANUAL)),ts:new Date().toISOString()});
+  localStorage.setItem('patec_mapa_manual',JSON.stringify(MAPA_MANUAL));
+  localStorage.setItem('patec_mapa_manual_ts',String(Date.now()));
+  console.log('✓ Mapa manual salvo');
+}
+
+async function fbCarregarMapaManual(){
+  const dados=await fbGet('config','mapa_manual');
+  const lsRaw=localStorage.getItem('patec_mapa_manual');
+  const fbTs=dados?.ts?new Date(dados.ts).getTime():0;
+  const lsTs=parseInt(localStorage.getItem('patec_mapa_manual_ts')||'0');
+  if(dados&&dados.lista&&dados.lista.length>0&&fbTs>=lsTs){
+    MAPA_MANUAL=dados.lista;
+    console.log('✓ Mapa manual (Firebase):',MAPA_MANUAL.length,'dias');
+  } else if(lsRaw&&lsTs>fbTs){
+    try{MAPA_MANUAL=JSON.parse(lsRaw);if(MAPA_MANUAL.length>0)await fbSalvarMapaManual();}catch(e){}
+  }
+  // Mesclar dados manuais com os dados estáticos (L array)
+  mapaMesclarComEstaticos();
+}
+
+function mapaMesclarComEstaticos(){
+  // Os dados manuais sobrescrevem ou complementam os dados estáticos
+  MAPA_MANUAL.forEach(d=>{
+    const iso=d.data;
+    const idx=DATAS_ISO_MAPA.indexOf(iso);
+    if(idx>=0){
+      // Atualizar dados estáticos existentes
+      L[3][idx]=d.l3; L[4][idx]=d.l4; L[5][idx]=d.l5;
+      L[6][idx]=d.l6; L[7][idx]=d.l7; L[8][idx]=d.l8;
+    } else {
+      // Novo dia — adicionar nas arrays
+      const dt=new Date(iso);
+      const meses={4:'abr',5:'mai',6:'jun',7:'jul',8:'ago',9:'set',10:'out',11:'nov',12:'dez',3:'mar'};
+      const fmt=`${String(dt.getDate()).padStart(2,'0')}/${meses[dt.getMonth()+1]}`;
+      DATAS_ISO_MAPA.push(iso);
+      DATAS_MAPA.push(fmt);
+      L[3].push(d.l3); L[4].push(d.l4); L[5].push(d.l5);
+      L[6].push(d.l6); L[7].push(d.l7); L[8].push(d.l8);
+    }
+  });
+  // Reordenar por data
+  const zipped=DATAS_ISO_MAPA.map((iso,i)=>({iso,fmt:DATAS_MAPA[i],l3:L[3][i],l4:L[4][i],l5:L[5][i],l6:L[6][i],l7:L[7][i],l8:L[8][i]}));
+  zipped.sort((a,b)=>a.iso.localeCompare(b.iso));
+  DATAS_ISO_MAPA.splice(0);zipped.forEach((z,i)=>DATAS_ISO_MAPA[i]=z.iso);
+  DATAS_MAPA.splice(0);zipped.forEach((z,i)=>DATAS_MAPA[i]=z.fmt);
+  [3,4,5,6,7,8].forEach(ln=>L[ln].splice(0));
+  zipped.forEach((z,i)=>{L[3][i]=z.l3;L[4][i]=z.l4;L[5][i]=z.l5;L[6][i]=z.l6;L[7][i]=z.l7;L[8][i]=z.l8;});
+}
+
+function mapaCalcTotais(){
+  const l3=parseInt(document.getElementById('mapa-new-l3')?.value||0);
+  const l4=parseInt(document.getElementById('mapa-new-l4')?.value||0);
+  const l5=parseInt(document.getElementById('mapa-new-l5')?.value||0);
+  const l6=parseInt(document.getElementById('mapa-new-l6')?.value||0);
+  const l7=parseInt(document.getElementById('mapa-new-l7')?.value||0);
+  const l8=parseInt(document.getElementById('mapa-new-l8')?.value||0);
+  const l10=l3+l4+l5+l6+l7+l8;
+  const l12=l3+l4+l5+l6;
+  const el10=document.getElementById('mapa-prev-l10');
+  const el12=document.getElementById('mapa-prev-l12');
+  if(el10)el10.textContent=l10.toLocaleString('pt-BR');
+  if(el12)el12.textContent=l12.toLocaleString('pt-BR');
+}
+
+async function mapaAddDia(){
+  const data=document.getElementById('mapa-new-data')?.value;
+  if(!data){alert('Informe a data.');return;}
+  const l3=parseInt(document.getElementById('mapa-new-l3')?.value||0);
+  const l4=parseInt(document.getElementById('mapa-new-l4')?.value||0);
+  const l5=parseInt(document.getElementById('mapa-new-l5')?.value||0);
+  const l6=parseInt(document.getElementById('mapa-new-l6')?.value||0);
+  const l7=parseInt(document.getElementById('mapa-new-l7')?.value||0);
+  const l8=parseInt(document.getElementById('mapa-new-l8')?.value||0);
+  if(!l3&&!l4&&!l5&&!l6&&!l7&&!l8){alert('Preencha pelo menos um campo.');return;}
+
+  // Remover dia existente se já tiver
+  MAPA_MANUAL=MAPA_MANUAL.filter(d=>d.data!==data);
+  MAPA_MANUAL.push({data,l3,l4,l5,l6,l7,l8});
+  MAPA_MANUAL.sort((a,b)=>a.data.localeCompare(b.data));
+
+  // Salvar no Firebase
+  await fbSalvarMapaManual();
+  mapaMesclarComEstaticos();
+  filtrarHistMapa('all');
+
+  // Limpar campos
+  ['mapa-new-data','mapa-new-l3','mapa-new-l4','mapa-new-l5','mapa-new-l6','mapa-new-l7','mapa-new-l8'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('mapa-prev-l10').textContent='—';
+  document.getElementById('mapa-prev-l12').textContent='—';
+  const ok=document.getElementById('mapa-new-ok');
+  if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',3000);}
+}
+
+async function mapaRemDia(data){
+  if(!confirm('Remover dados de '+data.split('-').reverse().join('/')+' ?'))return;
+  MAPA_MANUAL=MAPA_MANUAL.filter(d=>d.data!==data);
+  await fbSalvarMapaManual();
+  // Reconstruir arrays L do zero (estáticos) e reaplicar manuais
+  location.reload(); // Reload garante estado limpo dos arrays estáticos
+}
+
+
+// ════ CONFIGURAR NOVO CICLO ════
+function calcNovoCiclo(){
+  const inicio=document.getElementById('novo-ciclo-inicio')?.value;
+  const fim=document.getElementById('novo-ciclo-fim')?.value;
+  const meta=parseInt(document.getElementById('novo-ciclo-meta')?.value||90);
+  const prev=document.getElementById('novo-ciclo-preview');
+  if(!inicio){if(prev)prev.style.display='none';return;}
+  if(prev)prev.style.display='block';
+
+  const dtInicio=new Date(inicio+'T12:00:00');
+  // Usar data fim ou data atual (ciclo ativo)
+  const dtFim=fim?new Date(fim+'T12:00:00'):new Date();
+
+  // Contar dias úteis (seg=1 a sex=5)
+  let diasUteis=0, diasCorridos=0;
+  let dt=new Date(dtInicio);
+  while(dt<=dtFim){
+    const dow=dt.getDay();
+    if(dow>=1&&dow<=5) diasUteis++;
+    diasCorridos++;
+    dt.setDate(dt.getDate()+1);
+  }
+
+  const metaCiclo=diasUteis*meta*4; // 4 pessoas (André, Lory, Ludy, Wanessa)
+  document.getElementById('ncp-dias').textContent=diasUteis;
+  document.getElementById('ncp-corridos').textContent=diasCorridos;
+  document.getElementById('ncp-meta').textContent=metaCiclo.toLocaleString('pt-BR');
+  document.getElementById('ncp-equipe').textContent=(diasUteis*meta).toLocaleString('pt-BR')+' por pessoa';
+}
+
+function aplicarNovoCiclo(){
+  const nome=document.getElementById('novo-ciclo-nome')?.value?.trim();
+  const inicio=document.getElementById('novo-ciclo-inicio')?.value;
+  const fim=document.getElementById('novo-ciclo-fim')?.value||'';
+  const meta=parseInt(document.getElementById('novo-ciclo-meta')?.value||90);
+  if(!nome||!inicio){alert('Preencha o nome e a data de início.');return;}
+
+  // Calcular dias úteis
+  const dtInicio=new Date(inicio+'T12:00:00');
+  const dtFim=fim?new Date(fim+'T12:00:00'):new Date();
+  let diasUteis=0;
+  let dt=new Date(dtInicio);
+  while(dt<=dtFim){const dow=dt.getDay();if(dow>=1&&dow<=5)diasUteis++;dt.setDate(dt.getDate()+1);}
+
+  const metaCiclo=diasUteis*meta*4;
+  const id=inicio.replace(/-/g,'').slice(0,8);
+
+  // Gerar código JS para copiar
+  const codigo=`// Cole no início do script (substituindo CICLO_ATUAL):
+const CICLO_ATUAL = {
+  id: '${id}',
+  nome: '${nome}',
+  inicio: '${inicio}',
+  fim: '${fim||'em aberto'}',
+  meta_ciclo: ${metaCiclo},
+  dias_uteis: ${diasUteis},
+  status: '${fim?'fechado':'ativo'}',
+};
+const META = ${meta};
+const DIAS_UTEIS = ${diasUteis};`;
+
+  // Mostrar em modal/alert com o código
+  const msg=`Novo ciclo calculado:\n\nNome: ${nome}\nInício: ${inicio.split('-').reverse().join('/')}\nFim: ${fim?fim.split('-').reverse().join('/'):'Em aberto (ativo)'}\nDias úteis: ${diasUteis}\nMeta do ciclo: ${metaCiclo.toLocaleString('pt-BR')}\nMeta/dia/pessoa: ${meta}\n\nEnvie estas informações ao Claude para atualizar o arquivo!`;
+  alert(msg);
+
+  const ok=document.getElementById('novo-ciclo-ok');
+  if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',4000);}
+}
+
 // ══ INIT SEGURO ══
 // Atualizar data na topbar
 (function(){
