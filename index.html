@@ -5033,7 +5033,25 @@ function renderBHECards(){
         });
       });
     });
-    // Cards de resumo do mês
+    const saldoPendenteMin = Math.max(0, totalMesMin - folgaMin - pagoMin);
+
+    // Calcular HE a pagar: saldo de períodos VENCIDOS/ARQUIVADOS que viraram pagamento automático
+    let hePagarMin = 0;
+    BANCO_HE.forEach(b=>{
+      getPs(b).forEach(p=>{
+        if(p.arquivado && p.arquivado_motivo && p.arquivado_motivo.includes('automaticamente')){
+          (p.usos||[]).filter(u=>u.automatico).forEach(u=>{ hePagarMin+=(u.h||0)*60+(u.m||0); });
+        }
+      });
+    });
+
+    // Verificar se o mês já fechou (vencimento de todos os períodos passou)
+    const hoje=HOJE.toISOString().split('T')[0];
+    const todosFechados = BANCO_HE.every(b=>
+      getPs(b).every(p=> !p.vencimento || String(p.vencimento).slice(0,10) < hoje || p.arquivado)
+    );
+
+    // Cards de resumo
     const cardsMes=document.createElement('div');
     cardsMes.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem';
     cardsMes.innerHTML=`
@@ -5043,20 +5061,71 @@ function renderBHECards(){
         <div class="kc-s">horas extras feitas</div>
       </div>
       <div class="kc ok">
-        <div class="kc-l">Compensado (folgas)</div>
+        <div class="kc-l">Compensado em folgas</div>
         <div class="kc-v">${Math.floor(folgaMin/60)}h${String(folgaMin%60).padStart(2,'0')}min</div>
         <div class="kc-s">dias de folga concedidos</div>
       </div>
       <div class="kc" style="border-top-color:var(--azm)">
-        <div class="kc-l">Horas pagas</div>
-        <div class="kc-v" style="color:var(--azm)">${Math.floor(pagoMin/60)}h${String(pagoMin%60).padStart(2,'0')}min</div>
-        <div class="kc-s">pagamento hora extra</div>
+        <div class="kc-l">Saldo pendente</div>
+        <div class="kc-v" style="color:var(--azm)">${Math.floor(saldoPendenteMin/60)}h${String(saldoPendenteMin%60).padStart(2,'0')}min</div>
+        <div class="kc-s">a decidir: folga ou pagamento</div>
+      </div>
+      <div class="kc" style="border-top-color:${hePagarMin>0?'var(--vm)':'var(--brd)'}">
+        <div class="kc-l">💳 HE a pagar</div>
+        <div class="kc-v" style="color:${hePagarMin>0?'var(--vm)':'var(--tx2);font-size:14px'}">${hePagarMin>0?Math.floor(hePagarMin/60)+'h'+String(hePagarMin%60).padStart(2,'0')+'min':todosFechados&&saldoPendenteMin>0?'⚠ Verificar':'Aguardando fechamento'}</div>
+        <div class="kc-s">${hePagarMin>0?'após vencimento do prazo':todosFechados&&saldoPendenteMin>0?'saldo sem folga registrada':'zerado até o vencimento'}</div>
       </div>
     `;
     limitePainel.innerHTML='';
     limitePainel.appendChild(cardsMes);
 
-    const limMin=limite.h*60+limite.m;if(limMin>0){const exc=totalMesMin-limMin;const excH=Math.floor(Math.abs(exc)/60),excM=Math.abs(exc)%60;const pct=Math.min(Math.round(totalMesMin/limMin*100),999);const dentro=totalMesMin<=limMin;limitePainel.innerHTML=`<div class="cd" style="border-top:3px solid ${dentro?'var(--vd)':'var(--vm)'}"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;align-items:center"><div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">HE feita em <strong>${mesFiltro}</strong></div><div style="font-size:28px;font-weight:700;color:var(--am);line-height:1">${Math.floor(totalMesMin/60)}h${String(totalMesMin%60).padStart(2,'0')}min</div></div><div><div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Limite mensal</div><div style="font-size:28px;font-weight:700;color:var(--az);line-height:1">${limite.h}h${String(limite.m).padStart(2,'0')}min</div><div style="height:5px;background:#eee;border-radius:3px;overflow:hidden;margin-top:6px"><div style="height:100%;background:${dentro?'var(--vd)':'var(--vm)'};border-radius:3px;width:${Math.min(pct,100)}%"></div></div><div style="font-size:10px;color:var(--tx2);margin-top:3px">${pct}% utilizado</div></div><div style="padding:1rem;border-radius:10px;background:${dentro?'var(--vdc)':'var(--vmc)'};border:1px solid ${dentro?'rgba(14,158,106,.2)':'rgba(217,64,64,.2)'}"><div style="font-size:11px;font-weight:700;color:${dentro?'var(--vd)':'var(--vm)'};margin-bottom:4px">${dentro?'✅ Dentro do limite':'⚠️ Acima do limite'}</div>${dentro?`<div style="font-size:12px;color:var(--tx2)">Folga ou pagamento: <strong>a critério</strong></div><div style="font-size:11px;color:var(--vd);margin-top:3px">Margem: ${Math.floor((limMin-totalMesMin)/60)}h${String((limMin-totalMesMin)%60).padStart(2,'0')}min</div>`:`<div style="font-size:12px;color:var(--tx2)">Excedente: <strong style="color:var(--vm)">${excH}h${String(excM).padStart(2,'0')}min</strong></div><div style="font-size:11px;color:var(--vm);margin-top:3px;font-weight:600">🌴 Obrigado a dar folga!</div>`}</div></div></div>`;if(limiteBadge){limiteBadge.style.display='block';limiteBadge.innerHTML=dentro?'✅ Dentro do limite':`⚠️ Excede em ${excH}h${String(excM).padStart(2,'0')}min`;limiteBadge.style.cssText+=`;background:${dentro?'var(--vdc)':'var(--vmc)'};color:${dentro?'var(--vd)':'var(--vm)'};border-color:${dentro?'rgba(14,158,106,.3)':'rgba(217,64,64,.3)'};font-weight:600`;}}else{limitePainel.innerHTML='<div class="al al-a">⚠ Nenhum limite mensal configurado. Acesse ADM → Banco de Horas para definir.</div>';if(limiteBadge)limiteBadge.style.display='none';}}else{if(limitePainel)limitePainel.style.display='none';if(limiteBadge)limiteBadge.style.display='none';}
+    // Painel de limite mensal — usa saldo pendente (o que ainda vai impactar o orçamento)
+    const limMin=limite.h*60+limite.m;
+    if(limMin>0){
+      const saldoVsLimite = saldoPendenteMin; // o que ainda precisa ser pago ou folgado
+      const pct=Math.min(Math.round(saldoVsLimite/limMin*100),999);
+      const dentro=saldoVsLimite<=limMin;
+      const excH=Math.floor(Math.abs(saldoVsLimite-limMin)/60), excM=Math.abs(saldoVsLimite-limMin)%60;
+      const limPainelDiv=document.createElement('div');
+      limPainelDiv.innerHTML=`<div class="cd" style="border-top:3px solid ${dentro?'var(--vd)':'var(--vm)'}">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;align-items:center">
+          <div>
+            <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Saldo pendente em <strong>${mesFiltro}</strong></div>
+            <div style="font-size:28px;font-weight:700;color:var(--am);line-height:1">${Math.floor(saldoPendenteMin/60)}h${String(saldoPendenteMin%60).padStart(2,'0')}min</div>
+            <div style="font-size:10px;color:var(--tx2);margin-top:4px">a decidir: folga ou pagar</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">Limite mensal</div>
+            <div style="font-size:28px;font-weight:700;color:var(--az);line-height:1">${limite.h}h${String(limite.m).padStart(2,'0')}min</div>
+            <div style="height:5px;background:#eee;border-radius:3px;overflow:hidden;margin-top:6px">
+              <div style="height:100%;background:${dentro?'var(--vd)':'var(--vm)'};border-radius:3px;width:${Math.min(pct,100)}%"></div>
+            </div>
+            <div style="font-size:10px;color:var(--tx2);margin-top:3px">${pct}% do limite a decidir</div>
+          </div>
+          <div style="padding:1rem;border-radius:10px;background:${dentro?'var(--vdc)':'var(--vmc)'};border:1px solid ${dentro?'rgba(14,158,106,.2)':'rgba(217,64,64,.2)'}">
+            <div style="font-size:11px;font-weight:700;color:${dentro?'var(--vd)':'var(--vm)'};margin-bottom:4px">${dentro?'✅ Dentro do limite':'⚠️ Acima do limite'}</div>
+            ${dentro
+              ?`<div style="font-size:12px;color:var(--tx2)">Folga ou pagamento: <strong>a critério</strong></div>
+                <div style="font-size:11px;color:var(--vd);margin-top:3px">Margem: ${Math.floor((limMin-saldoVsLimite)/60)}h${String((limMin-saldoVsLimite)%60).padStart(2,'0')}min</div>`
+              :`<div style="font-size:12px;color:var(--tx2)">Excedente: <strong style="color:var(--vm)">${excH}h${String(excM).padStart(2,'0')}min</strong></div>
+                <div style="font-size:11px;color:var(--vm);margin-top:3px;font-weight:600">🌴 Obrigado a dar folga!</div>`
+            }
+          </div>
+        </div>
+      </div>`;
+      limitePainel.appendChild(limPainelDiv);
+      if(limiteBadge){limiteBadge.style.display='block';limiteBadge.innerHTML=dentro?'✅ Dentro do limite':`⚠️ Excede em ${excH}h${String(excM).padStart(2,'0')}min`;
+        limiteBadge.style.cssText+=`;background:${dentro?'var(--vdc)':'var(--vmc)'};color:${dentro?'var(--vd)':'var(--vm)'};border-color:${dentro?'rgba(14,158,106,.3)':'rgba(217,64,64,.3)'};font-weight:600`;}
+    } else {
+      const semLimDiv=document.createElement('div');
+      semLimDiv.innerHTML='<div class="al al-a">⚠ Nenhum limite mensal configurado. Acesse ADM → Banco de Horas para definir.</div>';
+      limitePainel.appendChild(semLimDiv);
+      if(limiteBadge)limiteBadge.style.display='none';
+    }
+  }else{
+    if(limitePainel)limitePainel.style.display='none';
+    if(limiteBadge)limiteBadge.style.display='none';
+  }
   renderBHEColabCard();
 }
 function renderBHEColabCard(){
