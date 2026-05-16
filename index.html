@@ -2125,13 +2125,17 @@ async function fbCarregarTudo(){
     console.log('✓ Férias carregadas (Firebase fallback):', FERIAS_DATA.length, 'períodos');
   }
   // Reconstruir _feriasState para o formulário ADM
+  _feriasState = {};
+  COLABS.forEach(c => { _feriasState[c] = []; });
   if(FERIAS_DATA.length > 0){
-    _feriasState = {};
-    COLABS.forEach(c => { _feriasState[c] = []; });
     FERIAS_DATA.forEach(r => {
       if(_feriasState[r.colab]) _feriasState[r.colab].push({saida:r.saida||'',dias:r.dias||30,retorno:r.retorno||''});
     });
-    COLABS.forEach(c => { if(!_feriasState[c].length) _feriasState[c]=[{saida:'',dias:30,retorno:''}]; });
+  }
+  COLABS.forEach(c => { if(!_feriasState[c].length) _feriasState[c]=[{saida:'',dias:30,retorno:''}]; });
+  // Atualizar formulário do ADM se estiver aberto
+  if(document.getElementById('adm-painel')?.style.display !== 'none'){
+    renderFeriasForm();
   }
 
   // Banco de horas
@@ -3418,14 +3422,19 @@ async
 let _feriasState = {};
 
 function renderFeriasForm(){
-  // Inicializar estado a partir de FERIAS_DATA
-  _feriasState = {};
-  COLABS.forEach(c => { _feriasState[c] = []; });
-  (FERIAS_DATA || []).forEach(r => {
-    if(_feriasState[r.colab]) _feriasState[r.colab].push({saida:r.saida||'',dias:r.dias||30,retorno:r.retorno||''});
-  });
+  // Se _feriasState já foi preenchido pelo Firebase, manter (não resetar)
+  // Só inicializar se estiver completamente vazio
+  const jaTem = COLABS.some(c => (_feriasState[c]||[]).some(p => p.saida));
+  if(!jaTem){
+    // Inicializar a partir de FERIAS_DATA (que pode ter vindo do Firebase)
+    _feriasState = {};
+    COLABS.forEach(c => { _feriasState[c] = []; });
+    (FERIAS_DATA || []).forEach(r => {
+      if(_feriasState[r.colab]) _feriasState[r.colab].push({saida:r.saida||'',dias:r.dias||30,retorno:r.retorno||''});
+    });
+  }
   // Garantir pelo menos 1 linha por colaborador
-  COLABS.forEach(c => { if(!_feriasState[c].length) _feriasState[c].push({saida:'',dias:30,retorno:''}); });
+  COLABS.forEach(c => { if(!(_feriasState[c]||[]).length) { _feriasState[c]=[{saida:'',dias:30,retorno:''}]; } });
   _renderFeriasColabs();
 }
 
@@ -3532,11 +3541,12 @@ async function salvarFeriasAdm(){
     });
   });
   FERIAS_DATA.sort((a,b) => a.saida.localeCompare(b.saida));
+  console.log('💾 Salvando férias:', FERIAS_DATA.length, 'períodos:', JSON.stringify(FERIAS_DATA));
   // Salvar localStorage E Firebase
   localStorage.setItem('patec_ferias', JSON.stringify(FERIAS_DATA));
   localStorage.setItem('patec_ferias_ts', String(Date.now()));
-  await fbSalvarFerias();
-  console.log('✓ Férias salvas — Firebase + localStorage:', FERIAS_DATA.length, 'períodos');
+  const salvou = await fbSalvarFerias();
+  console.log('✓ Férias salvas — Firebase:', salvou, '| localStorage:', FERIAS_DATA.length, 'períodos');
   renderFerias();
   _atualizarFeriasPreview();
   const ok = document.getElementById('adm-ferias-ok');
