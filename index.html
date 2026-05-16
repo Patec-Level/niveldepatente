@@ -2723,8 +2723,29 @@ function renderFerias(){
   const elProg     = document.getElementById('bf-prog');
   if(elProxNome) elProxNome.textContent = prox ? prox.colab : '—';
   if(elProxDt)   elProxDt.textContent   = prox ? prox.saida.split('-').reverse().join('/') : '—';
-  if(elAgora)    elAgora.textContent    = emFerias > 0 ? emFerias + ' pessoa(s)' : 'Ninguém';
   if(elProg)     elProg.textContent     = prog;
+
+  // Card "Em férias agora" — mostrar nome(s) e data de retorno
+  if(elAgora){
+    if(emFerias === 0){
+      elAgora.textContent = 'Ninguém';
+      elAgora.style.fontSize = '16px';
+    } else {
+      // Coletar todos em férias agora
+      const emFeriasLista = dados.filter(r => {
+        const retIso = r.retorno ? r.retorno.split('/').reverse().join('-') : '';
+        return r.saida <= hoje && retIso >= hoje;
+      });
+      elAgora.style.fontSize = '13px';
+      elAgora.innerHTML = emFeriasLista.map(r => {
+        const retFmt = r.retorno || '—';
+        return `<div style="margin-bottom:4px">
+          <span style="font-size:15px;font-weight:700;color:var(--vm)">${r.colab}</span>
+          <span style="font-size:11px;color:var(--tx2);display:block;margin-top:1px">↩ Retorno: <strong>${retFmt}</strong></span>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 function renderBanco(){
   if(!document.getElementById('bh-tb')) return;
