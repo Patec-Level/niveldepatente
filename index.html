@@ -1951,19 +1951,12 @@ async function loadFirebaseSDK(){
   }
   _firebaseLoading = true;
 
-  // Lista de CDNs para tentar em sequência
+  // CDNs gstatic (confiáveis para GitHub Pages — sem CORS)
   const CDN_SETS = [
-    // CDN 1: unpkg
-    [
-      'https://unpkg.com/firebase@10.12.0/compat/app/dist/app.browser.esm.js',
-      'https://unpkg.com/firebase@10.12.0/compat/firestore/dist/firestore.browser.esm.js',
-    ],
-    // CDN 2: gstatic oficial
     [
       'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
       'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js',
     ],
-    // CDN 3: versão mais antiga e estável
     [
       'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
       'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
