@@ -3413,84 +3413,57 @@ async function analisarIA(tipo){
   const resultEl=document.getElementById(`adm-ia-${tipo}-result`);
   const txtEl=document.getElementById(`adm-ia-${tipo}-txt`);
   const btn=document.getElementById(`adm-ia-${tipo}-btn`);
-  const prompt=promptEl.value.trim();
-  if(!prompt){alert('Escreva sua pergunta antes de analisar.');return;}
+  const pergunta=promptEl.value.trim();
+  if(!pergunta){alert('Escreva sua pergunta antes de analisar.');return;}
 
-  // Montar contexto de dados
+  // Contexto de dados
   let contexto='';
   if(tipo==='mapa'){
     const l12arr=L[3].map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]);
-    const l10arr=L[3].map((_,i)=>Object.keys(L).reduce((s,k)=>s+L[k][i],0));
-    contexto='Dados do Histórico do Mapa PATEC (ciclo Maio 2026, 9 dias registrados):\n'+
-    DATAS_MAPA.map(function(dt,i){
-      return 'Dia '+(i+1)+' ('+dt+'): L3='+L[3][i]+' L4='+L[4][i]+' L5='+L[5][i]+' L6='+L[6][i]+' L7='+L[7][i]+' L8='+L[8][i]+' | L10='+l10arr[i]+' L12='+l12arr[i]+' Var.L12='+(i>0?l12arr[i]-l12arr[i-1]:'-');
-    }).join('\n')+
-    '\nLevel Board atual: L3=1019 L4=1215 L5=43 L6=405 L7=1694 L8=140 | L10=4516 L12=2682'
+    const l10arr=L[3].map((_,i)=>L[3][i]+L[4][i]+L[5][i]+L[6][i]+L[7][i]+L[8][i]);
+    contexto='Histórico do Mapa PATEC — Ciclo Abr/Mai 2026 ('+DATAS_MAPA.length+' dias registrados):\n'+
+    DATAS_MAPA.map((dt,i)=>`Dia ${i+1} (${dt}): PATEC Finalizado=${L[3][i]} | Ag.Finalizar=${L[4][i]} | 100%Reprov=${L[5][i]} | Cancelado=${L[6][i]} | AbrirIDNão=${L[7][i]} | AbrirObrig=${L[8][i]} | TotalGeral=${l10arr[i]} | TotalPATEC=${l12arr[i]}`).join('\n');
   } else {
-    const colab=document.getElementById('adm-prod-colab').value||'toda a equipe';
+    const colab=document.getElementById('adm-prod-colab')?.value||'toda a equipe';
     const regsIA=colab==='toda a equipe'?registros:registros.filter(r=>r.colab===colab);
-    contexto='Dados de Produção PATEC — '+colab+' (ciclo Maio 2026):\n'+
-    'Meta mínima: '+getMeta()+' itens/dia\n'+
-    'Linhas: Analisados, Tratativa, Fornecedor, Requisitante, MDG, Val.Thiago, XGL, Republicação, Pedidos, Devoluções\n'+
-    regsIA.slice().sort(function(a,b){return a.data.localeCompare(b.data);}).map(function(r){
-      return fmtDt(r.data)+' | '+r.colab+' | '+r.pres+' | Analisados: '+r.f[0]+' | Total: '+r.f.reduce(function(a,b){return a+b;},0)+(r.justif?' | Justif: '+r.justif:'');
-    }).join('\n')
+    contexto='Produção PATEC — '+colab+' (ciclo Abr/Mai 2026)\nMeta: '+getMeta()+' itens/dia\n'+
+    regsIA.slice().sort((a,b)=>a.data.localeCompare(b.data))
+      .map(r=>`${fmtDt(r.data)} | ${r.colab} | ${r.pres} | Analisados:${r.f[0]} | Total:${r.f.reduce((a,b)=>a+b,0)}${r.justif?' | '+r.justif:''}`).join('\n');
   }
+
+  const fullPrompt='Você é um analista de compras e procurement. Analise os dados e responda em português de forma objetiva e estruturada.\n\nDADOS:\n'+contexto+'\n\nPERGUNTA:\n'+pergunta+'\n\nDê insights práticos e sugira ações quando relevante.';
 
   btn.disabled=true;
   btn.innerHTML='<span class="ia-spin">↻</span> Analisando...';
   resultEl.style.display='block';
   txtEl.innerHTML='<span class="ia-loading"><span class="ia-spin">↻</span> Consultando IA...</span>';
 
-  // Montar prompt e codificar em base64 para passar ao iframe via window.name
-  const fullPrompt='Você é um analista especializado em gestão de compras e procurement. Analise os dados abaixo e responda à pergunta do gestor de forma clara, objetiva e em português.\n\nDADOS:\n'+contexto+'\n\nPERGUNTA DO GESTOR:\n'+prompt+'\n\nResponda de forma estruturada com insights práticos e sugestões de ação quando relevante.';
+  // Proxy CORS que suporta POST — contorna bloqueio do GitHub Pages
+  const PROXY='https://corsproxy.io/?';
+  const API_URL='https://api.anthropic.com/v1/messages';
 
-  // Listener antes de criar o iframe
-  const handler=(ev)=>{
-    if(ev.data&&ev.data.type==='ia-resp'){
-      window.removeEventListener('message',handler);
-      txtEl.textContent=ev.data.texto;
-      btn.disabled=false;
-      btn.innerHTML='🤖 Analisar com IA';
-      const fr=document.getElementById('ia-frame-tmp');
-      if(fr)fr.remove();
+  try{
+    const resp=await fetch(PROXY+encodeURIComponent(API_URL),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1200,
+        messages:[{role:'user',content:fullPrompt}]
+      })
+    });
+    if(!resp.ok){
+      const err=await resp.text();
+      throw new Error('Status '+resp.status+': '+err.slice(0,200));
     }
-  };
-  window.addEventListener('message',handler);
-
-  // Criar iframe — passa o prompt via postMessage após load
-  let fr=document.getElementById('ia-frame-tmp');
-  if(fr)fr.remove();
-  fr=document.createElement('iframe');
-  fr.id='ia-frame-tmp';
-  fr.style.cssText='display:none;position:fixed;width:1px;height:1px';
-  fr.srcdoc='<!DOCTYPE html><html><body><script>'+
-    'window.addEventListener(\'message\',function(ev){'+
-    '  if(ev.data&&ev.data.type===\'ia-run\'){'+
-    '    fetch(\'https://api.anthropic.com/v1/messages\',{'+
-    '      method:\'POST\','+
-    '      headers:{\'Content-Type\':\'application/json\'},'+
-    '      body:JSON.stringify({model:\'claude-sonnet-4-20250514\',max_tokens:1200,messages:[{role:\'user\',content:ev.data.prompt}]})'+
-    '    }).then(function(r){return r.json();})'+
-    '    .then(function(d){'+
-    '      var t=(d.content||[]).map(function(c){return c.text||\'\'}).join(\'\\n\')||(d.error&&d.error.message)||\'Sem resposta.\';'+
-    '      ev.source.postMessage({type:\'ia-resp\',texto:t},\'*\');'+
-    '    })'+
-    '    .catch(function(e){ev.source.postMessage({type:\'ia-resp\',texto:\'Erro: \'+e.message},\'*\');});'+
-    '  }'+
-    '});'+
-    'window.parent.postMessage({type:\'ia-ready\'},\'*\');'+
-    '<\/script></body></html>';
-
-  // Quando iframe estiver pronto, enviar o prompt
-  const readyHandler=(ev)=>{
-    if(ev.data&&ev.data.type==='ia-ready'){
-      window.removeEventListener('message',readyHandler);
-      fr.contentWindow.postMessage({type:'ia-run',prompt:fullPrompt},'*');
-    }
-  };
-  window.addEventListener('message',readyHandler);
-  document.body.appendChild(fr);
+    const data=await resp.json();
+    const texto=(data.content||[]).map(c=>c.text||'').join('\n')||data.error?.message||'Sem resposta.';
+    txtEl.textContent=texto;
+  }catch(err){
+    txtEl.textContent='Erro ao consultar IA: '+err.message;
+  }
+  btn.disabled=false;
+  btn.innerHTML='🤖 Analisar com IA';
 }
 
 // ── FÉRIAS ADM ──
