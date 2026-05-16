@@ -3438,7 +3438,7 @@ async function analisarIA(tipo){
   resultEl.style.display='block';
   txtEl.innerHTML='<span class="ia-loading"><span class="ia-spin">↻</span> Consultando IA...</span>';
 
-  // Worker Cloudflare — continuação do sistema PATEC — Worker URL: patec-ia.amazzali.workers.dev
+  // Worker Cloudflare — Gemini — Worker URL: patec-ia.amazzali.workers.dev
   const WORKER_URL='https://patec-ia.amazzali.workers.dev';
 
   try{
@@ -3446,8 +3446,6 @@ async function analisarIA(tipo){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1200,
         messages:[{role:'user',content:fullPrompt}]
       })
     });
