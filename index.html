@@ -1891,6 +1891,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
 <script>// ── GLOBAIS ──
 const HOJE = new Date();
+let BANCO_HE = COLABS.map(c => ({ colab: c, periodos: [] }));
 
 // ════════════════════════════════════════════
 // FIREBASE — Persistência multi-máquina
@@ -2267,7 +2268,7 @@ function go(id, el) {
   },50);
   // Triggers de render
   if (id==='vg-validade') renderValidade();
-  if (id==='pr-equipe') { renderEquipe(); renderEquipeAcum(); }
+  if (id==='pr-equipe') { renderEquipe(); }
 
 }
 
@@ -4812,12 +4813,9 @@ function gerarHTMLAtualizado(){
 
 // Carregar valores salvos na topbar ao iniciar
 initMetaGap();
-fbCarregarTudo().then(() => { initMetaGap(); });
 
 
 // ════ BANCO HE — por período/mês ════
-let BANCO_HE=COLABS.map(c=>({colab:c,periodos:[]}));
-
 function bheInit(){
   const sel=document.getElementById('bhe-colab-sel');
   if(!sel)return;
