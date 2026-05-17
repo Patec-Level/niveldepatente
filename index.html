@@ -2585,7 +2585,13 @@ let _estChartProd = null, _estChartMapa = null;
 function estGetDia(){
   const sel=document.getElementById('est-dia-sel');
   if(sel&&sel.value) return sel.value;
-  return HOJE.toISOString().split('T')[0];
+  const hoje=HOJE.toISOString().split('T')[0];
+  // Se hoje não tem dados, buscar último dia com dados
+  const temHoje=pcpData.find(r=>r.data===hoje)||mapaFirebase.find(r=>r.data===hoje)||DATAS_ISO_MAPA.includes(hoje);
+  if(temHoje) return hoje;
+  // Último dia com dados no PCP ou mapa
+  const allDates=[...new Set([...pcpData.map(r=>r.data),...mapaFirebase.map(r=>r.data),...DATAS_ISO_MAPA])].sort();
+  return allDates.filter(d=>d<=hoje).slice(-1)[0]||hoje;
 }
 function estVoltarHoje(){
   const sel=document.getElementById('est-dia-sel');
@@ -2614,7 +2620,7 @@ function renderCardsDia(){
   if(lbl) lbl.textContent=fmtDt(dt)+(dt===HOJE.toISOString().split('T')[0]?' (hoje)':'');
   // Garantir que o input mostre a data
   const sel=document.getElementById('est-dia-sel');
-  if(sel&&!sel.value) sel.value=dt;
+  if(sel) sel.value=dt;
 
   // Dados do dia selecionado
   const getPcp=(d)=>pcpData.find(r=>r.data===d)||{f1:0,f2:0,f6:0,f3:0,f4:0,f5:0};
