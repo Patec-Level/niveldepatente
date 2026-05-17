@@ -894,121 +894,160 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('pcp-adm',this)">📈 Dados PCP</button>
         <button class="stab" onclick="setAdmTab('upload-adm',this)">⬆ Upload MAPA</button>
         <button class="stab" onclick="setAdmTab('export-adm',this)">💾 Exportar</button>
+        <button class="stab" onclick="setAdmTab('resultado-medicao',this)">📊 Resultado de Medição</button>
       </div>
 
       <!-- ── GESTÃO DE CICLOS ── -->
       <div id="adm-ciclos" class="adm-tab" style="display:block">
 
-        <!-- Status do ciclo ativo -->
-        <div class="g2" style="margin-bottom:1rem">
-          <div class="cd" style="border-top:3px solid var(--vd)">
-            <div class="cd-t">🟢 Ciclo ativo</div>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <!-- CICLO ATIVO -->
+        <div class="cd" style="border-top:3px solid var(--vd);margin-bottom:1rem">
+          <div class="cd-t">🟢 Ciclo de Medição Ativo</div>
+          <div id="ciclo-ativo-painel">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:1rem">
               <div>
-                <div style="font-size:18px;font-weight:700;color:var(--az)" id="ciclo-nome-ativo">—</div>
-                <div style="font-size:11px;color:var(--tx2);margin-top:3px" id="ciclo-datas-ativo">—</div>
+                <div style="font-size:20px;font-weight:700;color:var(--az)" id="ciclo-nome-ativo">—</div>
+                <div style="font-size:12px;color:var(--tx2);margin-top:3px" id="ciclo-datas-ativo">—</div>
                 <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
                   <span style="font-size:11px;background:var(--azc);color:var(--azm);padding:3px 10px;border-radius:5px">Meta: <strong id="ciclo-meta-ativo">—</strong></span>
                   <span style="font-size:11px;background:var(--vdc);color:var(--vd);padding:3px 10px;border-radius:5px">Registros: <strong id="ciclo-regs-ativo">—</strong></span>
                   <span style="font-size:11px;background:var(--amc);color:var(--am);padding:3px 10px;border-radius:5px">Dias úteis: <strong id="ciclo-dias-ativo">—</strong></span>
                 </div>
               </div>
-              <div style="text-align:right">
-                <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">Realizado acumulado</div>
-                <div style="font-size:32px;font-weight:700;color:var(--azm)" id="ciclo-real-ativo">—</div>
+              <div style="text-align:center;padding:1rem 1.5rem;background:var(--azc);border-radius:10px;border:1px solid rgba(26,74,138,.15)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Realizado acumulado</div>
+                <div style="font-size:36px;font-weight:700;color:var(--azm);line-height:1" id="ciclo-real-ativo">—</div>
+                <div style="font-size:11px;color:var(--tx2);margin-top:2px" id="ciclo-pct-ativo">—% da meta</div>
               </div>
             </div>
-          </div>
-
-          <!-- Fechar ciclo -->
-          <div class="cd" style="border-top:3px solid var(--am)">
-            <div class="cd-t">🔒 Fechar ciclo atual</div>
-            <div class="al al-a" style="margin-bottom:.875rem">⚠ Ao fechar, todos os dados são arquivados e o ciclo fica disponível para análise histórica. Não é possível desfazer.</div>
-            <div class="form-grid" style="margin-bottom:.875rem">
-              <div class="field-wrap">
-                <span class="field-label">Data de fechamento</span>
-                <input type="date" id="adm-ciclo-fechamento" style="width:100%">
-              </div>
-              <div class="field-wrap">
-                <span class="field-label">Observação final</span>
-                <input type="text" id="adm-ciclo-obs" placeholder="Ex: Ciclo encerrado com 82% da meta" style="width:100%">
-              </div>
-            </div>
-            <button class="btn btn-r" onclick="fecharCiclo()" style="background:var(--am);color:#fff;border:none">
-              🔒 Fechar ciclo e arquivar
-            </button>
-            <span id="ciclo-fechamento-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Ciclo fechado!</span>
+            <!-- KPIs do ciclo ativo -->
+            <div id="ciclo-ativo-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem"></div>
           </div>
         </div>
 
-        <!-- Upload nova base -->
-        <div class="cd" style="border-top:3px solid var(--vd)">
-          <div class="cd-t">⬆ Upload nova base de medição</div>
-          <div class="al al-b">ℹ Suba a planilha <strong>Controle_Medição.xlsx</strong> do novo ciclo. O sistema vai extrair automaticamente: datas, produção por colaborador, MAPA, férias e banco de horas.</div>
-
+        <!-- ENCERRAR CICLO -->
+        <div class="cd" style="border-top:3px solid var(--vm);margin-bottom:1rem">
+          <div class="cd-t">🔒 Encerrar ciclo de medição</div>
+          <div class="al al-a" style="margin-bottom:1rem">⚠ Ao encerrar, todos os dados (produção, PCP, mapa) são arquivados no Firebase com snapshot completo. Os dados permanecem acessíveis no histórico. Não é possível desfazer.</div>
+          <!-- Resumo pré-encerramento -->
+          <div id="ciclo-resumo-encerramento" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1rem;padding:1rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Total produzido</div><div style="font-size:22px;font-weight:700;color:var(--azm)" id="enc-total">—</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">% da meta</div><div style="font-size:22px;font-weight:700" id="enc-pct" style="color:var(--vd)">—</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Dias úteis</div><div style="font-size:22px;font-weight:700;color:var(--az)" id="enc-dias">—</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Média/dia equipe</div><div style="font-size:22px;font-weight:700;color:var(--az)" id="enc-media">—</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Registros PCP</div><div style="font-size:22px;font-weight:700;color:var(--az)" id="enc-pcp">—</div></div>
+          </div>
           <div class="form-grid" style="margin-bottom:1rem">
             <div class="field-wrap">
-              <span class="field-label">Nome do novo ciclo</span>
-              <input type="text" id="novo-ciclo-nome" placeholder="Ex: Ciclo Jun 2026" style="width:100%">
+              <span class="field-label">Data de encerramento</span>
+              <input type="date" id="adm-ciclo-fechamento" style="width:100%">
             </div>
             <div class="field-wrap">
-              <span class="field-label">Data início</span>
+              <span class="field-label">Observação final</span>
+              <input type="text" id="adm-ciclo-obs" placeholder="Ex: Ciclo encerrado com 92% da meta" style="width:100%">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn" style="background:var(--vm);color:#fff;font-weight:700;padding:9px 20px" onclick="encerrarCiclo()">
+              🔒 Encerrar e arquivar ciclo
+            </button>
+            <span id="ciclo-fechamento-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Ciclo encerrado e arquivado!</span>
+          </div>
+        </div>
+
+        <!-- INICIAR NOVO CICLO -->
+        <div class="cd" style="border-top:3px solid var(--vd)">
+          <div class="cd-t">🚀 Iniciar novo ciclo de medição</div>
+          <div class="al al-b" style="margin-bottom:1rem">ℹ Defina o nome, data de início e meta. A data de encerramento você define quando chegar o momento. Os colaboradores já começam a lançar produção no novo ciclo automaticamente.</div>
+          <div class="form-grid" style="margin-bottom:1rem">
+            <div class="field-wrap">
+              <span class="field-label">Nome do ciclo</span>
+              <input type="text" id="novo-ciclo-nome" placeholder="Ex: Mai/Jun 2026" style="width:100%">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label">Data de início</span>
               <input type="date" id="novo-ciclo-inicio" style="width:100%">
             </div>
             <div class="field-wrap">
-              <span class="field-label">Data fim prevista</span>
-              <input type="date" id="novo-ciclo-fim" style="width:100%">
-            </div>
-            <div class="field-wrap">
-              <span class="field-label">Meta do ciclo (itens)</span>
-              <input type="number" id="novo-ciclo-meta" placeholder="1980" style="width:100%">
+              <span class="field-label">Meta (itens)</span>
+              <input type="number" id="novo-ciclo-meta" placeholder="Ex: 1980" style="width:100%">
             </div>
           </div>
-
-          <!-- Zona de upload -->
-          <div class="uz" id="ciclo-uz" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="cicloOnDrop(event)" style="margin-bottom:1rem">
-            <input type="file" accept=".xlsx,.xls" id="ciclo-file" onchange="cicloOnFile(this)">
-            <div style="font-size:36px;margin-bottom:8px" id="ciclo-uico">📊</div>
-            <div style="font-size:13px;font-weight:700;margin-bottom:4px" id="ciclo-ulabel">Clique ou arraste o arquivo Controle_Medição.xlsx</div>
-            <div style="font-size:11px;color:var(--tx2)">.xlsx · .xls aceitos</div>
-          </div>
-
-          <!-- Preview dos dados extraídos -->
-          <div id="ciclo-preview" style="display:none;margin-bottom:1rem">
-            <div class="al al-v">✓ Arquivo lido com sucesso — confira os dados abaixo antes de ativar</div>
-            <div class="kgrid" id="ciclo-preview-kpis"></div>
-            <div class="g2">
-              <div class="cd" style="padding:.875rem">
-                <div class="cd-t" style="margin-bottom:.5rem">📅 Datas registradas</div>
-                <div id="ciclo-preview-datas" style="font-size:11px;color:var(--tx2);line-height:2"></div>
-              </div>
-              <div class="cd" style="padding:.875rem">
-                <div class="cd-t" style="margin-bottom:.5rem">👥 Colaboradores detectados</div>
-                <div id="ciclo-preview-colabs" style="font-size:11px;line-height:2"></div>
-              </div>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-g" id="ciclo-ativar-btn" onclick="ativarNovoCiclo()" disabled>✓ Ativar novo ciclo</button>
-            <button class="btn btn-s" onclick="cicloLimpar()">↺ Limpar</button>
-            <span id="ciclo-ativar-ok" style="font-size:12px;color:var(--vd);font-weight:600;display:none">✓ Novo ciclo ativado!</span>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-g" style="padding:9px 20px;font-size:13px" onclick="iniciarNovoCiclo()">
+              🚀 Iniciar novo ciclo
+            </button>
+            <span id="novo-ciclo-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Novo ciclo iniciado!</span>
           </div>
         </div>
+      </div>
 
-        <!-- Histórico de ciclos fechados -->
-        <div class="cd">
-          <div class="cd-t">📂 Histórico de ciclos fechados</div>
-          <div id="ciclo-historico-empty" class="al al-b">ℹ Nenhum ciclo fechado ainda. Ao fechar um ciclo, ele aparece aqui para análise histórica.</div>
-          <div id="ciclo-historico-lista" style="display:none">
-            <div class="tw">
-              <table>
-                <thead><tr>
-                  <th>Ciclo</th><th>Início</th><th>Fechamento</th>
-                  <th>Meta</th><th>Realizado</th><th>%</th><th>Registros</th><th>Obs.</th><th></th>
-                </tr></thead>
-                <tbody id="ciclo-hist-tb"></tbody>
-              </table>
+      <!-- ── RESULTADO DE MEDIÇÃO ── -->
+      <div id="adm-resultado-medicao" class="adm-tab" style="display:none">
+        <div class="al al-b" style="margin-bottom:1rem">ℹ Histórico completo de todos os ciclos de medição encerrados. Clique em um ciclo para ver o detalhamento.</div>
+
+        <!-- Lista de ciclos -->
+        <div id="resultado-ciclos-lista" style="display:flex;flex-direction:column;gap:12px;margin-bottom:1rem"></div>
+        <div id="resultado-ciclos-empty" class="al al-b">ℹ Nenhum ciclo encerrado ainda. Ao encerrar um ciclo em Gestão de Ciclos, ele aparece aqui.</div>
+
+        <!-- Detalhamento do ciclo selecionado -->
+        <div id="resultado-detalhe" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+            <div style="font-size:16px;font-weight:700;color:var(--az)" id="resultado-titulo">—</div>
+            <button class="btn btn-s" style="font-size:11px" onclick="document.getElementById('resultado-detalhe').style.display='none'">✕ Fechar</button>
+          </div>
+
+          <!-- KPIs do ciclo -->
+          <div id="resultado-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1rem"></div>
+
+          <!-- Abas de detalhe -->
+          <div class="stabs" id="resultado-subtabs" style="margin-bottom:1rem">
+            <button class="stab active" onclick="setResultadoTab('prod',this)">👥 Produção</button>
+            <button class="stab" onclick="setResultadoTab('colab',this)">📊 Por Colaborador</button>
+            <button class="stab" onclick="setResultadoTab('pcp',this)">📈 PCP</button>
+            <button class="stab" onclick="setResultadoTab('mapa',this)">📋 Mapa</button>
+          </div>
+
+          <!-- Produção -->
+          <div id="resultado-tab-prod" class="resultado-tab">
+            <div class="cd">
+              <div class="cd-t">📋 Produção diária do ciclo</div>
+              <div class="tw"><table>
+                <thead><tr><th>Data</th><th>Colaborador</th><th>Presença</th><th>1ª Análise</th><th>Tratativa</th><th>Status B</th><th>Total</th><th>Meta</th></tr></thead>
+                <tbody id="resultado-prod-tb"></tbody>
+                <tfoot id="resultado-prod-tf"></tfoot>
+              </table></div>
+            </div>
+          </div>
+
+          <!-- Por Colaborador -->
+          <div id="resultado-tab-colab" class="resultado-tab" style="display:none">
+            <div class="cd">
+              <div class="cd-t">👥 Desempenho por colaborador</div>
+              <div id="resultado-colab-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+            </div>
+          </div>
+
+          <!-- PCP -->
+          <div id="resultado-tab-pcp" class="resultado-tab" style="display:none">
+            <div class="cd">
+              <div class="cd-t">📈 Dados PCP do ciclo</div>
+              <div class="tw"><table>
+                <thead><tr><th>Data</th><th>PATEC Fin./Parada</th><th>MDG</th><th>XGL</th><th>Pedidos</th><th>Dev.</th><th>Repub.</th><th>Total</th></tr></thead>
+                <tbody id="resultado-pcp-tb"></tbody>
+                <tfoot id="resultado-pcp-tf"></tfoot>
+              </table></div>
+            </div>
+          </div>
+
+          <!-- Mapa -->
+          <div id="resultado-tab-mapa" class="resultado-tab" style="display:none">
+            <div class="cd">
+              <div class="cd-t">📋 Histórico do Mapa no ciclo</div>
+              <div class="tw"><table>
+                <thead><tr><th>Data</th><th>PATEC Finalizado</th><th>Ag. PATEC</th><th>100% Reprov.</th><th>Cancelado</th><th>Total PATEC</th></tr></thead>
+                <tbody id="resultado-mapa-tb"></tbody>
+              </table></div>
             </div>
           </div>
         </div>
@@ -3424,9 +3463,10 @@ function admLogout(){
 }
 
 function setAdmTab(id,btn){
-  if(id==='ciclos') setTimeout(initCicloADM,50);
+  if(id==='ciclos') setTimeout(()=>{cicloCarregarAtivo().then(initCicloADM);},50);
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
+  if(id==='resultado-medicao') setTimeout(renderResultadoMedicao,50);
   document.querySelectorAll('#adm-tabs .stab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.adm-tab').forEach(t=>t.style.display='none');
@@ -4513,269 +4553,347 @@ function salvarMetaGap(){
   if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',3000); }
 }
 
+// ════════════════════════════════════════════
+// GESTÃO DE CICLOS — Encerrar + Iniciar + Resultado
+// ════════════════════════════════════════════
+
+// Ciclo ativo salvo no Firebase/localStorage
+let _cicloAtivo = null;
+
+async function cicloCarregarAtivo(){
+  try {
+    const saved = await fbGet('config','ciclo_ativo');
+    if(saved) _cicloAtivo = saved;
+    else {
+      // usar o CICLO_ATUAL padrão
+      _cicloAtivo = {
+        id: CICLO_ATUAL.id, nome: CICLO_ATUAL.nome,
+        inicio: CICLO_ATUAL.inicio, fim: '', meta: CICLO_ATUAL.meta_ciclo,
+        status: 'ativo', ts_inicio: CICLO_ATUAL.inicio
+      };
+    }
+  } catch(e) {
+    _cicloAtivo = {
+      id: CICLO_ATUAL.id, nome: CICLO_ATUAL.nome,
+      inicio: CICLO_ATUAL.inicio, fim: '', meta: CICLO_ATUAL.meta_ciclo,
+      status: 'ativo', ts_inicio: CICLO_ATUAL.inicio
+    };
+  }
+}
+
 function initCicloADM() {
   const el = id => document.getElementById(id);
   if(!el('ciclo-nome-ativo')) return;
-  el('ciclo-nome-ativo').textContent = CICLO_ATUAL.nome;
-  el('ciclo-datas-ativo').textContent = fmtDt(CICLO_ATUAL.inicio) + ' → ' + fmtDt(CICLO_ATUAL.fim);
-  el('ciclo-meta-ativo').textContent = CICLO_ATUAL.meta_ciclo.toLocaleString('pt-BR');
-  el('ciclo-regs-ativo').textContent = registros.length;
-  el('ciclo-dias-ativo').textContent = CICLO_ATUAL.dias_uteis;
-  const real = PROD_ACUM[PROD_ACUM.length-1] || 0;
-  el('ciclo-real-ativo').textContent = real.toLocaleString('pt-BR');
-  // Preencher data fechamento com fim do ciclo
-  if(el('adm-ciclo-fechamento')) el('adm-ciclo-fechamento').value = CICLO_ATUAL.fim;
-  renderCicloHistorico();
+
+  // Dados do ciclo ativo
+  const ciclo = _cicloAtivo || CICLO_ATUAL;
+  const nome = ciclo.nome || CICLO_ATUAL.nome;
+  const inicio = ciclo.inicio || CICLO_ATUAL.inicio;
+  const meta = ciclo.meta || CICLO_ATUAL.meta_ciclo;
+
+  // Filtrar registros do ciclo ativo (a partir da data de início)
+  const regsAtivos = registros.filter(r => r.data >= inicio && r.pres !== 'Folga' && r.pres !== 'Férias');
+  const diasUteis = [...new Set(regsAtivos.map(r => r.data))].length;
+  const totalReal = regsAtivos.reduce((s,r) => s + (r.f[0]||0) + (r.f[1]||0) + (r.f[2]||0), 0);
+  const pctMeta = meta > 0 ? Math.round(totalReal / meta * 100) : 0;
+  const mediaDay = diasUteis > 0 ? Math.round(totalReal / diasUteis) : 0;
+  const pcpAtivos = pcpData.filter(r => r.data >= inicio).length;
+
+  el('ciclo-nome-ativo').textContent = nome;
+  el('ciclo-datas-ativo').textContent = 'Início: ' + fmtDt(inicio) + (ciclo.fim ? ' → ' + fmtDt(ciclo.fim) : ' → em andamento');
+  el('ciclo-meta-ativo').textContent = meta.toLocaleString('pt-BR');
+  el('ciclo-regs-ativo').textContent = registros.filter(r => r.data >= inicio).length;
+  el('ciclo-dias-ativo').textContent = diasUteis;
+  el('ciclo-real-ativo').textContent = totalReal.toLocaleString('pt-BR');
+  const pctEl = el('ciclo-pct-ativo');
+  if(pctEl) { pctEl.textContent = pctMeta + '% da meta'; pctEl.style.color = pctMeta >= 100 ? 'var(--vd)' : pctMeta >= 80 ? 'var(--am)' : 'var(--vm)'; }
+
+  // KPIs
+  const kpisEl = el('ciclo-ativo-kpis');
+  if(kpisEl) kpisEl.innerHTML = `
+    <div style="background:var(--azc);border-radius:8px;padding:.75rem;text-align:center;border:1px solid rgba(26,74,138,.12)">
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Média/dia equipe</div>
+      <div style="font-size:22px;font-weight:700;color:var(--azm)">${mediaDay}</div>
+    </div>
+    <div style="background:${pctMeta>=100?'var(--vdc)':pctMeta>=80?'var(--amc)':'var(--vmc)'};border-radius:8px;padding:.75rem;text-align:center;border:1px solid rgba(0,0,0,.06)">
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">% Meta</div>
+      <div style="font-size:22px;font-weight:700;color:${pctMeta>=100?'var(--vd)':pctMeta>=80?'var(--am)':'var(--vm)'}">${pctMeta}%</div>
+    </div>
+    <div style="background:var(--cin);border-radius:8px;padding:.75rem;text-align:center;border:1px solid var(--brd)">
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Registros PCP</div>
+      <div style="font-size:22px;font-weight:700;color:var(--az)">${pcpAtivos}</div>
+    </div>
+    <div style="background:var(--cin);border-radius:8px;padding:.75rem;text-align:center;border:1px solid var(--brd)">
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Colaboradores</div>
+      <div style="font-size:22px;font-weight:700;color:var(--az)">${[...new Set(regsAtivos.map(r=>r.colab))].length}</div>
+    </div>`;
+
+  // Resumo encerramento
+  el('enc-total') && (el('enc-total').textContent = totalReal.toLocaleString('pt-BR'));
+  if(el('enc-pct')){ el('enc-pct').textContent = pctMeta+'%'; el('enc-pct').style.color = pctMeta>=100?'var(--vd)':pctMeta>=80?'var(--am)':'var(--vm)'; }
+  el('enc-dias') && (el('enc-dias').textContent = diasUteis);
+  el('enc-media') && (el('enc-media').textContent = mediaDay+'/dia');
+  el('enc-pcp') && (el('enc-pcp').textContent = pcpAtivos);
+  if(el('adm-ciclo-fechamento') && !el('adm-ciclo-fechamento').value)
+    el('adm-ciclo-fechamento').value = HOJE.toISOString().split('T')[0];
 }
 
-function fecharCiclo() {
+async function encerrarCiclo() {
   const dtFech = document.getElementById('adm-ciclo-fechamento')?.value;
   const obs    = document.getElementById('adm-ciclo-obs')?.value || '';
-  if(!dtFech) { alert('Informe a data de fechamento.'); return; }
-  if(!confirm('Confirmar fechamento do ciclo? Os dados serão arquivados.')) return;
+  if(!dtFech) { alert('Informe a data de encerramento.'); return; }
+  if(!confirm('Encerrar o ciclo atual e arquivar todos os dados? Esta ação não pode ser desfeita.')) return;
 
-  const real = PROD_ACUM[PROD_ACUM.length-1] || 0;
-  const ciclo_fechado = {
-    id:         CICLO_ATUAL.id + '_' + Date.now(),
-    nome:       CICLO_ATUAL.nome,
-    inicio:     CICLO_ATUAL.inicio,
-    fim:        CICLO_ATUAL.fim,
-    fechamento: dtFech,
-    meta:       CICLO_ATUAL.meta_ciclo,
-    realizado:  real,
-    pct:        Math.round(real / CICLO_ATUAL.meta_ciclo * 100),
-    dias_uteis: CICLO_ATUAL.dias_uteis,
-    obs:        obs,
-    n_registros: registros.length,
-    // Snapshot dos dados
-    dados: {
-      datas:    DATAS_ISO,
-      prod_dia: PROD,
-      saida_dia: SAIDA,
-      prod_acum: PROD_ACUM,
-      mapa:     { L3: L[3], L4: L[4], L5: L[5], L6: L[6], L7: L[7], L8: L[8] },
-      registros: registros.slice(),
+  const ciclo = _cicloAtivo || CICLO_ATUAL;
+  const inicio = ciclo.inicio || CICLO_ATUAL.inicio;
+  const meta = ciclo.meta || CICLO_ATUAL.meta_ciclo;
+
+  // Filtrar dados do ciclo
+  const regsC = registros.filter(r => r.data >= inicio);
+  const pcpC  = pcpData.filter(r => r.data >= inicio);
+  const regsAtivos = regsC.filter(r => r.pres !== 'Folga' && r.pres !== 'Férias');
+  const diasUteis = [...new Set(regsAtivos.map(r => r.data))].length;
+  const totalReal = regsAtivos.reduce((s,r) => s + (r.f[0]||0) + (r.f[1]||0) + (r.f[2]||0), 0);
+  const pct = meta > 0 ? Math.round(totalReal / meta * 100) : 0;
+
+  // Montar snapshot completo
+  const snapshot = {
+    id: (ciclo.id || CICLO_ATUAL.id) + '_enc_' + Date.now(),
+    nome: ciclo.nome || CICLO_ATUAL.nome,
+    inicio, fim: dtFech,
+    meta, realizado: totalReal, pct,
+    dias_uteis: diasUteis,
+    obs, ts_encerramento: new Date().toISOString(),
+    n_registros: regsC.length,
+    // Snapshot de dados para consulta histórica
+    registros: regsC,
+    pcp: pcpC,
+    mapa: {
+      datas: DATAS_MAPA, datas_iso: DATAS_ISO_MAPA,
+      L3: L[3], L4: L[4], L5: L[5], L6: L[6], L7: L[7], L8: L[8]
     }
   };
 
-  ciclos_historico.push(ciclo_fechado);
+  // Salvar no Firebase — chave única por ciclo
+  await fbSet('ciclos_encerrados', snapshot.id, snapshot);
+
+  // Atualizar lista local
+  ciclos_historico.push(snapshot);
   localStorage.setItem('patec_ciclos_historico', JSON.stringify(ciclos_historico));
 
   const ok = document.getElementById('ciclo-fechamento-ok');
-  if(ok) { ok.style.display = 'inline'; setTimeout(()=>ok.style.display='none', 4000); }
-  renderCicloHistorico();
+  if(ok) { ok.style.display='inline'; setTimeout(()=>ok.style.display='none',5000); }
+
+  alert('Ciclo ' + snapshot.nome + ' encerrado com sucesso!\n\nTotal: ' + totalReal.toLocaleString('pt-BR') + ' itens (' + pct + '% da meta)\nDias uteis: ' + diasUteis + '\n\nDados arquivados no Firebase.');
+  renderResultadoMedicao();
 }
 
-function renderCicloHistorico() {
-  const empty = document.getElementById('ciclo-historico-empty');
-  const lista  = document.getElementById('ciclo-historico-lista');
-  const tb     = document.getElementById('ciclo-hist-tb');
-  if(!tb) return;
+async function iniciarNovoCiclo() {
+  const nome   = document.getElementById('novo-ciclo-nome')?.value?.trim();
+  const inicio = document.getElementById('novo-ciclo-inicio')?.value;
+  const meta   = parseInt(document.getElementById('novo-ciclo-meta')?.value || '0');
+  if(!nome)   { alert('Informe o nome do ciclo.'); return; }
+  if(!inicio) { alert('Informe a data de início.'); return; }
+  if(!meta)   { alert('Informe a meta do ciclo.'); return; }
+  if(!confirm('Iniciar novo ciclo "' + nome + '" a partir de ' + fmtDt(inicio) + ' com meta de ' + meta.toLocaleString('pt-BR') + ' itens?')) return;
 
-  if(!ciclos_historico.length) {
-    if(empty) empty.style.display = 'flex';
-    if(lista) lista.style.display = 'none';
+  _cicloAtivo = { id: 'ciclo_' + Date.now(), nome, inicio, fim: '', meta, status: 'ativo', ts_inicio: new Date().toISOString() };
+  await fbSet('config', 'ciclo_ativo', _cicloAtivo);
+  localStorage.setItem('patec_meta', String(meta));
+  initMetaGap();
+
+  const ok = document.getElementById('novo-ciclo-ok');
+  if(ok) { ok.style.display='inline'; setTimeout(()=>ok.style.display='none',4000); }
+
+  // Limpar campos
+  ['novo-ciclo-nome','novo-ciclo-inicio','novo-ciclo-meta'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  initCicloADM();
+  alert('Novo ciclo ' + nome + ' iniciado!\n\nData inicio: ' + fmtDt(inicio) + '\nMeta: ' + meta.toLocaleString('pt-BR') + ' itens\n\nOs colaboradores ja podem lancar producao no novo ciclo.');
+}
+
+// ── RESULTADO DE MEDIÇÃO ──
+async function renderResultadoMedicao() {
+  // Carregar do Firebase
+  let ciclos = [...ciclos_historico];
+  try {
+    const fbCiclos = await fbGetAll('ciclos_encerrados');
+    if(fbCiclos.length > 0) {
+      // Mesclar — Firebase tem precedência
+      fbCiclos.forEach(c => {
+        if(!ciclos.find(x => x.id === c.id)) ciclos.push(c);
+      });
+      ciclos.sort((a,b) => (a.inicio||'').localeCompare(b.inicio||''));
+    }
+  } catch(e) { console.warn('Erro ao carregar ciclos:', e); }
+
+  const listaEl = document.getElementById('resultado-ciclos-lista');
+  const emptyEl = document.getElementById('resultado-ciclos-empty');
+  if(!listaEl) return;
+
+  if(!ciclos.length) {
+    listaEl.innerHTML = '';
+    if(emptyEl) emptyEl.style.display = 'block';
     return;
   }
-  if(empty) empty.style.display = 'none';
-  if(lista) lista.style.display = 'block';
+  if(emptyEl) emptyEl.style.display = 'none';
 
-  tb.innerHTML = ciclos_historico.slice().reverse().map((c,i) => {
-    const pctCor = c.pct >= 100 ? 'var(--vd)' : c.pct >= 80 ? 'var(--am)' : 'var(--vm)';
-    return `<tr>
-      <td><strong>${c.nome}</strong></td>
-      <td>${fmtDt(c.inicio)}</td>
-      <td>${fmtDt(c.fechamento)}</td>
-      <td>${c.meta.toLocaleString('pt-BR')}</td>
-      <td style="font-weight:700;color:var(--azm)">${c.realizado.toLocaleString('pt-BR')}</td>
-      <td style="font-weight:700;color:${pctCor}">${c.pct}%</td>
-      <td>${c.n_registros}</td>
-      <td style="font-size:10px;color:var(--tx2);max-width:150px;overflow:hidden;text-overflow:ellipsis">${c.obs||'—'}</td>
-      <td>
-        <button class="btn btn-s" style="padding:2px 8px;font-size:10px" onclick="analisarCicloHist('${c.id}')">📊</button>
-        <button class="btn btn-r" style="padding:2px 8px;font-size:10px" onclick="deletarCicloHist('${c.id}')">✕</button>
-      </td>
-    </tr>`;
+  // Guardar ciclos em memória para acesso por índice
+  window._resultadoCiclos = ciclos.slice().reverse();
+  listaEl.innerHTML = window._resultadoCiclos.map((c,idx) => {
+    const pctCor = (c.pct||0) >= 100 ? 'var(--vd)' : (c.pct||0) >= 80 ? 'var(--am)' : 'var(--vm)';
+    const bgPct = pctCor==='var(--vd)'?'var(--vdc)':pctCor==='var(--am)'?'var(--amc)':'var(--vmc)';
+    return '<div class="cd" style="border-left:4px solid '+pctCor+';cursor:pointer" onclick="abrirResultadoCiclo('+idx+')">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">'
+      +'<div><div style="font-size:15px;font-weight:700;color:var(--az)">'+c.nome+'</div>'
+      +'<div style="font-size:11px;color:var(--tx2);margin-top:2px">'+fmtDt(c.inicio)+' → '+fmtDt(c.fim||'')+' · '+(c.obs||'')+'</div></div>'
+      +'<div style="display:flex;gap:12px;align-items:center">'
+      +'<div style="text-align:center;padding:.5rem .875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Realizado</div><div style="font-size:18px;font-weight:700;color:var(--azm)">'+(c.realizado||0).toLocaleString('pt-BR')+'</div></div>'
+      +'<div style="text-align:center;padding:.5rem .875rem;background:'+bgPct+';border-radius:8px"><div style="font-size:9px;color:var(--tx2)">% Meta</div><div style="font-size:18px;font-weight:700;color:'+pctCor+'">'+(c.pct||0)+'%</div></div>'
+      +'<div style="text-align:center;padding:.5rem .875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Meta</div><div style="font-size:18px;font-weight:700;color:var(--az)">'+(c.meta||0).toLocaleString('pt-BR')+'</div></div>'
+      +'<button class="btn btn-p" style="font-size:11px;padding:5px 12px">📊 Ver detalhes</button>'
+      +'</div></div></div>';
   }).join('');
 }
 
-function deletarCicloHist(id) {
-  if(!confirm('Excluir este ciclo do histórico?')) return;
-  ciclos_historico = ciclos_historico.filter(c => c.id !== id);
-  localStorage.setItem('patec_ciclos_historico', JSON.stringify(ciclos_historico));
-  renderCicloHistorico();
+function abrirResultadoCiclo(idx) {
+  const c = (window._resultadoCiclos||[])[idx];
+  if(!c) return;
+  const detalheEl = document.getElementById('resultado-detalhe');
+  if(!detalheEl) return;
+  detalheEl.style.display = 'block';
+  detalheEl.scrollIntoView({behavior:'smooth'});
+
+  const pctCor = (c.pct||0)>=100?'var(--vd)':(c.pct||0)>=80?'var(--am)':'var(--vm)';
+  document.getElementById('resultado-titulo').textContent = '📊 ' + c.nome + ' — ' + fmtDt(c.inicio) + ' a ' + fmtDt(c.fim||'');
+
+  // KPIs
+  const dias = c.dias_uteis || 0;
+  const med  = dias > 0 ? Math.round((c.realizado||0) / dias) : 0;
+  document.getElementById('resultado-kpis').innerHTML = `
+    <div class="kc ok"><div class="kc-l">Total realizado</div><div class="kc-v">${(c.realizado||0).toLocaleString('pt-BR')}</div><div class="kc-s">itens</div></div>
+    <div class="kc ${(c.pct||0)>=100?'ok':(c.pct||0)>=80?'warn':'bad'}"><div class="kc-l">% da meta</div><div class="kc-v">${c.pct||0}%</div><div class="kc-s">meta: ${(c.meta||0).toLocaleString('pt-BR')}</div></div>
+    <div class="kc"><div class="kc-l">Dias úteis</div><div class="kc-v" style="color:var(--az)">${dias}</div></div>
+    <div class="kc"><div class="kc-l">Média/dia</div><div class="kc-v" style="color:var(--azm)">${med}</div></div>
+    <div class="kc"><div class="kc-l">Registros</div><div class="kc-v" style="color:var(--az)">${c.n_registros||0}</div></div>`;
+
+  // Preencher tabs
+  setResultadoTab('prod', document.querySelector('#resultado-subtabs .stab'));
+  _renderResultadoProd(c);
+  _renderResultadoPCP(c);
+  _renderResultadoMapa(c);
+  _renderResultadoColab(c);
 }
 
-function analisarCicloHist(id) {
-  const ciclo = ciclos_historico.find(c => c.id === id);
-  if(!ciclo) return;
-  alert('Análise do ciclo "' + ciclo.nome + '":\n\nMeta: ' + ciclo.meta + '\nRealizado: ' + ciclo.realizado + ' (' + ciclo.pct + '%)\nDias: ' + ciclo.dias_uteis + '\nRegistros: ' + ciclo.n_registros + '\n\n' + (ciclo.obs||''));
+function setResultadoTab(id, btn) {
+  document.querySelectorAll('.resultado-tab').forEach(t => t.style.display='none');
+  document.querySelectorAll('#resultado-subtabs .stab').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('resultado-tab-'+id);
+  if(el) el.style.display = 'block';
+  if(btn) btn.classList.add('active');
 }
 
-// ── UPLOAD NOVA BASE ──
-let _novoCicloData = null;
-
-function cicloOnDrop(e) {
-  e.preventDefault();
-  document.getElementById('ciclo-uz').classList.remove('drag');
-  cicloLoadFile(e.dataTransfer.files[0]);
+function _renderResultadoProd(c) {
+  const regs = c.registros || [];
+  const metaVal = c.meta_dia || getMeta();
+  const sums = Array(12).fill(0); let totT = 0;
+  const tb = document.getElementById('resultado-prod-tb');
+  if(!tb) return;
+  tb.innerHTML = regs.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r => {
+    const f = [...(r.f||[])]; while(f.length<12)f.push(0);
+    const tot = (f[0]||0)+(f[1]||0)+(f[2]||0);
+    totT+=tot; f.forEach((v,i)=>sums[i]+=v);
+    const semMeta = COLABS_SEM_META.includes(r.colab);
+    let mp;
+    if(r.pres==='Folga'||r.pres==='Férias') mp='<span class="pl pl-g">'+r.pres+'</span>';
+    else if(semMeta) mp='<span class="pl pl-az">Líder/Ajuda</span>';
+    else if(tot>=metaVal) mp='<span class="pl pl-ok">✓ Meta</span>';
+    else mp='<span class="pl pl-b">Abaixo</span>';
+    return`<tr><td>${fmtDt(r.data)}</td><td><strong>${r.colab}</strong></td><td>${presPill(r.pres)}</td><td>${f[0]||'—'}</td><td>${f[1]||'—'}</td><td>${f[2]||'—'}</td><td style="font-weight:700">${tot}</td><td>${mp}</td></tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--tx2);padding:1rem">Sem registros</td></tr>';
+  const tf = document.getElementById('resultado-prod-tf');
+  if(tf) tf.innerHTML = `<tr><td colspan="3"><strong>TOTAL</strong></td><td>${sums[0]}</td><td>${sums[1]}</td><td>${sums[2]}</td><td style="font-weight:700">${sums[0]+sums[1]+sums[2]}</td><td>—</td></tr>`;
 }
-function cicloOnFile(inp) { cicloLoadFile(inp.files[0]); }
 
-function cicloLoadFile(file) {
-  if(!file) return;
-  const uz    = document.getElementById('ciclo-uz');
-  const label = document.getElementById('ciclo-ulabel');
-  const ico   = document.getElementById('ciclo-uico');
+function _renderResultadoPCP(c) {
+  const pcp = c.pcp || [];
+  const tb = document.getElementById('resultado-pcp-tb');
+  const tf = document.getElementById('resultado-pcp-tf');
+  if(!tb) return;
+  const sums = {f1:0,f2:0,f6:0,f3:0,f4:0,f5:0};
+  tb.innerHTML = pcp.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r => {
+    const tot=(r.f1||0)+(r.f2||0)+(r.f6||0)+(r.f3||0)+(r.f4||0)+(r.f5||0);
+    sums.f1+=r.f1||0;sums.f2+=r.f2||0;sums.f6+=r.f6||0;sums.f3+=r.f3||0;sums.f4+=r.f4||0;sums.f5+=r.f5||0;
+    return`<tr><td>${fmtDt(r.data)}</td><td>${r.f1||0}</td><td>${r.f2||0}</td><td>${r.f6||0}</td><td>${r.f3||0}</td><td>${r.f4||0}</td><td>${r.f5||0}</td><td style="font-weight:700">${tot}</td></tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--tx2)">Sem registros PCP</td></tr>';
+  if(tf) tf.innerHTML = `<tr><td><strong>TOTAL</strong></td><td>${sums.f1}</td><td>${sums.f2}</td><td>${sums.f6}</td><td>${sums.f3}</td><td>${sums.f4}</td><td>${sums.f5}</td><td style="font-weight:700">${sums.f1+sums.f2+sums.f6+sums.f3+sums.f4+sums.f5}</td></tr>`;
+}
 
-  ico.textContent = '⏳';
-  label.textContent = 'Lendo ' + file.name + '...';
+function _renderResultadoMapa(c) {
+  const mapa = c.mapa || {};
+  const datas = mapa.datas || [];
+  const tb = document.getElementById('resultado-mapa-tb');
+  if(!tb||!datas.length){if(tb)tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--tx2)">Sem dados de mapa</td></tr>';return;}
+  tb.innerHTML = datas.map((dt,i) => {
+    const l3=mapa.L3?.[i]||0,l4=mapa.L4?.[i]||0,l5=mapa.L5?.[i]||0,l6=mapa.L6?.[i]||0;
+    return`<tr><td>${dt}</td><td>${l3}</td><td>${l4}</td><td>${l5}</td><td>${l6}</td><td style="font-weight:700;color:var(--azm)">${l3+l4+l5+l6}</td></tr>`;
+  }).join('');
+}
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const wb = XLSX.read(e.target.result, {type:'binary', cellDates:true});
-      const dados = extrairDadosXLSX(wb, file.name);
-      _novoCicloData = dados;
-
-      uz.classList.add('done');
-      ico.textContent = '✅';
-      label.textContent = file.name + ' — ' + dados.n_registros + ' registros detectados';
-
-      renderCicloPreview(dados);
-      document.getElementById('ciclo-preview').style.display = 'block';
-      document.getElementById('ciclo-ativar-btn').disabled = false;
-    } catch(err) {
-      ico.textContent = '❌';
-      label.textContent = 'Erro ao ler o arquivo: ' + err.message;
-      console.error(err);
+function _renderResultadoColab(c) {
+  const regs = c.registros || [];
+  const el = document.getElementById('resultado-colab-cards');
+  if(!el) return;
+  const acum = {};
+  COLABS.forEach(col => { acum[col] = {tot:0,dias:0,meta:0}; });
+  regs.forEach(r => {
+    if(!acum[r.colab]) acum[r.colab]={tot:0,dias:0,meta:0};
+    if(r.pres!=='Folga'&&r.pres!=='Férias'){
+      const t=(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0);
+      acum[r.colab].tot+=t; acum[r.colab].dias++;
+      if(t>=(c.meta_dia||getMeta())) acum[r.colab].meta++;
     }
-  };
-  reader.readAsBinaryString(file);
+  });
+  el.innerHTML = Object.entries(acum).filter(([,d])=>d.dias>0).map(([col,d])=>{
+    const med=d.dias>0?Math.round(d.tot/d.dias):0;
+    const pctMeta=d.dias>0?Math.round(d.meta/d.dias*100):0;
+    const cor=pctMeta>=80?'var(--vd)':pctMeta>=60?'var(--am)':'var(--vm)';
+    return`<div class="cd" style="border-top:3px solid ${cor}">
+      <div style="font-size:14px;font-weight:700;color:var(--az);margin-bottom:.75rem">👤 ${col}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="text-align:center;padding:.5rem;background:var(--azc);border-radius:7px">
+          <div style="font-size:9px;color:var(--tx2)">Total</div>
+          <div style="font-size:20px;font-weight:700;color:var(--azm)">${d.tot}</div>
+        </div>
+        <div style="text-align:center;padding:.5rem;background:${cor==='var(--vd)'?'var(--vdc)':cor==='var(--am)'?'var(--amc)':'var(--vmc)'};border-radius:7px">
+          <div style="font-size:9px;color:var(--tx2)">% Metas</div>
+          <div style="font-size:20px;font-weight:700;color:${cor}">${pctMeta}%</div>
+        </div>
+        <div style="text-align:center;padding:.5rem;background:var(--cin);border-radius:7px;border:1px solid var(--brd)">
+          <div style="font-size:9px;color:var(--tx2)">Média/dia</div>
+          <div style="font-size:20px;font-weight:700;color:var(--az)">${med}</div>
+        </div>
+        <div style="text-align:center;padding:.5rem;background:var(--cin);border-radius:7px;border:1px solid var(--brd)">
+          <div style="font-size:9px;color:var(--tx2)">Dias trabalhados</div>
+          <div style="font-size:20px;font-weight:700;color:var(--az)">${d.dias}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function extrairDadosXLSX(wb, filename) {
-  // Ler aba "Grafico Medição " para dados de medição
-  const grafSheet = wb.Sheets['Grafico Medição '] || wb.Sheets['Grafico Medicao'] || wb.Sheets[wb.SheetNames[3]];
-  const prodSheet = wb.Sheets['Produção '] || wb.Sheets['Producao'] || wb.Sheets[wb.SheetNames[1]];
-  const detSheet  = wb.Sheets['Detalhamento do Plano'] || wb.Sheets[wb.SheetNames[4]];
-  const ferSheet  = wb.Sheets['Ferias '] || wb.Sheets['Ferias'] || wb.Sheets[wb.SheetNames[5]];
+// manter compatibilidade
+function fecharCiclo(){ encerrarCiclo(); }
+function renderCicloHistorico(){ renderResultadoMedicao(); }
+function deletarCicloHist(id){ if(confirm('Excluir?')){ciclos_historico=ciclos_historico.filter(c=>c.id!==id);localStorage.setItem('patec_ciclos_historico',JSON.stringify(ciclos_historico));renderResultadoMedicao();} }
+function analisarCicloHist(id){ abrirResultadoCiclo(JSON.stringify(ciclos_historico.find(c=>c.id===id)||{})); }
+let _novoCicloData=null;
+function cicloOnDrop(e){e.preventDefault();}
+function cicloOnFile(i){}
+function cicloLimpar(){}
+function ativarNovoCiclo(){ iniciarNovoCiclo(); }
 
-  const gData = grafSheet ? XLSX.utils.sheet_to_json(grafSheet, {header:1, defval:null}) : [];
-  const pData = prodSheet ? XLSX.utils.sheet_to_json(prodSheet, {header:1, defval:null}) : [];
-  const dData = detSheet  ? XLSX.utils.sheet_to_json(detSheet,  {header:1, defval:null}) : [];
-
-  // Extrair datas da linha 3 do gráfico (índice 3)
-  const datas_raw = gData[3] ? gData[3].slice(3).filter(v => v != null) : [];
-  const datas_iso = datas_raw.map(v => {
-    if(v instanceof Date) return v.toISOString().slice(0,10);
-    if(typeof v === 'number') {
-      const d = new Date(Math.round((v - 25569) * 86400 * 1000));
-      return d.toISOString().slice(0,10);
-    }
-    return String(v).slice(0,10);
-  }).filter(d => d.match(/^\d{4}-\d{2}-\d{2}$/));
-
-  // Extrair prod acum (linha 1) e saída acum (linha 2)
-  const safeInt = v => { try { const n=parseInt(v); return isNaN(n)?0:n; } catch{return 0;} };
-  const prod_acum  = gData[1] ? gData[1].slice(3, 3+datas_iso.length).map(safeInt) : [];
-  const saida_acum = gData[2] ? gData[2].slice(3, 3+datas_iso.length).map(safeInt) : [];
-  const prod_dia   = prod_acum.map((v,i) => i===0?v:Math.max(0,v-prod_acum[i-1]));
-  const saida_dia  = saida_acum.map((v,i) => i===0?v:Math.max(0,v-saida_acum[i-1]));
-
-  // Extrair informações do ciclo (linha 0 e 1 da aba Produção)
-  const mesInicio = pData[0] ? pData[0][2] : null;
-  const mesFim    = pData[1] ? pData[1][2] : null;
-  const fmtDate   = v => { if(!v) return ''; if(v instanceof Date) return v.toISOString().slice(0,10); if(typeof v==='number'){const d=new Date(Math.round((v-25569)*86400*1000));return d.toISOString().slice(0,10);} return String(v).slice(0,10); };
-
-  // Extrair MAPA (detalhamento do plano)
-  const mapa_datas = dData[0] ? dData[0].slice(2, 2+datas_iso.length).map(fmtDate).filter(d=>d.match(/^\d{4}/)) : [];
-  const mapa_l3 = dData[1] ? dData[1].slice(2).filter(v=>v!=null).map(safeInt) : [];
-  const mapa_l4 = dData[2] ? dData[2].slice(2).filter(v=>v!=null).map(safeInt) : [];
-  const mapa_l5 = dData[3] ? dData[3].slice(2).filter(v=>v!=null).map(safeInt) : [];
-  const mapa_l6 = dData[4] ? dData[4].slice(2).filter(v=>v!=null).map(safeInt) : [];
-  const mapa_l7 = dData[5] ? dData[5].slice(2).filter(v=>v!=null).map(safeInt) : [];
-  const mapa_l8 = dData[6] ? dData[6].slice(2).filter(v=>v!=null).map(safeInt) : [];
-
-  // Detectar colaboradores da aba Produção
-  const colabs_detected = [];
-  const colab_markers = ['André','Aline','Lory','Ludy','Wanessa'];
-  for(let ri=0; ri<pData.length; ri++) {
-    const row = pData[ri];
-    if(row && colab_markers.includes(String(row[1]||'').trim())) {
-      if(!colabs_detected.includes(String(row[1]).trim())) colabs_detected.push(String(row[1]).trim());
-    }
-  }
-
-  return {
-    filename,
-    inicio:    fmtDate(mesInicio),
-    fim:       fmtDate(mesFim),
-    datas_iso,
-    prod_dia, saida_dia, prod_acum, saida_acum,
-    mapa: { L3:mapa_l3, L4:mapa_l4, L5:mapa_l5, L6:mapa_l6, L7:mapa_l7, L8:mapa_l8 },
-    datas_mapa: mapa_datas,
-    colabs_detected,
-    n_registros: datas_iso.filter((_,i) => prod_dia[i] > 0).length,
-  };
-}
-
-function renderCicloPreview(d) {
-  const kpis = document.getElementById('ciclo-preview-kpis');
-  if(kpis) kpis.innerHTML = `
-    <div class="kc"><div class="kc-l">Dias com dados</div><div class="kc-v" style="color:var(--az)">${d.datas_iso.length}</div></div>
-    <div class="kc ok"><div class="kc-l">Realizado total</div><div class="kc-v">${(d.prod_acum[d.prod_acum.length-1]||0).toLocaleString('pt-BR')}</div></div>
-    <div class="kc"><div class="kc-l">Saídas acum.</div><div class="kc-v" style="color:var(--az)">${(d.saida_acum[d.saida_acum.length-1]||0).toLocaleString('pt-BR')}</div></div>
-    <div class="kc"><div class="kc-l">Colaboradores</div><div class="kc-v" style="color:var(--az)">${d.colabs_detected.length}</div></div>
-  `;
-  const datas = document.getElementById('ciclo-preview-datas');
-  if(datas) datas.innerHTML = d.datas_iso.map((dt,i) => `<span style="margin-right:8px">${fmtDt(dt)}: <strong>${d.prod_dia[i]||0}</strong></span>`).join('');
-  const col = document.getElementById('ciclo-preview-colabs');
-  if(col) col.innerHTML = d.colabs_detected.map(c => `<span style="display:inline-block;background:var(--azc);color:var(--azm);padding:2px 10px;border-radius:5px;margin:2px;font-weight:600">${c}</span>`).join('');
-}
-
-function ativarNovoCiclo() {
-  if(!_novoCicloData) return;
-  const nome   = document.getElementById('novo-ciclo-nome')?.value?.trim();
-  const inicio = document.getElementById('novo-ciclo-inicio')?.value;
-  const fim    = document.getElementById('novo-ciclo-fim')?.value;
-  const meta   = parseInt(document.getElementById('novo-ciclo-meta')?.value || '1980');
-  if(!nome) { alert('Informe o nome do ciclo.'); return; }
-  if(!confirm('Ativar novo ciclo ' + nome + '? Continuar?')) return;
-
-  const d = _novoCicloData;
-
-  // Atualizar dados globais (recarregar página não é necessário — JS permite reatribuição de let/var)
-  // Como usamos const, precisamos salvar no localStorage e forçar reload
-  const novo_ciclo_state = {
-    ciclo: { id: 'ciclo_'+Date.now(), nome, inicio: inicio||d.inicio, fim: fim||d.fim, meta_ciclo: meta, dias_uteis: 22, status: 'ativo' },
-    datas_iso:   d.datas_iso,
-    prod_dia:    d.prod_dia,
-    saida_dia:   d.saida_dia,
-    prod_acum:   d.prod_acum,
-    saida_acum:  d.saida_acum,
-    mapa:        d.mapa,
-    datas_mapa:  d.datas_mapa,
-  };
-  localStorage.setItem('patec_ciclo_ativo', JSON.stringify(novo_ciclo_state));
-  localStorage.setItem('patec_meta', String(meta));
-
-  const ok = document.getElementById('ciclo-ativar-ok');
-  if(ok) { ok.style.display = 'inline'; }
-  setTimeout(() => { location.reload(); }, 1500);
-}
-
-function cicloLimpar() {
-  _novoCicloData = null;
-  document.getElementById('ciclo-preview').style.display = 'none';
-  document.getElementById('ciclo-ativar-btn').disabled = true;
-  const uz = document.getElementById('ciclo-uz');
-  if(uz) { uz.classList.remove('done'); }
-  document.getElementById('ciclo-uico').textContent = '📊';
-  document.getElementById('ciclo-ulabel').textContent = 'Clique ou arraste o arquivo Controle_Medição.xlsx';
-  const fi = document.getElementById('ciclo-file');
-  if(fi) fi.value = '';
-}
 
 // Ao carregar, verificar se há ciclo salvo no localStorage
 (function loadCicloFromStorage() {
