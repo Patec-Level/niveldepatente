@@ -1322,7 +1322,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           </div>
           <div class="tw" style="margin-bottom:1rem">
             <table>
-              <thead><tr><th>Data</th><th>Colaborador</th><th>Presença</th><th>Analisados</th><th>Tratativa</th><th>Forn.</th><th>Req.</th><th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Total</th><th>Justificativa</th></tr></thead>
+              <thead><tr><th>Data</th><th>Colaborador</th><th>Presença</th><th>1ª Análise</th><th>Em Tratativa</th><th>Status B</th><th>Outros</th><th>Forn.</th><th>Req.</th><th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Total</th><th>Meta</th><th>Justificativa</th></tr></thead>
               <tbody id="adm-prod-tb"></tbody>
               <tfoot id="adm-prod-tf"></tfoot>
             </table>
@@ -1633,17 +1633,55 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <!-- Mensagem motivacional -->
           <div id="pr-motivacao" style="border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;font-weight:600;display:none;align-items:center;gap:10px"></div>
 
+          <!-- Campos principais — definem a meta (pf0, pf1, pf2=StatusB) -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.75rem">
+            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(primeira análise)</span></label>
+              <input type="number" id="pf0" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
+            </div>
+            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(em tratativa)</span></label>
+              <input type="number" id="pf1" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
+            </div>
+            <div class="prod-row" style="background:#EFF8F5;border:1.5px solid var(--vd);border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:var(--vd)">Status B<br><span style="font-size:10px;font-weight:500;color:var(--vd)">(entra na meta)</span></label>
+              <input type="number" id="pf2" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--vd);width:80px">
+            </div>
+          </div>
+
+          <!-- Outros — não entram na meta individual -->
+          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;display:flex;align-items:center;gap:8px">
+            <span>📋 Outros</span>
+            <span style="font-size:9px;font-weight:500;color:var(--tx2);text-transform:none;letter-spacing:0">(Republicação, Devoluções etc — somam ao resultado da equipe, não à meta individual)</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem">
+            <div class="prod-row" style="background:#FFF3E0;border:1.5px solid #CC6600;border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:#884400">Outros<br><span style="font-size:10px;font-weight:500;color:#884400">(Repub. + Devol. + outros)</span></label>
+              <input type="number" id="pf11" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:#884400;width:80px">
+            </div>
+          </div>
+
+          <!-- Divisor composição -->
+          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;padding-top:.25rem">↓ Composição dos itens acima</div>
+
+          <!-- Campos de composição (pf3 a pf10) -->
           <div class="prod-grid">
-            <div class="prod-row"><label>Itens Analisados<br><span style="font-size:10px;color:var(--tx2)">(novos)</span></label><input type="number" id="pf0" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Itens em Tratativa</label><input type="number" id="pf1" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Fornecedor</label><input type="number" id="pf2" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Requisitante</label><input type="number" id="pf3" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>MDG</label><input type="number" id="pf4" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Validação Thiago</label><input type="number" id="pf5" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>XGL</label><input type="number" id="pf6" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Republicação</label><input type="number" id="pf7" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>RCs para Pedidos</label><input type="number" id="pf8" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>RCs para Devoluções</label><input type="number" id="pf9" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Fornecedor</label><input type="number" id="pf3" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Requisitante</label><input type="number" id="pf4" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>MDG</label><input type="number" id="pf5" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Validação Thiago</label><input type="number" id="pf6" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>XGL</label><input type="number" id="pf7" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Republicação</label><input type="number" id="pf8" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>RCs para Pedidos</label><input type="number" id="pf9" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>RCs para Devoluções</label><input type="number" id="pf10" min="0" placeholder="0" oninput="updProd()"></div>
+          </div>
+
+          <!-- Aviso composição -->
+          <div id="pr-composicao-aviso" style="display:none;background:var(--vmc);color:var(--vm);border:1px solid #f5b8b8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;align-items:center;gap:8px">⚠ </div>
+
+          <!-- Badge sem meta -->
+          <div id="pr-sem-meta-msg" style="display:none;background:var(--azc);border:1px solid var(--azm);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;color:var(--azm);align-items:center;gap:8px">
+            ℹ️ <span>Este colaborador <strong>não possui meta individual</strong>. Os lançamentos somam ao resultado da equipe.</span>
           </div>
 
           <!-- Justificativa (aparece se abaixo da meta) -->
@@ -2419,7 +2457,8 @@ function getMeta(){
   catch{return 30;}
 }
 
-const LINHAS_PROD = ['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
+const LINHAS_PROD = ['Analisados','Tratativa','Status B','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções','Outros'];
+const COLABS_SEM_META = ['André','Ajuda de outros times'];
 const COLABS = ['André','Lory','Ludy','Wanessa']; // Aline transferida Mai/2026
 BANCO_HE = COLABS.map(c => ({ colab: c, periodos: [] })); // inicializa BANCO_HE
 const SENHA_PCP = 'patec2026';
@@ -2507,46 +2546,64 @@ function salvarFolga(){
 
 // ── PRODUÇÃO: TOTAL E MOTIVAÇÃO ──
 function updProd(){
-  const meta = getMeta();
-  let total=0;
-  for(let i=0;i<10;i++) total+=parseInt(document.getElementById('pf'+i)?.value||0);
-  // Total badge
+  const semMeta = (typeof COLABS_SEM_META !== 'undefined') && COLABS_SEM_META.includes(colabLogado);
+  const meta = semMeta ? 0 : getMeta();
+  const principal = parseInt(document.getElementById('pf0')?.value||0)
+                  + parseInt(document.getElementById('pf1')?.value||0)
+                  + parseInt(document.getElementById('pf2')?.value||0);
+  let composicao = 0;
+  for(let i=3;i<=10;i++) composicao += parseInt(document.getElementById('pf'+i)?.value||0);
+
   const badge=document.getElementById('pr-total-badge');
   if(badge){
-    badge.textContent=total.toLocaleString('pt-BR');
-    badge.style.color=total>=meta?'var(--vd)':total>=meta*.8?'var(--am)':'var(--az)';
+    badge.textContent=principal.toLocaleString('pt-BR');
+    badge.style.color=principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--az)';
   }
-  // Barra de progresso
-  const pctVal=Math.min(Math.round(total/meta*100),100);
+  const pctVal=Math.min(Math.round(principal/(meta||1)*100),100);
   const barra=document.getElementById('pr-barra-meta');
   if(barra){
     barra.style.width=pctVal+'%';
-    barra.style.background=total>=meta?'var(--vd)':total>=meta*.8?'var(--am)':'var(--vm)';
+    barra.style.background=principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--vm)';
   }
   document.getElementById('pr-pct-meta').textContent=pctVal+'%';
-  // Mensagem motivacional
+
+  const totalPrincipal = principal + parseInt(document.getElementById('pf11')?.value||0);
+  const aviso = document.getElementById('pr-composicao-aviso');
+  const btnSalvar = document.querySelector('[onclick="salvarProducao()"]');
+  if(aviso){
+    if(composicao > 0 && composicao !== totalPrincipal){
+      aviso.style.display='flex';
+      aviso.innerHTML='⚠ A soma da composição (<strong>'+composicao+'</strong>) deve ser igual ao total de todos os campos principais (<strong>'+totalPrincipal+'</strong>). Diferença: '+(composicao-totalPrincipal>0?'+':'')+(composicao-totalPrincipal)+' itens.';
+      if(btnSalvar) btnSalvar.disabled=true;
+    } else {
+      aviso.style.display='none';
+      if(btnSalvar) btnSalvar.disabled=false;
+    }
+  }
+
   const motiv=document.getElementById('pr-motivacao');
-  if(motiv && total>0){
+  if(motiv && principal>0 && !semMeta){
     motiv.style.display='flex';
-    if(total>=meta){
+    if(principal>=meta){
       motiv.style.background='var(--vdc)';motiv.style.color='#3B6D11';
       motiv.innerHTML='🎯 <span>Excelente resultado! Você atingiu a meta do dia. Continue mantendo esse nível de performance!</span>';
-    } else if(total>=meta*.8){
+    } else if(principal>=meta*.8){
       motiv.style.background='var(--amc)';motiv.style.color='#854F0B';
       motiv.innerHTML='⚡ <span>Você está muito perto da meta! Vamos dar mais um gás que você chega lá!</span>';
     } else {
       motiv.style.background='var(--vmc)';motiv.style.color='#A32D2D';
       motiv.innerHTML='⚠ <span>Atenção: sua produção está abaixo da meta. Vamos ajustar o ritmo e focar na recuperação do resultado.</span>';
     }
-  } else if(motiv){
-    motiv.style.display='none';
-  }
-  // Justificativa
+  } else if(motiv){ motiv.style.display='none'; }
+
   const justBox=document.getElementById('pr-justif-box');
-  if(justBox) justBox.style.display=(total>0&&total<meta)?'block':'none';
+  if(justBox) justBox.style.display=(!semMeta&&principal>0&&principal<meta)?'block':'none';
+  const semMetaMsg=document.getElementById('pr-sem-meta-msg');
+  if(semMetaMsg) semMetaMsg.style.display=semMeta?'flex':'none';
 }
 function limparProd(){
-  for(let i=0;i<10;i++){const e=document.getElementById('pf'+i);if(e)e.value='';}
+  for(let i=0;i<=11;i++){const e=document.getElementById('pf'+i);if(e)e.value='';}
+  window._metaAjustadaTemp=null;window._folgaParcialInfo=null;
   updProd();
   const m=document.getElementById('pr-motivacao');if(m)m.style.display='none';
 }
@@ -2554,11 +2611,19 @@ function limparProd(){
 // ── SALVAR PRODUÇÃO ──
 function salvarProducao(){
   if(!colabLogado||!dataAtual||!presAtual){alert('Preencha todos os campos.');return;}
+  const semMeta=COLABS_SEM_META.includes(colabLogado);
   const meta=getMeta();
   const f=[];
-  for(let i=0;i<10;i++) f.push(parseInt(document.getElementById('pf'+i)?.value||0));
-  const total=f.reduce((a,b)=>a+b,0);
-  if(total<meta){
+  for(let i=0;i<=11;i++) f.push(parseInt(document.getElementById('pf'+i)?.value||0));
+  const principal=f[0]+f[1]+f[2];
+  const composicao=f.slice(3,11).reduce((a,b)=>a+b,0);
+  const baseComp=f[0]+f[1]+f[2]+f[11];
+  if(composicao>0&&composicao!==baseComp){
+    alert('A soma da composição ('+composicao+') deve ser igual ao total de todos os campos principais ('+baseComp+'). Corrija antes de salvar.');
+    return;
+  }
+  const total=principal;
+  if(!semMeta&&total<meta){
     const justif=document.getElementById('pr-justif')?.value?.trim();
     if(!justif){alert('Justificativa obrigatória quando abaixo da meta.');document.getElementById('pr-justif')?.focus();return;}
   }
@@ -3426,14 +3491,25 @@ function filtrarHistProd(modo){
     if(dia) regs=regs.filter(r=>r.data===dia);
     else if(de&&ate) regs=regs.filter(r=>r.data>=de&&r.data<=ate);
   }
-  const sums=Array(10).fill(0);let totT=0;
+  const sums=Array(12).fill(0);let totT=0;
   document.getElementById('adm-prod-tb').innerHTML=regs.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r=>{
-    const tot=r.f.reduce((a,b)=>a+b,0);totT+=tot;r.f.forEach((v,i)=>sums[i]+=v);
-    const meta=getMeta();
-    const pill=tot>=meta?'<span class="pl pl-ok">✓ Meta</span>':r.pres==='Folga'?'<span class="pl pl-g">Folga</span>':'<span class="pl pl-b">Abaixo</span>';
-    return`<tr><td>${fmtDt(r.data)}</td><td><strong>${r.colab}</strong></td><td>${presPill(r.pres)}</td>${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${tot}</td><td style="font-size:10px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.justif||'—'}</td></tr>`;
+    const f=[...(r.f||[])];while(f.length<12)f.push(0);
+    const tot=(f[0]||0)+(f[1]||0)+(f[2]||0);
+    totT+=tot;f.forEach((v,i)=>sums[i]+=v);
+    const metaVal=getMeta();
+    const semMeta=(typeof COLABS_SEM_META!=='undefined')&&COLABS_SEM_META.includes(r.colab);
+    const isAndre=r.colab==='André';
+    let metaPill;
+    if(r.pres==='Folga'||r.pres==='Férias') metaPill='<span class="pl pl-g">'+r.pres+'</span>';
+    else if(semMeta) metaPill=isAndre?'<span class="pl pl-az">Líder</span>':'<span class="pl pl-az">Ajuda</span>';
+    else if(tot>=metaVal) metaPill='<span class="pl pl-ok">✓ Meta</span>';
+    else metaPill='<span class="pl pl-b">Abaixo</span>';
+    const fOrdem=[f[0],f[1],f[2],f[11],f[3],f[4],f[5],f[6],f[7],f[8],f[9],f[10]];
+    return`<tr><td>${fmtDt(r.data)}</td><td><strong>${r.colab}</strong></td><td>${presPill(r.pres)}</td>${fOrdem.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${tot}</td><td>${metaPill}</td><td style="font-size:10px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.justif||'—'}</td></tr>`;
   }).join('');
-  document.getElementById('adm-prod-tf').innerHTML=`<tr><td colspan="3"><strong>TOTAL</strong></td>${sums.map(v=>`<td style="font-weight:700">${v||'—'}</td>`).join('')}<td style="font-weight:700">${totT}</td><td>—</td></tr>`;
+  const sumsOrdem=[sums[0],sums[1],sums[2],sums[11],sums[3],sums[4],sums[5],sums[6],sums[7],sums[8],sums[9],sums[10]];
+  const totMeta=sums[0]+sums[1]+sums[2];
+  document.getElementById('adm-prod-tf').innerHTML=`<tr><td colspan="3"><strong>TOTAL</strong></td>${sumsOrdem.map(v=>`<td style="font-weight:700">${v||'—'}</td>`).join('')}<td style="font-weight:700">${totMeta}</td><td>—</td><td>—</td></tr>`;
 }
 
 // ── IA ANÁLISE ──
