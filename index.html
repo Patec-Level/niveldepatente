@@ -4054,15 +4054,38 @@ function _renderFeriasColabs(){
   }
   const filtColab = selEdit?.value||'';
   const colabsFiltrados = filtColab ? COLABS.filter(c=>c===filtColab) : COLABS;
+  const hojeRender = HOJE.toISOString().split('T')[0];
   container.innerHTML = colabsFiltrados.map(c => {
     const periodos = _feriasState[c];
+    // Separar ativos (sem data, em andamento ou programados) dos concluídos
+    const ativos = periodos.filter((p,pi) => {
+      if(!p.saida) return true; // sem data = mantém para edição
+      const retIso = p.retorno ? (p.retorno.includes('/') ? p.retorno.split('/').reverse().join('-') : p.retorno) : '';
+      return !retIso || hojeRender <= retIso; // em andamento ou programado
+    });
+    const concluidos = periodos.filter((p,pi) => {
+      if(!p.saida) return false;
+      const retIso = p.retorno ? (p.retorno.includes('/') ? p.retorno.split('/').reverse().join('-') : p.retorno) : '';
+      return retIso && hojeRender > retIso;
+    });
+    // Índices reais no array original
+    const atInd = periodos.map((p,i)=>i).filter(i=>{
+      const p=periodos[i]; if(!p.saida) return true;
+      const retIso=p.retorno?(p.retorno.includes('/')?p.retorno.split('/').reverse().join('-'):p.retorno):'';
+      return !retIso||hojeRender<=retIso;
+    });
+    const concMsg = concluidos.length ? `<div style="font-size:11px;color:var(--tx2);padding:.5rem .75rem;background:var(--cin);border-radius:6px;margin-bottom:.5rem">📦 ${concluidos.length} período(s) arquivado(s) — concluído(s). Visível apenas na prévia.</div>` : '';
+    const periodosHTML = ativos.length
+      ? ativos.map((p,i) => _periodoHTML(c, atInd[i], p, i===0 && ativos.length===1 && !p.saida)).join('')
+      : `<div style="font-size:12px;color:var(--tx2);padding:.5rem">Nenhum período ativo. Clique em <strong>+ Período</strong> para adicionar.</div>`;
     return `<div class="cd" style="padding:1rem;border-left:3px solid var(--azm)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <div style="font-size:13px;font-weight:700;color:var(--az)">🧑 ${c}</div>
         <button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="_addPeriodo('${c}')">+ Período</button>
       </div>
+      ${concMsg}
       <div id="ferias-periodos-${c.replace(' ','_')}" style="display:flex;flex-direction:column;gap:8px">
-        ${periodos.map((p,pi) => _periodoHTML(c, pi, p)).join('')}
+        ${periodosHTML}
       </div>
     </div>`;
   }).join('');
@@ -4072,8 +4095,14 @@ function filtrarFeriasEdit(){
   _renderFeriasColabs();
 }
 
-function _periodoHTML(colab, pi, p){
-  const cid = colab.replace(' ','_');
+function _periodoHTML(colab, pi, p, unico=false){
+  const cid = colab.replace(/\s/g,'_');
+  const botoes = unico
+    ? `<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end;font-size:10px;white-space:nowrap" onclick="_limparPeriodo('${colab}',${pi})" title="Limpar datas">🗑 Limpar</button>`
+    : `<div style="display:flex;flex-direction:column;gap:4px;align-self:flex-end">
+        <button class="btn btn-r" style="padding:4px 8px;font-size:10px" onclick="_removePeriodo('${colab}',${pi})" title="Remover período">✕</button>
+        <button class="btn btn-s" style="padding:4px 8px;font-size:10px;white-space:nowrap" onclick="_limparPeriodo('${colab}',${pi})" title="Limpar datas">🗑</button>
+      </div>`;
   return `<div id="ferias-p-${cid}-${pi}" style="display:grid;grid-template-columns:1fr 80px 1fr auto;gap:8px;align-items:end;background:var(--cin);padding:8px 10px;border-radius:8px;border:1px solid var(--brd)">
     <div class="field-wrap">
       <span class="field-label">Período ${pi+1} — Data de saída</span>
@@ -4087,8 +4116,15 @@ function _periodoHTML(colab, pi, p){
       <span class="field-label">Retorno (automático)</span>
       <input type="text" id="ret-${cid}-${pi}" value="${p.retorno||''}" readonly style="width:100%;background:#fff;color:var(--tx2);font-weight:600">
     </div>
-    ${pi > 0 ? `<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end" onclick="_removePeriodo('${colab}',${pi})" title="Remover período">✕</button>` : '<div></div>'}
+    ${botoes}
   </div>`;
+}
+function _limparPeriodo(colab, pi){
+  if(!confirm('Limpar todas as datas deste período?')) return;
+  if(_feriasState[colab]&&_feriasState[colab][pi]){
+    _feriasState[colab][pi]={saida:'',dias:30,retorno:''};
+    _renderFeriasColabs();
+  }
 }
 
 function _addPeriodo(colab){
