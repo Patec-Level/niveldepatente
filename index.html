@@ -5520,7 +5520,7 @@ initMetaGap();
 function bheInit(){
   const sel=document.getElementById('bhe-colab-sel');
   if(!sel)return;
-  sel.innerHTML='<option value="">— Selecione —</option>'+COLABS.map(c=>`<option value="${c}">${c}</option>`).join('');
+  sel.innerHTML='<option value="">— Selecione —</option><option value="__todos__">👥 Todos os colaboradores</option>'+COLABS.map(c=>`<option value="${c}">${c}</option>`).join('');
   const selA=document.getElementById('bhe-new-mes-a');
   if(selA){const y=new Date().getFullYear();selA.innerHTML='<option value="">Ano</option>'+[y-1,y,y+1].map(a=>`<option value="${a}">${a}</option>`).join('');selA.value=String(y);}
   bheCarregarLimiteADM();
