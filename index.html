@@ -1251,6 +1251,58 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- ── HISTÓRICO DO MAPA ── -->
       <div id="adm-hist-mapa" class="adm-tab" style="display:none">
+
+        <!-- LANÇAMENTO DIÁRIO DO MAPA -->
+        <div class="cd" style="border-top:3px solid var(--azm);margin-bottom:1rem">
+          <div class="cd-t">📥 Lançamento diário — dados do Mapa</div>
+          <div class="al al-b" style="margin-bottom:1rem">ℹ Preencha os dados do dia diretamente do Level Board. Ao salvar, o histórico é atualizado automaticamente no Firebase.</div>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:1rem">
+            <div class="field-wrap" style="min-width:150px">
+              <span class="field-label">Data</span>
+              <input type="date" id="mapa-lanc-dt" style="width:100%">
+            </div>
+            <button class="btn btn-g" onclick="mapaAutoHoje()" style="align-self:flex-end;font-size:11px">📅 Hoje</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem">
+            <div class="field-wrap">
+              <span class="field-label" style="color:#3266AD;font-weight:700">L3 — PATEC Finalizado</span>
+              <input type="number" id="mapa-lanc-l3" min="0" placeholder="0" style="font-size:18px;font-weight:700;text-align:center">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label" style="color:#3266AD;font-weight:700">L4 — Ag. PATEC Finalizar</span>
+              <input type="number" id="mapa-lanc-l4" min="0" placeholder="0" style="font-size:18px;font-weight:700;text-align:center">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label" style="color:#1D9E75;font-weight:700">L5 — 100% Reprovado</span>
+              <input type="number" id="mapa-lanc-l5" min="0" placeholder="0" style="font-size:18px;font-weight:700;text-align:center">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label" style="color:#1D9E75;font-weight:700">L6 — PATEC Cancelado</span>
+              <input type="number" id="mapa-lanc-l6" min="0" placeholder="0" style="font-size:18px;font-weight:700;text-align:center">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label" style="color:#BA7517;font-weight:700">L7 — Abrir ID Não</span>
+              <input type="number" id="mapa-lanc-l7" min="0" placeholder="0" style="font-size:18px;font-weight:700;text-align:center">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label" style="color:#BA7517;font-weight:700">L8 — Abrir PATEC Obrig.</span>
+              <input type="number" id="mapa-lanc-l8" min="0" placeholder="0" style="font-size:18px;font-weight:700;text-align:center">
+            </div>
+          </div>
+          <!-- Preview dos totais -->
+          <div id="mapa-lanc-preview" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:1rem;padding:.875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Total PATEC (L3+L4+L5+L6)</div><div style="font-size:20px;font-weight:700;color:var(--azm)" id="mapa-prev-patec">—</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Total Geral (L3..L8)</div><div style="font-size:20px;font-weight:700;color:var(--az)" id="mapa-prev-geral">—</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Var. PATEC vs dia anterior</div><div style="font-size:20px;font-weight:700" id="mapa-prev-var">—</div></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-p" style="padding:9px 20px;font-size:13px" onclick="salvarMapaDia()">💾 Salvar lançamento</button>
+            <button class="btn btn-s" style="font-size:11px" onclick="mapaLimparLanc()">↺ Limpar</button>
+            <span id="mapa-lanc-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Lançamento salvo!</span>
+            <span id="mapa-lanc-dup" style="font-size:11px;color:var(--am);font-weight:600;display:none">⚠ Data já existe — substituído.</span>
+          </div>
+        </div>
+
         <div class="cd">
           <div class="cd-t">📋 Histórico do Mapa — filtros</div>
           <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.875rem">
@@ -1286,6 +1338,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <tbody id="adm-mapa-tb"></tbody>
             </table>
           </div>
+        </div>
         </div>
         <!-- IA ANÁLISE MAPA -->
         <div class="cd" style="border:1.5px solid var(--azm)">
@@ -2258,6 +2311,7 @@ async function fbCarregarTudo(){
   renderBanco();
   renderBHECards();
   console.log('✓ Firebase: todos os dados carregados e renderizados');
+    fbCarregarMapaDiario();
 }
 
 
@@ -3437,6 +3491,7 @@ function setAdmTab(id,btn){
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
   if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
+  if(id==='hist-mapa') setTimeout(renderAdmMapaHistorico,50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
   document.querySelectorAll('#adm-tabs .stab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -3511,6 +3566,164 @@ async function salvarSenhas(){
 }
 
 // ── HISTÓRICO MAPA ──
+// ── LANÇAMENTO DIÁRIO DO MAPA ──
+let mapaFirebase = []; // registros salvos no Firebase
+
+function mapaAutoHoje(){
+  const el=document.getElementById('mapa-lanc-dt');
+  if(el) el.value=HOJE.toISOString().split('T')[0];
+  mapaCalcPreview();
+}
+
+function mapaCalcPreview(){
+  const get=id=>parseInt(document.getElementById(id)?.value||'0')||0;
+  const l3=get('mapa-lanc-l3'),l4=get('mapa-lanc-l4'),l5=get('mapa-lanc-l5'),l6=get('mapa-lanc-l6'),l7=get('mapa-lanc-l7'),l8=get('mapa-lanc-l8');
+  const patec=l3+l4+l5+l6;
+  const geral=l3+l4+l5+l6+l7+l8;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('mapa-prev-patec',patec.toLocaleString('pt-BR'));
+  set('mapa-prev-geral',geral.toLocaleString('pt-BR'));
+  // Variação vs último dia
+  const last=mapaFirebase.length>0?mapaFirebase[mapaFirebase.length-1]:null;
+  const varEl=document.getElementById('mapa-prev-var');
+  if(varEl&&last){
+    const lastPatec=(last.l3||0)+(last.l4||0)+(last.l5||0)+(last.l6||0);
+    const vari=patec-lastPatec;
+    varEl.textContent=(vari>=0?'+':'')+vari;
+    varEl.style.color=vari>=0?'var(--vm)':'var(--vd)';
+  } else if(varEl) varEl.textContent='—';
+}
+
+// Adicionar listener de input nos campos
+['mapa-lanc-l3','mapa-lanc-l4','mapa-lanc-l5','mapa-lanc-l6','mapa-lanc-l7','mapa-lanc-l8'].forEach(id=>{
+  setTimeout(()=>{const el=document.getElementById(id);if(el)el.addEventListener('input',mapaCalcPreview);},500);
+});
+
+async function salvarMapaDia(){
+  const dt=document.getElementById('mapa-lanc-dt')?.value;
+  if(!dt){alert('Informe a data.');return;}
+  const get=id=>parseInt(document.getElementById(id)?.value||'0')||0;
+  const reg={
+    data:dt,
+    l3:get('mapa-lanc-l3'),l4:get('mapa-lanc-l4'),
+    l5:get('mapa-lanc-l5'),l6:get('mapa-lanc-l6'),
+    l7:get('mapa-lanc-l7'),l8:get('mapa-lanc-l8'),
+    ts:new Date().toISOString()
+  };
+  // Verificar duplicata
+  const existIdx=mapaFirebase.findIndex(r=>r.data===dt);
+  const duplicado=existIdx>=0;
+  if(existIdx>=0) mapaFirebase[existIdx]=reg;
+  else mapaFirebase.push(reg);
+  mapaFirebase.sort((a,b)=>a.data.localeCompare(b.data));
+  // Salvar no Firebase
+  await fbSet('mapa_diario',dt.replace(/-/g,''),reg);
+  // Feedback
+  _flash(duplicado?'mapa-lanc-dup':'mapa-lanc-ok');
+  mapaLimparLanc();
+  renderAdmMapaHistorico();
+  // Atualizar arrays globais para o painel
+  mapaAtualizarGlobais();
+}
+
+function mapaLimparLanc(){
+  ['mapa-lanc-l3','mapa-lanc-l4','mapa-lanc-l5','mapa-lanc-l6','mapa-lanc-l7','mapa-lanc-l8'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  ['mapa-prev-patec','mapa-prev-geral','mapa-prev-var'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.textContent='—';
+  });
+}
+
+function mapaAtualizarGlobais(){
+  // Mesclar Firebase com dados iniciais (L, DATAS_MAPA)
+  // Apenas atualiza se o dia já existir nos arrays
+  mapaFirebase.forEach(reg=>{
+    const iso=reg.data;
+    const idx=DATAS_ISO_MAPA.indexOf(iso);
+    if(idx>=0){
+      L[3][idx]=reg.l3||0;L[4][idx]=reg.l4||0;
+      L[5][idx]=reg.l5||0;L[6][idx]=reg.l6||0;
+      L[7][idx]=reg.l7||0;L[8][idx]=reg.l8||0;
+    }
+  });
+}
+
+async function fbCarregarMapaDiario(){
+  try{
+    const db=getDB();if(!db)return;
+    const snap=await db.collection('mapa_diario').orderBy('data').get();
+    mapaFirebase=snap.docs.map(d=>d.data());
+    mapaAtualizarGlobais();
+    renderAdmMapaHistorico();
+    console.log('Mapa diario: '+mapaFirebase.length+' registros');
+  }catch(e){console.warn('Erro mapa diario:',e);}
+}
+
+function renderAdmMapaHistorico(){
+  const tb=document.getElementById('adm-mapa-tb');
+  if(!tb) return;
+  // Combinar dados fixos + Firebase
+  const todos=[];
+  DATAS_ISO_MAPA.forEach((iso,i)=>{
+    const fb=mapaFirebase.find(r=>r.data===iso);
+    todos.push({
+      data:iso,dt:DATAS_MAPA[i],
+      l3:fb?fb.l3:L[3][i], l4:fb?fb.l4:L[4][i],
+      l5:fb?fb.l5:L[5][i], l6:fb?fb.l6:L[6][i],
+      l7:fb?fb.l7:L[7][i], l8:fb?fb.l8:L[8][i],
+      fromFb:!!fb
+    });
+  });
+  // Adicionar dias do Firebase que não estão nos arrays fixos
+  mapaFirebase.forEach(r=>{
+    if(!DATAS_ISO_MAPA.includes(r.data)){
+      const d=r.data.split('-');
+      todos.push({data:r.data,dt:d[2]+'/'+(['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][parseInt(d[1])-1]),l3:r.l3||0,l4:r.l4||0,l5:r.l5||0,l6:r.l6||0,l7:r.l7||0,l8:r.l8||0,fromFb:true});
+    }
+  });
+  todos.sort((a,b)=>a.data.localeCompare(b.data));
+  tb.innerHTML=todos.map((r,i)=>{
+    const patec=r.l3+r.l4+r.l5+r.l6;
+    const geral=patec+r.l7+r.l8;
+    const prev=i>0?(todos[i-1].l3+todos[i-1].l4+todos[i-1].l5+todos[i-1].l6):null;
+    const vari=prev!==null?patec-prev:null;
+    const varStr=vari===null?'—':(vari>=0?'▲ +'+vari:'▼ '+vari);
+    const varCor=vari===null?'var(--tx2)':vari>=0?'var(--vm)':'var(--vd)';
+    const fbTag=r.fromFb?'<span style="font-size:9px;background:var(--azc);color:var(--azm);padding:1px 5px;border-radius:3px;margin-left:4px">●</span>':'';
+    return'<tr>'
+      +'<td><strong>'+(i+1)+' · '+r.dt+'</strong>'+fbTag+'</td>'
+      +'<td>'+r.l3+'</td><td>'+r.l4+'</td><td>'+r.l5+'</td><td>'+r.l6+'</td><td>'+r.l7+'</td><td>'+r.l8+'</td>'
+      +'<td style="font-weight:700">'+geral.toLocaleString('pt-BR')+'</td>'
+      +'<td style="font-weight:700;color:var(--azm)">'+patec.toLocaleString('pt-BR')+'</td>'
+      +'<td style="font-weight:700;color:'+varCor+'">'+varStr+'</td>'
+      +'<td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="mapaEditarDia(this.dataset.dt)" data-dt="'+r.data+'">✎</button>'
+      +(r.fromFb?'<button class="btn btn-r" style="padding:2px 7px;font-size:10px;margin-left:4px" onclick="mapaExcluirDia(this.dataset.dt)" data-dt="'+r.data+'">✕</button>':'')
+      +'</td>'
+      +'</tr>';
+  }).join('')||'<tr><td colspan="11" style="text-align:center;color:var(--tx2)">Sem registros</td></tr>';
+}
+
+function mapaEditarDia(dt){
+  const reg=mapaFirebase.find(r=>r.data===dt);
+  const iso=dt;const idx=DATAS_ISO_MAPA.indexOf(iso);
+  const l3=reg?reg.l3:L[3][idx]||0, l4=reg?reg.l4:L[4][idx]||0,
+        l5=reg?reg.l5:L[5][idx]||0, l6=reg?reg.l6:L[6][idx]||0,
+        l7=reg?reg.l7:L[7][idx]||0, l8=reg?reg.l8:L[8][idx]||0;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+  set('mapa-lanc-dt',dt);set('mapa-lanc-l3',l3);set('mapa-lanc-l4',l4);
+  set('mapa-lanc-l5',l5);set('mapa-lanc-l6',l6);set('mapa-lanc-l7',l7);set('mapa-lanc-l8',l8);
+  mapaCalcPreview();
+  document.getElementById('mapa-lanc-dt')?.scrollIntoView({behavior:'smooth'});
+}
+
+async function mapaExcluirDia(dt){
+  if(!confirm('Excluir registro de '+fmtDt(dt)+'?'))return;
+  mapaFirebase=mapaFirebase.filter(r=>r.data!==dt);
+  try{const db=getDB();if(db)await db.collection('mapa_diario').doc(dt.replace(/-/g,'')).delete();}catch(e){}
+  renderAdmMapaHistorico();
+}
+
 function filtrarHistMapa(modo, l12Anterior=null){
   let dados=[];
   if(modo==='all'){
@@ -5614,4 +5827,3 @@ fbCarregarTudo().then(()=>{ initMetaGap(); });
 </script>
 </body>
 </html>
-  
