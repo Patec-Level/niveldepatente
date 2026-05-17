@@ -1348,7 +1348,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div id="adm-ferias-adm" class="adm-tab" style="display:none">
         <div class="cd">
           <div class="cd-t">🌴 Editar quadro de férias</div>
-          <div class="al al-b">ℹ Cada colaborador pode ter <strong>múltiplos períodos</strong> de férias (férias fracionadas). Use o botão <strong>+ Período</strong> para adicionar novas datas. O retorno é calculado automaticamente.</div>
+          <div class="al al-b">ℹ Cada colaborador pode ter <strong>múltiplos períodos</strong> de férias (férias fracionadas). Use o botão <strong>+ Período</strong> para adicionar novas datas. O retorno é calculado automaticamente. Períodos concluídos são arquivados automaticamente.</div>
+
+          <!-- Filtro colaborador na edição -->
+          <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">
+            <div class="field-wrap" style="min-width:180px">
+              <span class="field-label">Filtrar colaborador</span>
+              <select id="ferias-edit-colab" onchange="filtrarFeriasEdit()" style="width:100%">
+                <option value="">Todos os colaboradores</option>
+              </select>
+            </div>
+          </div>
 
           <!-- Lista dinâmica de colaboradores com períodos -->
           <div id="adm-ferias-colabs" style="display:flex;flex-direction:column;gap:14px;margin-bottom:1rem"></div>
@@ -1361,9 +1371,28 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
         <!-- Prévia ordenada por data de saída -->
         <div class="cd">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
             <div class="cd-t" style="margin:0">Prévia — todos os períodos (ordem de saída)</div>
             <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="exportAdmFerias()">💾 Exportar CSV</button>
+          </div>
+          <!-- Filtros prévia -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.75rem;align-items:flex-end">
+            <div class="field-wrap" style="min-width:160px">
+              <span class="field-label">Colaborador</span>
+              <select id="ferias-filtro-colab" onchange="renderFeriasPreview()" style="width:100%">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="field-wrap" style="min-width:160px">
+              <span class="field-label">Status</span>
+              <select id="ferias-filtro-status" onchange="renderFeriasPreview()" style="width:100%">
+                <option value="">Todos</option>
+                <option value="Em andamento">🟢 Em andamento</option>
+                <option value="Programada">🔵 Programada</option>
+                <option value="Concluída">✅ Concluída</option>
+              </select>
+            </div>
+            <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="limparFiltrosFerias()">Limpar filtros</button>
           </div>
           <div class="tw"><table>
             <thead><tr><th>#</th><th>Colaborador</th><th>Período</th><th>Saída</th><th>Dias</th><th>Retorno</th><th>Status</th></tr></thead>
@@ -3631,41 +3660,131 @@ let _feriasState = {};
 
 
 
+// helper status período
+function _getPeriodoStatus(p){
+  const hoje=HOJE.toISOString().split('T')[0];
+  if(!p.saida) return 'sem-data';
+  const retIso=p.retorno?(p.retorno.includes('/')?p.retorno.split('/').reverse().join('-'):p.retorno):'';
+  if(hoje>=p.saida&&retIso&&hoje<=retIso) return 'andamento';
+  if(p.saida>hoje) return 'programada';
+  return 'concluida';
+}
+
+function filtrarFeriasEdit(){_renderFeriasColabs();}
+
+function limparFiltrosFerias(){
+  const fc=document.getElementById('ferias-filtro-colab');
+  const fs=document.getElementById('ferias-filtro-status');
+  if(fc)fc.value='';if(fs)fs.value='';
+  renderFeriasPreview();
+}
+
+function renderFeriasPreview(){
+  const filtColab=document.getElementById('ferias-filtro-colab')?.value||'';
+  const filtStatus=document.getElementById('ferias-filtro-status')?.value||'';
+  const hoje=HOJE.toISOString().split('T')[0];
+  // Montar lista plana
+  let todos=[];
+  COLABS.forEach(c=>{
+    (_feriasState[c]||[]).forEach((p,pi)=>{
+      if(p.saida) todos.push({colab:c,periodo:pi+1,...p});
+    });
+  });
+  todos.sort((a,b)=>a.saida.localeCompare(b.saida));
+  // Aplicar filtros
+  if(filtColab) todos=todos.filter(r=>r.colab===filtColab);
+  let cont=0;
+  const tb=document.getElementById('adm-ferias-preview');
+  if(!tb)return;
+  const rows=todos.map(r=>{
+    const saidaFmt=r.saida.split('-').reverse().join('/');
+    const st=_getPeriodoStatus(r);
+    let stLabel,stClass;
+    if(st==='andamento'){stLabel='Em andamento';stClass='pl-ok';}
+    else if(st==='programada'){stLabel='Programada';stClass='pl-az';}
+    else{stLabel='Concluída';stClass='pl-g';}
+    if(filtStatus&&filtStatus!==stLabel) return '';
+    cont++;
+    return`<tr><td><strong>${cont}º</strong></td><td>${r.colab}</td><td style="font-size:10px;color:var(--tx2)">Período ${r.periodo}</td><td>${saidaFmt}</td><td>${r.dias||30}</td><td style="font-weight:600">${r.retorno||'—'}</td><td><span class="pl ${stClass}">${stLabel}</span></td></tr>`;
+  }).join('');
+  tb.innerHTML=rows||'<tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:1rem">Nenhum período encontrado</td></tr>';
+}
+
 function _renderFeriasColabs(){
   const container = document.getElementById('adm-ferias-colabs');
   if(!container) return;
-  container.innerHTML = COLABS.map(c => {
-    const periodos = _feriasState[c];
+  const hoje=HOJE.toISOString().split('T')[0];
+  // Popular selects de filtro
+  const selEdit=document.getElementById('ferias-edit-colab');
+  if(selEdit&&selEdit.options.length<=1){
+    COLABS.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;selEdit.appendChild(o);});
+  }
+  const selPrev=document.getElementById('ferias-filtro-colab');
+  if(selPrev&&selPrev.options.length<=1){
+    COLABS.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;selPrev.appendChild(o);});
+  }
+  const filtColab=selEdit?.value||'';
+  const colabsFiltrados=filtColab?COLABS.filter(c=>c===filtColab):COLABS;
+
+  container.innerHTML = colabsFiltrados.map(c => {
+    const periodos = _feriasState[c]||[];
+    // Separar ativos (sem data, em andamento, programados) dos concluídos
+    const ativos=[], concluidos=[], atInd=[];
+    periodos.forEach((p,i)=>{
+      const st=_getPeriodoStatus(p);
+      if(st==='concluida'){concluidos.push(p);}
+      else{ativos.push(p);atInd.push(i);}
+    });
+    const concMsg=concluidos.length?`<div style="font-size:11px;color:var(--tx2);padding:.5rem .75rem;background:var(--cin);border-radius:6px;margin-bottom:.5rem">📦 ${concluidos.length} período(s) arquivado(s) — concluído(s). Visível apenas na prévia.</div>`:'';
+    const periodosHTML=ativos.length
+      ?ativos.map((p,i)=>_periodoHTML(c,atInd[i],p,i===0&&ativos.length===1&&!p.saida)).join('')
+      :`<div style="font-size:12px;color:var(--tx2);padding:.5rem">Nenhum período ativo. Clique em <strong>+ Período</strong> para adicionar.</div>`;
     return `<div class="cd" style="padding:1rem;border-left:3px solid var(--azm)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <div style="font-size:13px;font-weight:700;color:var(--az)">🧑 ${c}</div>
         <button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="_addPeriodo('${c}')">+ Período</button>
       </div>
-      <div id="ferias-periodos-${c.replace(' ','_')}" style="display:flex;flex-direction:column;gap:8px">
-        ${periodos.map((p,pi) => _periodoHTML(c, pi, p)).join('')}
+      ${concMsg}
+      <div id="ferias-periodos-${c.replace(/ /g,'_')}" style="display:flex;flex-direction:column;gap:8px">
+        ${periodosHTML}
       </div>
     </div>`;
   }).join('');
-  _atualizarFeriasPreview();
+  renderFeriasPreview();
 }
 
-function _periodoHTML(colab, pi, p){
-  const cid = colab.replace(' ','_');
+function _periodoHTML(colab, pi, p, unico=false){
+  const cid=colab.replace(/ /g,'_');
+  const cj=JSON.stringify(colab);
+  const botoes=unico
+    ?`<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end;font-size:10px;white-space:nowrap" onclick="_limparPeriodo(${cj},${pi})" title="Limpar datas">🗑 Limpar</button>`
+    :`<div style="display:flex;flex-direction:column;gap:4px;align-self:flex-end">
+        <button class="btn btn-r" style="padding:4px 8px;font-size:10px" onclick="_removePeriodo(${cj},${pi})" title="Remover">✕</button>
+        <button class="btn btn-s" style="padding:4px 8px;font-size:10px" onclick="_limparPeriodo(${cj},${pi})" title="Limpar datas">🗑</button>
+      </div>`;
   return `<div id="ferias-p-${cid}-${pi}" style="display:grid;grid-template-columns:1fr 80px 1fr auto;gap:8px;align-items:end;background:var(--cin);padding:8px 10px;border-radius:8px;border:1px solid var(--brd)">
     <div class="field-wrap">
       <span class="field-label">Período ${pi+1} — Data de saída</span>
-      <input type="date" value="${p.saida||''}" onchange="_updPeriodo('${colab}',${pi},'saida',this.value)" style="width:100%">
+      <input type="date" value="${p.saida||''}" onchange="_updPeriodo(${cj},${pi},'saida',this.value)" style="width:100%">
     </div>
     <div class="field-wrap">
       <span class="field-label">Dias</span>
-      <input type="number" value="${p.dias||30}" min="1" max="90" onchange="_updPeriodo('${colab}',${pi},'dias',this.value)" style="width:100%;text-align:center;font-weight:700">
+      <input type="number" value="${p.dias||30}" min="1" max="90" onchange="_updPeriodo(${cj},${pi},'dias',this.value)" style="width:100%;text-align:center;font-weight:700">
     </div>
     <div class="field-wrap">
       <span class="field-label">Retorno (automático)</span>
       <input type="text" id="ret-${cid}-${pi}" value="${p.retorno||''}" readonly style="width:100%;background:#fff;color:var(--tx2);font-weight:600">
     </div>
-    ${pi > 0 ? `<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end" onclick="_removePeriodo('${colab}',${pi})" title="Remover período">✕</button>` : '<div></div>'}
+    ${botoes}
   </div>`;
+}
+
+function _limparPeriodo(colab,pi){
+  if(!confirm('Limpar todas as datas deste período?'))return;
+  if(_feriasState[colab]&&_feriasState[colab][pi]){
+    _feriasState[colab][pi]={saida:'',dias:30,retorno:''};
+    _renderFeriasColabs();
+  }
 }
 
 function _addPeriodo(colab){
@@ -3695,7 +3814,8 @@ function _updPeriodo(colab, pi, campo, val){
   _atualizarFeriasPreview();
 }
 
-function _atualizarFeriasPreview(){
+function _atualizarFeriasPreview(){renderFeriasPreview();}
+function _atualizarFeriasPreview_old(){
   const hoje = HOJE.toISOString().split('T')[0];
   // Montar lista plana de todos os períodos ordenados por data
   let todos = [];
