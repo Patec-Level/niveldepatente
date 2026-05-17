@@ -884,6 +884,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- ABAS ADM -->
       <div class="stabs" id="adm-tabs">
         <button class="stab active" onclick="setAdmTab('ciclos',this)">🔄 Gestão de Ciclos</button>
+        <button class="stab" onclick="setAdmTab('metas',this)">🎯 Metas e Gap</button>
         <button class="stab" onclick="setAdmTab('meta-gap',this)">📌 Meta & Gap (Topbar)</button>
         <button class="stab" onclick="setAdmTab('senhas',this)">🔑 Senhas</button>
         <button class="stab" onclick="setAdmTab('hist-mapa',this)">📋 Hist. Mapa</button>
@@ -902,39 +903,34 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <!-- CICLO ATIVO -->
         <div class="cd" style="border-top:3px solid var(--vd);margin-bottom:1rem">
           <div class="cd-t">🟢 Ciclo de Medição Ativo</div>
-          <div id="ciclo-ativo-painel">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:1rem">
-              <div>
-                <div style="font-size:20px;font-weight:700;color:var(--az)" id="ciclo-nome-ativo">—</div>
-                <div style="font-size:12px;color:var(--tx2);margin-top:3px" id="ciclo-datas-ativo">—</div>
-                <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-                  <span style="font-size:11px;background:var(--azc);color:var(--azm);padding:3px 10px;border-radius:5px">Meta: <strong id="ciclo-meta-ativo">—</strong></span>
-                  <span style="font-size:11px;background:var(--vdc);color:var(--vd);padding:3px 10px;border-radius:5px">Registros: <strong id="ciclo-regs-ativo">—</strong></span>
-                  <span style="font-size:11px;background:var(--amc);color:var(--am);padding:3px 10px;border-radius:5px">Dias úteis: <strong id="ciclo-dias-ativo">—</strong></span>
-                </div>
-              </div>
-              <div style="text-align:center;padding:1rem 1.5rem;background:var(--azc);border-radius:10px;border:1px solid rgba(26,74,138,.15)">
-                <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Realizado acumulado</div>
-                <div style="font-size:36px;font-weight:700;color:var(--azm);line-height:1" id="ciclo-real-ativo">—</div>
-                <div style="font-size:11px;color:var(--tx2);margin-top:2px" id="ciclo-pct-ativo">—% da meta</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:1rem">
+            <div>
+              <div style="font-size:20px;font-weight:700;color:var(--az)" id="ciclo-nome-ativo">—</div>
+              <div style="font-size:12px;color:var(--tx2);margin-top:3px" id="ciclo-datas-ativo">—</div>
+              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                <span style="font-size:11px;background:var(--azc);color:var(--azm);padding:3px 10px;border-radius:5px">Meta: <strong id="ciclo-meta-ativo">—</strong></span>
+                <span style="font-size:11px;background:var(--vdc);color:var(--vd);padding:3px 10px;border-radius:5px">Registros: <strong id="ciclo-regs-ativo">—</strong></span>
+                <span style="font-size:11px;background:var(--amc);color:var(--am);padding:3px 10px;border-radius:5px">Dias úteis: <strong id="ciclo-dias-ativo">—</strong></span>
               </div>
             </div>
-            <!-- KPIs do ciclo ativo -->
-            <div id="ciclo-ativo-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem"></div>
+            <div style="text-align:center;padding:1rem 1.5rem;background:var(--azc);border-radius:10px;border:1px solid rgba(26,74,138,.15)">
+              <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Realizado acumulado</div>
+              <div style="font-size:36px;font-weight:700;color:var(--azm);line-height:1" id="ciclo-real-ativo">—</div>
+              <div style="font-size:11px;margin-top:2px" id="ciclo-pct-ativo">—% da meta</div>
+            </div>
           </div>
+          <div id="ciclo-ativo-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px"></div>
         </div>
 
         <!-- ENCERRAR CICLO -->
         <div class="cd" style="border-top:3px solid var(--vm);margin-bottom:1rem">
           <div class="cd-t">🔒 Encerrar ciclo de medição</div>
-          <div class="al al-a" style="margin-bottom:1rem">⚠ Ao encerrar, todos os dados (produção, PCP, mapa) são arquivados no Firebase com snapshot completo. Os dados permanecem acessíveis no histórico. Não é possível desfazer.</div>
-          <!-- Resumo pré-encerramento -->
-          <div id="ciclo-resumo-encerramento" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1rem;padding:1rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
-            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Total produzido</div><div style="font-size:22px;font-weight:700;color:var(--azm)" id="enc-total">—</div></div>
-            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">% da meta</div><div style="font-size:22px;font-weight:700" id="enc-pct" style="color:var(--vd)">—</div></div>
-            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Dias úteis</div><div style="font-size:22px;font-weight:700;color:var(--az)" id="enc-dias">—</div></div>
-            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Média/dia equipe</div><div style="font-size:22px;font-weight:700;color:var(--az)" id="enc-media">—</div></div>
-            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Registros PCP</div><div style="font-size:22px;font-weight:700;color:var(--az)" id="enc-pcp">—</div></div>
+          <div class="al al-a" style="margin-bottom:1rem">⚠ Ao encerrar, todos os dados (produção, PCP, mapa) são arquivados no Firebase. Os dados permanecem disponíveis no Resultado de Medição. Não é possível desfazer.</div>
+          <div id="ciclo-resumo-enc" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1rem;padding:1rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Total produzido</div><div style="font-size:20px;font-weight:700;color:var(--azm)" id="enc-total">—</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">% da meta</div><div style="font-size:20px;font-weight:700" id="enc-pct">—</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Dias úteis</div><div style="font-size:20px;font-weight:700;color:var(--az)" id="enc-dias">—</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Média/dia</div><div style="font-size:20px;font-weight:700;color:var(--az)" id="enc-media">—</div></div>
           </div>
           <div class="form-grid" style="margin-bottom:1rem">
             <div class="field-wrap">
@@ -947,10 +943,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn" style="background:var(--vm);color:#fff;font-weight:700;padding:9px 20px" onclick="encerrarCiclo()">
-              🔒 Encerrar e arquivar ciclo
-            </button>
-            <span id="ciclo-fechamento-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Ciclo encerrado e arquivado!</span>
+            <button class="btn" style="background:var(--vm);color:#fff;font-weight:700;padding:9px 20px" onclick="encerrarCiclo()">🔒 Encerrar e arquivar ciclo</button>
+            <span id="ciclo-fechamento-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Ciclo encerrado e arquivado no Firebase!</span>
           </div>
         </div>
 
@@ -973,9 +967,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-g" style="padding:9px 20px;font-size:13px" onclick="iniciarNovoCiclo()">
-              🚀 Iniciar novo ciclo
-            </button>
+            <button class="btn btn-g" style="padding:9px 20px;font-size:13px" onclick="iniciarNovoCiclo()">🚀 Iniciar novo ciclo</button>
             <span id="novo-ciclo-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Novo ciclo iniciado!</span>
           </div>
         </div>
@@ -983,100 +975,107 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- ── RESULTADO DE MEDIÇÃO ── -->
       <div id="adm-resultado-medicao" class="adm-tab" style="display:none">
-        <div class="al al-b" style="margin-bottom:1rem">ℹ Histórico completo de todos os ciclos de medição encerrados. Clique em um ciclo para ver o detalhamento.</div>
-
-        <!-- Lista de ciclos -->
+        <div class="al al-b" style="margin-bottom:1rem">ℹ Histórico completo de todos os ciclos encerrados. Clique em um ciclo para ver o detalhamento completo.</div>
         <div id="resultado-ciclos-lista" style="display:flex;flex-direction:column;gap:12px;margin-bottom:1rem"></div>
         <div id="resultado-ciclos-empty" class="al al-b">ℹ Nenhum ciclo encerrado ainda. Ao encerrar um ciclo em Gestão de Ciclos, ele aparece aqui.</div>
-
-        <!-- Detalhamento do ciclo selecionado -->
-        <div id="resultado-detalhe" style="display:none">
+        <div id="resultado-detalhe" style="display:none;margin-top:1rem">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
             <div style="font-size:16px;font-weight:700;color:var(--az)" id="resultado-titulo">—</div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-r" style="font-size:11px" id="btn-excluir-ciclo" onclick="excluirCicloResultadoAberto()">🗑 Excluir análise</button>
+              <button class="btn btn-r" style="font-size:11px" onclick="excluirCicloResultadoAberto()">🗑 Excluir análise</button>
               <button class="btn btn-s" style="font-size:11px" onclick="document.getElementById('resultado-detalhe').style.display='none'">✕ Fechar</button>
             </div>
           </div>
-
-          <!-- KPIs do ciclo -->
           <div id="resultado-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1rem"></div>
-
-          <!-- Abas de detalhe -->
           <div class="stabs" id="resultado-subtabs" style="margin-bottom:1rem">
             <button class="stab active" onclick="setResultadoTab('prod',this)">👥 Produção</button>
             <button class="stab" onclick="setResultadoTab('colab',this)">📊 Por Colaborador</button>
             <button class="stab" onclick="setResultadoTab('pcp',this)">📈 PCP</button>
             <button class="stab" onclick="setResultadoTab('mapa',this)">📋 Mapa</button>
           </div>
-
-          <!-- Produção -->
           <div id="resultado-tab-prod" class="resultado-tab">
-            <div class="cd">
-              <div class="cd-t">📋 Produção diária do ciclo</div>
+            <div class="cd"><div class="cd-t">📋 Produção diária do ciclo</div>
               <div class="tw"><table>
                 <thead><tr><th>Data</th><th>Colaborador</th><th>Presença</th><th>1ª Análise</th><th>Tratativa</th><th>Status B</th><th>Total</th><th>Meta</th></tr></thead>
-                <tbody id="resultado-prod-tb"></tbody>
-                <tfoot id="resultado-prod-tf"></tfoot>
-              </table></div>
-            </div>
+                <tbody id="resultado-prod-tb"></tbody><tfoot id="resultado-prod-tf"></tfoot>
+              </table></div></div>
           </div>
-
-          <!-- Por Colaborador -->
           <div id="resultado-tab-colab" class="resultado-tab" style="display:none">
-            <div class="cd">
-              <div class="cd-t">👥 Desempenho por colaborador</div>
-              <div id="resultado-colab-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
-            </div>
+            <div class="cd"><div class="cd-t">👥 Desempenho por colaborador</div>
+              <div id="resultado-colab-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div></div>
           </div>
-
-          <!-- PCP -->
           <div id="resultado-tab-pcp" class="resultado-tab" style="display:none">
-            <div class="cd">
-              <div class="cd-t">📈 Dados PCP do ciclo</div>
+            <div class="cd"><div class="cd-t">📈 Dados PCP do ciclo</div>
               <div class="tw"><table>
                 <thead><tr><th>Data</th><th>PATEC Fin./Parada</th><th>MDG</th><th>XGL</th><th>Pedidos</th><th>Dev.</th><th>Repub.</th><th>Total</th></tr></thead>
-                <tbody id="resultado-pcp-tb"></tbody>
-                <tfoot id="resultado-pcp-tf"></tfoot>
-              </table></div>
-            </div>
+                <tbody id="resultado-pcp-tb"></tbody><tfoot id="resultado-pcp-tf"></tfoot>
+              </table></div></div>
           </div>
-
-          <!-- Mapa -->
           <div id="resultado-tab-mapa" class="resultado-tab" style="display:none">
-            <div class="cd">
-              <div class="cd-t">📋 Histórico do Mapa no ciclo</div>
+            <div class="cd"><div class="cd-t">📋 Histórico do Mapa no ciclo</div>
               <div class="tw"><table>
                 <thead><tr><th>Data</th><th>PATEC Finalizado</th><th>Ag. PATEC</th><th>100% Reprov.</th><th>Cancelado</th><th>Total PATEC</th></tr></thead>
                 <tbody id="resultado-mapa-tb"></tbody>
-              </table></div>
+              </table></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── METAS E GAP ── -->
+      <div id="adm-metas" class="adm-tab" style="display:none">
+        <div class="g2">
+          <div class="cd">
+            <div class="cd-t">🎯 Meta do ciclo de medição</div>
+            <div class="al al-b">ℹ Esses valores são refletidos no sidebar e no painel geral em tempo real.</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div class="field-wrap">
+                <span class="field-label">Meta total do ciclo (itens)</span>
+                <input type="number" id="adm-meta-ciclo" placeholder="Ex: 1980" min="0" style="width:100%">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Realizado acumulado atual</span>
+                <input type="number" id="adm-realizado" placeholder="Ex: 743" min="0" style="width:100%">
+              </div>
+              <div style="padding:.875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">Gap calculado automaticamente</div>
+                <div style="font-size:24px;font-weight:700" id="adm-gap-preview">—</div>
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Meta mínima individual por dia (itens)</span>
+                <input type="number" id="adm-meta-min" placeholder="Ex: 30" min="1" style="width:100%">
+              </div>
+              <button class="btn btn-g" onclick="salvarMetas()" style="align-self:flex-start">✓ Salvar e refletir no painel</button>
+              <span id="adm-metas-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo! Sidebar atualizada.</span>
+            </div>
+          </div>
+          <div class="cd">
+            <div class="cd-t">📊 Valores atuais no sistema</div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--vdc);border-radius:8px">
+                <span style="font-weight:600;color:#3B6D11">Meta do ciclo</span>
+                <span style="font-size:20px;font-weight:700;color:var(--vd)" id="adm-cur-meta">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--azc);border-radius:8px">
+                <span style="font-weight:600;color:#0C447C">Realizado</span>
+                <span style="font-size:20px;font-weight:700;color:var(--azm)" id="adm-cur-real">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--amc);border-radius:8px">
+                <span style="font-weight:600;color:#854F0B">Gap atual</span>
+                <span style="font-size:20px;font-weight:700;color:var(--am)" id="adm-cur-gap">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
+                <span style="font-weight:600">Meta mín./dia</span>
+                <span style="font-size:20px;font-weight:700;color:var(--az)" id="adm-cur-metamin">—</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- ── META & GAP TOPBAR ── -->
+            <!-- ── META & GAP TOPBAR ── -->
       <div id="adm-meta-gap" class="adm-tab" style="display:none">
         <div class="al al-b" style="margin-bottom:1rem">ℹ São <strong>4 cards independentes</strong> na topbar — 2 no lado esquerdo e 2 no lado direito. Cada um tem seu próprio botão de salvar.</div>
-
-        <!-- META MÍNIMA INDIVIDUAL -->
-        <div class="cd" style="border-top:3px solid var(--vd);margin-bottom:1.25rem">
-          <div class="cd-t">🎯 Meta mínima individual por dia</div>
-          <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
-            <div class="field-wrap" style="min-width:160px">
-              <span class="field-label">Meta mínima (itens/dia)</span>
-              <input type="number" id="adm-meta-min" placeholder="Ex: 30" min="1"
-                style="width:100%;font-size:22px;font-weight:700;color:var(--vd);text-align:center;padding:8px">
-            </div>
-            <div style="padding:.75rem 1rem;background:var(--vdc);border-radius:8px;border:1px solid rgba(14,158,106,.2);flex:1">
-              <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Meta vigente</div>
-              <div style="font-size:20px;font-weight:700;color:var(--vd)" id="adm-cur-metamin">—</div>
-              <div style="font-size:10px;color:var(--tx2);margin-top:2px">itens por dia · usada para avaliar desempenho individual</div>
-            </div>
-            <button class="btn btn-g" onclick="salvarMetaMin()" style="align-self:flex-end">✓ Salvar meta mínima</button>
-            <span id="adm-metamin-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;align-self:flex-end">✓ Salvo!</span>
-          </div>
-        </div>
 
         <!-- LINHA: Esquerda -->
         <div style="font-size:11px;font-weight:700;color:var(--az);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;padding-left:2px">◀ Lado Esquerdo da Topbar</div>
@@ -2370,17 +2369,6 @@ const L10_LB = 4516;
 
 // Ciclos históricos
 let ciclos_historico = JSON.parse(localStorage.getItem('patec_ciclos_historico')||'[]');
-// Ciclo Mar/Abr 2026 — snapshot histórico
-(function(){
-  const _snapMarAbr = {"id": "marabr2026_enc", "nome": "Ciclo Mar/Abr 2026", "inicio": "2026-03-26", "fim": "2026-04-24", "meta": 1584, "realizado": 2003, "pct": 126, "dias_uteis": 20, "obs": "Ciclo Mar/Abr 2026 — Primeiro ciclo completo do sistema", "ts_encerramento": "2026-04-24T18:00:00.000Z", "n_registros": 78, "registros": [{"colab": "André", "data": "2026-03-27", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 2, 10]}, {"colab": "André", "data": "2026-03-30", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 11, 13]}, {"colab": "André", "data": "2026-04-01", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 11, 30]}, {"colab": "André", "data": "2026-04-06", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 6, 13]}, {"colab": "André", "data": "2026-04-09", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 5, 13]}, {"colab": "André", "data": "2026-04-10", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 4, 9]}, {"colab": "André", "data": "2026-04-13", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 15, 25]}, {"colab": "André", "data": "2026-04-14", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 8, 14]}, {"colab": "André", "data": "2026-04-15", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 5, 8]}, {"colab": "André", "data": "2026-04-24", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 10, 13]}, {"colab": "Lory", "data": "2026-03-26", "pres": "Presencial", "f": [24, 7, 0, 17, 5, 3, 4, 0, 0, 2, 0, 0]}, {"colab": "Lory", "data": "2026-03-27", "pres": "Presencial", "f": [22, 11, 0, 14, 2, 4, 0, 3, 0, 9, 1, 0]}, {"colab": "Lory", "data": "2026-03-30", "pres": "Presencial", "f": [21, 12, 0, 10, 8, 0, 0, 0, 8, 1, 6, 0]}, {"colab": "Lory", "data": "2026-03-31", "pres": "Presencial", "f": [24, 6, 0, 15, 2, 0, 0, 2, 4, 2, 1, 0]}, {"colab": "Lory", "data": "2026-04-01", "pres": "Presencial", "f": [26, 3, 0, 14, 3, 4, 5, 0, 2, 1, 0, 0]}, {"colab": "Lory", "data": "2026-04-02", "pres": "Presencial", "f": [27, 5, 0, 14, 3, 3, 4, 5, 0, 1, 0, 0]}, {"colab": "Lory", "data": "2026-04-06", "pres": "Presencial", "f": [5, 32, 0, 18, 0, 2, 5, 3, 0, 9, 10, 0]}, {"colab": "Lory", "data": "2026-04-07", "pres": "Presencial", "f": [16, 18, 0, 14, 0, 0, 0, 2, 6, 0, 5, 0]}, {"colab": "Lory", "data": "2026-04-08", "pres": "Presencial", "f": [6, 24, 0, 14, 0, 2, 3, 1, 4, 0, 1, 0]}, {"colab": "Lory", "data": "2026-04-09", "pres": "Presencial", "f": [0, 31, 0, 14, 0, 3, 5, 0, 2, 0, 0, 0]}, {"colab": "Lory", "data": "2026-04-10", "pres": "Presencial", "f": [3, 29, 0, 13, 5, 0, 0, 0, 2, 3, 4, 0]}, {"colab": "Lory", "data": "2026-04-13", "pres": "Presencial", "f": [2, 13, 0, 8, 3, 2, 5, 0, 0, 2, 2, 0]}, {"colab": "Lory", "data": "2026-04-14", "pres": "Presencial", "f": [5, 31, 0, 16, 4, 0, 0, 0, 4, 3, 4, 0]}, {"colab": "Lory", "data": "2026-04-15", "pres": "Presencial", "f": [4, 26, 0, 15, 4, 0, 0, 0, 4, 2, 2, 0]}, {"colab": "Lory", "data": "2026-04-16", "pres": "Presencial", "f": [5, 25, 0, 18, 4, 0, 0, 2, 0, 0, 0, 0]}, {"colab": "Lory", "data": "2026-04-17", "pres": "Presencial", "f": [3, 24, 0, 15, 2, 3, 1, 2, 2, 2, 0, 0]}, {"colab": "Lory", "data": "2026-04-20", "pres": "Presencial", "f": [0, 30, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0]}, {"colab": "Lory", "data": "2026-04-22", "pres": "Presencial", "f": [7, 28, 0, 10, 2, 3, 1, 0, 5, 1, 9, 0]}, {"colab": "Lory", "data": "2026-04-23", "pres": "Presencial", "f": [13, 17, 0, 13, 3, 0, 0, 1, 17, 11, 4, 0]}, {"colab": "Lory", "data": "2026-04-24", "pres": "Presencial", "f": [0, 0, 0, 0, 0, 0, 0, 0, 1, 11, 6, 0]}, {"colab": "Ludy", "data": "2026-03-26", "pres": "Presencial", "f": [15, 16, 0, 5, 4, 0, 13, 1, 3, 2, 3, 0]}, {"colab": "Ludy", "data": "2026-03-27", "pres": "Presencial", "f": [0, 28, 0, 16, 1, 1, 2, 1, 6, 0, 1, 0]}, {"colab": "Ludy", "data": "2026-03-30", "pres": "Presencial", "f": [7, 23, 0, 11, 3, 3, 3, 3, 0, 5, 2, 0]}, {"colab": "Ludy", "data": "2026-03-31", "pres": "Presencial", "f": [6, 29, 0, 18, 2, 3, 3, 1, 2, 4, 5, 0]}, {"colab": "Ludy", "data": "2026-04-01", "pres": "Presencial", "f": [22, 24, 0, 17, 5, 0, 12, 4, 5, 2, 1, 0]}, {"colab": "Ludy", "data": "2026-04-06", "pres": "Presencial", "f": [0, 47, 0, 9, 0, 0, 5, 13, 7, 3, 3, 0]}, {"colab": "Ludy", "data": "2026-04-07", "pres": "Presencial", "f": [32, 8, 0, 2, 10, 2, 1, 4, 22, 3, 7, 0]}, {"colab": "Ludy", "data": "2026-04-08", "pres": "Presencial", "f": [4, 34, 0, 2, 11, 2, 5, 3, 2, 7, 8, 0]}, {"colab": "Ludy", "data": "2026-04-09", "pres": "Presencial", "f": [9, 10, 0, 10, 6, 4, 1, 3, 0, 1, 1, 0]}, {"colab": "Ludy", "data": "2026-04-10", "pres": "Presencial", "f": [22, 9, 0, 4, 0, 4, 9, 1, 4, 3, 7, 0]}, {"colab": "Ludy", "data": "2026-04-13", "pres": "Presencial", "f": [6, 9, 0, 7, 1, 0, 2, 1, 9, 2, 2, 0]}, {"colab": "Ludy", "data": "2026-04-14", "pres": "Presencial", "f": [8, 28, 0, 6, 2, 0, 10, 1, 2, 1, 6, 0]}, {"colab": "Ludy", "data": "2026-04-15", "pres": "Presencial", "f": [19, 16, 0, 10, 2, 0, 3, 3, 2, 4, 1, 0]}, {"colab": "Ludy", "data": "2026-04-16", "pres": "Presencial", "f": [0, 32, 0, 3, 7, 1, 1, 3, 3, 5, 19, 0]}, {"colab": "Ludy", "data": "2026-04-17", "pres": "Presencial", "f": [0, 24, 0, 9, 2, 1, 7, 6, 1, 3, 3, 0]}, {"colab": "Ludy", "data": "2026-04-20", "pres": "Presencial", "f": [7, 24, 0, 9, 1, 0, 0, 6, 1, 4, 2, 0]}, {"colab": "Ludy", "data": "2026-04-22", "pres": "Presencial", "f": [4, 11, 0, 9, 3, 2, 0, 0, 1, 2, 4, 0]}, {"colab": "Ludy", "data": "2026-04-23", "pres": "Presencial", "f": [22, 14, 0, 15, 9, 2, 3, 0, 12, 4, 1, 0]}, {"colab": "Ludy", "data": "2026-04-24", "pres": "Presencial", "f": [20, 18, 0, 12, 0, 0, 3, 2, 0, 3, 4, 0]}, {"colab": "Wanessa", "data": "2026-03-26", "pres": "Presencial", "f": [30, 0, 0, 17, 2, 0, 10, 0, 0, 0, 1, 0]}, {"colab": "Wanessa", "data": "2026-03-27", "pres": "Presencial", "f": [11, 13, 0, 11, 6, 0, 2, 0, 0, 3, 2, 0]}, {"colab": "Wanessa", "data": "2026-03-30", "pres": "Presencial", "f": [16, 19, 0, 15, 6, 2, 1, 3, 2, 6, 2, 0]}, {"colab": "Wanessa", "data": "2026-03-31", "pres": "Presencial", "f": [5, 12, 0, 3, 3, 1, 6, 1, 0, 4, 0, 0]}, {"colab": "Wanessa", "data": "2026-04-01", "pres": "Presencial", "f": [18, 6, 0, 10, 3, 1, 3, 1, 2, 5, 0, 0]}, {"colab": "Wanessa", "data": "2026-04-02", "pres": "Presencial", "f": [13, 32, 0, 16, 1, 0, 5, 2, 15, 1, 6, 0]}, {"colab": "Wanessa", "data": "2026-04-06", "pres": "Presencial", "f": [8, 18, 0, 4, 2, 0, 5, 2, 0, 3, 10, 0]}, {"colab": "Wanessa", "data": "2026-04-07", "pres": "Presencial", "f": [17, 20, 0, 2, 2, 1, 5, 2, 8, 4, 20, 0]}, {"colab": "Wanessa", "data": "2026-04-08", "pres": "Presencial", "f": [3, 32, 0, 18, 2, 0, 0, 9, 1, 2, 3, 0]}, {"colab": "Wanessa", "data": "2026-04-09", "pres": "Presencial", "f": [0, 21, 0, 7, 1, 1, 2, 0, 4, 2, 5, 0]}, {"colab": "Wanessa", "data": "2026-04-10", "pres": "Presencial", "f": [0, 17, 0, 8, 4, 1, 0, 0, 0, 2, 2, 0]}, {"colab": "Wanessa", "data": "2026-04-13", "pres": "Presencial", "f": [0, 17, 0, 4, 0, 0, 5, 5, 8, 0, 0, 0]}, {"colab": "Wanessa", "data": "2026-04-14", "pres": "Presencial", "f": [9, 18, 0, 9, 2, 0, 5, 5, 6, 1, 3, 0]}, {"colab": "Wanessa", "data": "2026-04-15", "pres": "Presencial", "f": [7, 8, 0, 10, 1, 0, 2, 2, 6, 1, 5, 0]}, {"colab": "Wanessa", "data": "2026-04-16", "pres": "Presencial", "f": [16, 24, 0, 4, 1, 0, 4, 2, 1, 1, 7, 0]}, {"colab": "Wanessa", "data": "2026-04-17", "pres": "Presencial", "f": [0, 30, 0, 7, 1, 1, 7, 4, 0, 1, 10, 0]}, {"colab": "Wanessa", "data": "2026-04-20", "pres": "Presencial", "f": [0, 28, 0, 4, 0, 0, 4, 2, 0, 0, 0, 0]}, {"colab": "Wanessa", "data": "2026-04-22", "pres": "Presencial", "f": [0, 28, 0, 1, 1, 0, 4, 4, 8, 0, 10, 0]}, {"colab": "Wanessa", "data": "2026-04-23", "pres": "Presencial", "f": [0, 25, 0, 4, 2, 0, 0, 0, 15, 6, 6, 0]}, {"colab": "Wanessa", "data": "2026-04-24", "pres": "Presencial", "f": [15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, {"colab": "Aline", "data": "2026-03-26", "pres": "Presencial", "f": [9, 23, 0, 7, 1, 6, 0, 0, 6, 4, 8, 0]}, {"colab": "Aline", "data": "2026-03-27", "pres": "Presencial", "f": [0, 33, 0, 5, 7, 2, 3, 13, 2, 1, 0, 0]}, {"colab": "Aline", "data": "2026-03-30", "pres": "Presencial", "f": [16, 14, 0, 11, 6, 4, 2, 0, 6, 1, 0, 0]}, {"colab": "Aline", "data": "2026-03-31", "pres": "Presencial", "f": [0, 37, 0, 6, 3, 6, 8, 1, 2, 4, 7, 0]}, {"colab": "Aline", "data": "2026-04-02", "pres": "Presencial", "f": [0, 27, 0, 5, 1, 3, 3, 3, 4, 3, 5, 0]}, {"colab": "Aline", "data": "2026-04-06", "pres": "Presencial", "f": [0, 32, 0, 5, 6, 2, 0, 2, 1, 3, 13, 0]}, {"colab": "Aline", "data": "2026-04-07", "pres": "Presencial", "f": [0, 31, 0, 4, 4, 0, 0, 1, 9, 1, 12, 0]}, {"colab": "Ajuda de outros times", "data": "2026-04-01", "pres": "Presencial", "f": [16, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0]}, {"colab": "Ajuda de outros times", "data": "2026-04-13", "pres": "Presencial", "f": [37, 0, 0, 0, 0, 0, 0, 0, 0, 37, 0, 0]}], "pcp": [{"data": "2026-03-26", "f1": 124, "f2": 9, "f6": 1, "f3": 8, "f4": 12, "f5": 9}, {"data": "2026-03-27", "f1": 118, "f2": 7, "f6": 17, "f3": 13, "f4": 6, "f5": 16}, {"data": "2026-03-30", "f1": 128, "f2": 9, "f6": 6, "f3": 13, "f4": 19, "f5": 18}, {"data": "2026-03-31", "f1": 119, "f2": 7, "f6": 4, "f3": 14, "f4": 12, "f5": 8}, {"data": "2026-04-01", "f1": 115, "f2": 5, "f6": 4, "f3": 24, "f4": 13, "f5": 28}, {"data": "2026-04-02", "f1": 104, "f2": 6, "f6": 9, "f3": 5, "f4": 11, "f5": 19}, {"data": "2026-04-06", "f1": 142, "f2": 4, "f6": 20, "f3": 15, "f4": 32, "f5": 15}, {"data": "2026-04-07", "f1": 142, "f2": 3, "f6": 5, "f3": 8, "f4": 49, "f5": 45}, {"data": "2026-04-08", "f1": 103, "f2": 2, "f6": 14, "f3": 9, "f4": 16, "f5": 7}, {"data": "2026-04-09", "f1": 71, "f2": 3, "f6": 1, "f3": 4, "f4": 12, "f5": 14}, {"data": "2026-04-10", "f1": 80, "f2": 5, "f6": 0, "f3": 8, "f4": 17, "f5": 11}, {"data": "2026-04-13", "f1": 47, "f2": 0, "f6": 1, "f3": 4, "f4": 17, "f5": 20}, {"data": "2026-04-14", "f1": 135, "f2": 0, "f6": 1, "f3": 42, "f4": 21, "f5": 25}, {"data": "2026-04-15", "f1": 90, "f2": 2, "f6": 8, "f3": 4, "f4": 17, "f5": 15}, {"data": "2026-04-16", "f1": 86, "f2": 3, "f6": 1, "f3": 6, "f4": 27, "f5": 6}, {"data": "2026-04-17", "f1": 82, "f2": 2, "f6": 8, "f3": 4, "f4": 22, "f5": 1}, {"data": "2026-04-20", "f1": 88, "f2": 2, "f6": 0, "f3": 3, "f4": 18, "f5": 23}, {"data": "2026-04-22", "f1": 96, "f2": 3, "f6": 1, "f3": 4, "f4": 13, "f5": 33}, {"data": "2026-04-23", "f1": 89, "f2": 0, "f6": 0, "f3": 14, "f4": 12, "f5": 27}, {"data": "2026-04-24", "f1": 33, "f2": 0, "f6": 2, "f3": 5, "f4": 16, "f5": 3}], "mapa": {"datas": ["26/mar", "27/mar", "30/mar", "31/mar", "01/abr", "02/abr", "06/abr", "07/abr", "08/abr", "09/abr", "10/abr", "13/abr", "14/abr", "15/abr", "16/abr", "17/abr", "20/abr", "22/abr", "23/abr", "24/abr", "27/abr"], "datas_iso": ["2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27"], "L3": [812, 843, 806, 807, 814, 835, 833, 820, 765, 754, 745, 755, 754, 728, 691, 686, 697, 719, 717, 707, 624], "L4": [141, 185, 157, 258, 312, 286, 283, 236, 223, 273, 263, 237, 225, 233, 246, 246, 290, 248, 243, 250, 195], "L5": [65, 81, 69, 69, 28, 19, 13, 12, 17, 13, 6, 15, 10, 4, 9, 9, 31, 18, 12, 6, 10], "L6": [2, 2, 2, 1, 2, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1], "L7": [148, 130, 57, 74, 63, 69, 47, 98, 101, 59, 88, 108, 112, 166, 127, 201, 145, 177, 184, 186, 172], "L8": [108, 97, 59, 52, 52, 35, 20, 72, 83, 40, 35, 66, 56, 124, 106, 156, 116, 130, 150, 154, 128]}};
-  if(!ciclos_historico.find(c=>c.id===_snapMarAbr.id)){
-    ciclos_historico.unshift(_snapMarAbr);
-    // Salvar no Firebase na primeira carga
-    setTimeout(()=>{
-      fbSet('ciclos_encerrados',_snapMarAbr.id,_snapMarAbr).then(()=>console.log('Snapshot Mar/Abr salvo no Firebase'));
-    },3000);
-  }
-})();
 
 (function(){
   const ID='marabr2026';
@@ -3444,9 +3432,9 @@ function admLogout(){
 
 function setAdmTab(id,btn){
   if(id==='ciclos') setTimeout(()=>{cicloCarregarAtivo().then(initCicloADM);},50);
+  if(id==='resultado-medicao') setTimeout(renderResultadoMedicao,50);
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
-  if(id==='resultado-medicao') setTimeout(renderResultadoMedicao,50);
   document.querySelectorAll('#adm-tabs .stab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.adm-tab').forEach(t=>t.style.display='none');
@@ -4327,10 +4315,6 @@ function initMetaGapADM(){
   if(el('mg-gap-real'))       el('mg-gap-real').value = gapReal;
   if(el('mg-gap-label'))      el('mg-gap-label').value = gapLbl;
   if(el('mg-gap-manual-val')) el('mg-gap-manual-val').value = gapMan;
-  // Meta mínima
-  const metaMinVal = parseInt(ls('patec_meta_min')||'30');
-  if(el('adm-meta-min')) el('adm-meta-min').value = metaMinVal;
-  if(el('adm-cur-metamin')) el('adm-cur-metamin').textContent = metaMinVal+'/dia';
 
   // Resumo
   _setEl('mg-cur-meta',           parseInt(meta).toLocaleString('pt-BR'));
@@ -4436,14 +4420,6 @@ async function salvarGapProjCard(){
   _flash('mg-gap-ok');
 }
 function _flash(id){ const el=document.getElementById(id); if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',3000);} }
-async function salvarMetaMin(){
-  const val=parseInt(document.getElementById('adm-meta-min')?.value||'30')||30;
-  localStorage.setItem('patec_meta_min',String(val));
-  const el=document.getElementById('adm-cur-metamin');
-  if(el) el.textContent=val+'/dia';
-  await fbSalvarTopbar();
-  _flash('adm-metamin-ok');
-}
 
 // Manter compatibilidade
 async function salvarMetaGap(){ salvarMetaCard(); salvarPatecCard(); salvarMetaProjCard(); salvarGapProjCard(); }
@@ -4545,394 +4521,275 @@ function salvarMetaGap(){
   if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',3000); }
 }
 
-// ════════════════════════════════════════════
-// GESTÃO DE CICLOS — Encerrar + Iniciar + Resultado
-// ════════════════════════════════════════════
-
-// Ciclo ativo salvo no Firebase/localStorage
+// ════════════════════════════════════
+// GESTÃO DE CICLOS
+// ════════════════════════════════════
 let _cicloAtivo = null;
 
 async function cicloCarregarAtivo(){
-  try {
-    const saved = await fbGet('config','ciclo_ativo');
-    if(saved) _cicloAtivo = saved;
-    else {
-      // usar o CICLO_ATUAL padrão
-      _cicloAtivo = {
-        id: CICLO_ATUAL.id, nome: CICLO_ATUAL.nome,
-        inicio: CICLO_ATUAL.inicio, fim: '', meta: CICLO_ATUAL.meta_ciclo,
-        status: 'ativo', ts_inicio: CICLO_ATUAL.inicio
-      };
-    }
-  } catch(e) {
-    _cicloAtivo = {
-      id: CICLO_ATUAL.id, nome: CICLO_ATUAL.nome,
-      inicio: CICLO_ATUAL.inicio, fim: '', meta: CICLO_ATUAL.meta_ciclo,
-      status: 'ativo', ts_inicio: CICLO_ATUAL.inicio
-    };
+  try{
+    const saved=await fbGet('config','ciclo_ativo');
+    _cicloAtivo=saved||{id:CICLO_ATUAL.id,nome:CICLO_ATUAL.nome,inicio:CICLO_ATUAL.inicio,fim:'',meta:CICLO_ATUAL.meta_ciclo};
+  }catch(e){
+    _cicloAtivo={id:CICLO_ATUAL.id,nome:CICLO_ATUAL.nome,inicio:CICLO_ATUAL.inicio,fim:'',meta:CICLO_ATUAL.meta_ciclo};
   }
 }
 
-function initCicloADM() {
-  const el = id => document.getElementById(id);
-  if(!el('ciclo-nome-ativo')) return;
-
-  // Dados do ciclo ativo
-  const ciclo = _cicloAtivo || CICLO_ATUAL;
-  const nome = ciclo.nome || CICLO_ATUAL.nome;
-  const inicio = ciclo.inicio || CICLO_ATUAL.inicio;
-  const meta = ciclo.meta || CICLO_ATUAL.meta_ciclo;
-
-  // Filtrar registros do ciclo ativo (a partir da data de início)
-  const regsAtivos = registros.filter(r => r.data >= inicio && r.pres !== 'Folga' && r.pres !== 'Férias');
-  const diasUteis = [...new Set(regsAtivos.map(r => r.data))].length;
-  const totalReal = regsAtivos.reduce((s,r) => s + (r.f[0]||0) + (r.f[1]||0) + (r.f[2]||0), 0);
-  const pctMeta = meta > 0 ? Math.round(totalReal / meta * 100) : 0;
-  const mediaDay = diasUteis > 0 ? Math.round(totalReal / diasUteis) : 0;
-  const pcpAtivos = pcpData.filter(r => r.data >= inicio).length;
-
-  el('ciclo-nome-ativo').textContent = nome;
-  el('ciclo-datas-ativo').textContent = 'Início: ' + fmtDt(inicio) + (ciclo.fim ? ' → ' + fmtDt(ciclo.fim) : ' → em andamento');
-  el('ciclo-meta-ativo').textContent = meta.toLocaleString('pt-BR');
-  el('ciclo-regs-ativo').textContent = registros.filter(r => r.data >= inicio).length;
-  el('ciclo-dias-ativo').textContent = diasUteis;
-  el('ciclo-real-ativo').textContent = totalReal.toLocaleString('pt-BR');
-  const pctEl = el('ciclo-pct-ativo');
-  if(pctEl) { pctEl.textContent = pctMeta + '% da meta'; pctEl.style.color = pctMeta >= 100 ? 'var(--vd)' : pctMeta >= 80 ? 'var(--am)' : 'var(--vm)'; }
-
-  // KPIs
-  const kpisEl = el('ciclo-ativo-kpis');
-  if(kpisEl) kpisEl.innerHTML = `
-    <div style="background:var(--azc);border-radius:8px;padding:.75rem;text-align:center;border:1px solid rgba(26,74,138,.12)">
-      <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Média/dia equipe</div>
-      <div style="font-size:22px;font-weight:700;color:var(--azm)">${mediaDay}</div>
-    </div>
-    <div style="background:${pctMeta>=100?'var(--vdc)':pctMeta>=80?'var(--amc)':'var(--vmc)'};border-radius:8px;padding:.75rem;text-align:center;border:1px solid rgba(0,0,0,.06)">
-      <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">% Meta</div>
-      <div style="font-size:22px;font-weight:700;color:${pctMeta>=100?'var(--vd)':pctMeta>=80?'var(--am)':'var(--vm)'}">${pctMeta}%</div>
-    </div>
-    <div style="background:var(--cin);border-radius:8px;padding:.75rem;text-align:center;border:1px solid var(--brd)">
-      <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Registros PCP</div>
-      <div style="font-size:22px;font-weight:700;color:var(--az)">${pcpAtivos}</div>
-    </div>
-    <div style="background:var(--cin);border-radius:8px;padding:.75rem;text-align:center;border:1px solid var(--brd)">
-      <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Colaboradores</div>
-      <div style="font-size:22px;font-weight:700;color:var(--az)">${[...new Set(regsAtivos.map(r=>r.colab))].length}</div>
-    </div>`;
-
-  // Resumo encerramento
-  el('enc-total') && (el('enc-total').textContent = totalReal.toLocaleString('pt-BR'));
-  if(el('enc-pct')){ el('enc-pct').textContent = pctMeta+'%'; el('enc-pct').style.color = pctMeta>=100?'var(--vd)':pctMeta>=80?'var(--am)':'var(--vm)'; }
-  el('enc-dias') && (el('enc-dias').textContent = diasUteis);
-  el('enc-media') && (el('enc-media').textContent = mediaDay+'/dia');
-  el('enc-pcp') && (el('enc-pcp').textContent = pcpAtivos);
-  if(el('adm-ciclo-fechamento') && !el('adm-ciclo-fechamento').value)
-    el('adm-ciclo-fechamento').value = HOJE.toISOString().split('T')[0];
+function initCicloADM(){
+  const el=id=>document.getElementById(id);
+  if(!el('ciclo-nome-ativo'))return;
+  const ciclo=_cicloAtivo||CICLO_ATUAL;
+  const inicio=ciclo.inicio||CICLO_ATUAL.inicio;
+  const meta=ciclo.meta||CICLO_ATUAL.meta_ciclo;
+  const regsA=registros.filter(r=>r.data>=inicio&&r.pres!=='Folga'&&r.pres!=='Férias');
+  const dias=[...new Set(regsA.map(r=>r.data))].length;
+  const total=regsA.reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0),0);
+  const pct=meta>0?Math.round(total/meta*100):0;
+  const med=dias>0?Math.round(total/dias):0;
+  el('ciclo-nome-ativo').textContent=ciclo.nome;
+  el('ciclo-datas-ativo').textContent='Início: '+fmtDt(inicio)+(ciclo.fim?' → '+fmtDt(ciclo.fim):' → em andamento');
+  el('ciclo-meta-ativo').textContent=meta.toLocaleString('pt-BR');
+  el('ciclo-regs-ativo').textContent=registros.filter(r=>r.data>=inicio).length;
+  el('ciclo-dias-ativo').textContent=dias;
+  el('ciclo-real-ativo').textContent=total.toLocaleString('pt-BR');
+  const pEl=el('ciclo-pct-ativo');
+  if(pEl){pEl.textContent=pct+'% da meta';pEl.style.color=pct>=100?'var(--vd)':pct>=80?'var(--am)':'var(--vm)';}
+  const kEl=el('ciclo-ativo-kpis');
+  if(kEl)kEl.innerHTML=
+    '<div style="background:var(--azc);border-radius:8px;padding:.75rem;text-align:center"><div style="font-size:10px;color:var(--tx2)">Média/dia</div><div style="font-size:22px;font-weight:700;color:var(--azm)">'+med+'</div></div>'+
+    '<div style="background:'+(pct>=100?'var(--vdc)':pct>=80?'var(--amc)':'var(--vmc)')+';border-radius:8px;padding:.75rem;text-align:center"><div style="font-size:10px;color:var(--tx2)">% Meta</div><div style="font-size:22px;font-weight:700;color:'+(pct>=100?'var(--vd)':pct>=80?'var(--am)':'var(--vm)')+'">'+pct+'%</div></div>'+
+    '<div style="background:var(--cin);border-radius:8px;padding:.75rem;text-align:center;border:1px solid var(--brd)"><div style="font-size:10px;color:var(--tx2)">Registros PCP</div><div style="font-size:22px;font-weight:700;color:var(--az)">'+pcpData.filter(r=>r.data>=inicio).length+'</div></div>'+
+    '<div style="background:var(--cin);border-radius:8px;padding:.75rem;text-align:center;border:1px solid var(--brd)"><div style="font-size:10px;color:var(--tx2)">Colaboradores</div><div style="font-size:22px;font-weight:700;color:var(--az)">'+[...new Set(regsA.map(r=>r.colab))].length+'</div></div>';
+  if(el('enc-total'))el('enc-total').textContent=total.toLocaleString('pt-BR');
+  if(el('enc-pct')){el('enc-pct').textContent=pct+'%';el('enc-pct').style.color=pct>=100?'var(--vd)':pct>=80?'var(--am)':'var(--vm)';}
+  if(el('enc-dias'))el('enc-dias').textContent=dias;
+  if(el('enc-media'))el('enc-media').textContent=med+'/dia';
+  if(el('adm-ciclo-fechamento')&&!el('adm-ciclo-fechamento').value)
+    el('adm-ciclo-fechamento').value=HOJE.toISOString().split('T')[0];
 }
 
-async function encerrarCiclo() {
-  const dtFech = document.getElementById('adm-ciclo-fechamento')?.value;
-  const obs    = document.getElementById('adm-ciclo-obs')?.value || '';
-  if(!dtFech) { alert('Informe a data de encerramento.'); return; }
-  if(!confirm('Encerrar o ciclo atual e arquivar todos os dados? Esta ação não pode ser desfeita.')) return;
-
-  const ciclo = _cicloAtivo || CICLO_ATUAL;
-  const inicio = ciclo.inicio || CICLO_ATUAL.inicio;
-  const meta = ciclo.meta || CICLO_ATUAL.meta_ciclo;
-
-  // Filtrar dados do ciclo
-  const regsC = registros.filter(r => r.data >= inicio);
-  const pcpC  = pcpData.filter(r => r.data >= inicio);
-  const regsAtivos = regsC.filter(r => r.pres !== 'Folga' && r.pres !== 'Férias');
-  const diasUteis = [...new Set(regsAtivos.map(r => r.data))].length;
-  const totalReal = regsAtivos.reduce((s,r) => s + (r.f[0]||0) + (r.f[1]||0) + (r.f[2]||0), 0);
-  const pct = meta > 0 ? Math.round(totalReal / meta * 100) : 0;
-
-  // Montar snapshot completo
-  const snapshot = {
-    id: (ciclo.id || CICLO_ATUAL.id) + '_enc_' + Date.now(),
-    nome: ciclo.nome || CICLO_ATUAL.nome,
-    inicio, fim: dtFech,
-    meta, realizado: totalReal, pct,
-    dias_uteis: diasUteis,
-    obs, ts_encerramento: new Date().toISOString(),
-    n_registros: regsC.length,
-    // Snapshot de dados para consulta histórica
-    registros: regsC,
-    pcp: pcpC,
-    mapa: {
-      datas: DATAS_MAPA, datas_iso: DATAS_ISO_MAPA,
-      L3: L[3], L4: L[4], L5: L[5], L6: L[6], L7: L[7], L8: L[8]
-    }
+async function encerrarCiclo(){
+  const dtFech=document.getElementById('adm-ciclo-fechamento')?.value;
+  const obs=document.getElementById('adm-ciclo-obs')?.value||'';
+  if(!dtFech){alert('Informe a data de encerramento.');return;}
+  if(!confirm('Encerrar o ciclo atual e arquivar todos os dados no Firebase?'))return;
+  const ciclo=_cicloAtivo||CICLO_ATUAL;
+  const inicio=ciclo.inicio||CICLO_ATUAL.inicio;
+  const meta=ciclo.meta||CICLO_ATUAL.meta_ciclo;
+  const regsC=registros.filter(r=>r.data>=inicio);
+  const pcpC=pcpData.filter(r=>r.data>=inicio);
+  const regsA=regsC.filter(r=>r.pres!=='Folga'&&r.pres!=='Férias');
+  const dias=[...new Set(regsA.map(r=>r.data))].length;
+  const total=regsA.reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0),0);
+  const pct=meta>0?Math.round(total/meta*100):0;
+  const snap={
+    id:(ciclo.id||CICLO_ATUAL.id)+'_enc_'+Date.now(),
+    nome:ciclo.nome||CICLO_ATUAL.nome,
+    inicio,fim:dtFech,meta,realizado:total,pct,
+    dias_uteis:dias,obs,ts_encerramento:new Date().toISOString(),
+    n_registros:regsC.length,
+    registros:regsC,pcp:pcpC,
+    mapa:{datas:DATAS_MAPA,datas_iso:DATAS_ISO_MAPA,L3:L[3],L4:L[4],L5:L[5],L6:L[6],L7:L[7],L8:L[8]}
   };
-
-  // Salvar no Firebase — chave única por ciclo
-  await fbSet('ciclos_encerrados', snapshot.id, snapshot);
-
-  // Atualizar lista local
-  ciclos_historico.push(snapshot);
-  localStorage.setItem('patec_ciclos_historico', JSON.stringify(ciclos_historico));
-
-  const ok = document.getElementById('ciclo-fechamento-ok');
-  if(ok) { ok.style.display='inline'; setTimeout(()=>ok.style.display='none',5000); }
-
-  alert('Ciclo ' + snapshot.nome + ' encerrado com sucesso!\n\nTotal: ' + totalReal.toLocaleString('pt-BR') + ' itens (' + pct + '% da meta)\nDias uteis: ' + diasUteis + '\n\nDados arquivados no Firebase.');
+  await fbSet('ciclos_encerrados',snap.id,snap);
+  ciclos_historico.push(snap);
+  localStorage.setItem('patec_ciclos_historico',JSON.stringify(ciclos_historico));
+  const ok=document.getElementById('ciclo-fechamento-ok');
+  if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',6000);}
+  alert('Ciclo '+snap.nome+' encerrado!\n\nTotal: '+total.toLocaleString('pt-BR')+' itens ('+pct+'% da meta)\nDias uteis: '+dias+'\n\nDados arquivados. Veja em Resultado de Medicao.');
   renderResultadoMedicao();
 }
 
-async function iniciarNovoCiclo() {
-  const nome   = document.getElementById('novo-ciclo-nome')?.value?.trim();
-  const inicio = document.getElementById('novo-ciclo-inicio')?.value;
-  const meta   = parseInt(document.getElementById('novo-ciclo-meta')?.value || '0');
-  if(!nome)   { alert('Informe o nome do ciclo.'); return; }
-  if(!inicio) { alert('Informe a data de início.'); return; }
-  if(!meta)   { alert('Informe a meta do ciclo.'); return; }
-  if(!confirm('Iniciar novo ciclo "' + nome + '" a partir de ' + fmtDt(inicio) + ' com meta de ' + meta.toLocaleString('pt-BR') + ' itens?')) return;
-
-  _cicloAtivo = { id: 'ciclo_' + Date.now(), nome, inicio, fim: '', meta, status: 'ativo', ts_inicio: new Date().toISOString() };
-  await fbSet('config', 'ciclo_ativo', _cicloAtivo);
-  localStorage.setItem('patec_meta', String(meta));
+async function iniciarNovoCiclo(){
+  const nome=document.getElementById('novo-ciclo-nome')?.value?.trim();
+  const inicio=document.getElementById('novo-ciclo-inicio')?.value;
+  const meta=parseInt(document.getElementById('novo-ciclo-meta')?.value||'0');
+  if(!nome){alert('Informe o nome do ciclo.');return;}
+  if(!inicio){alert('Informe a data de inicio.');return;}
+  if(!meta){alert('Informe a meta do ciclo.');return;}
+  if(!confirm('Iniciar novo ciclo "'+nome+'" a partir de '+fmtDt(inicio)+' com meta de '+meta.toLocaleString('pt-BR')+' itens?'))return;
+  _cicloAtivo={id:'ciclo_'+Date.now(),nome,inicio,fim:'',meta,status:'ativo',ts_inicio:new Date().toISOString()};
+  await fbSet('config','ciclo_ativo',_cicloAtivo);
+  localStorage.setItem('patec_meta',String(meta));
   initMetaGap();
-
-  const ok = document.getElementById('novo-ciclo-ok');
-  if(ok) { ok.style.display='inline'; setTimeout(()=>ok.style.display='none',4000); }
-
-  // Limpar campos
-  ['novo-ciclo-nome','novo-ciclo-inicio','novo-ciclo-meta'].forEach(id => {
-    const el = document.getElementById(id); if(el) el.value = '';
-  });
+  const ok=document.getElementById('novo-ciclo-ok');
+  if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',4000);}
+  ['novo-ciclo-nome','novo-ciclo-inicio','novo-ciclo-meta'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   initCicloADM();
-  alert('Novo ciclo ' + nome + ' iniciado!\n\nData inicio: ' + fmtDt(inicio) + '\nMeta: ' + meta.toLocaleString('pt-BR') + ' itens\n\nOs colaboradores ja podem lancar producao no novo ciclo.');
+  alert('Novo ciclo "'+nome+'" iniciado!\n\nData inicio: '+fmtDt(inicio)+'\nMeta: '+meta.toLocaleString('pt-BR')+' itens');
 }
 
 // ── RESULTADO DE MEDIÇÃO ──
-async function renderResultadoMedicao() {
-  // Carregar do Firebase
-  let ciclos = [...ciclos_historico];
-  try {
-    const fbCiclos = await fbGetAll('ciclos_encerrados');
-    if(fbCiclos.length > 0) {
-      // Mesclar — local tem precedência se tiver mais dados (registros)
-      fbCiclos.forEach(fbC => {
-        const localIdx = ciclos.findIndex(x => x.id === fbC.id);
-        if(localIdx >= 0) {
-          // Manter o que tiver mais dados (registros)
-          const localC = ciclos[localIdx];
-          if(!localC.registros || localC.registros.length === 0)
-            ciclos[localIdx] = fbC;
-        } else {
-          ciclos.push(fbC);
-        }
+async function renderResultadoMedicao(){
+  let ciclos=[...ciclos_historico];
+  try{
+    const fb=await fbGetAll('ciclos_encerrados');
+    if(fb.length>0){
+      fb.forEach(c=>{
+        const i=ciclos.findIndex(x=>x.id===c.id);
+        if(i>=0){if(!ciclos[i].registros||!ciclos[i].registros.length)ciclos[i]=c;}
+        else ciclos.push(c);
       });
-      ciclos.sort((a,b) => (a.inicio||'').localeCompare(b.inicio||''));
+      ciclos.sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||''));
     }
-  } catch(e) { console.warn('Erro ao carregar ciclos:', e); }
-
-  const listaEl = document.getElementById('resultado-ciclos-lista');
-  const emptyEl = document.getElementById('resultado-ciclos-empty');
-  if(!listaEl) return;
-
-  if(!ciclos.length) {
-    listaEl.innerHTML = '';
-    if(emptyEl) emptyEl.style.display = 'block';
-    return;
-  }
-  if(emptyEl) emptyEl.style.display = 'none';
-
-  // Guardar ciclos em memória para acesso por índice
-  window._resultadoCiclos = ciclos.slice().reverse();
-  listaEl.innerHTML = window._resultadoCiclos.map((c,idx) => {
-    const pctCor = (c.pct||0) >= 100 ? 'var(--vd)' : (c.pct||0) >= 80 ? 'var(--am)' : 'var(--vm)';
-    const bgPct = pctCor==='var(--vd)'?'var(--vdc)':pctCor==='var(--am)'?'var(--amc)':'var(--vmc)';
-    return '<div class="cd" style="border-left:4px solid '+pctCor+';cursor:pointer" onclick="abrirResultadoCiclo('+idx+')">'
+  }catch(e){console.warn('Erro ciclos:',e);}
+  const listaEl=document.getElementById('resultado-ciclos-lista');
+  const emptyEl=document.getElementById('resultado-ciclos-empty');
+  if(!listaEl)return;
+  if(!ciclos.length){listaEl.innerHTML='';if(emptyEl)emptyEl.style.display='block';return;}
+  if(emptyEl)emptyEl.style.display='none';
+  window._resultadoCiclos=ciclos.slice().reverse();
+  listaEl.innerHTML=window._resultadoCiclos.map((c,i)=>{
+    const cor=(c.pct||0)>=100?'var(--vd)':(c.pct||0)>=80?'var(--am)':'var(--vm)';
+    const bg=cor==='var(--vd)'?'var(--vdc)':cor==='var(--am)'?'var(--amc)':'var(--vmc)';
+    return '<div class="cd" style="border-left:4px solid '+cor+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">'
       +'<div><div style="font-size:15px;font-weight:700;color:var(--az)">'+c.nome+'</div>'
-      +'<div style="font-size:11px;color:var(--tx2);margin-top:2px">'+fmtDt(c.inicio)+' → '+fmtDt(c.fim||'')+' · '+(c.obs||'')+'</div></div>'
-      +'<div style="display:flex;gap:12px;align-items:center">'
-      +'<div style="text-align:center;padding:.5rem .875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Realizado</div><div style="font-size:18px;font-weight:700;color:var(--azm)">'+(c.realizado||0).toLocaleString('pt-BR')+'</div></div>'
-      +'<div style="text-align:center;padding:.5rem .875rem;background:'+bgPct+';border-radius:8px"><div style="font-size:9px;color:var(--tx2)">% Meta</div><div style="font-size:18px;font-weight:700;color:'+pctCor+'">'+(c.pct||0)+'%</div></div>'
-      +'<div style="text-align:center;padding:.5rem .875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Meta</div><div style="font-size:18px;font-weight:700;color:var(--az)">'+(c.meta||0).toLocaleString('pt-BR')+'</div></div>'
-      +'<button class="btn btn-p" style="font-size:11px;padding:5px 12px">📊 Ver detalhes</button>'
-      +'<button class="btn btn-r" style="font-size:11px;padding:5px 12px" onclick="event.stopPropagation();excluirCicloResultado('+idx+')">🗑 Excluir</button>'
+      +'<div style="font-size:11px;color:var(--tx2);margin-top:2px">'+fmtDt(c.inicio)+' → '+fmtDt(c.fim||'')+(c.obs?' · '+c.obs:'')+'</div></div>'
+      +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+      +'<div style="text-align:center;padding:.5rem .875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Realizado</div><div style="font-size:17px;font-weight:700;color:var(--azm)">'+(c.realizado||0).toLocaleString('pt-BR')+'</div></div>'
+      +'<div style="text-align:center;padding:.5rem .875rem;background:'+bg+';border-radius:8px"><div style="font-size:9px;color:var(--tx2)">% Meta</div><div style="font-size:17px;font-weight:700;color:'+cor+'">'+(c.pct||0)+'%</div></div>'
+      +'<div style="text-align:center;padding:.5rem .875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Meta</div><div style="font-size:17px;font-weight:700;color:var(--az)">'+(c.meta||0).toLocaleString('pt-BR')+'</div></div>'
+      +'<button class="btn btn-p" style="font-size:11px;padding:5px 12px" onclick="abrirResultadoCiclo('+i+')">📊 Ver detalhes</button>'
+      +'<button class="btn btn-r" style="font-size:11px;padding:5px 10px" onclick="excluirCicloResultado('+i+')">🗑</button>'
       +'</div></div></div>';
   }).join('');
 }
 
-function excluirCicloResultado(idx) {
-  const ciclos = window._resultadoCiclos || [];
-  const c = ciclos[idx];
-  if(!c) return;
-  if(!confirm('Excluir a analise do ciclo "' + c.nome + '"? Esta acao nao pode ser desfeita.')) return;
-  // Remover do array local
-  ciclos_historico = ciclos_historico.filter(x => x.id !== c.id);
-  localStorage.setItem('patec_ciclos_historico', JSON.stringify(ciclos_historico));
-  // Remover do Firebase
-  try {
-    const db = getDB();
-    if(db) db.collection('ciclos_encerrados').doc(c.id).delete();
-  } catch(e) { console.warn('Erro ao excluir do Firebase:', e); }
-  document.getElementById('resultado-detalhe').style.display = 'none';
+function excluirCicloResultado(idx){
+  const c=(window._resultadoCiclos||[])[idx];if(!c)return;
+  if(!confirm('Excluir analise "'+c.nome+'"?'))return;
+  ciclos_historico=ciclos_historico.filter(x=>x.id!==c.id);
+  localStorage.setItem('patec_ciclos_historico',JSON.stringify(ciclos_historico));
+  try{const db=getDB();if(db)db.collection('ciclos_encerrados').doc(c.id).delete();}catch(e){}
+  document.getElementById('resultado-detalhe').style.display='none';
   renderResultadoMedicao();
 }
-function excluirCicloResultadoAberto() {
-  const idx = window._resultadoCicloAbertoIdx;
-  if(idx === undefined) return;
-  excluirCicloResultado(idx);
+function excluirCicloResultadoAberto(){
+  excluirCicloResultado(window._resultadoCicloAbertoIdx);
 }
-function abrirResultadoCiclo(idx) {
-  window._resultadoCicloAbertoIdx = idx;
-  const c = (window._resultadoCiclos||[])[idx];
-  if(!c) return;
-  const detalheEl = document.getElementById('resultado-detalhe');
-  if(!detalheEl) return;
-  detalheEl.style.display = 'block';
+
+function abrirResultadoCiclo(idx){
+  window._resultadoCicloAbertoIdx=idx;
+  const c=(window._resultadoCiclos||[])[idx];if(!c)return;
+  const detalheEl=document.getElementById('resultado-detalhe');
+  if(!detalheEl)return;
+  detalheEl.style.display='block';
   detalheEl.scrollIntoView({behavior:'smooth'});
-
-  const pctCor = (c.pct||0)>=100?'var(--vd)':(c.pct||0)>=80?'var(--am)':'var(--vm)';
-  document.getElementById('resultado-titulo').textContent = '📊 ' + c.nome + ' — ' + fmtDt(c.inicio) + ' a ' + fmtDt(c.fim||'');
-
-  // KPIs
-  const dias = c.dias_uteis || 0;
-  const med  = dias > 0 ? Math.round((c.realizado||0) / dias) : 0;
-  document.getElementById('resultado-kpis').innerHTML = `
-    <div class="kc ok"><div class="kc-l">Total realizado</div><div class="kc-v">${(c.realizado||0).toLocaleString('pt-BR')}</div><div class="kc-s">itens</div></div>
-    <div class="kc ${(c.pct||0)>=100?'ok':(c.pct||0)>=80?'warn':'bad'}"><div class="kc-l">% da meta</div><div class="kc-v">${c.pct||0}%</div><div class="kc-s">meta: ${(c.meta||0).toLocaleString('pt-BR')}</div></div>
-    <div class="kc"><div class="kc-l">Dias úteis</div><div class="kc-v" style="color:var(--az)">${dias}</div></div>
-    <div class="kc"><div class="kc-l">Média/dia</div><div class="kc-v" style="color:var(--azm)">${med}</div></div>
-    <div class="kc"><div class="kc-l">Registros</div><div class="kc-v" style="color:var(--az)">${c.n_registros||0}</div></div>`;
-
-  // Preencher tabs
-  setResultadoTab('prod', document.querySelector('#resultado-subtabs .stab'));
-  _renderResultadoProd(c);
-  _renderResultadoPCP(c);
-  _renderResultadoMapa(c);
-  _renderResultadoColab(c);
+  document.getElementById('resultado-titulo').textContent='📊 '+c.nome+' — '+fmtDt(c.inicio)+' a '+fmtDt(c.fim||'');
+  const dias=c.dias_uteis||0;
+  const med=dias>0?Math.round((c.realizado||0)/dias):0;
+  document.getElementById('resultado-kpis').innerHTML=
+    '<div class="kc ok"><div class="kc-l">Total realizado</div><div class="kc-v">'+(c.realizado||0).toLocaleString('pt-BR')+'</div></div>'+
+    '<div class="kc '+((c.pct||0)>=100?'ok':(c.pct||0)>=80?'warn':'bad')+'"><div class="kc-l">% da meta</div><div class="kc-v">'+(c.pct||0)+'%</div><div class="kc-s">meta: '+(c.meta||0).toLocaleString('pt-BR')+'</div></div>'+
+    '<div class="kc"><div class="kc-l">Dias úteis</div><div class="kc-v" style="color:var(--az)">'+dias+'</div></div>'+
+    '<div class="kc"><div class="kc-l">Média/dia</div><div class="kc-v" style="color:var(--azm)">'+med+'</div></div>'+
+    '<div class="kc"><div class="kc-l">Registros</div><div class="kc-v" style="color:var(--az)">'+(c.n_registros||0)+'</div></div>';
+  setResultadoTab('prod',document.querySelector('#resultado-subtabs .stab'));
+  _renderResultadoProd(c);_renderResultadoPCP(c);_renderResultadoMapa(c);_renderResultadoColab(c);
 }
 
-function setResultadoTab(id, btn) {
-  document.querySelectorAll('.resultado-tab').forEach(t => t.style.display='none');
-  document.querySelectorAll('#resultado-subtabs .stab').forEach(b => b.classList.remove('active'));
-  const el = document.getElementById('resultado-tab-'+id);
-  if(el) el.style.display = 'block';
-  if(btn) btn.classList.add('active');
+function setResultadoTab(id,btn){
+  document.querySelectorAll('.resultado-tab').forEach(t=>t.style.display='none');
+  document.querySelectorAll('#resultado-subtabs .stab').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('resultado-tab-'+id);if(el)el.style.display='block';
+  if(btn)btn.classList.add('active');
 }
-
-function _renderResultadoProd(c) {
-  const regs = c.registros || [];
-  const metaVal = c.meta_dia || getMeta();
-  const sums = Array(12).fill(0); let totT = 0;
-  const tb = document.getElementById('resultado-prod-tb');
-  if(!tb) return;
-  tb.innerHTML = regs.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r => {
-    const f = [...(r.f||[])]; while(f.length<12)f.push(0);
-    const tot = (f[0]||0)+(f[1]||0)+(f[2]||0);
-    totT+=tot; f.forEach((v,i)=>sums[i]+=v);
-    const semMeta = COLABS_SEM_META.includes(r.colab);
-    let mp;
-    if(r.pres==='Folga'||r.pres==='Férias') mp='<span class="pl pl-g">'+r.pres+'</span>';
-    else if(semMeta) mp='<span class="pl pl-az">Líder/Ajuda</span>';
-    else if(tot>=metaVal) mp='<span class="pl pl-ok">✓ Meta</span>';
-    else mp='<span class="pl pl-b">Abaixo</span>';
-    return`<tr><td>${fmtDt(r.data)}</td><td><strong>${r.colab}</strong></td><td>${presPill(r.pres)}</td><td>${f[0]||'—'}</td><td>${f[1]||'—'}</td><td>${f[2]||'—'}</td><td style="font-weight:700">${tot}</td><td>${mp}</td></tr>`;
-  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--tx2);padding:1rem">Sem registros</td></tr>';
-  const tf = document.getElementById('resultado-prod-tf');
-  if(tf) tf.innerHTML = `<tr><td colspan="3"><strong>TOTAL</strong></td><td>${sums[0]}</td><td>${sums[1]}</td><td>${sums[2]}</td><td style="font-weight:700">${sums[0]+sums[1]+sums[2]}</td><td>—</td></tr>`;
+function _renderResultadoProd(c){
+  const regs=c.registros||[];const tb=document.getElementById('resultado-prod-tb');if(!tb)return;
+  const sums=Array(12).fill(0);let totT=0;
+  tb.innerHTML=regs.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r=>{
+    const f=[...(r.f||[])];while(f.length<12)f.push(0);
+    const tot=(f[0]||0)+(f[1]||0)+(f[2]||0);totT+=tot;f.forEach((v,i)=>sums[i]+=v);
+    const sm=COLABS_SEM_META.includes(r.colab);
+    let mp=r.pres==='Folga'||r.pres==='Férias'?'<span class="pl pl-g">'+r.pres+'</span>':
+           sm?'<span class="pl pl-az">Líder/Ajuda</span>':
+           tot>=getMeta()?'<span class="pl pl-ok">✓ Meta</span>':'<span class="pl pl-b">Abaixo</span>';
+    return'<tr><td>'+fmtDt(r.data)+'</td><td><strong>'+r.colab+'</strong></td><td>'+presPill(r.pres)+'</td><td>'+(f[0]||'—')+'</td><td>'+(f[1]||'—')+'</td><td>'+(f[2]||'—')+'</td><td style="font-weight:700">'+tot+'</td><td>'+mp+'</td></tr>';
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--tx2);padding:1rem">Sem registros</td></tr>';
+  const tf=document.getElementById('resultado-prod-tf');
+  if(tf)tf.innerHTML='<tr><td colspan="3"><strong>TOTAL</strong></td><td>'+sums[0]+'</td><td>'+sums[1]+'</td><td>'+sums[2]+'</td><td style="font-weight:700">'+(sums[0]+sums[1]+sums[2])+'</td><td>—</td></tr>';
 }
-
-function _renderResultadoPCP(c) {
-  const pcp = c.pcp || [];
-  const tb = document.getElementById('resultado-pcp-tb');
-  const tf = document.getElementById('resultado-pcp-tf');
-  if(!tb) return;
-  const sums = {f1:0,f2:0,f6:0,f3:0,f4:0,f5:0};
-  tb.innerHTML = pcp.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r => {
+function _renderResultadoPCP(c){
+  const pcp=c.pcp||[];const tb=document.getElementById('resultado-pcp-tb');const tf=document.getElementById('resultado-pcp-tf');if(!tb)return;
+  const s={f1:0,f2:0,f6:0,f3:0,f4:0,f5:0};
+  tb.innerHTML=pcp.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r=>{
     const tot=(r.f1||0)+(r.f2||0)+(r.f6||0)+(r.f3||0)+(r.f4||0)+(r.f5||0);
-    sums.f1+=r.f1||0;sums.f2+=r.f2||0;sums.f6+=r.f6||0;sums.f3+=r.f3||0;sums.f4+=r.f4||0;sums.f5+=r.f5||0;
-    return`<tr><td>${fmtDt(r.data)}</td><td>${r.f1||0}</td><td>${r.f2||0}</td><td>${r.f6||0}</td><td>${r.f3||0}</td><td>${r.f4||0}</td><td>${r.f5||0}</td><td style="font-weight:700">${tot}</td></tr>`;
-  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--tx2)">Sem registros PCP</td></tr>';
-  if(tf) tf.innerHTML = `<tr><td><strong>TOTAL</strong></td><td>${sums.f1}</td><td>${sums.f2}</td><td>${sums.f6}</td><td>${sums.f3}</td><td>${sums.f4}</td><td>${sums.f5}</td><td style="font-weight:700">${sums.f1+sums.f2+sums.f6+sums.f3+sums.f4+sums.f5}</td></tr>`;
+    s.f1+=r.f1||0;s.f2+=r.f2||0;s.f6+=r.f6||0;s.f3+=r.f3||0;s.f4+=r.f4||0;s.f5+=r.f5||0;
+    return'<tr><td>'+fmtDt(r.data)+'</td><td>'+(r.f1||0)+'</td><td>'+(r.f2||0)+'</td><td>'+(r.f6||0)+'</td><td>'+(r.f3||0)+'</td><td>'+(r.f4||0)+'</td><td>'+(r.f5||0)+'</td><td style="font-weight:700">'+tot+'</td></tr>';
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--tx2)">Sem registros PCP</td></tr>';
+  if(tf)tf.innerHTML='<tr><td><strong>TOTAL</strong></td><td>'+s.f1+'</td><td>'+s.f2+'</td><td>'+s.f6+'</td><td>'+s.f3+'</td><td>'+s.f4+'</td><td>'+s.f5+'</td><td style="font-weight:700">'+(s.f1+s.f2+s.f6+s.f3+s.f4+s.f5)+'</td></tr>';
 }
-
-function _renderResultadoMapa(c) {
-  const mapa = c.mapa || {};
-  const datas = mapa.datas || [];
-  const tb = document.getElementById('resultado-mapa-tb');
+function _renderResultadoMapa(c){
+  const mapa=c.mapa||{};const datas=mapa.datas||[];
+  const tb=document.getElementById('resultado-mapa-tb');
   if(!tb||!datas.length){if(tb)tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--tx2)">Sem dados de mapa</td></tr>';return;}
-  tb.innerHTML = datas.map((dt,i) => {
+  tb.innerHTML=datas.map((dt,i)=>{
     const l3=mapa.L3?.[i]||0,l4=mapa.L4?.[i]||0,l5=mapa.L5?.[i]||0,l6=mapa.L6?.[i]||0;
-    return`<tr><td>${dt}</td><td>${l3}</td><td>${l4}</td><td>${l5}</td><td>${l6}</td><td style="font-weight:700;color:var(--azm)">${l3+l4+l5+l6}</td></tr>`;
+    return'<tr><td>'+dt+'</td><td>'+l3+'</td><td>'+l4+'</td><td>'+l5+'</td><td>'+l6+'</td><td style="font-weight:700;color:var(--azm)">'+(l3+l4+l5+l6)+'</td></tr>';
   }).join('');
 }
-
-function _renderResultadoColab(c) {
-  const regs = c.registros || [];
-  const el = document.getElementById('resultado-colab-cards');
-  if(!el) return;
-  const acum = {};
-  COLABS.forEach(col => { acum[col] = {tot:0,dias:0,meta:0}; });
-  regs.forEach(r => {
-    if(!acum[r.colab]) acum[r.colab]={tot:0,dias:0,meta:0};
+function _renderResultadoColab(c){
+  const regs=c.registros||[];const el=document.getElementById('resultado-colab-cards');if(!el)return;
+  const acum={};COLABS.forEach(col=>{acum[col]={tot:0,dias:0,meta:0};});
+  regs.forEach(r=>{
+    if(!acum[r.colab])acum[r.colab]={tot:0,dias:0,meta:0};
     if(r.pres!=='Folga'&&r.pres!=='Férias'){
       const t=(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0);
-      acum[r.colab].tot+=t; acum[r.colab].dias++;
-      if(t>=(c.meta_dia||getMeta())) acum[r.colab].meta++;
+      acum[r.colab].tot+=t;acum[r.colab].dias++;
+      if(t>=getMeta())acum[r.colab].meta++;
     }
   });
-  el.innerHTML = Object.entries(acum).filter(([,d])=>d.dias>0).map(([col,d])=>{
+  el.innerHTML=Object.entries(acum).filter(([,d])=>d.dias>0).map(([col,d])=>{
     const med=d.dias>0?Math.round(d.tot/d.dias):0;
-    const pctMeta=d.dias>0?Math.round(d.meta/d.dias*100):0;
-    const cor=pctMeta>=80?'var(--vd)':pctMeta>=60?'var(--am)':'var(--vm)';
-    return`<div class="cd" style="border-top:3px solid ${cor}">
-      <div style="font-size:14px;font-weight:700;color:var(--az);margin-bottom:.75rem">👤 ${col}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="text-align:center;padding:.5rem;background:var(--azc);border-radius:7px">
-          <div style="font-size:9px;color:var(--tx2)">Total</div>
-          <div style="font-size:20px;font-weight:700;color:var(--azm)">${d.tot}</div>
-        </div>
-        <div style="text-align:center;padding:.5rem;background:${cor==='var(--vd)'?'var(--vdc)':cor==='var(--am)'?'var(--amc)':'var(--vmc)'};border-radius:7px">
-          <div style="font-size:9px;color:var(--tx2)">% Metas</div>
-          <div style="font-size:20px;font-weight:700;color:${cor}">${pctMeta}%</div>
-        </div>
-        <div style="text-align:center;padding:.5rem;background:var(--cin);border-radius:7px;border:1px solid var(--brd)">
-          <div style="font-size:9px;color:var(--tx2)">Média/dia</div>
-          <div style="font-size:20px;font-weight:700;color:var(--az)">${med}</div>
-        </div>
-        <div style="text-align:center;padding:.5rem;background:var(--cin);border-radius:7px;border:1px solid var(--brd)">
-          <div style="font-size:9px;color:var(--tx2)">Dias trabalhados</div>
-          <div style="font-size:20px;font-weight:700;color:var(--az)">${d.dias}</div>
-        </div>
-      </div>
-    </div>`;
+    const pctM=d.dias>0?Math.round(d.meta/d.dias*100):0;
+    const cor=pctM>=80?'var(--vd)':pctM>=60?'var(--am)':'var(--vm)';
+    const bg=pctM>=80?'var(--vdc)':pctM>=60?'var(--amc)':'var(--vmc)';
+    return'<div class="cd" style="border-top:3px solid '+cor+'"><div style="font-size:14px;font-weight:700;color:var(--az);margin-bottom:.75rem">👤 '+col+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      +'<div style="text-align:center;padding:.5rem;background:var(--azc);border-radius:7px"><div style="font-size:9px;color:var(--tx2)">Total</div><div style="font-size:20px;font-weight:700;color:var(--azm)">'+d.tot+'</div></div>'
+      +'<div style="text-align:center;padding:.5rem;background:'+bg+';border-radius:7px"><div style="font-size:9px;color:var(--tx2)">% Metas</div><div style="font-size:20px;font-weight:700;color:'+cor+'">'+pctM+'%</div></div>'
+      +'<div style="text-align:center;padding:.5rem;background:var(--cin);border-radius:7px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Média/dia</div><div style="font-size:20px;font-weight:700;color:var(--az)">'+med+'</div></div>'
+      +'<div style="text-align:center;padding:.5rem;background:var(--cin);border-radius:7px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Dias</div><div style="font-size:20px;font-weight:700;color:var(--az)">'+d.dias+'</div></div>'
+      +'</div></div>';
   }).join('');
 }
 
-// manter compatibilidade
-function fecharCiclo(){ encerrarCiclo(); }
-function renderCicloHistorico(){ renderResultadoMedicao(); }
-function deletarCicloHist(id){ if(confirm('Excluir?')){ciclos_historico=ciclos_historico.filter(c=>c.id!==id);localStorage.setItem('patec_ciclos_historico',JSON.stringify(ciclos_historico));renderResultadoMedicao();} }
-function analisarCicloHist(id){ abrirResultadoCiclo(JSON.stringify(ciclos_historico.find(c=>c.id===id)||{})); }
+// ── Snapshot Mar/Abr ──
+(function(){
+  const _s={id:'marabr2026_enc',nome:'Ciclo Mar/Abr 2026',inicio:'2026-03-26',fim:'2026-04-24',meta:1584,realizado:2003,pct:126,dias_uteis:20,obs:'Primeiro ciclo completo do sistema',ts_encerramento:'2026-04-24T18:00:00.000Z',n_registros:79,
+    registros:[
+      {colab:'André',data:'2026-03-27',pres:'Presencial',f:[0,0,0,0,0,0,0,0,8,0,2,10]},{colab:'André',data:'2026-03-30',pres:'Presencial',f:[0,0,0,0,0,0,0,0,2,0,11,13]},{colab:'André',data:'2026-04-01',pres:'Presencial',f:[0,0,0,0,0,0,0,0,19,0,11,30]},{colab:'André',data:'2026-04-06',pres:'Presencial',f:[0,0,0,0,0,0,0,0,7,0,6,13]},{colab:'André',data:'2026-04-09',pres:'Presencial',f:[0,0,0,0,0,0,0,0,8,0,5,13]},{colab:'André',data:'2026-04-10',pres:'Presencial',f:[0,0,0,0,0,0,0,0,5,0,4,9]},{colab:'André',data:'2026-04-13',pres:'Presencial',f:[0,0,0,0,0,0,0,0,10,0,15,25]},{colab:'André',data:'2026-04-14',pres:'Presencial',f:[0,0,0,0,0,0,0,0,6,0,8,14]},{colab:'André',data:'2026-04-15',pres:'Presencial',f:[0,0,0,0,0,0,0,0,3,0,5,8]},{colab:'André',data:'2026-04-24',pres:'Presencial',f:[0,0,0,0,0,0,0,0,3,0,10,13]},
+      {colab:'Lory',data:'2026-03-26',pres:'Presencial',f:[24,7,0,17,5,3,4,0,0,2,0,0]},{colab:'Lory',data:'2026-03-27',pres:'Presencial',f:[22,11,0,14,2,4,0,3,0,9,1,0]},{colab:'Lory',data:'2026-03-30',pres:'Presencial',f:[21,12,0,10,8,0,0,0,8,1,6,0]},{colab:'Lory',data:'2026-03-31',pres:'Presencial',f:[24,6,0,15,2,0,0,2,4,2,1,0]},{colab:'Lory',data:'2026-04-01',pres:'Presencial',f:[26,3,0,14,3,4,5,0,2,1,0,0]},{colab:'Lory',data:'2026-04-02',pres:'Presencial',f:[27,5,0,14,3,3,4,5,0,1,0,0]},{colab:'Lory',data:'2026-04-06',pres:'Presencial',f:[5,32,0,18,0,2,5,3,0,9,10,0]},{colab:'Lory',data:'2026-04-07',pres:'Presencial',f:[16,18,0,14,0,0,0,2,6,0,5,0]},{colab:'Lory',data:'2026-04-08',pres:'Presencial',f:[6,24,0,14,0,2,3,1,4,0,1,0]},{colab:'Lory',data:'2026-04-09',pres:'Presencial',f:[0,31,0,14,0,3,5,0,2,0,0,0]},{colab:'Lory',data:'2026-04-10',pres:'Presencial',f:[3,29,0,13,5,0,0,0,2,3,4,0]},{colab:'Lory',data:'2026-04-13',pres:'Presencial',f:[2,13,0,8,3,2,5,0,0,2,2,0]},{colab:'Lory',data:'2026-04-14',pres:'Presencial',f:[5,31,0,16,4,0,0,0,4,3,4,0]},{colab:'Lory',data:'2026-04-15',pres:'Presencial',f:[4,26,0,15,4,0,0,0,4,2,2,0]},{colab:'Lory',data:'2026-04-16',pres:'Presencial',f:[5,25,0,18,4,0,0,2,0,0,0,0]},{colab:'Lory',data:'2026-04-17',pres:'Presencial',f:[3,24,0,15,2,3,1,2,2,2,0,0]},{colab:'Lory',data:'2026-04-20',pres:'Presencial',f:[0,30,0,16,0,0,0,0,0,0,0,0]},{colab:'Lory',data:'2026-04-22',pres:'Presencial',f:[7,28,0,10,2,3,1,0,5,1,9,0]},{colab:'Lory',data:'2026-04-23',pres:'Presencial',f:[13,17,0,13,3,0,0,1,17,11,4,0]},{colab:'Lory',data:'2026-04-24',pres:'Presencial',f:[0,0,0,0,0,0,0,0,1,11,6,0]},
+      {colab:'Ludy',data:'2026-03-26',pres:'Presencial',f:[15,16,0,5,4,0,13,1,3,2,3,0]},{colab:'Ludy',data:'2026-03-27',pres:'Presencial',f:[0,28,0,16,1,1,2,1,6,0,1,0]},{colab:'Ludy',data:'2026-03-30',pres:'Presencial',f:[7,23,0,11,3,3,3,3,0,5,2,0]},{colab:'Ludy',data:'2026-03-31',pres:'Presencial',f:[6,29,0,18,2,3,3,1,2,4,5,0]},{colab:'Ludy',data:'2026-04-01',pres:'Presencial',f:[22,24,0,17,5,0,12,4,5,2,1,0]},{colab:'Ludy',data:'2026-04-06',pres:'Presencial',f:[0,47,0,9,0,0,5,13,7,3,3,0]},{colab:'Ludy',data:'2026-04-07',pres:'Presencial',f:[32,8,0,2,10,2,1,4,22,3,7,0]},{colab:'Ludy',data:'2026-04-08',pres:'Presencial',f:[4,34,0,2,11,2,5,3,2,7,8,0]},{colab:'Ludy',data:'2026-04-09',pres:'Presencial',f:[9,10,0,10,6,4,1,3,0,1,1,0]},{colab:'Ludy',data:'2026-04-10',pres:'Presencial',f:[22,9,0,4,0,4,9,1,4,3,7,0]},{colab:'Ludy',data:'2026-04-13',pres:'Presencial',f:[6,9,0,7,1,0,2,1,9,2,2,0]},{colab:'Ludy',data:'2026-04-14',pres:'Presencial',f:[8,28,0,6,2,0,10,1,2,1,6,0]},{colab:'Ludy',data:'2026-04-15',pres:'Presencial',f:[19,16,0,10,2,0,3,3,2,4,1,0]},{colab:'Ludy',data:'2026-04-16',pres:'Presencial',f:[0,32,0,3,7,1,1,3,3,5,19,0]},{colab:'Ludy',data:'2026-04-17',pres:'Presencial',f:[0,24,0,9,2,1,7,6,1,3,3,0]},{colab:'Ludy',data:'2026-04-20',pres:'Presencial',f:[7,24,0,9,1,0,0,6,1,4,2,0]},{colab:'Ludy',data:'2026-04-22',pres:'Presencial',f:[4,11,0,9,3,2,0,0,1,2,4,0]},{colab:'Ludy',data:'2026-04-23',pres:'Presencial',f:[22,14,0,15,9,2,3,0,12,4,1,0]},{colab:'Ludy',data:'2026-04-24',pres:'Presencial',f:[20,18,0,12,0,0,3,2,0,3,4,0]},
+      {colab:'Wanessa',data:'2026-03-26',pres:'Presencial',f:[30,0,0,17,2,0,10,0,0,0,1,0]},{colab:'Wanessa',data:'2026-03-27',pres:'Presencial',f:[11,13,0,11,6,0,2,0,0,3,2,0]},{colab:'Wanessa',data:'2026-03-30',pres:'Presencial',f:[16,19,0,15,6,2,1,3,2,6,2,0]},{colab:'Wanessa',data:'2026-03-31',pres:'Presencial',f:[5,12,0,3,3,1,6,1,0,4,0,0]},{colab:'Wanessa',data:'2026-04-01',pres:'Presencial',f:[18,6,0,10,3,1,3,1,2,5,0,0]},{colab:'Wanessa',data:'2026-04-02',pres:'Presencial',f:[13,32,0,16,1,0,5,2,15,1,6,0]},{colab:'Wanessa',data:'2026-04-06',pres:'Presencial',f:[8,18,0,4,2,0,5,2,0,3,10,0]},{colab:'Wanessa',data:'2026-04-07',pres:'Presencial',f:[17,20,0,2,2,1,5,2,8,4,20,0]},{colab:'Wanessa',data:'2026-04-08',pres:'Presencial',f:[3,32,0,18,2,0,0,9,1,2,3,0]},{colab:'Wanessa',data:'2026-04-09',pres:'Presencial',f:[0,21,0,7,1,1,2,0,4,2,5,0]},{colab:'Wanessa',data:'2026-04-10',pres:'Presencial',f:[0,17,0,8,4,1,0,0,0,2,2,0]},{colab:'Wanessa',data:'2026-04-13',pres:'Presencial',f:[0,17,0,4,0,0,5,5,8,0,0,0]},{colab:'Wanessa',data:'2026-04-14',pres:'Presencial',f:[9,18,0,9,2,0,5,5,6,1,3,0]},{colab:'Wanessa',data:'2026-04-15',pres:'Presencial',f:[7,8,0,10,1,0,2,2,6,1,5,0]},{colab:'Wanessa',data:'2026-04-16',pres:'Presencial',f:[16,24,0,4,1,0,4,2,1,1,7,0]},{colab:'Wanessa',data:'2026-04-17',pres:'Presencial',f:[0,30,0,7,1,1,7,4,0,1,10,0]},{colab:'Wanessa',data:'2026-04-20',pres:'Presencial',f:[0,28,0,4,0,0,4,2,0,0,0,0]},{colab:'Wanessa',data:'2026-04-22',pres:'Presencial',f:[0,28,0,1,1,0,4,4,8,0,10,0]},{colab:'Wanessa',data:'2026-04-23',pres:'Presencial',f:[0,25,0,4,2,0,0,0,15,6,6,0]},{colab:'Wanessa',data:'2026-04-24',pres:'Presencial',f:[15,0,0,0,0,0,0,0,0,0,0,0]},
+      {colab:'Aline',data:'2026-03-26',pres:'Presencial',f:[9,23,0,7,1,6,0,0,6,4,8,0]},{colab:'Aline',data:'2026-03-27',pres:'Presencial',f:[0,33,0,5,7,2,3,13,2,1,0,0]},{colab:'Aline',data:'2026-03-30',pres:'Presencial',f:[16,14,0,11,6,4,2,0,6,1,0,0]},{colab:'Aline',data:'2026-03-31',pres:'Presencial',f:[0,37,0,6,3,6,8,1,2,4,7,0]},{colab:'Aline',data:'2026-04-02',pres:'Presencial',f:[0,27,0,5,1,3,3,3,4,3,5,0]},{colab:'Aline',data:'2026-04-06',pres:'Presencial',f:[0,32,0,5,6,2,0,2,1,3,13,0]},{colab:'Aline',data:'2026-04-07',pres:'Presencial',f:[0,31,0,4,4,0,0,1,9,1,12,0]},
+      {colab:'Ajuda de outros times',data:'2026-04-01',pres:'Presencial',f:[16,0,0,0,0,0,0,0,0,16,0,0]},{colab:'Ajuda de outros times',data:'2026-04-13',pres:'Presencial',f:[37,0,0,0,0,0,0,0,0,37,0,0]}
+    ],
+    pcp:[
+      {data:'2026-03-26',f1:124,f2:9,f6:1,f3:8,f4:12,f5:9},{data:'2026-03-27',f1:118,f2:7,f6:17,f3:13,f4:6,f5:16},{data:'2026-03-30',f1:128,f2:9,f6:6,f3:13,f4:19,f5:18},{data:'2026-03-31',f1:119,f2:7,f6:4,f3:14,f4:12,f5:8},
+      {data:'2026-04-01',f1:115,f2:5,f6:4,f3:24,f4:13,f5:28},{data:'2026-04-02',f1:104,f2:6,f6:9,f3:5,f4:11,f5:19},{data:'2026-04-06',f1:142,f2:4,f6:20,f3:15,f4:32,f5:15},{data:'2026-04-07',f1:142,f2:3,f6:5,f3:8,f4:49,f5:45},
+      {data:'2026-04-08',f1:103,f2:2,f6:14,f3:9,f4:16,f5:7},{data:'2026-04-09',f1:71,f2:3,f6:1,f3:4,f4:12,f5:14},{data:'2026-04-10',f1:80,f2:5,f6:0,f3:8,f4:17,f5:11},{data:'2026-04-13',f1:47,f2:0,f6:1,f3:4,f4:17,f5:20},
+      {data:'2026-04-14',f1:135,f2:0,f6:1,f3:42,f4:21,f5:25},{data:'2026-04-15',f1:90,f2:2,f6:8,f3:4,f4:17,f5:15},{data:'2026-04-16',f1:86,f2:3,f6:1,f3:6,f4:27,f5:6},{data:'2026-04-17',f1:82,f2:2,f6:8,f3:4,f4:22,f5:1},
+      {data:'2026-04-20',f1:88,f2:2,f6:0,f3:3,f4:18,f5:23},{data:'2026-04-22',f1:96,f2:3,f6:1,f3:4,f4:13,f5:33},{data:'2026-04-23',f1:89,f2:0,f6:0,f3:14,f4:12,f5:27},{data:'2026-04-24',f1:33,f2:0,f6:2,f3:5,f4:16,f5:3}
+    ],
+    mapa:{datas:['26/mar','27/mar','30/mar','31/mar','01/abr','02/abr','06/abr','07/abr','08/abr','09/abr','10/abr','13/abr','14/abr','15/abr','16/abr','17/abr','20/abr','22/abr','23/abr','24/abr','27/abr'],datas_iso:['2026-03-26','2026-03-27','2026-03-30','2026-03-31','2026-04-01','2026-04-02','2026-04-06','2026-04-07','2026-04-08','2026-04-09','2026-04-10','2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17','2026-04-20','2026-04-22','2026-04-23','2026-04-24','2026-04-27'],L3:[812,843,806,807,814,835,833,820,765,754,745,755,754,728,691,686,697,719,717,707,624],L4:[141,185,157,258,312,286,283,236,223,273,263,237,225,233,246,246,290,248,243,250,195],L5:[65,81,69,69,28,19,13,12,17,13,6,15,10,4,9,9,31,18,12,6,10],L6:[2,2,2,1,2,0,0,1,0,0,0,0,0,1,0,0,1,1,0,0,1],L7:[148,130,57,74,63,69,47,98,101,59,88,108,112,166,127,201,145,177,184,186,172],L8:[108,97,59,52,52,35,20,72,83,40,35,66,56,124,106,156,116,130,150,154,128]}
+  };
+  if(!ciclos_historico.find(c=>c.id===_s.id)){
+    ciclos_historico.unshift(_s);
+    setTimeout(()=>fbSet('ciclos_encerrados',_s.id,_s).then(()=>console.log('Snapshot Mar/Abr salvo')),3000);
+  }
+})();
+
+// compatibilidade
+function fecharCiclo(){encerrarCiclo();}
+function renderCicloHistorico(){renderResultadoMedicao();}
+function deletarCicloHist(id){if(confirm('Excluir?')){ciclos_historico=ciclos_historico.filter(c=>c.id!==id);localStorage.setItem('patec_ciclos_historico',JSON.stringify(ciclos_historico));renderResultadoMedicao();}}
 let _novoCicloData=null;
 function cicloOnDrop(e){e.preventDefault();}
 function cicloOnFile(i){}
 function cicloLimpar(){}
-function ativarNovoCiclo(){ iniciarNovoCiclo(); }
-
-
-// Ao carregar, verificar se há ciclo salvo no localStorage
-(function loadCicloFromStorage() {
-  const saved = localStorage.getItem('patec_ciclo_ativo');
-  if(saved) {
-    try {
-      const s = JSON.parse(saved);
-      // Atualizar dados globais com os dados salvos
-      // Como são const, vamos apenas atualizar as variáveis let/mutáveis
-      // Os arrays de dados podem ser atualizados via referência se fossem let
-      // Para simplificar, exibir aviso de que há ciclo pendente
-      console.log('Ciclo ativo encontrado no localStorage:', s.ciclo.nome);
-    } catch(e) { console.error('Erro ao carregar ciclo:', e); }
-  }
-})();
-
+function ativarNovoCiclo(){iniciarNovoCiclo();}
 
 // ════════════════════════════════════════════
 // INTELIGÊNCIA DE MERCADO
