@@ -1848,12 +1848,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     <div id="p-pr-estrategico" class="page">
 
       <!-- CARDS DO DIA (automático) -->
-      <div style="margin-bottom:1rem">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
-          <div style="font-size:13px;font-weight:700;color:var(--tx2)">📊 Resumo do dia — <span id="est-hoje-label">—</span></div>
-          <button class="btn btn-s" style="font-size:11px" onclick="renderPainelEstrategico()">↺ Atualizar</button>
+      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="font-size:13px;font-weight:700;color:var(--az)">📊 Resumo do dia</div>
+            <input type="date" id="est-dia-sel" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--brd);border-radius:6px;color:var(--az);font-weight:600"
+              onchange="renderCardsDia()">
+            <span style="font-size:11px;color:var(--tx2)" id="est-hoje-label"></span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-s" style="font-size:11px" onclick="estVoltarHoje()">📅 Hoje</button>
+            <button class="btn btn-s" style="font-size:11px" onclick="renderCardsDia()">↺ Atualizar</button>
+          </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px" id="est-cards-dia"></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px" id="est-cards-dia"></div>
       </div>
 
       <!-- FILTRO DE MEDIÇÃO -->
@@ -2560,7 +2568,12 @@ function go(id, el) {
   // Triggers de render
   if (id==='vg-validade') renderValidade();
   if (id==='pr-equipe') { renderEquipe(); }
-  if (id==='pr-estrategico') { renderPainelEstrategico(); }
+  if (id==='pr-estrategico') {
+    const sel=document.getElementById('est-dia-sel');
+    if(sel&&!sel.value) sel.value=HOJE.toISOString().split('T')[0];
+    renderCardsDia();
+    renderPainelEstrategico();
+  }
 
 }
 
@@ -2569,40 +2582,85 @@ function go(id, el) {
 // ════════════════════════════════════════════
 let _estChartProd = null, _estChartMapa = null;
 
+function estGetDia(){
+  const sel=document.getElementById('est-dia-sel');
+  if(sel&&sel.value) return sel.value;
+  return HOJE.toISOString().split('T')[0];
+}
+function estVoltarHoje(){
+  const sel=document.getElementById('est-dia-sel');
+  if(sel) sel.value=HOJE.toISOString().split('T')[0];
+  renderCardsDia();
+}
+function estGetDiaAnterior(dt){
+  // Encontrar o dia anterior com registros PCP ou mapa
+  const dtObj=new Date(dt+'T12:00:00');
+  dtObj.setDate(dtObj.getDate()-1);
+  // Tentar até 7 dias atrás
+  for(let i=0;i<7;i++){
+    const iso=dtObj.toISOString().split('T')[0];
+    const temPcp=pcpData.find(r=>r.data===iso);
+    const temMapa=mapaFirebase.find(r=>r.data===iso)||DATAS_ISO_MAPA.includes(iso);
+    if(temPcp||temMapa) return iso;
+    dtObj.setDate(dtObj.getDate()-1);
+  }
+  return null;
+}
+function renderCardsDia(){
+  const dt=estGetDia();
+  const dtAnt=estGetDiaAnterior(dt);
+  // Atualizar label
+  const lbl=document.getElementById('est-hoje-label');
+  if(lbl) lbl.textContent=fmtDt(dt)+(dt===HOJE.toISOString().split('T')[0]?' (hoje)':'');
+  // Garantir que o input mostre a data
+  const sel=document.getElementById('est-dia-sel');
+  if(sel&&!sel.value) sel.value=dt;
+
+  // Dados do dia selecionado
+  const getPcp=(d)=>pcpData.find(r=>r.data===d)||{f1:0,f2:0,f6:0,f3:0,f4:0,f5:0};
+  const getMapa=(d)=>{
+    const fb=mapaFirebase.find(r=>r.data===d);
+    if(fb) return fb;
+    const idx=DATAS_ISO_MAPA.indexOf(d);
+    if(idx>=0) return{l3:L[3][idx]||0,l4:L[4][idx]||0,l5:L[5][idx]||0,l6:L[6][idx]||0,l7:L[7][idx]||0,l8:L[8][idx]||0};
+    return{l3:0,l4:0,l5:0,l6:0,l7:0,l8:0};
+  };
+  const pcp=getPcp(dt), pcpAnt=dtAnt?getPcp(dtAnt):null;
+  const mapa=getMapa(dt), mapaAnt=dtAnt?getMapa(dtAnt):null;
+
+  const varStr=(v,ant)=>{
+    if(!ant) return'';
+    const d=v-ant;
+    const cor=d>0?'var(--vm)':d<0?'var(--vd)':'var(--tx2)';
+    const ico=d>0?'▲':d<0?'▼':'—';
+    return`<div style="font-size:11px;font-weight:700;color:${cor};margin-top:4px">${ico} ${d>0?'+':''}${d} vs dia ant.</div>`;
+  };
+
+  const cards=[
+    {label:'PATEC Fin./Parada',sub:'1ª Análise + Tratativa + Status B',val:pcp.f1,ant:pcpAnt?pcpAnt.f1:null,cor:'var(--azm)',bg:'var(--azc)'},
+    {label:'MDG',sub:'composição MDG',val:pcp.f2,ant:pcpAnt?pcpAnt.f2:null,cor:'var(--az)',bg:'var(--cin)'},
+    {label:'XGL',sub:'composição XGL',val:pcp.f6,ant:pcpAnt?pcpAnt.f6:null,cor:'var(--az)',bg:'var(--cin)'},
+    {label:'RCs Pedidos',sub:'composição pedidos',val:pcp.f3,ant:pcpAnt?pcpAnt.f3:null,cor:'var(--vd)',bg:'var(--vdc)'},
+    {label:'RCs Devoluções',sub:'composição devoluções',val:pcp.f4,ant:pcpAnt?pcpAnt.f4:null,cor:'var(--vm)',bg:'var(--vmc)'},
+    {label:'RCs Republicação',sub:'composição republicação',val:pcp.f5,ant:pcpAnt?pcpAnt.f5:null,cor:'var(--am)',bg:'var(--amc)'},
+    {label:'PATEC Finalizado',sub:'Level Board L3 (mapa)',val:mapa.l3,ant:mapaAnt?mapaAnt.l3:null,cor:'#3266AD',bg:'#EBF0FA'},
+  ];
+  const cardsEl=document.getElementById('est-cards-dia');
+  if(cardsEl) cardsEl.innerHTML=cards.map(c=>`
+    <div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.07)">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:5px">${c.sub}</div>
+      <div style="font-size:26px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
+      ${varStr(c.val,c.ant)}
+    </div>`).join('');
+}
 function renderPainelEstrategico(){
   const hoje = HOJE.toISOString().split('T')[0];
   const label = document.getElementById('est-hoje-label');
   if(label) label.textContent = fmtDt(hoje);
 
-  // ── Cards do dia (PCP + Mapa) ──
-  const pcpHoje = pcpData.find(r=>r.data===hoje);
-  const mapaHoje = mapaFirebase.find(r=>r.data===hoje) || (() => {
-    const idx = DATAS_ISO_MAPA.indexOf(hoje);
-    if(idx<0) return null;
-    return {l3:L[3][idx]||0,l4:L[4][idx]||0,l5:L[5][idx]||0,l6:L[6][idx]||0,l7:L[7][idx]||0,l8:L[8][idx]||0};
-  })();
-
-  const cardsEl = document.getElementById('est-cards-dia');
-  if(cardsEl){
-    const f1=pcpHoje?pcpHoje.f1:0, mdg=pcpHoje?pcpHoje.f2:0, xgl=pcpHoje?pcpHoje.f6:0;
-    const ped=pcpHoje?pcpHoje.f3:0, dev=pcpHoje?pcpHoje.f4:0, rep=pcpHoje?pcpHoje.f5:0;
-    const l3=mapaHoje?mapaHoje.l3:0;
-    const cards=[
-      {label:'PATEC Fin./Parada',sub:'1ª Análise + Tratativa + Status B',val:f1,cor:'var(--azm)',bg:'var(--azc)'},
-      {label:'MDG',sub:'composição MDG',val:mdg,cor:'var(--az)',bg:'var(--cin)'},
-      {label:'XGL',sub:'composição XGL',val:xgl,cor:'var(--az)',bg:'var(--cin)'},
-      {label:'RCs Pedidos',sub:'composição pedidos',val:ped,cor:'var(--vd)',bg:'var(--vdc)'},
-      {label:'RCs Devoluções',sub:'composição devoluções',val:dev,cor:'var(--vm)',bg:'var(--vmc)'},
-      {label:'RCs Republicação',sub:'composição republicação',val:rep,cor:'var(--am)',bg:'var(--amc)'},
-      {label:'PATEC Finalizado',sub:'Level Board L3 (mapa)',val:l3,cor:'#3266AD',bg:'#EBF0FA'},
-    ];
-    cardsEl.innerHTML=cards.map(c=>`
-      <div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.07)">
-        <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
-        <div style="font-size:10px;color:var(--tx2);margin-bottom:6px">${c.sub}</div>
-        <div style="font-size:26px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
-      </div>`).join('');
-  }
+  // ── Cards do dia — delegar para renderCardsDia ──
+  renderCardsDia();
 
   // ── Filtro: definir período ──
   const cicloSel = document.getElementById('est-ciclo-sel')?.value || 'atual';
