@@ -884,6 +884,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- ABAS ADM -->
       <div class="stabs" id="adm-tabs">
         <button class="stab active" onclick="setAdmTab('ciclos',this)">🔄 Gestão de Ciclos</button>
+        <button class="stab" onclick="setAdmTab('metas',this)">🎯 Metas e Gap</button>
         <button class="stab" onclick="setAdmTab('meta-gap',this)">📌 Meta & Gap (Topbar)</button>
         <button class="stab" onclick="setAdmTab('senhas',this)">🔑 Senhas</button>
         <button class="stab" onclick="setAdmTab('hist-mapa',this)">📋 Hist. Mapa</button>
@@ -1021,7 +1022,58 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       </div>
 
       <!-- ── METAS E GAP ── -->
+      <div id="adm-metas" class="adm-tab" style="display:none">
+        <div class="g2">
+          <div class="cd">
+            <div class="cd-t">🎯 Meta do ciclo de medição</div>
+            <div class="al al-b">ℹ Esses valores são refletidos no sidebar e no painel geral em tempo real.</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div class="field-wrap">
+                <span class="field-label">Meta total do ciclo (itens)</span>
+                <input type="number" id="adm-meta-ciclo" placeholder="Ex: 1980" min="0" style="width:100%">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Realizado acumulado atual</span>
+                <input type="number" id="adm-realizado" placeholder="Ex: 743" min="0" style="width:100%">
+              </div>
+              <div style="padding:.875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">Gap calculado automaticamente</div>
+                <div style="font-size:24px;font-weight:700" id="adm-gap-preview">—</div>
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Meta mínima individual por dia (itens)</span>
+                <input type="number" id="adm-meta-min" placeholder="Ex: 30" min="1" style="width:100%">
+              </div>
+              <button class="btn btn-g" onclick="salvarMetas()" style="align-self:flex-start">✓ Salvar e refletir no painel</button>
+              <span id="adm-metas-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo! Sidebar atualizada.</span>
+            </div>
+          </div>
+          <div class="cd">
+            <div class="cd-t">📊 Valores atuais no sistema</div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--vdc);border-radius:8px">
+                <span style="font-weight:600;color:#3B6D11">Meta do ciclo</span>
+                <span style="font-size:20px;font-weight:700;color:var(--vd)" id="adm-cur-meta">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--azc);border-radius:8px">
+                <span style="font-weight:600;color:#0C447C">Realizado</span>
+                <span style="font-size:20px;font-weight:700;color:var(--azm)" id="adm-cur-real">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--amc);border-radius:8px">
+                <span style="font-weight:600;color:#854F0B">Gap atual</span>
+                <span style="font-size:20px;font-weight:700;color:var(--am)" id="adm-cur-gap">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
+                <span style="font-weight:600">Meta mín./dia</span>
+                <span style="font-size:20px;font-weight:700;color:var(--az)" id="adm-cur-metamin">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── META & GAP TOPBAR ── -->
+            <!-- ── META & GAP TOPBAR ── -->
       <div id="adm-meta-gap" class="adm-tab" style="display:none">
         <div class="al al-b" style="margin-bottom:1rem">ℹ São <strong>4 cards independentes</strong> na topbar — 2 no lado esquerdo e 2 no lado direito. Cada um tem seu próprio botão de salvar.</div>
 
@@ -1183,6 +1235,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </div>
           </div>
         </div>
+      </div>
+
+
         <!-- META MÍNIMA INDIVIDUAL -->
         <div class="cd" style="border-top:3px solid var(--vd);margin-top:1rem">
           <div class="cd-t">🎯 Meta mínima individual por dia</div>
@@ -1202,7 +1257,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           </div>
         </div>
       </div>
-
 
       <!-- ── SENHAS ── -->
       <div id="adm-senhas" class="adm-tab" style="display:none">
@@ -3402,6 +3456,8 @@ function setAdmTab(id,btn){
   if(id==='resultado-medicao') setTimeout(renderResultadoMedicao,50);
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
+  if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
+  if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
   document.querySelectorAll('#adm-tabs .stab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.adm-tab').forEach(t=>t.style.display='none');
@@ -3413,17 +3469,18 @@ function admCarregarValores(){
   const meta=parseInt(localStorage.getItem('patec_meta')||'1980');
   const real=parseInt(localStorage.getItem('patec_realizado')||'743');
   const metaMin=parseInt(localStorage.getItem('patec_meta_min')||'30');
-  document.getElementById('adm-meta-ciclo').value=meta;
-  document.getElementById('adm-realizado').value=real;
-  document.getElementById('adm-meta-min').value=metaMin;
-  atualizarPreviewGap();
-  document.getElementById('adm-cur-meta').textContent=meta.toLocaleString('pt-BR');
-  document.getElementById('adm-cur-real').textContent=real.toLocaleString('pt-BR');
+  // Campos podem não existir se aba Metas e Gap foi removida — usar optional chaining
+  const sel=id=>{const e=document.getElementById(id);return e||{value:0,textContent:'',style:{}};};
+  sel('adm-meta-ciclo').value=meta;
+  sel('adm-realizado').value=real;
+  sel('adm-meta-min').value=metaMin;
+  try{atualizarPreviewGap();}catch(e){}
+  sel('adm-cur-meta').textContent=meta.toLocaleString('pt-BR');
+  sel('adm-cur-real').textContent=real.toLocaleString('pt-BR');
   const gap=real-meta;
   const gapEl=document.getElementById('adm-cur-gap');
-  gapEl.textContent=(gap>=0?'+':'')+gap.toLocaleString('pt-BR');
-  gapEl.style.color=gap>=0?'var(--vd)':gap>=-100?'var(--am)':'var(--vm)';
-  document.getElementById('adm-cur-metamin').textContent=metaMin+'/dia';
+  if(gapEl){gapEl.textContent=(gap>=0?'+':'')+gap.toLocaleString('pt-BR');gapEl.style.color=gap>=0?'var(--vd)':gap>=-100?'var(--am)':'var(--vm)';}
+  sel('adm-cur-metamin').textContent=metaMin+'/dia';
 }
 function atualizarPreviewGap(){
   const meta=parseInt(document.getElementById('adm-meta-ciclo').value)||0;
@@ -4063,6 +4120,7 @@ function pcpAtualizarRegistroDia(dt){
 }
 
 function renderAdmPCP(){
+  if(!document.getElementById('adm-pcp-tb')) return;
   const sums={f1:0,f2:0,f6:0,f3:0,f4:0,f5:0};
   pcpData.forEach(r=>{
     sums.f1+=r.f1||0;sums.f2+=r.f2||0;sums.f6+=r.f6||0;
@@ -4282,7 +4340,6 @@ function initMetaGapADM(){
   if(el('mg-gap-real'))       el('mg-gap-real').value = gapReal;
   if(el('mg-gap-label'))      el('mg-gap-label').value = gapLbl;
   if(el('mg-gap-manual-val')) el('mg-gap-manual-val').value = gapMan;
-  // Meta mínima
   const metaMinVal=parseInt(ls('patec_meta_min')||'30');
   if(el('adm-meta-min')) el('adm-meta-min').value=metaMinVal;
   if(el('adm-cur-metamin')) el('adm-cur-metamin').textContent=metaMinVal+'/dia';
