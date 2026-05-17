@@ -1300,49 +1300,29 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div id="adm-hist-prod" class="adm-tab" style="display:none">
         <div class="cd">
           <div class="cd-t">📊 Histórico da Produção — filtros</div>
-          <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
-            <!-- Ciclo de medição -->
-            <div class="field-wrap" style="min-width:170px">
-              <span class="field-label">Ciclo de medição</span>
-              <select id="adm-prod-ciclo" onchange="filtrarHistProdCiclo()" style="width:100%">
-                <option value="">Todos os ciclos</option>
-                <option value="mar-abr">Mar/Abr 2026</option>
-                <option value="abr-mai">Abr/Mai 2026</option>
-              </select>
-            </div>
-            <!-- Colaborador -->
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
             <div class="field-wrap" style="min-width:150px">
               <span class="field-label">Colaborador</span>
               <select id="adm-prod-colab" onchange="filtrarHistProd()" style="width:100%">
                 <option value="">Todos</option>
+                <option>André</option><option>Aline</option><option>Lory</option>
+                <option>Ludy</option><option>Wanessa</option>
               </select>
             </div>
-            <!-- Filtro Meta -->
-            <div class="field-wrap" style="min-width:130px">
-              <span class="field-label">Meta</span>
-              <select id="adm-prod-meta" onchange="filtrarHistProd()" style="width:100%">
-                <option value="">Todos</option>
-                <option value="ok">✓ Atingiu</option>
-                <option value="abaixo">Abaixo</option>
-                <option value="ajuda">Ajuda/Líder</option>
-                <option value="folga">Folga/Férias</option>
-              </select>
-            </div>
-            <!-- Dia ou período -->
-            <div style="display:flex;align-items:center;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px;align-self:flex-end">
               <span style="font-size:12px;color:var(--tx2)">Dia:</span>
               <input type="date" id="adm-prod-dia" style="width:150px;font-size:12px;padding:5px 10px">
             </div>
-            <span style="font-size:11px;color:var(--tx2);padding-bottom:2px">ou período:</span>
-            <input type="date" id="adm-prod-de" style="width:145px;font-size:12px;padding:5px 10px">
-            <span style="font-size:11px;color:var(--tx2);padding-bottom:2px">até</span>
-            <input type="date" id="adm-prod-ate" style="width:145px;font-size:12px;padding:5px 10px">
-            <button class="btn btn-s" style="padding:5px 12px;font-size:11px" onclick="filtrarHistProd()">Filtrar</button>
-            <button class="btn btn-s" style="padding:5px 12px;font-size:11px" onclick="limparFiltrosAdmProd()">Limpar</button>
+            <span style="font-size:11px;color:var(--tx2);align-self:flex-end;padding-bottom:6px">ou período:</span>
+            <input type="date" id="adm-prod-de" style="width:145px;font-size:12px;padding:5px 10px;align-self:flex-end">
+            <span style="font-size:11px;color:var(--tx2);align-self:flex-end;padding-bottom:6px">até</span>
+            <input type="date" id="adm-prod-ate" style="width:145px;font-size:12px;padding:5px 10px;align-self:flex-end">
+            <button class="btn btn-s" style="padding:5px 12px;font-size:11px;align-self:flex-end" onclick="filtrarHistProd()">Filtrar</button>
+            <button class="btn btn-s" style="padding:5px 12px;font-size:11px;align-self:flex-end" onclick="filtrarHistProd('all')">Todos</button>
           </div>
           <div class="tw" style="margin-bottom:1rem">
             <table>
-              <thead><tr><th>Data</th><th>Colaborador</th><th>Presença</th><th>1ª Análise</th><th>Em Tratativa</th><th>Status B</th><th>Outros</th><th>Forn.</th><th>Req.</th><th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Total</th><th>Meta</th><th>Justificativa</th></tr></thead>
+              <thead><tr><th>Data</th><th>Colaborador</th><th>Presença</th><th>Analisados</th><th>Tratativa</th><th>Forn.</th><th>Req.</th><th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Total</th><th>Justificativa</th></tr></thead>
               <tbody id="adm-prod-tb"></tbody>
               <tfoot id="adm-prod-tf"></tfoot>
             </table>
@@ -1370,16 +1350,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="cd-t">🌴 Editar quadro de férias</div>
           <div class="al al-b">ℹ Cada colaborador pode ter <strong>múltiplos períodos</strong> de férias (férias fracionadas). Use o botão <strong>+ Período</strong> para adicionar novas datas. O retorno é calculado automaticamente.</div>
 
-          <!-- Filtro colaborador na edição -->
-          <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">
-            <div class="field-wrap" style="min-width:180px">
-              <span class="field-label">Filtrar colaborador</span>
-              <select id="ferias-edit-colab" onchange="filtrarFeriasEdit()" style="width:100%">
-                <option value="">Todos os colaboradores</option>
-              </select>
-            </div>
-          </div>
-
           <!-- Lista dinâmica de colaboradores com períodos -->
           <div id="adm-ferias-colabs" style="display:flex;flex-direction:column;gap:14px;margin-bottom:1rem"></div>
 
@@ -1391,28 +1361,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
         <!-- Prévia ordenada por data de saída -->
         <div class="cd">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
             <div class="cd-t" style="margin:0">Prévia — todos os períodos (ordem de saída)</div>
             <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="exportAdmFerias()">💾 Exportar CSV</button>
-          </div>
-          <!-- Filtros -->
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.75rem;align-items:flex-end">
-            <div class="field-wrap" style="min-width:160px">
-              <span class="field-label">Colaborador</span>
-              <select id="ferias-filtro-colab" onchange="renderFeriasPreview()" style="width:100%">
-                <option value="">Todos</option>
-              </select>
-            </div>
-            <div class="field-wrap" style="min-width:160px">
-              <span class="field-label">Status</span>
-              <select id="ferias-filtro-status" onchange="renderFeriasPreview()" style="width:100%">
-                <option value="">Todos</option>
-                <option value="Em andamento">🟢 Em andamento</option>
-                <option value="Programada">🔵 Programada</option>
-                <option value="Concluída">✅ Concluída</option>
-              </select>
-            </div>
-            <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="limparFiltrosFerias()">Limpar filtros</button>
           </div>
           <div class="tw"><table>
             <thead><tr><th>#</th><th>Colaborador</th><th>Período</th><th>Saída</th><th>Dias</th><th>Retorno</th><th>Status</th></tr></thead>
@@ -1449,8 +1400,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="field-wrap" style="min-width:180px"><span class="field-label">Colaborador</span>
             <select id="bhe-colab-sel" onchange="bheRenderColab()" style="width:100%">
               <option value="">— Selecione —</option>
-            </select>
-            <div id="bhe-todos-resumo" style="display:none;margin-top:1rem"></div></div>
+            </select></div>
           <button class="btn btn-g" onclick="bheSalvarTudo()" style="align-self:flex-end">✓ Salvar tudo no Firebase</button>
           <span id="bhe-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;align-self:flex-end">✓ Salvo!</span>
         </div>
@@ -1566,10 +1516,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <div style="margin-top:1rem;font-size:12px;color:var(--tx2)">
               Registros de produção: <strong id="adm-exp-count" style="font-size:15px;color:var(--azm)">—</strong>
             </div>
-            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--brd)">
-              <button class="btn btn-r" onclick="zerarProducaoFirebase()" style="justify-content:center;width:100%">🗑 Zerar TODA a produção do Firebase</button>
-              <div style="font-size:10px;color:var(--tx2);margin-top:5px;text-align:center">⚠ Apaga todos os registros permanentemente</div>
-            </div>
           </div>
           <div class="cd">
             <div class="cd-t">🗑 Gerenciar registros de produção</div>
@@ -1608,6 +1554,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <span class="field-label">Colaborador</span>
             <select id="pr-login-nome" onchange="if(this.value)fazerLogin()" style="width:100%">
               <option value="">— selecione —</option>
+              <option>André</option><option>Aline</option><option>Lory</option>
+              <option>Ludy</option><option>Wanessa</option>
             </select>
           </div>
           <button class="btn btn-p" onclick="fazerLogin()" style="justify-content:center;width:100%;margin-top:4px">Entrar</button>
@@ -1637,9 +1585,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <input type="date" id="pr-data-ref" onchange="selecionarData(this.value)" style="width:100%">
           </div>
         </div>
-
-        <!-- AVISO: Férias / Folga automática / Folga parcial -->
-        <div id="pr-aviso-ferias" style="display:none;background:var(--amc);border:1px solid var(--am);border-radius:9px;padding:.875rem 1rem;margin-bottom:.75rem;font-size:13px;color:#7A4500;align-items:center;gap:10px;line-height:1.5"></div>
 
         <!-- PASSO 2: Presença (aparece após data) -->
         <div class="cd" id="pr-s2" style="display:none">
@@ -1685,55 +1630,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </div>
           </div>
 
-          <!-- Badge sem meta (André / Ajuda de outros times) -->
-          <div id="pr-sem-meta-msg" style="display:none;background:var(--azc);border:1px solid var(--azm);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;color:var(--azm);align-items:center;gap:8px">
-            ℹ️ <span>Este colaborador <strong>não possui meta individual</strong>. Os lançamentos somam ao resultado da equipe.</span>
-          </div>
-
           <!-- Mensagem motivacional -->
           <div id="pr-motivacao" style="border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;font-weight:600;display:none;align-items:center;gap:10px"></div>
 
-          <!-- Campos principais — definem a meta (pf0, pf1, pf2=StatusB) -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.75rem">
-            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
-              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(primeira análise)</span></label>
-              <input type="number" id="pf0" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
-            </div>
-            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
-              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(em tratativa)</span></label>
-              <input type="number" id="pf1" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
-            </div>
-            <div class="prod-row" style="background:#EFF8F5;border:1.5px solid var(--vd);border-radius:9px;padding:.875rem 1rem">
-              <label style="font-size:13px;font-weight:700;color:var(--vd)">Status B<br><span style="font-size:10px;font-weight:500;color:var(--vd)">(entra na meta)</span></label>
-              <input type="number" id="pf2" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--vd);width:80px">
-            </div>
-          </div>
-
-          <!-- Outros — não entram na meta individual -->
-          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;padding-top:.25rem;display:flex;align-items:center;gap:8px">
-            <span>📋 Outros</span>
-            <span style="font-size:9px;font-weight:500;color:var(--tx2);text-transform:none;letter-spacing:0">(Republicação, Devoluções etc — somam ao resultado da equipe, não à meta individual)</span>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem">
-            <div class="prod-row" style="background:#FFF3E0;border:1.5px solid #CC6600;border-radius:9px;padding:.875rem 1rem">
-              <label style="font-size:13px;font-weight:700;color:#884400">Outros<br><span style="font-size:10px;font-weight:500;color:#884400">(Repub. + Devol. + outros)</span></label>
-              <input type="number" id="pf11" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:#884400;width:80px">
-            </div>
-          </div>
-
-          <!-- Divisor composição -->
-          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;padding-top:.25rem">↓ Composição dos itens acima</div>
-
-          <!-- Campos de composição (pf3 a pf10) -->
           <div class="prod-grid">
-            <div class="prod-row"><label>Fornecedor</label><input type="number" id="pf3" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Requisitante</label><input type="number" id="pf4" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>MDG</label><input type="number" id="pf5" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Validação Thiago</label><input type="number" id="pf6" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>XGL</label><input type="number" id="pf7" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Republicação</label><input type="number" id="pf8" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>RCs para Pedidos</label><input type="number" id="pf9" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>RCs para Devoluções</label><input type="number" id="pf10" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Itens Analisados<br><span style="font-size:10px;color:var(--tx2)">(novos)</span></label><input type="number" id="pf0" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Itens em Tratativa</label><input type="number" id="pf1" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Fornecedor</label><input type="number" id="pf2" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Requisitante</label><input type="number" id="pf3" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>MDG</label><input type="number" id="pf4" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Validação Thiago</label><input type="number" id="pf5" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>XGL</label><input type="number" id="pf6" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Republicação</label><input type="number" id="pf7" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>RCs para Pedidos</label><input type="number" id="pf8" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>RCs para Devoluções</label><input type="number" id="pf9" min="0" placeholder="0" oninput="updProd()"></div>
           </div>
 
           <!-- Justificativa (aparece se abaixo da meta) -->
@@ -1744,9 +1654,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <textarea id="pr-justif" rows="3" style="width:100%;padding:8px 12px;border:1.5px solid var(--am);border-radius:7px;font-family:Arial,sans-serif;font-size:13px;resize:vertical" placeholder="Ex: Volume reduzido por reuniões no período da manhã..."></textarea>
             </div>
           </div>
-
-          <!-- Aviso composição -->
-          <div id="pr-composicao-aviso" style="display:none;background:var(--vmc);color:var(--vm);border:1px solid #f5b8b8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;align-items:center;gap:8px">⚠ </div>
 
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-p" onclick="salvarProducao()">✓ Salvar produção</button>
@@ -1823,8 +1730,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <table>
             <thead><tr>
               <th>Colaborador</th><th>Presença</th>
-              <th>Analisados</th><th>Tratativa</th><th>Status B</th><th>Fornecedor</th><th>Req.</th>
-              <th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Outros</th>
+              <th>Analisados</th><th>Tratativa</th><th>Fornecedor</th><th>Req.</th>
+              <th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th>
               <th>Total</th><th>% Meta</th>
             </tr></thead>
             <tbody id="eq-tbody"></tbody>
@@ -1911,8 +1818,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <table>
             <thead><tr>
               <th>Data</th><th>Equipe</th>
-              <th>Analisados</th><th>Tratativa</th><th>Status B</th><th>Forn.</th><th>Req.</th>
-              <th>MDG</th><th>V.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Outros</th>
+              <th>Analisados</th><th>Tratativa</th><th>Forn.</th><th>Req.</th>
+              <th>MDG</th><th>V.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th>
               <th>Total dia</th>
             </tr></thead>
             <tbody id="peq-tbody"></tbody>
@@ -2185,38 +2092,8 @@ async function fbCarregarTudo(){
   // Produção
   const prods = await fbGetAll('producao');
   if(prods.length > 0){
-    // Carregar do Firebase — garantir 12 campos no array f
-    registros = prods.map(r => {
-      const f = r.f || [];
-      while(f.length < 12) f.push(0);
-      return {colab:r.colab, data:r.data, pres:r.pres, f, justif:r.justif||''};
-    });
-    // Mesclar HISTORICO_INICIAL — adicionar registros que não existem no Firebase
-    let salvouNovos = false;
-    for(const h of HISTORICO_INICIAL){
-      const existe = registros.some(r=>r.colab===h.colab&&r.data===h.data);
-      if(!existe){
-        const fh = [...(h.f||[])];
-        while(fh.length < 12) fh.push(0);
-        const reg = {colab:h.colab, data:h.data, pres:h.pres||'Presencial', f:fh, justif:h.justif||''};
-        registros.push(reg);
-        await fbSalvarProducao(reg);
-        salvouNovos = true;
-      }
-    }
-    if(salvouNovos) console.log('✓ HISTORICO_INICIAL mesclado ao Firebase');
+    registros = prods.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
     console.log('✓ Produção carregada:', registros.length, 'registros');
-  } else {
-    // Firebase vazio — salvar HISTORICO_INICIAL completo
-    registros = HISTORICO_INICIAL.map(h => {
-      const f = [...(h.f||[])];
-      while(f.length < 12) f.push(0);
-      return {colab:h.colab, data:h.data, pres:h.pres||'Presencial', f, justif:h.justif||''};
-    });
-    for(const reg of registros){
-      await fbSalvarProducao(reg);
-    }
-    console.log('✓ HISTORICO_INICIAL salvo no Firebase:', registros.length, 'registros');
   }
 
   // Férias — sync Firebase ↔ localStorage
@@ -2465,147 +2342,72 @@ function go(id, el) {
 // DADOS REAIS — Ciclo Maio 2026
 // ════════════════════════════════════════════
 const HISTORICO_INICIAL = [
-  {colab:'André',data:'2026-03-27',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 2, 10]},
-  {colab:'André',data:'2026-03-30',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 11, 13]},
-  {colab:'André',data:'2026-04-01',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 11, 30]},
-  {colab:'André',data:'2026-04-06',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 6, 13]},
-  {colab:'André',data:'2026-04-09',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 5, 13]},
-  {colab:'André',data:'2026-04-10',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 4, 9]},
-  {colab:'André',data:'2026-04-13',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 15, 25]},
-  {colab:'André',data:'2026-04-14',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 8, 14]},
-  {colab:'André',data:'2026-04-15',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 5, 8]},
-  {colab:'André',data:'2026-04-24',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 10, 13]},
-  {colab:'Lory',data:'2026-03-26',pres:'Presencial',f:[24, 7, 0, 17, 5, 3, 4, 0, 0, 2, 0, 0]},
-  {colab:'Lory',data:'2026-03-27',pres:'Presencial',f:[22, 11, 0, 14, 2, 4, 0, 3, 0, 9, 1, 0]},
-  {colab:'Lory',data:'2026-03-30',pres:'Presencial',f:[21, 12, 0, 10, 8, 0, 0, 0, 8, 1, 6, 0]},
-  {colab:'Lory',data:'2026-03-31',pres:'Presencial',f:[24, 6, 0, 15, 2, 0, 0, 2, 4, 2, 1, 0]},
-  {colab:'Lory',data:'2026-04-01',pres:'Presencial',f:[26, 3, 0, 14, 3, 4, 5, 0, 2, 1, 0, 0]},
-  {colab:'Lory',data:'2026-04-02',pres:'Presencial',f:[27, 5, 0, 14, 3, 3, 4, 5, 0, 1, 0, 0]},
-  {colab:'Lory',data:'2026-04-06',pres:'Presencial',f:[5, 32, 0, 18, 0, 2, 5, 3, 0, 9, 10, 0]},
-  {colab:'Lory',data:'2026-04-07',pres:'Presencial',f:[16, 18, 0, 14, 0, 0, 0, 2, 6, 0, 5, 0]},
-  {colab:'Lory',data:'2026-04-08',pres:'Presencial',f:[6, 24, 0, 14, 0, 2, 3, 1, 4, 0, 1, 0]},
-  {colab:'Lory',data:'2026-04-09',pres:'Presencial',f:[0, 31, 0, 14, 0, 3, 5, 0, 2, 0, 0, 0]},
-  {colab:'Lory',data:'2026-04-10',pres:'Presencial',f:[3, 29, 0, 13, 5, 0, 0, 0, 2, 3, 4, 0]},
-  {colab:'Lory',data:'2026-04-13',pres:'Presencial',f:[2, 13, 0, 8, 3, 2, 5, 0, 0, 2, 2, 0]},
-  {colab:'Lory',data:'2026-04-14',pres:'Presencial',f:[5, 31, 0, 16, 4, 0, 0, 0, 4, 3, 4, 0]},
-  {colab:'Lory',data:'2026-04-15',pres:'Presencial',f:[4, 26, 0, 15, 4, 0, 0, 0, 4, 2, 2, 0]},
-  {colab:'Lory',data:'2026-04-16',pres:'Presencial',f:[5, 25, 0, 18, 4, 0, 0, 2, 0, 0, 0, 0]},
-  {colab:'Lory',data:'2026-04-17',pres:'Presencial',f:[3, 24, 0, 15, 2, 3, 1, 2, 2, 2, 0, 0]},
-  {colab:'Lory',data:'2026-04-20',pres:'Presencial',f:[0, 30, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0]},
-  {colab:'Lory',data:'2026-04-22',pres:'Presencial',f:[7, 28, 0, 10, 2, 3, 1, 0, 5, 1, 9, 0]},
-  {colab:'Lory',data:'2026-04-23',pres:'Presencial',f:[13, 17, 0, 13, 3, 0, 0, 1, 17, 11, 4, 0]},
-  {colab:'Lory',data:'2026-04-24',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 1, 11, 6, 0]},
-  {colab:'Ludy',data:'2026-03-26',pres:'Presencial',f:[15, 16, 0, 5, 4, 0, 13, 1, 3, 2, 3, 0]},
-  {colab:'Ludy',data:'2026-03-27',pres:'Presencial',f:[0, 28, 0, 16, 1, 1, 2, 1, 6, 0, 1, 0]},
-  {colab:'Ludy',data:'2026-03-30',pres:'Presencial',f:[7, 23, 0, 11, 3, 3, 3, 3, 0, 5, 2, 0]},
-  {colab:'Ludy',data:'2026-03-31',pres:'Presencial',f:[6, 29, 0, 18, 2, 3, 3, 1, 2, 4, 5, 0]},
-  {colab:'Ludy',data:'2026-04-01',pres:'Presencial',f:[22, 24, 0, 17, 5, 0, 12, 4, 5, 2, 1, 0]},
-  {colab:'Ludy',data:'2026-04-06',pres:'Presencial',f:[0, 47, 0, 9, 0, 0, 5, 13, 7, 3, 3, 0]},
-  {colab:'Ludy',data:'2026-04-07',pres:'Presencial',f:[32, 8, 0, 2, 10, 2, 1, 4, 22, 3, 7, 0]},
-  {colab:'Ludy',data:'2026-04-08',pres:'Presencial',f:[4, 34, 0, 2, 11, 2, 5, 3, 2, 7, 8, 0]},
-  {colab:'Ludy',data:'2026-04-09',pres:'Presencial',f:[9, 10, 0, 10, 6, 4, 1, 3, 0, 1, 1, 0]},
-  {colab:'Ludy',data:'2026-04-10',pres:'Presencial',f:[22, 9, 0, 4, 0, 4, 9, 1, 4, 3, 7, 0]},
-  {colab:'Ludy',data:'2026-04-13',pres:'Presencial',f:[6, 9, 0, 7, 1, 0, 2, 1, 9, 2, 2, 0]},
-  {colab:'Ludy',data:'2026-04-14',pres:'Presencial',f:[8, 28, 0, 6, 2, 0, 10, 1, 2, 1, 6, 0]},
-  {colab:'Ludy',data:'2026-04-15',pres:'Presencial',f:[19, 16, 0, 10, 2, 0, 3, 3, 2, 4, 1, 0]},
-  {colab:'Ludy',data:'2026-04-16',pres:'Presencial',f:[0, 32, 0, 3, 7, 1, 1, 3, 3, 5, 19, 0]},
-  {colab:'Ludy',data:'2026-04-17',pres:'Presencial',f:[0, 24, 0, 9, 2, 1, 7, 6, 1, 3, 3, 0]},
-  {colab:'Ludy',data:'2026-04-20',pres:'Presencial',f:[7, 24, 0, 9, 1, 0, 0, 6, 1, 4, 2, 0]},
-  {colab:'Ludy',data:'2026-04-22',pres:'Presencial',f:[4, 11, 0, 9, 3, 2, 0, 0, 1, 2, 4, 0]},
-  {colab:'Ludy',data:'2026-04-23',pres:'Presencial',f:[22, 14, 0, 15, 9, 2, 3, 0, 12, 4, 1, 0]},
-  {colab:'Ludy',data:'2026-04-24',pres:'Presencial',f:[20, 18, 0, 12, 0, 0, 3, 2, 0, 3, 4, 0]},
-  {colab:'Wanessa',data:'2026-03-26',pres:'Presencial',f:[30, 0, 0, 17, 2, 0, 10, 0, 0, 0, 1, 0]},
-  {colab:'Wanessa',data:'2026-03-27',pres:'Presencial',f:[11, 13, 0, 11, 6, 0, 2, 0, 0, 3, 2, 0]},
-  {colab:'Wanessa',data:'2026-03-30',pres:'Presencial',f:[16, 19, 0, 15, 6, 2, 1, 3, 2, 6, 2, 0]},
-  {colab:'Wanessa',data:'2026-03-31',pres:'Presencial',f:[5, 12, 0, 3, 3, 1, 6, 1, 0, 4, 0, 0]},
-  {colab:'Wanessa',data:'2026-04-01',pres:'Presencial',f:[18, 6, 0, 10, 3, 1, 3, 1, 2, 5, 0, 0]},
-  {colab:'Wanessa',data:'2026-04-02',pres:'Presencial',f:[13, 32, 0, 16, 1, 0, 5, 2, 15, 1, 6, 0]},
-  {colab:'Wanessa',data:'2026-04-06',pres:'Presencial',f:[8, 18, 0, 4, 2, 0, 5, 2, 0, 3, 10, 0]},
-  {colab:'Wanessa',data:'2026-04-07',pres:'Presencial',f:[17, 20, 0, 2, 2, 1, 5, 2, 8, 4, 20, 0]},
-  {colab:'Wanessa',data:'2026-04-08',pres:'Presencial',f:[3, 32, 0, 18, 2, 0, 0, 9, 1, 2, 3, 0]},
-  {colab:'Wanessa',data:'2026-04-09',pres:'Presencial',f:[0, 21, 0, 7, 1, 1, 2, 0, 4, 2, 5, 0]},
-  {colab:'Wanessa',data:'2026-04-10',pres:'Presencial',f:[0, 17, 0, 8, 4, 1, 0, 0, 0, 2, 2, 0]},
-  {colab:'Wanessa',data:'2026-04-13',pres:'Presencial',f:[0, 17, 0, 4, 0, 0, 5, 5, 8, 0, 0, 0]},
-  {colab:'Wanessa',data:'2026-04-14',pres:'Presencial',f:[9, 18, 0, 9, 2, 0, 5, 5, 6, 1, 3, 0]},
-  {colab:'Wanessa',data:'2026-04-15',pres:'Presencial',f:[7, 8, 0, 10, 1, 0, 2, 2, 6, 1, 5, 0]},
-  {colab:'Wanessa',data:'2026-04-16',pres:'Presencial',f:[16, 24, 0, 4, 1, 0, 4, 2, 1, 1, 7, 0]},
-  {colab:'Wanessa',data:'2026-04-17',pres:'Presencial',f:[0, 30, 0, 7, 1, 1, 7, 4, 0, 1, 10, 0]},
-  {colab:'Wanessa',data:'2026-04-20',pres:'Presencial',f:[0, 28, 0, 4, 0, 0, 4, 2, 0, 0, 0, 0]},
-  {colab:'Wanessa',data:'2026-04-22',pres:'Presencial',f:[0, 28, 0, 1, 1, 0, 4, 4, 8, 0, 10, 0]},
-  {colab:'Wanessa',data:'2026-04-23',pres:'Presencial',f:[0, 25, 0, 4, 2, 0, 0, 0, 15, 6, 6, 0]},
-  {colab:'Wanessa',data:'2026-04-24',pres:'Presencial',f:[15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
-  {colab:'Ajuda de outros times',data:'2026-04-01',pres:'Presencial',f:[16, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0]},
-  {colab:'Ajuda de outros times',data:'2026-04-13',pres:'Presencial',f:[37, 0, 0, 0, 0, 0, 0, 0, 0, 37, 0, 0]},
-  {colab:'Aline',data:'2026-03-26',pres:'Presencial',f:[9, 23, 0, 7, 1, 6, 0, 0, 6, 4, 8, 0]},
-  {colab:'Aline',data:'2026-03-27',pres:'Presencial',f:[0, 33, 0, 5, 7, 2, 3, 13, 2, 1, 0, 0]},
-  {colab:'Aline',data:'2026-03-30',pres:'Presencial',f:[16, 14, 0, 11, 6, 4, 2, 0, 6, 1, 0, 0]},
-  {colab:'Aline',data:'2026-03-31',pres:'Presencial',f:[0, 37, 0, 6, 3, 6, 8, 1, 2, 4, 7, 0]},
-  {colab:'Aline',data:'2026-04-02',pres:'Presencial',f:[0, 27, 0, 5, 1, 3, 3, 3, 4, 3, 5, 0]},
-  {colab:'Aline',data:'2026-04-06',pres:'Presencial',f:[0, 32, 0, 5, 6, 2, 0, 2, 1, 3, 13, 0]},
-  {colab:'Aline',data:'2026-04-07',pres:'Presencial',f:[0, 31, 0, 4, 4, 0, 0, 1, 9, 1, 12, 0]},
-  {colab:'André',data:'2026-04-27',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 2, 7]},
-  {colab:'André',data:'2026-04-29',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13]},
-  {colab:'André',data:'2026-04-30',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6]},
-  {colab:'André',data:'2026-05-04',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 15, 22]},
-  {colab:'André',data:'2026-05-05',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 4, 9]},
-  {colab:'André',data:'2026-05-06',pres:'Presencial',f:[26, 0, 0, 19, 1, 0, 0, 0, 6, 2, 6, 14]},
-  {colab:'André',data:'2026-05-07',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 4, 6]},
-  {colab:'André',data:'2026-05-08',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 3, 8]},
-  {colab:'André',data:'2026-05-11',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 5, 15]},
-  {colab:'André',data:'2026-05-12',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2]},
-  {colab:'André',data:'2026-05-14',pres:'Presencial',f:[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 9, 10]},
-  {colab:'Lory',data:'2026-04-27',pres:'Presencial',f:[21, 1, 0, 1, 0, 0, 0, 0, 0, 21, 0, 0]},
-  {colab:'Lory',data:'2026-04-28',pres:'Presencial',f:[35, 3, 0, 15, 0, 0, 0, 0, 6, 1, 0, 0]},
-  {colab:'Lory',data:'2026-04-29',pres:'Presencial',f:[35, 0, 0, 7, 0, 0, 0, 0, 0, 35, 1, 0]},
-  {colab:'Lory',data:'2026-04-30',pres:'Presencial',f:[8, 17, 0, 15, 0, 0, 0, 1, 8, 1, 1, 0]},
-  {colab:'Lory',data:'2026-05-04',pres:'Presencial',f:[19, 11, 0, 7, 1, 1, 1, 1, 8, 9, 2, 0]},
-  {colab:'Lory',data:'2026-05-05',pres:'Presencial',f:[29, 5, 0, 16, 0, 1, 0, 1, 9, 0, 2, 0]},
-  {colab:'Lory',data:'2026-05-06',pres:'Presencial',f:[46, 0, 0, 46, 0, 0, 0, 0, 0, 0, 2, 0]},
-  {colab:'Lory',data:'2026-05-07',pres:'Presencial',f:[40, 3, 0, 12, 0, 0, 0, 0, 16, 12, 0, 0]},
-  {colab:'Lory',data:'2026-05-08',pres:'Presencial',f:[20, 6, 0, 18, 0, 2, 2, 1, 0, 0, 0, 0]},
-  {colab:'Lory',data:'2026-05-11',pres:'Presencial',f:[30, 0, 0, 24, 3, 2, 2, 1, 0, 6, 6, 0]},
-  {colab:'Lory',data:'2026-05-13',pres:'Presencial',f:[62, 30, 0, 22, 0, 0, 0, 0, 24, 40, 6, 0]},
-  {colab:'Lory',data:'2026-05-14',pres:'Presencial',f:[14, 26, 0, 5, 0, 20, 0, 0, 10, 5, 5, 0]},
-  {colab:'Lory',data:'2026-05-15',pres:'Presencial',f:[35, 0, 0, 15, 0, 7, 0, 0, 0, 13, 0, 0]},
-  {colab:'Ludy',data:'2026-04-27',pres:'Presencial',f:[17, 16, 0, 15, 0, 1, 1, 1, 7, 5, 4, 0]},
-  {colab:'Ludy',data:'2026-04-28',pres:'Presencial',f:[8, 24, 0, 7, 4, 2, 2, 0, 8, 1, 10, 0]},
-  {colab:'Ludy',data:'2026-04-29',pres:'Presencial',f:[3, 33, 0, 12, 4, 0, 2, 1, 3, 3, 11, 0]},
-  {colab:'Ludy',data:'2026-05-04',pres:'Presencial',f:[8, 32, 0, 19, 4, 2, 2, 2, 6, 2, 5, 0]},
-  {colab:'Ludy',data:'2026-05-05',pres:'Presencial',f:[16, 14, 0, 9, 7, 2, 2, 1, 0, 6, 5, 0]},
-  {colab:'Ludy',data:'2026-05-06',pres:'Presencial',f:[52, 7, 0, 33, 2, 3, 3, 0, 3, 17, 1, 0]},
-  {colab:'Ludy',data:'2026-05-07',pres:'Presencial',f:[6, 39, 0, 16, 4, 0, 0, 0, 8, 11, 1, 0]},
-  {colab:'Ludy',data:'2026-05-08',pres:'Presencial',f:[8, 22, 0, 17, 2, 2, 2, 1, 4, 0, 5, 0]},
-  {colab:'Ludy',data:'2026-05-11',pres:'Presencial',f:[19, 19, 0, 8, 0, 1, 2, 1, 19, 2, 5, 0]},
-  {colab:'Ludy',data:'2026-05-12',pres:'Presencial',f:[14, 26, 0, 3, 4, 1, 2, 0, 17, 4, 12, 0]},
-  {colab:'Ludy',data:'2026-05-13',pres:'Presencial',f:[20, 26, 0, 23, 0, 3, 2, 0, 23, 1, 19, 0]},
-  {colab:'Ludy',data:'2026-05-14',pres:'Presencial',f:[16, 25, 0, 3, 1, 4, 4, 0, 1, 3, 10, 0]},
-  {colab:'Ludy',data:'2026-05-15',pres:'Presencial',f:[16, 28, 0, 8, 0, 0, 1, 1, 25, 2, 9, 0]},
-  {colab:'Wanessa',data:'2026-04-27',pres:'Presencial',f:[0, 24, 0, 11, 0, 0, 3, 1, 5, 3, 1, 0]},
-  {colab:'Wanessa',data:'2026-04-28',pres:'Presencial',f:[0, 20, 0, 0, 0, 0, 2, 1, 8, 2, 7, 0]},
-  {colab:'Wanessa',data:'2026-04-29',pres:'Presencial',f:[0, 22, 0, 3, 3, 1, 1, 3, 5, 3, 3, 0]},
-  {colab:'Wanessa',data:'2026-04-30',pres:'Presencial',f:[0, 21, 0, 5, 4, 0, 1, 1, 7, 0, 3, 0]},
-  {colab:'Ludy',data:'2026-04-30',pres:'Folga',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Folga — Banco de Horas (dia inteiro) | Período: Março 2026 | Vencimento: 23/05/2026'},
-  {colab:'Wanessa',data:'2026-05-04',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'},
-  {colab:'Wanessa',data:'2026-05-05',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'},
-  {colab:'Wanessa',data:'2026-05-06',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'},
-  {colab:'Wanessa',data:'2026-05-07',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'},
-  {colab:'Wanessa',data:'2026-05-08',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'},
-  {colab:'Wanessa',data:'2026-05-11',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'},
-  {colab:'Wanessa',data:'2026-05-12',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'},
-  {colab:'Wanessa',data:'2026-05-13',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'},
-  {colab:'Wanessa',data:'2026-05-14',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'},
-  {colab:'Wanessa',data:'2026-05-15',pres:'Férias',f:[0,0,0,0,0,0,0,0,0,0,0,0],justif:'Férias — Saída: 04/05/2026 | Retorno: 19/05/2026'}
+  {colab:'André',data:'2026-05-06',pres:'Presencial',f:[26,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-04-27',pres:'Presencial',f:[21,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-04-28',pres:'Presencial',f:[35,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-04-29',pres:'Presencial',f:[35,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-04-30',pres:'Presencial',f:[8,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-05-04',pres:'Presencial',f:[19,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-05-05',pres:'Presencial',f:[29,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-05-06',pres:'Presencial',f:[46,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-05-07',pres:'Presencial',f:[40,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-05-08',pres:'Presencial',f:[20,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-05-11',pres:'Presencial',f:[30,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-05-13',pres:'Presencial',f:[62,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-05-14',pres:'Presencial',f:[14,0,0,0,0,0,0,0,0,0]},
+  {colab:'Lory',data:'2026-05-15',pres:'Presencial',f:[35,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-04-27',pres:'Presencial',f:[17,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-04-28',pres:'Presencial',f:[8,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-04-29',pres:'Presencial',f:[3,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-05-04',pres:'Presencial',f:[8,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-05-05',pres:'Presencial',f:[16,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-05-06',pres:'Presencial',f:[52,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-05-07',pres:'Presencial',f:[6,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-05-08',pres:'Presencial',f:[8,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-05-11',pres:'Presencial',f:[19,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-05-12',pres:'Presencial',f:[14,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-05-13',pres:'Presencial',f:[20,0,0,0,0,0,0,0,0,0]},
+  {colab:'Ludy',data:'2026-05-15',pres:'Presencial',f:[16,0,0,0,0,0,0,0,0,0]}
 ]
 const PCP_INICIAL = [
-  {data:'2026-05-01',f1:79,f2:2,f3:29,f4:7},{data:'2026-05-02',f1:90,f2:1,f3:4,f4:17},
-  {data:'2026-05-05',f1:93,f2:5,f3:41,f4:27},{data:'2026-05-06',f1:46,f2:1,f3:1,f4:10},
-  {data:'2026-05-07',f1:70,f2:3,f3:11,f4:22},{data:'2026-05-08',f1:64,f2:2,f3:6,f4:11},
-  {data:'2026-05-09',f1:131,f2:0,f3:19,f4:7},{data:'2026-05-12',f1:88,f2:0,f3:23,f4:5},
-  {data:'2026-05-13',f1:56,f2:3,f3:0,f4:8},
+  {data:'2026-03-26',f1:124,f2:10,f3:8,f4:12},
+  {data:'2026-03-27',f1:118,f2:24,f3:13,f4:6},
+  {data:'2026-03-30',f1:128,f2:15,f3:13,f4:19},
+  {data:'2026-03-31',f1:119,f2:11,f3:14,f4:12},
+  {data:'2026-04-01',f1:115,f2:9,f3:24,f4:13},
+  {data:'2026-04-02',f1:104,f2:15,f3:5,f4:11},
+  {data:'2026-04-06',f1:142,f2:20,f3:15,f4:32},
+  {data:'2026-04-07',f1:142,f2:8,f3:8,f4:49},
+  {data:'2026-04-08',f1:103,f2:16,f3:9,f4:16},
+  {data:'2026-04-09',f1:71,f2:4,f3:4,f4:12},
+  {data:'2026-04-10',f1:80,f2:5,f3:8,f4:17},
+  {data:'2026-04-13',f1:47,f2:1,f3:4,f4:17},
+  {data:'2026-04-14',f1:135,f2:1,f3:42,f4:21},
+  {data:'2026-04-15',f1:90,f2:10,f3:4,f4:17},
+  {data:'2026-04-16',f1:86,f2:4,f3:6,f4:27},
+  {data:'2026-04-17',f1:82,f2:10,f3:4,f4:22},
+  {data:'2026-04-20',f1:88,f2:2,f3:3,f4:18},
+  {data:'2026-04-22',f1:96,f2:3,f3:4,f4:13},
+  {data:'2026-04-23',f1:89,f2:3,f3:14,f4:12},
+  {data:'2026-04-24',f1:33,f2:2,f3:5,f4:16},
+  {data:'2026-04-27',f1:79,f2:2,f3:29,f4:7},
+  {data:'2026-04-28',f1:90,f2:1,f3:4,f4:17},
+  {data:'2026-04-29',f1:93,f2:5,f3:41,f4:27},
+  {data:'2026-04-30',f1:46,f2:1,f3:1,f4:10},
+  {data:'2026-05-04',f1:70,f2:3,f3:11,f4:22},
+  {data:'2026-05-05',f1:64,f2:2,f3:6,f4:11},
+  {data:'2026-05-06',f1:131,f2:0,f3:19,f4:7},
+  {data:'2026-05-07',f1:88,f2:0,f3:23,f4:5},
+  {data:'2026-05-08',f1:56,f2:3,f3:0,f4:8},
+  {data:'2026-05-11',f1:68,f2:2,f3:8,f4:10},
+  {data:'2026-05-12',f1:70,f2:0,f3:4,f4:20},
+  {data:'2026-05-13',f1:108,f2:1,f3:41,f4:19},
+  {data:'2026-05-14',f1:65,f2:3,f3:3,f4:24},
+  {data:'2026-05-15',f1:79,f2:1,f3:15,f4:9},
 ];
 
 // Senhas dos colaboradores (editáveis pelo ADM via localStorage)
-const SENHAS_DEFAULT = {André:'andre123',Aline:'aline123',Lory:'lory123',Ludy:'ludy123',Wanessa:'wanessa123','Ajuda de outros times':'ajuda123'};
+const SENHAS_DEFAULT = {André:'andre123',Aline:'aline123',Lory:'lory123',Ludy:'ludy123',Wanessa:'wanessa123'};
 function getSenhas(){
   try{const s=localStorage.getItem('patec_senhas');return s?JSON.parse(s):SENHAS_DEFAULT;}
   catch{return SENHAS_DEFAULT;}
@@ -2613,38 +2415,14 @@ function getSenhas(){
 
 // Meta mínima (editável pelo ADM)
 function getMeta(){
-  // Se há folga parcial ativa, retorna meta ajustada
-  if(window._metaAjustadaTemp) return window._metaAjustadaTemp;
   try{return parseInt(localStorage.getItem('patec_meta_min')||'30');}
   catch{return 30;}
 }
 
-const LINHAS_PROD = ['Analisados','Tratativa','Status B','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções','Outros'];
-// Colaboradores sem meta individual (somam à equipe)
-const COLABS_SEM_META = ['André','Ajuda de outros times'];
-const COLABS = ['André','Lory','Ludy','Wanessa','Ajuda de outros times']; // Aline transferida Mai/2026
+const LINHAS_PROD = ['Analisados','Tratativa','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedidos','Devoluções'];
+const COLABS = ['André','Lory','Ludy','Wanessa']; // Aline transferida Mai/2026
 BANCO_HE = COLABS.map(c => ({ colab: c, periodos: [] })); // inicializa BANCO_HE
 const SENHA_PCP = 'patec2026';
-
-// Preencher dropdowns de colaboradores dinamicamente
-(function(){
-  // Dropdown de login (produção)
-  const sel = document.getElementById('pr-login-nome');
-  if(sel) COLABS.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c; opt.textContent = c;
-    sel.appendChild(opt);
-  });
-  // Dropdown do ADM — inclui COLABS + Aline (histórico)
-  const selAdm = document.getElementById('adm-prod-colab');
-  if(selAdm) {
-    [...COLABS, 'Aline'].forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c; opt.textContent = c;
-      selAdm.appendChild(opt);
-    });
-  }
-})();
 
 let registros = [...HISTORICO_INICIAL];
 let pcpData   = [...PCP_INICIAL];
@@ -2699,144 +2477,11 @@ function fazerLogout(){
 function selecionarData(val){
   dataAtual = val;
   if(!val) return;
-
-  // ── Verificar férias ──
-  const emFerias = (FERIAS_DATA||[]).some(f => {
-    if(f.colab !== colabLogado || !f.saida) return false;
-    const saida = f.saida; // yyyy-mm-dd
-    // retorno pode ser dd/mm/yyyy
-    const retStr = (f.retorno||'').includes('/') ? f.retorno.split('/').reverse().join('-') : f.retorno;
-    return val >= saida && val <= retStr;
-  });
-
-  if(emFerias){
-    // Lançar férias automaticamente
-    presAtual = 'Férias';
-    document.getElementById('pr-s2').style.display='none';
-    document.getElementById('pr-s3').style.display='none';
-    document.getElementById('pr-folga').style.display='none';
-    // Mostrar aviso e salvar automaticamente
-    const avFerias = document.getElementById('pr-aviso-ferias');
-    if(avFerias){
-      avFerias.style.display='flex';
-      avFerias.innerHTML='🌴 <span><strong>'+colabLogado+'</strong> está de férias nesta data. O lançamento será registrado automaticamente como <strong>Férias</strong>.</span>';
-    }
-    // Registrar automaticamente se ainda não existir
-    const jaReg = registros.some(r=>r.colab===colabLogado&&r.data===val);
-    if(!jaReg){
-      // Buscar dados reais de férias
-      const feriasInfo = (FERIAS_DATA||[]).find(f=>{
-        if(f.colab!==colabLogado||!f.saida) return false;
-        const retStr=(f.retorno||'').includes('/')?f.retorno.split('/').reverse().join('-'):f.retorno;
-        return val>=f.saida&&val<=retStr;
-      });
-      const saidaFmt = feriasInfo?.saida ? feriasInfo.saida.split('-').reverse().join('/') : '—';
-      const retornoFmt = feriasInfo?.retorno || '—';
-      const justifFerias = `Férias — Saída: ${saidaFmt} | Retorno: ${retornoFmt}`;
-      registros.push({colab:colabLogado,data:val,pres:'Férias',f:Array(12).fill(0),justif:justifFerias});
-      renderMiniHist();
-    }
-    return;
-  }
-
-  // ── Verificar folga no Banco HE ──
-  const dadosHE = (BANCO_HE||[]).find(b=>b.colab===colabLogado);
-  let folgaDia = null; // {h, m} da folga neste dia
-  if(dadosHE){
-    dadosHE.periodos.forEach(p=>{
-      (p.usos||[]).forEach(u=>{
-        if(u.tipo==='folga' && u.data===val){
-          folgaDia = {h: u.h||0, m: u.m||0};
-        }
-      });
-    });
-  }
-
-  // Limpar aviso de férias se existir
-  const avFerias2 = document.getElementById('pr-aviso-ferias');
-  if(avFerias2) avFerias2.style.display='none';
-
-  if(folgaDia){
-    const totalMin = folgaDia.h * 60 + folgaDia.m;
-    const jornadaMin = 8 * 60; // 8h = jornada completa
-
-    if(totalMin >= jornadaMin){
-      // Folga dia inteiro — lançar automaticamente
-      presAtual = 'Folga';
-      document.getElementById('pr-s2').style.display='none';
-      document.getElementById('pr-s3').style.display='none';
-      const avFolga = document.getElementById('pr-aviso-ferias');
-      if(avFolga){
-        avFolga.style.display='flex';
-        avFolga.innerHTML='🌴 <span><strong>'+colabLogado+'</strong> tem folga de banco de horas (dia inteiro) nesta data. Lançado automaticamente como <strong>Folga</strong>.</span>';
-      }
-      const jaReg = registros.some(r=>r.colab===colabLogado&&r.data===val);
-      if(!jaReg){
-        // Buscar período e vencimento do banco HE
-        let periodoRef = '—', vencRef = '—';
-        if(dadosHE){
-          dadosHE.periodos.forEach(p=>{
-            (p.usos||[]).forEach(u=>{
-              if(u.tipo==='folga'&&u.data===val){
-                periodoRef = p.mes_ref||'—';
-                vencRef = p.vencimento ? String(p.vencimento).slice(0,10).split('-').reverse().join('/') : '—';
-              }
-            });
-          });
-        }
-        const justifFolga = `Folga — Banco de Horas (dia inteiro) | Período: ${periodoRef} | Vencimento: ${vencRef}`;
-        registros.push({colab:colabLogado,data:val,pres:'Folga',f:Array(12).fill(0),justif:justifFolga});
-        renderMiniHist();
-      }
-      return;
-    } else {
-      // Folga parcial — recalcular meta e preencher justificativa
-      const trabMin = jornadaMin - totalMin;
-      const metaOriginal = getMeta();
-      const metaAjustada = Math.round(metaOriginal * trabMin / jornadaMin);
-      const hFolga = folgaDia.h;
-      const mFolga = String(folgaDia.m).padStart(2,'0');
-      // Guardar meta ajustada temporariamente
-      window._metaAjustadaTemp = metaAjustada;
-      // Buscar período e vencimento do banco HE para folga parcial
-      let periodoRefP = '—', vencRefP = '—';
-      if(dadosHE){
-        dadosHE.periodos.forEach(p=>{
-          (p.usos||[]).forEach(u=>{
-            if(u.tipo==='folga'&&u.data===val){
-              periodoRefP = p.mes_ref||'—';
-              vencRefP = p.vencimento ? String(p.vencimento).slice(0,10).split('-').reverse().join('/') : '—';
-            }
-          });
-        });
-      }
-      window._folgaParcialInfo = `Folga parcial — Banco de Horas: ${hFolga}h${mFolga}min | Período: ${periodoRefP} | Vencimento: ${vencRefP} | Meta reduzida de ${metaOriginal} para ${metaAjustada} itens (${Math.round(trabMin/60*10)/10}h trabalhadas).`;
-      // Mostrar aviso
-      const avFolga = document.getElementById('pr-aviso-ferias');
-      if(avFolga){
-        avFolga.style.display='flex';
-        avFolga.innerHTML='⚡ <span><strong>'+colabLogado+'</strong> tem folga parcial de <strong>'+hFolga+'h'+mFolga+'min</strong>. Meta do dia ajustada para <strong>'+metaAjustada+' itens</strong>.</span>';
-      }
-    }
-  } else {
-    window._metaAjustadaTemp = null;
-    window._folgaParcialInfo = null;
-  }
-
   document.getElementById('pr-s2').style.display='block';
   document.getElementById('pr-s3').style.display='none';
   document.getElementById('pr-folga').style.display='none';
   presAtual=null;
   ['popt-P','popt-H','popt-F'].forEach(id=>document.getElementById(id).className='pres-opt');
-
-  // Preencher justificativa automática se folga parcial
-  if(window._folgaParcialInfo){
-    setTimeout(()=>{
-      const justif = document.getElementById('pr-justif');
-      if(justif) justif.value = window._folgaParcialInfo;
-      updProd();
-    }, 100);
-  }
 }
 function selecionarPresenca(v,el){
   presAtual=v;
@@ -2862,57 +2507,31 @@ function salvarFolga(){
 
 // ── PRODUÇÃO: TOTAL E MOTIVAÇÃO ──
 function updProd(){
-  const semMeta = COLABS_SEM_META.includes(colabLogado);
-  const meta = semMeta ? 0 : getMeta();
-  // Total principal = pf0 + pf1 + pf2 (StatusB) — define a meta
-  const principal = parseInt(document.getElementById('pf0')?.value||0)
-                  + parseInt(document.getElementById('pf1')?.value||0)
-                  + parseInt(document.getElementById('pf2')?.value||0);
-  // Total composição = pf3 a pf10
-  let composicao = 0;
-  for(let i=3;i<=10;i++) composicao += parseInt(document.getElementById('pf'+i)?.value||0);
-
-  // Total badge — mostra apenas o total principal
+  const meta = getMeta();
+  let total=0;
+  for(let i=0;i<10;i++) total+=parseInt(document.getElementById('pf'+i)?.value||0);
+  // Total badge
   const badge=document.getElementById('pr-total-badge');
   if(badge){
-    badge.textContent=principal.toLocaleString('pt-BR');
-    badge.style.color=principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--az)';
+    badge.textContent=total.toLocaleString('pt-BR');
+    badge.style.color=total>=meta?'var(--vd)':total>=meta*.8?'var(--am)':'var(--az)';
   }
-  // Barra de progresso baseada no total principal
-  const pctVal=Math.min(Math.round(principal/meta*100),100);
+  // Barra de progresso
+  const pctVal=Math.min(Math.round(total/meta*100),100);
   const barra=document.getElementById('pr-barra-meta');
   if(barra){
     barra.style.width=pctVal+'%';
-    barra.style.background=principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--vm)';
+    barra.style.background=total>=meta?'var(--vd)':total>=meta*.8?'var(--am)':'var(--vm)';
   }
   document.getElementById('pr-pct-meta').textContent=pctVal+'%';
-
-  // Validação composição — deve ser igual ao total principal (só valida se composição > 0)
-  const totalPrincipal = parseInt(document.getElementById('pf0')?.value||0)
-                       + parseInt(document.getElementById('pf1')?.value||0)
-                       + parseInt(document.getElementById('pf2')?.value||0)
-                       + parseInt(document.getElementById('pf11')?.value||0);
-  const aviso = document.getElementById('pr-composicao-aviso');
-  const btnSalvar = document.querySelector('[onclick="salvarProducao()"]');
-  if(aviso){
-    if(composicao > 0 && composicao !== totalPrincipal){
-      aviso.style.display='flex';
-      aviso.innerHTML='⚠ A soma da composição (<strong>'+composicao+'</strong>) deve ser igual ao total de todos os campos principais (<strong>'+totalPrincipal+'</strong>). Diferença: '+(composicao-totalPrincipal > 0 ? '+' : '')+(composicao-totalPrincipal)+' itens.';
-      if(btnSalvar) btnSalvar.disabled=true;
-    } else {
-      aviso.style.display='none';
-      if(btnSalvar) btnSalvar.disabled=false;
-    }
-  }
-
   // Mensagem motivacional
   const motiv=document.getElementById('pr-motivacao');
-  if(motiv && principal>0){
+  if(motiv && total>0){
     motiv.style.display='flex';
-    if(principal>=meta){
+    if(total>=meta){
       motiv.style.background='var(--vdc)';motiv.style.color='#3B6D11';
       motiv.innerHTML='🎯 <span>Excelente resultado! Você atingiu a meta do dia. Continue mantendo esse nível de performance!</span>';
-    } else if(principal>=meta*.8){
+    } else if(total>=meta*.8){
       motiv.style.background='var(--amc)';motiv.style.color='#854F0B';
       motiv.innerHTML='⚡ <span>Você está muito perto da meta! Vamos dar mais um gás que você chega lá!</span>';
     } else {
@@ -2922,18 +2541,12 @@ function updProd(){
   } else if(motiv){
     motiv.style.display='none';
   }
-  // Justificativa — só para colaboradores com meta
+  // Justificativa
   const justBox=document.getElementById('pr-justif-box');
-  if(justBox) justBox.style.display=(!semMeta&&principal>0&&principal<meta)?'block':'none';
-
-  // Badge sem meta
-  const semMetaMsg = document.getElementById('pr-sem-meta-msg');
-  if(semMetaMsg) semMetaMsg.style.display = semMeta ? 'flex' : 'none';
+  if(justBox) justBox.style.display=(total>0&&total<meta)?'block':'none';
 }
 function limparProd(){
-  for(let i=0;i<=11;i++){const e=document.getElementById('pf'+i);if(e)e.value='';}
-  window._metaAjustadaTemp = null;
-  window._folgaParcialInfo = null;
+  for(let i=0;i<10;i++){const e=document.getElementById('pf'+i);if(e)e.value='';}
   updProd();
   const m=document.getElementById('pr-motivacao');if(m)m.style.display='none';
 }
@@ -2942,19 +2555,10 @@ function limparProd(){
 function salvarProducao(){
   if(!colabLogado||!dataAtual||!presAtual){alert('Preencha todos os campos.');return;}
   const meta=getMeta();
-  const semMeta = COLABS_SEM_META.includes(colabLogado);
   const f=[];
-  for(let i=0;i<=11;i++) f.push(parseInt(document.getElementById('pf'+i)?.value||0));
-  const principal = f[0]+f[1]+f[2]; // pf0+pf1+StatusB
-  const composicao = f.slice(3,11).reduce((a,b)=>a+b,0); // pf3 a pf10
-  // Validar composição (pf0+pf1 devem bater com composição, StatusB e Outros são separados)
-  const baseComposicao = f[0]+f[1]+f[2]+f[11]; // pf0+pf1+StatusB+Outros
-  if(composicao > 0 && composicao !== baseComposicao){
-    alert('A soma da composição ('+composicao+') deve ser igual ao total de todos os campos principais ('+baseComposicao+'). Corrija antes de salvar.');
-    return;
-  }
-  const total=principal;
-  if(!semMeta && total<meta){
+  for(let i=0;i<10;i++) f.push(parseInt(document.getElementById('pf'+i)?.value||0));
+  const total=f.reduce((a,b)=>a+b,0);
+  if(total<meta){
     const justif=document.getElementById('pr-justif')?.value?.trim();
     if(!justif){alert('Justificativa obrigatória quando abaixo da meta.');document.getElementById('pr-justif')?.focus();return;}
   }
@@ -3809,45 +3413,11 @@ function filtrarHistMapaCiclo(){
 }
 
 // ── HISTÓRICO PRODUÇÃO ──
-// Ciclos de medição — datas
-const CICLOS_PROD = {
-  'mar-abr': {de:'2026-03-26', ate:'2026-04-24', nome:'Mar/Abr 2026'},
-  'abr-mai': {de:'2026-04-27', ate:'2026-05-29', nome:'Abr/Mai 2026'},
-};
-function filtrarHistProdCiclo(){
-  const ciclo = document.getElementById('adm-prod-ciclo')?.value||'';
-  if(ciclo && CICLOS_PROD[ciclo]){
-    document.getElementById('adm-prod-de').value = CICLOS_PROD[ciclo].de;
-    document.getElementById('adm-prod-ate').value = CICLOS_PROD[ciclo].ate;
-    document.getElementById('adm-prod-dia').value = '';
-  } else {
-    document.getElementById('adm-prod-de').value = '';
-    document.getElementById('adm-prod-ate').value = '';
-  }
-  filtrarHistProd();
-}
-function limparFiltrosAdmProd(){
-  ['adm-prod-ciclo','adm-prod-colab','adm-prod-meta','adm-prod-dia','adm-prod-de','adm-prod-ate'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
-  });
-  filtrarHistProd('all');
-}
-function getMetaPill(r, tot, metaVal){
-  const semMeta = COLABS_SEM_META.includes(r.colab);
-  const isAndre = r.colab === 'André';
-  if(r.pres==='Folga'||r.pres==='Férias') return '<span class="pl pl-g">'+r.pres+'</span>';
-  if(semMeta) return isAndre
-    ? '<span class="pl pl-az">Líder</span>'
-    : '<span class="pl pl-az">Ajuda</span>';
-  if(tot>=metaVal) return '<span class="pl pl-ok">✓ Meta</span>';
-  return '<span class="pl pl-b">Abaixo</span>';
-}
 function filtrarHistProd(modo){
   let regs=[];
   if(modo==='all'){regs=[...registros];}
   else {
     const colab=document.getElementById('adm-prod-colab').value;
-    const metaFiltro=document.getElementById('adm-prod-meta')?.value||'';
     const dia=document.getElementById('adm-prod-dia').value;
     const de=document.getElementById('adm-prod-de').value;
     const ate=document.getElementById('adm-prod-ate').value;
@@ -3855,33 +3425,15 @@ function filtrarHistProd(modo){
     if(colab) regs=regs.filter(r=>r.colab===colab);
     if(dia) regs=regs.filter(r=>r.data===dia);
     else if(de&&ate) regs=regs.filter(r=>r.data>=de&&r.data<=ate);
-    // Filtro meta
-    if(metaFiltro){
-      const metaVal=getMeta();
-      regs=regs.filter(r=>{
-        const tot=(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0);
-        const semMeta=COLABS_SEM_META.includes(r.colab);
-        const folga=r.pres==='Folga'||r.pres==='Férias';
-        if(metaFiltro==='ok') return !semMeta&&!folga&&tot>=metaVal;
-        if(metaFiltro==='abaixo') return !semMeta&&!folga&&tot<metaVal;
-        if(metaFiltro==='ajuda') return semMeta;
-        if(metaFiltro==='folga') return folga;
-        return true;
-      });
-    }
   }
-  const sums=Array(12).fill(0);let totT=0;
+  const sums=Array(10).fill(0);let totT=0;
   document.getElementById('adm-prod-tb').innerHTML=regs.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r=>{
-    const tot=(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0);
-    totT+=tot;r.f.forEach((v,i)=>sums[i]+=v);
-    const metaVal=getMeta();
-    const fOrdem = [r.f[0],r.f[1],r.f[2],r.f[11],r.f[3],r.f[4],r.f[5],r.f[6],r.f[7],r.f[8],r.f[9],r.f[10]];
-    const metaPill = getMetaPill(r, tot, metaVal);
-    return`<tr><td>${fmtDt(r.data)}</td><td><strong>${r.colab}</strong></td><td>${presPill(r.pres)}</td>${fOrdem.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${tot}</td><td>${metaPill}</td><td style="font-size:10px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.justif||'—'}</td></tr>`;
+    const tot=r.f.reduce((a,b)=>a+b,0);totT+=tot;r.f.forEach((v,i)=>sums[i]+=v);
+    const meta=getMeta();
+    const pill=tot>=meta?'<span class="pl pl-ok">✓ Meta</span>':r.pres==='Folga'?'<span class="pl pl-g">Folga</span>':'<span class="pl pl-b">Abaixo</span>';
+    return`<tr><td>${fmtDt(r.data)}</td><td><strong>${r.colab}</strong></td><td>${presPill(r.pres)}</td>${r.f.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${tot}</td><td style="font-size:10px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.justif||'—'}</td></tr>`;
   }).join('');
-  const sumsOrdem = [sums[0],sums[1],sums[2],sums[11],sums[3],sums[4],sums[5],sums[6],sums[7],sums[8],sums[9],sums[10]];
-  const totMeta = sums[0]+sums[1]+sums[2];
-  document.getElementById('adm-prod-tf').innerHTML=`<tr><td colspan="3"><strong>TOTAL</strong></td>${sumsOrdem.map(v=>`<td style="font-weight:700">${v||'—'}</td>`).join('')}<td style="font-weight:700">${totMeta}</td><td>—</td></tr>`;
+  document.getElementById('adm-prod-tf').innerHTML=`<tr><td colspan="3"><strong>TOTAL</strong></td>${sums.map(v=>`<td style="font-weight:700">${v||'—'}</td>`).join('')}<td style="font-weight:700">${totT}</td><td>—</td></tr>`;
 }
 
 // ── IA ANÁLISE ──
@@ -3915,14 +3467,17 @@ async function analisarIA(tipo){
   resultEl.style.display='block';
   txtEl.innerHTML='<span class="ia-loading"><span class="ia-spin">↻</span> Consultando IA...</span>';
 
-  // Worker Cloudflare — Gemini — Worker URL: patec-ia.amazzali.workers.dev
-  const WORKER_URL='https://patec-ia.amazzali.workers.dev';
+  // Proxy CORS que suporta POST — contorna bloqueio do GitHub Pages
+  const PROXY='https://corsproxy.io/?';
+  const API_URL='https://api.anthropic.com/v1/messages';
 
   try{
-    const resp=await fetch(WORKER_URL,{
+    const resp=await fetch(PROXY+encodeURIComponent(API_URL),{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1200,
         messages:[{role:'user',content:fullPrompt}]
       })
     });
@@ -3965,45 +3520,13 @@ function calcRetorno(i){
 }
 function atualizarFeriasPreview(){
   const hoje=HOJE.toISOString().split('T')[0];
-  // Popular filtro de colaborador nas férias
-  const selColabFerias = document.getElementById('ferias-filtro-colab');
-  if(selColabFerias && selColabFerias.options.length <= 1){
-    [...new Set(FERIAS_DATA.map(r=>r.colab))].sort().forEach(c=>{
-      const opt=document.createElement('option'); opt.value=c; opt.textContent=c;
-      selColabFerias.appendChild(opt);
-    });
-  }
-  renderFeriasPreview();
-}
-function limparFiltrosFerias(){
-  const fc=document.getElementById('ferias-filtro-colab');
-  const fs=document.getElementById('ferias-filtro-status');
-  if(fc) fc.value='';
-  if(fs) fs.value='';
-  renderFeriasPreview();
-}
-function renderFeriasPreview(){
-  const filtColab=document.getElementById('ferias-filtro-colab')?.value||'';
-  const filtStatus=document.getElementById('ferias-filtro-status')?.value||'';
-  const hoje=HOJE.toISOString().split('T')[0];
-  let dados=FERIAS_DATA;
-  if(filtColab) dados=dados.filter(r=>r.colab===filtColab);
-  let contFilt=0;
-  document.getElementById('adm-ferias-preview').innerHTML=dados.map((r,i)=>{
-    const saida=r.saida||'';
-    const retorno=r.retorno||'';
-    const retIso=retorno.includes('/')?retorno.split('/').reverse().join('-'):retorno;
+  document.getElementById('adm-ferias-preview').innerHTML=FERIAS_DATA.map((r,i)=>{
+    const saida=document.getElementById(`adm-f-saida-${i}`)?.value||r.saida||'';
+    const dias=parseInt(document.getElementById(`adm-f-dias-${i}`)?.value||r.dias||30);
+    const retorno=document.getElementById(`adm-f-retorno-${i}`)?.value||r.retorno||'';
     const saidaFmt=saida?saida.split('-').reverse().join('/'):'—';
-    let stLabel,stClass;
-    if(!saida){stLabel='A definir';stClass='pl-g';}
-    else if(hoje>=saida&&hoje<=retIso){stLabel='Em andamento';stClass='pl-ok';}
-    else if(saida>hoje){stLabel='Programada';stClass='pl-az';}
-    else{stLabel='Concluída';stClass='pl-g';}
-    // Aplicar filtro status
-    if(filtStatus&&filtStatus!==stLabel) return '';
-    contFilt++;
-    const st=`<span class="pl ${stClass}">${stLabel}</span>`;
-    return`<tr><td><strong>${contFilt}º</strong></td><td>${r.colab}</td><td>${saidaFmt}</td><td>${r.dias||30}</td><td>${retorno||'—'}</td><td>${st}</td></tr>`;
+    const st=!saida?'<span class="pl pl-g">A definir</span>':saida>hoje?'<span class="pl pl-az">Programado</span>':hoje<=retorno.split('/').reverse().join('-')?'<span class="pl pl-ok">Em férias</span>':'<span class="pl pl-g">Concluído</span>';
+    return`<tr><td><strong>${i+1}º</strong></td><td>${r.colab}</td><td>${saidaFmt}</td><td>${dias}</td><td>${retorno||'—'}</td><td>${st}</td></tr>`;
   }).join('');
 }
 async function salvarFeriasAdm(){
@@ -4035,73 +3558,23 @@ let _feriasState = {};
 function _renderFeriasColabs(){
   const container = document.getElementById('adm-ferias-colabs');
   if(!container) return;
-  // Popular select de filtro na edição
-  const selEdit = document.getElementById('ferias-edit-colab');
-  if(selEdit && selEdit.options.length <= 1){
-    COLABS.forEach(c=>{
-      const opt=document.createElement('option'); opt.value=c; opt.textContent=c;
-      selEdit.appendChild(opt);
-    });
-  }
-  // Popular select de filtro na prévia
-  const selPrev = document.getElementById('ferias-filtro-colab');
-  if(selPrev && selPrev.options.length <= 1){
-    COLABS.forEach(c=>{
-      const opt=document.createElement('option'); opt.value=c; opt.textContent=c;
-      selPrev.appendChild(opt);
-    });
-  }
-  const filtColab = selEdit?.value||'';
-  const colabsFiltrados = filtColab ? COLABS.filter(c=>c===filtColab) : COLABS;
-  const hojeRender = HOJE.toISOString().split('T')[0];
-  container.innerHTML = colabsFiltrados.map(c => {
+  container.innerHTML = COLABS.map(c => {
     const periodos = _feriasState[c];
-    // Separar ativos (sem data, em andamento ou programados) dos concluídos
-    const ativos = periodos.filter((p,pi) => {
-      if(!p.saida) return true; // sem data = mantém para edição
-      const retIso = p.retorno ? (p.retorno.includes('/') ? p.retorno.split('/').reverse().join('-') : p.retorno) : '';
-      return !retIso || hojeRender <= retIso; // em andamento ou programado
-    });
-    const concluidos = periodos.filter((p,pi) => {
-      if(!p.saida) return false;
-      const retIso = p.retorno ? (p.retorno.includes('/') ? p.retorno.split('/').reverse().join('-') : p.retorno) : '';
-      return retIso && hojeRender > retIso;
-    });
-    // Índices reais no array original
-    const atInd = periodos.map((p,i)=>i).filter(i=>{
-      const p=periodos[i]; if(!p.saida) return true;
-      const retIso=p.retorno?(p.retorno.includes('/')?p.retorno.split('/').reverse().join('-'):p.retorno):'';
-      return !retIso||hojeRender<=retIso;
-    });
-    const concMsg = concluidos.length ? `<div style="font-size:11px;color:var(--tx2);padding:.5rem .75rem;background:var(--cin);border-radius:6px;margin-bottom:.5rem">📦 ${concluidos.length} período(s) arquivado(s) — concluído(s). Visível apenas na prévia.</div>` : '';
-    const periodosHTML = ativos.length
-      ? ativos.map((p,i) => _periodoHTML(c, atInd[i], p, i===0 && ativos.length===1 && !p.saida)).join('')
-      : `<div style="font-size:12px;color:var(--tx2);padding:.5rem">Nenhum período ativo. Clique em <strong>+ Período</strong> para adicionar.</div>`;
     return `<div class="cd" style="padding:1rem;border-left:3px solid var(--azm)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <div style="font-size:13px;font-weight:700;color:var(--az)">🧑 ${c}</div>
         <button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="_addPeriodo('${c}')">+ Período</button>
       </div>
-      ${concMsg}
       <div id="ferias-periodos-${c.replace(' ','_')}" style="display:flex;flex-direction:column;gap:8px">
-        ${periodosHTML}
+        ${periodos.map((p,pi) => _periodoHTML(c, pi, p)).join('')}
       </div>
     </div>`;
   }).join('');
   _atualizarFeriasPreview();
 }
-function filtrarFeriasEdit(){
-  _renderFeriasColabs();
-}
 
-function _periodoHTML(colab, pi, p, unico=false){
-  const cid = colab.replace(/\s/g,'_');
-  const botoes = unico
-    ? `<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end;font-size:10px;white-space:nowrap" onclick="_limparPeriodo('${colab}',${pi})" title="Limpar datas">🗑 Limpar</button>`
-    : `<div style="display:flex;flex-direction:column;gap:4px;align-self:flex-end">
-        <button class="btn btn-r" style="padding:4px 8px;font-size:10px" onclick="_removePeriodo('${colab}',${pi})" title="Remover período">✕</button>
-        <button class="btn btn-s" style="padding:4px 8px;font-size:10px;white-space:nowrap" onclick="_limparPeriodo('${colab}',${pi})" title="Limpar datas">🗑</button>
-      </div>`;
+function _periodoHTML(colab, pi, p){
+  const cid = colab.replace(' ','_');
   return `<div id="ferias-p-${cid}-${pi}" style="display:grid;grid-template-columns:1fr 80px 1fr auto;gap:8px;align-items:end;background:var(--cin);padding:8px 10px;border-radius:8px;border:1px solid var(--brd)">
     <div class="field-wrap">
       <span class="field-label">Período ${pi+1} — Data de saída</span>
@@ -4115,15 +3588,8 @@ function _periodoHTML(colab, pi, p, unico=false){
       <span class="field-label">Retorno (automático)</span>
       <input type="text" id="ret-${cid}-${pi}" value="${p.retorno||''}" readonly style="width:100%;background:#fff;color:var(--tx2);font-weight:600">
     </div>
-    ${botoes}
+    ${pi > 0 ? `<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end" onclick="_removePeriodo('${colab}',${pi})" title="Remover período">✕</button>` : '<div></div>'}
   </div>`;
-}
-function _limparPeriodo(colab, pi){
-  if(!confirm('Limpar todas as datas deste período?')) return;
-  if(_feriasState[colab]&&_feriasState[colab][pi]){
-    _feriasState[colab][pi]={saida:'',dias:30,retorno:''};
-    _renderFeriasColabs();
-  }
 }
 
 function _addPeriodo(colab){
@@ -4401,29 +3867,6 @@ function admExportCruz(){
 function admDlModelo(){
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([['RC','ITEM_RC','OPORTUNIDADE','ITEM_OP'],['35638735','10','7004592687','1']]);
   ws['!cols']=[{wch:14},{wch:10},{wch:20},{wch:12}];XLSX.utils.book_append_sheet(wb,ws,'MAPA_PATEC');XLSX.writeFile(wb,'MAPA_PATEC_modelo.xlsx');
-}
-
-// ── ZERAR PRODUÇÃO FIREBASE ──
-async function zerarProducaoFirebase(){
-  if(!confirm('Tem certeza? Isso vai apagar TODOS os registros de produção do Firebase permanentemente!')) return;
-  if(!confirm('Confirma mesmo? Esta ação não pode ser desfeita.')) return;
-  try {
-    // Buscar todos os documentos da coleção producao e deletar
-    const db = getDB();
-    if(!db){ alert('Firebase não conectado.'); return; }
-    const snap = await db.collection('producao').get();
-    const batch = db.batch();
-    snap.docs.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
-    // Zerar também localmente
-    registros.length = 0;
-    localStorage.removeItem('patec_registros');
-    renderAdmExport();
-    renderExport();
-    alert('✅ Produção zerada com sucesso! ' + snap.docs.length + ' registros removidos.');
-  } catch(e) {
-    alert('Erro ao zerar: ' + e.message);
-  }
 }
 
 // ── EXPORTAR ADM ──
@@ -5532,25 +4975,6 @@ function bheRenderColab(){
   const painel=document.getElementById('bhe-painel');
   const empty=document.getElementById('bhe-empty');
   const nomeEl=document.getElementById('bhe-colab-nome');
-  // Modo "Todos" — visualização somente
-  if(colab==='__todos__'){
-    if(painel)painel.style.display='block';if(empty)empty.style.display='none';
-    if(nomeEl) nomeEl.innerHTML=`
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:.5rem">
-        <span style="font-size:15px;font-weight:700;color:var(--az)">👥 Todos os colaboradores</span>
-        <div class="field-wrap" style="min-width:160px;margin:0">
-          <span class="field-label">Filtrar por status</span>
-          <select id="bhe-filtro-status-todos" onchange="bheRenderTodos()" style="width:100%">
-            <option value="todos">Todos os períodos</option>
-            <option value="andamento">⏳ Em andamento</option>
-            <option value="concluido">✅ Concluídos (folgados)</option>
-            <option value="pago">💳 Pagos</option>
-          </select>
-        </div>
-      </div>`;
-    bheRenderTodos();
-    return;
-  }
   if(!colab){if(painel)painel.style.display='none';if(empty)empty.style.display='block';return;}
   if(painel)painel.style.display='block';if(empty)empty.style.display='none';
   // Cabeçalho com nome + filtro de status
@@ -5571,95 +4995,6 @@ function bheRenderColab(){
   if(!BANCO_HE.find(b=>b.colab===colab))BANCO_HE.push({colab,periodos:[]});
   bheRenderPeriodos(colab);
 }
-function bheGetStatusPeriodo(p){
-  if(p.arquivado){
-    const temPagoAuto=(p.usos||[]).some(u=>u.automatico);
-    return temPagoAuto||p.arquivado_motivo?.includes('automaticamente')?'pago':'concluido';
-  }
-  const tMin=(p.he_h||0)*60+(p.he_m||0);
-  const uMin=(p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);
-  return tMin-uMin>0?'andamento':'concluido';
-}
-function bheRenderTodos(){
-  const container=document.getElementById('bhe-periodos-lista');
-  if(!container) return;
-  const filtro=document.getElementById('bhe-filtro-status-todos')?.value||'todos';
-  const hoje=HOJE.toISOString().split('T')[0];
-  let html='';
-  COLABS.forEach(function(c){
-    if(!BANCO_HE.find(function(b){return b.colab===c;})) BANCO_HE.push({colab:c,periodos:[]});
-    const dados=BANCO_HE.find(function(b){return b.colab===c;});
-    const periodos=filtro==='todos'?dados.periodos:dados.periodos.filter(function(p){return bheGetStatusPeriodo(p)===filtro;});
-    if(!periodos.length) return;
-    let periodosHTML='';
-    periodos.forEach(function(p){
-      const pi=dados.periodos.indexOf(p);
-      const tMin=(p.he_h||0)*60+(p.he_m||0);
-      const uMin=(p.usos||[]).reduce(function(s,u){return s+(u.h||0)*60+(u.m||0);},0);
-      const sMin=tMin-uMin;
-      const sH=Math.floor(Math.abs(sMin)/60);
-      const sM=Math.abs(sMin)%60;
-      const venc=p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—';
-      const vencido=sMin>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje;
-      const arq=!!p.arquivado;
-      const corP=arq?'var(--azm)':sMin<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';
-      const statusP=arq?'💳 Arquivado':sMin<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
-      let usosHTML='';
-      (p.usos||[]).forEach(function(u,ui){
-        const btnRem=u.automatico?'':'<button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="bheRemUso('+JSON.stringify(c)+','+pi+','+ui+')">✕</button>';
-        usosHTML+='<tr>'
-          +'<td>'+(u.data?u.data.split('-').reverse().join('/'):'—')+'</td>'
-          +'<td style="font-weight:600;color:var(--azm)">'+String(u.h||0).padStart(2,'0')+'h'+String(u.m||0).padStart(2,'0')+'min</td>'
-          +'<td><span class="pl '+(u.tipo==='folga'?'pl-az':'pl-w')+'">'+(u.tipo==='folga'?'🌴 Folga':'💰 Pagamento')+'</span></td>'
-          +'<td style="font-size:11px;color:var(--tx2)">'+(u.obs||'—')+'</td>'
-          +'<td>'+btnRem+'</td></tr>';
-      });
-      let addForm='';
-      const cj=JSON.stringify(c);
-      if(!arq&&sMin>0){
-        addForm='<div style="background:var(--cin);border-radius:10px;padding:1rem;border:1px solid var(--brd);margin-top:.875rem">'
-          +'<div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.875rem;text-transform:uppercase">📅 Registrar folga / pagamento</div>'
-          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.875rem">'
-          +'<div class="field-wrap"><span class="field-label">Data</span><input type="date" id="bhe-uso-data-'+pi+'" style="width:100%"></div>'
-          +'<div class="field-wrap"><span class="field-label">Tipo</span>'
-          +'<select id="bhe-uso-tipo-'+pi+'" style="width:100%"><option value="folga">🌴 Folga</option><option value="pagamento">💰 Pagamento</option></select>'
-          +'</div></div>'
-          +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:.875rem">'
-          +'<input type="number" id="bhe-uso-h-'+pi+'" min="0" max="24" placeholder="0" oninput="bheFmtUso('+pi+')" style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">'
-          +'<span style="font-size:22px;font-weight:700">:</span>'
-          +'<input type="number" id="bhe-uso-m-'+pi+'" min="0" max="59" placeholder="0" oninput="bheFmtUso('+pi+')" style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">'
-          +'<span id="bhe-uso-fmt-'+pi+'" style="font-size:13px;color:var(--azm);font-weight:600;padding:6px 12px;background:#fff;border:1px solid var(--brd);border-radius:8px">= 0h 00min</span>'
-          +'<button class="btn btn-g" onclick="bheAddUso('+cj+','+pi+')" style="margin-left:auto">+ Registrar</button>'
-          +'</div>'
-          +'<div class="field-wrap"><span class="field-label">Observação</span>'
-          +'<input type="text" id="bhe-uso-obs-'+pi+'" placeholder="Ex: folga manhã" style="width:100%"></div>'
-          +'</div>';
-      } else if(arq){
-        addForm='<div style="padding:.625rem .875rem;background:var(--azc);border-radius:8px;font-size:11px;color:var(--azm);font-weight:600;margin-top:.5rem">📁 Arquivado — '+(p.arquivado_motivo||'')+'</div>';
-      } else {
-        addForm='<div style="padding:.5rem;background:var(--vdc);border-radius:8px;font-size:12px;color:var(--vd);font-weight:600;margin-top:.5rem">✅ Saldo zerado</div>';
-      }
-      const usosSection=(p.usos||[]).length
-        ?'<div class="tw" style="margin-bottom:.5rem;max-height:160px"><table><thead><tr><th>Data</th><th>Duração</th><th>Tipo</th><th>Obs.</th><th></th></tr></thead><tbody>'+usosHTML+'</tbody></table></div>'
-        :'';
-      periodosHTML+='<div class="cd" style="border-left:4px solid '+corP+';margin-bottom:.75rem">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">'
-        +'<div><div style="font-size:13px;font-weight:700;color:var(--az)">'+(p.mes_ref||'Período '+(pi+1))+'</div>'
-        +'<div style="font-size:11px;color:var(--tx2);margin-top:2px">Total HE: <strong style="color:var(--am)">'+(p.he_h||0)+'h'+String(p.he_m||0).padStart(2,'0')+'min</strong> · Vence: <strong>'+venc+'</strong></div></div>'
-        +'<div style="display:flex;align-items:center;gap:8px">'
-        +'<div style="text-align:center;padding:6px 12px;background:'+(sMin<=0||arq?'var(--vdc)':vencido?'var(--vmc)':'var(--amc)')+';border-radius:8px">'
-        +'<div style="font-size:18px;font-weight:700;color:'+corP+'">'+sH+'h'+String(sM).padStart(2,'0')+'min</div>'
-        +'<div style="font-size:10px;font-weight:600;color:'+corP+'">'+statusP+'</div></div>'
-        +'<button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="bheRemPeriodo('+cj+','+pi+')" title="Remover">🗑</button>'
-        +'</div></div>'+usosSection+addForm+'</div>';
-    });
-    html+='<div style="margin-bottom:1.5rem;border-left:3px solid var(--azm);padding-left:1rem">'
-      +'<div style="font-size:14px;font-weight:700;color:var(--az);margin-bottom:.75rem">👤 '+c+'</div>'
-      +periodosHTML+'</div>';
-  });
-  container.innerHTML=html||'<div class="al al-b">Nenhum período encontrado com este status.</div>';
-}
-
 function bheRenderPeriodos(colab){
   const container=document.getElementById('bhe-periodos-lista');if(!container)return;
   const dados=BANCO_HE.find(b=>b.colab===colab);
