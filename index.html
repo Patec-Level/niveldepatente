@@ -359,6 +359,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('vg-validade',this)">⏱ Validade Oportunidades</div>
   <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ EXECUÇÃO</div>
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
+  <div class="sb-it" onclick="go('pr-estrategico',this)">🎯 Painel Estratégico</div>
   <div class="sb-it" onclick="go('pr-equipe',this)">👥 Visão por Equipe</div>
   <div class="sb-it" onclick="go('pr-producao',this)">📊 Produção da Equipe</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
@@ -1842,6 +1843,64 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     </div>
 
     <!-- ══════════════════════════════════════════
+         PAINEL ESTRATÉGICO
+    ══════════════════════════════════════════ -->
+    <div id="p-pr-estrategico" class="page">
+
+      <!-- CARDS DO DIA (automático) -->
+      <div style="margin-bottom:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--tx2)">📊 Resumo do dia — <span id="est-hoje-label">—</span></div>
+          <button class="btn btn-s" style="font-size:11px" onclick="renderPainelEstrategico()">↺ Atualizar</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px" id="est-cards-dia"></div>
+      </div>
+
+      <!-- FILTRO DE MEDIÇÃO -->
+      <div class="cd" style="margin-bottom:1rem">
+        <div class="cd-t">🔍 Filtro de medição</div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div class="field-wrap" style="min-width:180px">
+            <span class="field-label">Ciclo</span>
+            <select id="est-ciclo-sel" style="width:100%;font-size:12px;padding:5px 10px">
+              <option value="atual">Ciclo atual (a partir de 27/04)</option>
+              <option value="custom">Período personalizado</option>
+            </select>
+          </div>
+          <div id="est-custom-datas" style="display:none;display:flex;gap:8px;flex-wrap:wrap">
+            <div class="field-wrap" style="min-width:140px">
+              <span class="field-label">De</span>
+              <input type="date" id="est-de" style="width:100%">
+            </div>
+            <div class="field-wrap" style="min-width:140px">
+              <span class="field-label">Até</span>
+              <input type="date" id="est-ate" style="width:100%">
+            </div>
+          </div>
+          <button class="btn btn-g" onclick="renderPainelEstrategico()" style="align-self:flex-end">🔍 Analisar</button>
+        </div>
+      </div>
+
+      <!-- CARDS DE ANÁLISE -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem" id="est-cards-analise"></div>
+
+      <!-- GRÁFICOS -->
+      <div class="g2" style="margin-bottom:1rem">
+        <div class="cd">
+          <div class="cd-t">📈 Programado × Realizado × Saídas — Produção</div>
+          <div style="font-size:10px;color:var(--tx2);margin-bottom:.5rem">Realizado = 1ª Análise + Tratativa + Status B · Saídas = Pedidos + Devoluções + XGL + Republicação</div>
+          <canvas id="est-chart-prod" height="110"></canvas>
+        </div>
+        <div class="cd">
+          <div class="cd-t">📈 Programado × Realizado × Saídas — Mapa</div>
+          <div style="font-size:10px;color:var(--tx2);margin-bottom:.5rem">Realizado = 1ª Análise + Tratativa · Saídas = Pedidos + Devoluções + XGL + Republicação</div>
+          <canvas id="est-chart-mapa" height="110"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════
          OPERAÇÃO — VISÃO POR EQUIPE
     ══════════════════════════════════════════ -->
     <div id="p-pr-equipe" class="page">
@@ -2472,7 +2531,7 @@ function go(id, el) {
   if (el) el.classList.add('active');
   const icons = {
     'vg-visao':'📊','vg-validade':'⏱',
-    'pr-lancar':'✏️','pr-equipe':'👥','pr-producao':'📋','pr-bancoferias':'🗓',
+    'pr-lancar':'✏️','pr-estrategico':'🎯','pr-equipe':'👥','pr-producao':'📋','pr-bancoferias':'🗓',
     'adm':'🔐'
   };
   const ico = icons[id] || '◈';
@@ -2483,7 +2542,7 @@ function go(id, el) {
   if(centroIco) centroIco.textContent = ico;
   const titles = {
     'vg-visao':'Visão Executiva','vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
-    'pr-lancar':'Gestão de Produção','pr-equipe':'Visão por Equipe',
+    'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
     'adm':'Administração',
     
@@ -2501,8 +2560,166 @@ function go(id, el) {
   // Triggers de render
   if (id==='vg-validade') renderValidade();
   if (id==='pr-equipe') { renderEquipe(); }
+  if (id==='pr-estrategico') { renderPainelEstrategico(); }
 
 }
+
+// ════════════════════════════════════════════
+// PAINEL ESTRATÉGICO
+// ════════════════════════════════════════════
+let _estChartProd = null, _estChartMapa = null;
+
+function renderPainelEstrategico(){
+  const hoje = HOJE.toISOString().split('T')[0];
+  const label = document.getElementById('est-hoje-label');
+  if(label) label.textContent = fmtDt(hoje);
+
+  // ── Cards do dia (PCP + Mapa) ──
+  const pcpHoje = pcpData.find(r=>r.data===hoje);
+  const mapaHoje = mapaFirebase.find(r=>r.data===hoje) || (() => {
+    const idx = DATAS_ISO_MAPA.indexOf(hoje);
+    if(idx<0) return null;
+    return {l3:L[3][idx]||0,l4:L[4][idx]||0,l5:L[5][idx]||0,l6:L[6][idx]||0,l7:L[7][idx]||0,l8:L[8][idx]||0};
+  })();
+
+  const cardsEl = document.getElementById('est-cards-dia');
+  if(cardsEl){
+    const f1=pcpHoje?pcpHoje.f1:0, mdg=pcpHoje?pcpHoje.f2:0, xgl=pcpHoje?pcpHoje.f6:0;
+    const ped=pcpHoje?pcpHoje.f3:0, dev=pcpHoje?pcpHoje.f4:0, rep=pcpHoje?pcpHoje.f5:0;
+    const l3=mapaHoje?mapaHoje.l3:0;
+    const cards=[
+      {label:'PATEC Fin./Parada',sub:'1ª Análise + Tratativa + Status B',val:f1,cor:'var(--azm)',bg:'var(--azc)'},
+      {label:'MDG',sub:'composição MDG',val:mdg,cor:'var(--az)',bg:'var(--cin)'},
+      {label:'XGL',sub:'composição XGL',val:xgl,cor:'var(--az)',bg:'var(--cin)'},
+      {label:'RCs Pedidos',sub:'composição pedidos',val:ped,cor:'var(--vd)',bg:'var(--vdc)'},
+      {label:'RCs Devoluções',sub:'composição devoluções',val:dev,cor:'var(--vm)',bg:'var(--vmc)'},
+      {label:'RCs Republicação',sub:'composição republicação',val:rep,cor:'var(--am)',bg:'var(--amc)'},
+      {label:'PATEC Finalizado',sub:'Level Board L3 (mapa)',val:l3,cor:'#3266AD',bg:'#EBF0FA'},
+    ];
+    cardsEl.innerHTML=cards.map(c=>`
+      <div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.07)">
+        <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
+        <div style="font-size:10px;color:var(--tx2);margin-bottom:6px">${c.sub}</div>
+        <div style="font-size:26px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
+      </div>`).join('');
+  }
+
+  // ── Filtro: definir período ──
+  const cicloSel = document.getElementById('est-ciclo-sel')?.value || 'atual';
+  let dtDe, dtAte;
+  if(cicloSel==='custom'){
+    dtDe = document.getElementById('est-de')?.value || '';
+    dtAte = document.getElementById('est-ate')?.value || hoje;
+  } else {
+    dtDe = CICLO_ATUAL.inicio;
+    dtAte = hoje;
+  }
+
+  // ── Registros do período ──
+  const regs = registros.filter(r=>r.data>=dtDe&&r.data<=dtAte&&r.pres!=='Folga'&&r.pres!=='Férias');
+  const dias = [...new Set(regs.map(r=>r.data))].sort();
+  const soma = (idx) => regs.reduce((s,r)=>s+(r.f[idx]||0),0);
+
+  const totalAnalis = soma(0)+soma(1)+soma(2);   // pf0+pf1+pf2
+  const totalMapaAn = soma(0)+soma(1);            // pf0+pf1 (sem Status B)
+  const totalPed = soma(9), totalDev = soma(10), totalXgl = soma(7), totalRep = soma(8);
+  const totalSaidas = totalPed+totalDev+totalXgl+totalRep;
+  const nDias = dias.length;
+  const mediaEquipe = nDias>0?Math.round(totalAnalis/nDias):0;
+  const metaDia = getMeta();
+
+  // Melhor e pior dia (por total da equipe)
+  const porDia = dias.map(dt=>{
+    const r=registros.filter(x=>x.data===dt&&x.pres!=='Folga'&&x.pres!=='Férias');
+    return{dt,tot:r.reduce((s,x)=>s+(x.f[0]||0)+(x.f[1]||0)+(x.f[2]||0),0)};
+  });
+  const melhor = porDia.length?porDia.reduce((a,b)=>b.tot>a.tot?b:a):{dt:'—',tot:0};
+  const pior = porDia.length?porDia.reduce((a,b)=>b.tot<a.tot?b:a):{dt:'—',tot:0};
+
+  // MDG total do período
+  const totalMDG = soma(5);
+
+  // ── Cards de análise ──
+  const analEl = document.getElementById('est-cards-analise');
+  if(analEl){
+    const cards2=[
+      {label:'Itens analisados',sub:nDias+' dia(s)',val:totalAnalis.toLocaleString('pt-BR'),cor:'var(--vd)'},
+      {label:'Total de ações',sub:'',val:totalAnalis.toLocaleString('pt-BR'),cor:'var(--az)'},
+      {label:'Média diária equipe',sub:'meta '+metaDia+'/colaborador',val:mediaEquipe,cor:'var(--azm)'},
+      {label:'Dias analisados',sub:'',val:nDias,cor:'var(--azm)'},
+      {label:'🏆 Melhor dia',sub:fmtDt(melhor.dt),val:melhor.tot,cor:'var(--vd)'},
+      {label:'📉 Pior dia',sub:fmtDt(pior.dt),val:pior.tot,cor:'var(--vm)'},
+      {label:'RCs Pedidos',sub:'acumulado',val:totalPed,cor:'var(--vd)'},
+      {label:'Republicação',sub:'acumulado',val:totalRep,cor:'var(--am)'},
+      {label:'Devoluções',sub:'acumulado',val:totalDev,cor:'var(--vm)'},
+      {label:'XGL',sub:'acumulado',val:totalXgl,cor:'var(--az)'},
+      {label:'MDG',sub:'acumulado',val:totalMDG,cor:'var(--az)'},
+    ];
+    analEl.innerHTML=cards2.map(c=>`
+      <div class="cd" style="padding:.75rem;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
+        <div style="font-size:24px;font-weight:700;color:${c.cor}">${c.val}</div>
+        ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">${c.sub}</div>`:''}
+      </div>`).join('');
+  }
+
+  // ── Dados para os gráficos (por dia) ──
+  const labels = dias.map(fmtDt);
+  const prog = dias.map(()=> metaDia * [...new Set(registros.filter(r=>r.data>=dtDe&&r.data<=dtAte&&r.pres!=='Folga'&&r.pres!=='Férias').map(r=>r.colab))].length);
+  const realProd = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias').reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0),0));
+  const realMapa = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias').reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0),0));
+  const saidasDia = dias.map(dt=>registros.filter(r=>r.data===dt).reduce((s,r)=>s+(r.f[9]||0)+(r.f[10]||0)+(r.f[7]||0)+(r.f[8]||0),0));
+  const progDia = dias.map(dt=>{
+    const colabs=[...new Set(registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias'&&!COLABS_SEM_META.includes(r.colab)).map(r=>r.colab))];
+    return colabs.length*metaDia;
+  });
+
+  // Acumular valores dia a dia
+  const acum = arr => arr.reduce((acc,v,i)=>{acc.push((acc[i-1]||0)+v);return acc;},[]);
+  const progAcum    = acum(progDia);
+  const realProdAcum= acum(realProd);
+  const realMapaAcum= acum(realMapa);
+  const saidasAcum  = acum(saidasDia);
+
+  const chartCfg=(realAcumArr)=>({
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Planejado',  data:progAcum,    borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,.08)', borderWidth:2,pointRadius:3,pointHoverRadius:5,fill:true, tension:.3},
+      {label:'Analisado',  data:realAcumArr, borderColor:'#F97316',backgroundColor:'rgba(249,115,22,.08)',borderWidth:2,pointRadius:3,pointHoverRadius:5,fill:false,tension:.3},
+      {label:'Saídas',     data:saidasAcum,  borderColor:'#16A34A',backgroundColor:'rgba(22,163,74,.08)', borderWidth:2,pointRadius:3,pointHoverRadius:5,fill:false,tension:.3},
+    ]},
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'top',labels:{font:{size:11},usePointStyle:true}}},
+      scales:{
+        y:{beginAtZero:true,ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},
+        x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}}
+      }
+    }
+  });
+
+  // Gráfico 1 — Produção (acumulado)
+  const ctx1=document.getElementById('est-chart-prod');
+  if(ctx1){
+    if(_estChartProd){_estChartProd.destroy();}
+    _estChartProd=new Chart(ctx1,chartCfg(realProdAcum));
+  }
+  // Gráfico 2 — Mapa (acumulado)
+  const ctx2=document.getElementById('est-chart-mapa');
+  if(ctx2){
+    if(_estChartMapa){_estChartMapa.destroy();}
+    _estChartMapa=new Chart(ctx2,chartCfg(realMapaAcum));
+  }
+}
+
+// Listener para ciclo custom
+document.addEventListener('DOMContentLoaded',()=>{
+  const sel=document.getElementById('est-ciclo-sel');
+  if(sel) sel.addEventListener('change',()=>{
+    const cust=document.getElementById('est-custom-datas');
+    if(cust) cust.style.display=sel.value==='custom'?'flex':'none';
+  });
+});
 
 // ══ VISÃO GERAL ══
 // ════════════════════════════════════════════
