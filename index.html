@@ -2631,25 +2631,34 @@ function renderCardsDia(){
     if(idx>=0) return{l3:L[3][idx]||0,l4:L[4][idx]||0,l5:L[5][idx]||0,l6:L[6][idx]||0,l7:L[7][idx]||0,l8:L[8][idx]||0};
     return{l3:0,l4:0,l5:0,l6:0,l7:0,l8:0};
   };
-  const pcp=getPcp(dt), pcpAnt=dtAnt?getPcp(dtAnt):null;
   const mapa=getMapa(dt), mapaAnt=dtAnt?getMapa(dtAnt):null;
 
-  const varStr=(v,ant)=>{
-    if(!ant) return'';
+  const varStr=(v,ant,inverter)=>{
+    if(ant===null||ant===undefined) return'';
     const d=v-ant;
-    const cor=d>0?'var(--vm)':d<0?'var(--vd)':'var(--tx2)';
-    const ico=d>0?'▲':d<0?'▼':'—';
+    if(d===0) return'<div style="font-size:11px;font-weight:600;color:var(--tx2);margin-top:4px">— igual ao dia ant.</div>';
+    // Para L3 (PATEC Finalizado): subir é ruim (vermelho), cair é bom (verde)
+    // Para demais: depende do contexto — mostrar neutro com seta
+    const cor=inverter?(d>0?'var(--vm)':'var(--vd)'):(d>0?'var(--vm)':'var(--vd)');
+    const ico=d>0?'▲':'▼';
     return`<div style="font-size:11px;font-weight:700;color:${cor};margin-top:4px">${ico} ${d>0?'+':''}${d} vs dia ant.</div>`;
   };
 
+  const l3=mapa.l3||0, l4=mapa.l4||0, l5=mapa.l5||0, l6=mapa.l6||0, l7=mapa.l7||0, l8=mapa.l8||0;
+  const l3a=mapaAnt?mapaAnt.l3:null, l4a=mapaAnt?mapaAnt.l4:null, l5a=mapaAnt?mapaAnt.l5:null;
+  const l6a=mapaAnt?mapaAnt.l6:null, l7a=mapaAnt?mapaAnt.l7:null, l8a=mapaAnt?mapaAnt.l8:null;
+  const totPatec=l3+l4+l5+l6, totGeral=l3+l4+l5+l6+l7+l8;
+  const totPatecAnt=mapaAnt?(l3a+l4a+l5a+l6a):null;
+
   const cards=[
-    {label:'PATEC Fin./Parada',sub:'1ª Análise + Tratativa + Status B',val:pcp.f1,ant:pcpAnt?pcpAnt.f1:null,cor:'var(--azm)',bg:'var(--azc)'},
-    {label:'MDG',sub:'composição MDG',val:pcp.f2,ant:pcpAnt?pcpAnt.f2:null,cor:'var(--az)',bg:'var(--cin)'},
-    {label:'XGL',sub:'composição XGL',val:pcp.f6,ant:pcpAnt?pcpAnt.f6:null,cor:'var(--az)',bg:'var(--cin)'},
-    {label:'RCs Pedidos',sub:'composição pedidos',val:pcp.f3,ant:pcpAnt?pcpAnt.f3:null,cor:'var(--vd)',bg:'var(--vdc)'},
-    {label:'RCs Devoluções',sub:'composição devoluções',val:pcp.f4,ant:pcpAnt?pcpAnt.f4:null,cor:'var(--vm)',bg:'var(--vmc)'},
-    {label:'RCs Republicação',sub:'composição republicação',val:pcp.f5,ant:pcpAnt?pcpAnt.f5:null,cor:'var(--am)',bg:'var(--amc)'},
-    {label:'PATEC Finalizado',sub:'Level Board L3 (mapa)',val:mapa.l3,ant:mapaAnt?mapaAnt.l3:null,cor:'#3266AD',bg:'#EBF0FA'},
+    {label:'PATEC Finalizado',    sub:'L3 — Analisar PATEC Finalizado',  val:l3,  ant:l3a, cor:'#3266AD',bg:'#EBF0FA'},
+    {label:'Ag. PATEC Finalizar', sub:'L4 — Aguardar PATEC Finalizado',  val:l4,  ant:l4a, cor:'#3266AD',bg:'#EBF0FA'},
+    {label:'100% Reprovado',      sub:'L5 — PATEC Fin. sem forn. aprov.',val:l5,  ant:l5a, cor:'var(--vd)',bg:'var(--vdc)'},
+    {label:'PATEC Cancelado',     sub:'L6 — Analisar PATEC Cancelado',   val:l6,  ant:l6a, cor:'var(--vd)',bg:'var(--vdc)'},
+    {label:'Abrir ID Não',        sub:'L7 — Abrir PATEC Idêntico Não',   val:l7,  ant:l7a, cor:'var(--am)',bg:'var(--amc)'},
+    {label:'Abrir PATEC Obrig.',  sub:'L8 — Abrir PATEC Grupo Merc.',    val:l8,  ant:l8a, cor:'var(--am)',bg:'var(--amc)'},
+    {label:'Total PATEC',         sub:'L3+L4+L5+L6',                     val:totPatec,ant:totPatecAnt,cor:'var(--azm)',bg:'var(--azc)'},
+    {label:'Total Geral',         sub:'L3 a L8',                         val:totGeral,ant:mapaAnt?(l3a+l4a+l5a+l6a+l7a+l8a):null,cor:'var(--az)',bg:'var(--cin)'},
   ];
   const cardsEl=document.getElementById('est-cards-dia');
   if(cardsEl) cardsEl.innerHTML=cards.map(c=>`
