@@ -1370,6 +1370,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="cd-t">🌴 Editar quadro de férias</div>
           <div class="al al-b">ℹ Cada colaborador pode ter <strong>múltiplos períodos</strong> de férias (férias fracionadas). Use o botão <strong>+ Período</strong> para adicionar novas datas. O retorno é calculado automaticamente.</div>
 
+          <!-- Filtro colaborador na edição -->
+          <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">
+            <div class="field-wrap" style="min-width:180px">
+              <span class="field-label">Filtrar colaborador</span>
+              <select id="ferias-edit-colab" onchange="filtrarFeriasEdit()" style="width:100%">
+                <option value="">Todos os colaboradores</option>
+              </select>
+            </div>
+          </div>
+
           <!-- Lista dinâmica de colaboradores com períodos -->
           <div id="adm-ferias-colabs" style="display:flex;flex-direction:column;gap:14px;margin-bottom:1rem"></div>
 
@@ -1440,7 +1450,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <select id="bhe-colab-sel" onchange="bheRenderColab()" style="width:100%">
               <option value="">— Selecione —</option>
               <option value="__todos__">👥 Todos os colaboradores</option>
-            </select></div>
+            </select>
+            <div id="bhe-todos-resumo" style="display:none;margin-top:1rem"></div></div>
           <button class="btn btn-g" onclick="bheSalvarTudo()" style="align-self:flex-end">✓ Salvar tudo no Firebase</button>
           <span id="bhe-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;align-self:flex-end">✓ Salvo!</span>
         </div>
@@ -4025,7 +4036,25 @@ let _feriasState = {};
 function _renderFeriasColabs(){
   const container = document.getElementById('adm-ferias-colabs');
   if(!container) return;
-  container.innerHTML = COLABS.map(c => {
+  // Popular select de filtro na edição
+  const selEdit = document.getElementById('ferias-edit-colab');
+  if(selEdit && selEdit.options.length <= 1){
+    COLABS.forEach(c=>{
+      const opt=document.createElement('option'); opt.value=c; opt.textContent=c;
+      selEdit.appendChild(opt);
+    });
+  }
+  // Popular select de filtro na prévia
+  const selPrev = document.getElementById('ferias-filtro-colab');
+  if(selPrev && selPrev.options.length <= 1){
+    COLABS.forEach(c=>{
+      const opt=document.createElement('option'); opt.value=c; opt.textContent=c;
+      selPrev.appendChild(opt);
+    });
+  }
+  const filtColab = selEdit?.value||'';
+  const colabsFiltrados = filtColab ? COLABS.filter(c=>c===filtColab) : COLABS;
+  container.innerHTML = colabsFiltrados.map(c => {
     const periodos = _feriasState[c];
     return `<div class="cd" style="padding:1rem;border-left:3px solid var(--azm)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
@@ -4038,6 +4067,9 @@ function _renderFeriasColabs(){
     </div>`;
   }).join('');
   _atualizarFeriasPreview();
+}
+function filtrarFeriasEdit(){
+  _renderFeriasColabs();
 }
 
 function _periodoHTML(colab, pi, p){
