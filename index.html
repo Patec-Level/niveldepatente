@@ -994,7 +994,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div id="resultado-detalhe" style="display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
             <div style="font-size:16px;font-weight:700;color:var(--az)" id="resultado-titulo">—</div>
-            <button class="btn btn-s" style="font-size:11px" onclick="document.getElementById('resultado-detalhe').style.display='none'">✕ Fechar</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-r" style="font-size:11px" id="btn-excluir-ciclo" onclick="excluirCicloResultadoAberto()">🗑 Excluir análise</button>
+              <button class="btn btn-s" style="font-size:11px" onclick="document.getElementById('resultado-detalhe').style.display='none'">✕ Fechar</button>
+            </div>
           </div>
 
           <!-- KPIs do ciclo -->
@@ -4758,13 +4761,34 @@ async function renderResultadoMedicao() {
       +'<div style="text-align:center;padding:.5rem .875rem;background:'+bgPct+';border-radius:8px"><div style="font-size:9px;color:var(--tx2)">% Meta</div><div style="font-size:18px;font-weight:700;color:'+pctCor+'">'+(c.pct||0)+'%</div></div>'
       +'<div style="text-align:center;padding:.5rem .875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Meta</div><div style="font-size:18px;font-weight:700;color:var(--az)">'+(c.meta||0).toLocaleString('pt-BR')+'</div></div>'
       +'<button class="btn btn-p" style="font-size:11px;padding:5px 12px">📊 Ver detalhes</button>'
+      +'<button class="btn btn-r" style="font-size:11px;padding:5px 12px" onclick="event.stopPropagation();excluirCicloResultado('+idx+')">🗑 Excluir</button>'
       +'</div></div></div>';
   }).join('');
 }
 
-function abrirResultadoCiclo(idx) {
-  const c = (window._resultadoCiclos||[])[idx];
+function excluirCicloResultado(idx) {
+  const ciclos = window._resultadoCiclos || [];
+  const c = ciclos[idx];
   if(!c) return;
+  if(!confirm('Excluir a analise do ciclo "' + c.nome + '"? Esta acao nao pode ser desfeita.')) return;
+  // Remover do array local
+  ciclos_historico = ciclos_historico.filter(x => x.id !== c.id);
+  localStorage.setItem('patec_ciclos_historico', JSON.stringify(ciclos_historico));
+  // Remover do Firebase
+  try {
+    const db = getDB();
+    if(db) db.collection('ciclos_encerrados').doc(c.id).delete();
+  } catch(e) { console.warn('Erro ao excluir do Firebase:', e); }
+  document.getElementById('resultado-detalhe').style.display = 'none';
+  renderResultadoMedicao();
+}
+function excluirCicloResultadoAberto() {
+  const idx = window._resultadoCicloAbertoIdx;
+  if(idx === undefined) return;
+  excluirCicloResultado(idx);
+}
+function abrirResultadoCiclo(idx) {
+  window._resultadoCicloAbertoIdx = idx;
   const detalheEl = document.getElementById('resultado-detalhe');
   if(!detalheEl) return;
   detalheEl.style.display = 'block';
