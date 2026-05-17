@@ -2155,8 +2155,38 @@ async function fbCarregarTudo(){
   // Produção
   const prods = await fbGetAll('producao');
   if(prods.length > 0){
-    registros = prods.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
+    // Carregar do Firebase — garantir 12 campos no array f
+    registros = prods.map(r => {
+      const f = r.f || [];
+      while(f.length < 12) f.push(0);
+      return {colab:r.colab, data:r.data, pres:r.pres, f, justif:r.justif||''};
+    });
+    // Mesclar HISTORICO_INICIAL — adicionar registros que não existem no Firebase
+    let salvouNovos = false;
+    for(const h of HISTORICO_INICIAL){
+      const existe = registros.some(r=>r.colab===h.colab&&r.data===h.data);
+      if(!existe){
+        const fh = [...(h.f||[])];
+        while(fh.length < 12) fh.push(0);
+        const reg = {colab:h.colab, data:h.data, pres:h.pres||'Presencial', f:fh, justif:h.justif||''};
+        registros.push(reg);
+        await fbSalvarProducao(reg);
+        salvouNovos = true;
+      }
+    }
+    if(salvouNovos) console.log('✓ HISTORICO_INICIAL mesclado ao Firebase');
     console.log('✓ Produção carregada:', registros.length, 'registros');
+  } else {
+    // Firebase vazio — salvar HISTORICO_INICIAL completo
+    registros = HISTORICO_INICIAL.map(h => {
+      const f = [...(h.f||[])];
+      while(f.length < 12) f.push(0);
+      return {colab:h.colab, data:h.data, pres:h.pres||'Presencial', f, justif:h.justif||''};
+    });
+    for(const reg of registros){
+      await fbSalvarProducao(reg);
+    }
+    console.log('✓ HISTORICO_INICIAL salvo no Firebase:', registros.length, 'registros');
   }
 
   // Férias — sync Firebase ↔ localStorage
