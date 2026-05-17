@@ -1449,7 +1449,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="field-wrap" style="min-width:180px"><span class="field-label">Colaborador</span>
             <select id="bhe-colab-sel" onchange="bheRenderColab()" style="width:100%">
               <option value="">— Selecione —</option>
-              <option value="__todos__">👥 Todos os colaboradores</option>
             </select>
             <div id="bhe-todos-resumo" style="display:none;margin-top:1rem"></div></div>
           <button class="btn btn-g" onclick="bheSalvarTudo()" style="align-self:flex-end">✓ Salvar tudo no Firebase</button>
@@ -5520,7 +5519,7 @@ initMetaGap();
 function bheInit(){
   const sel=document.getElementById('bhe-colab-sel');
   if(!sel)return;
-  sel.innerHTML='<option value="">— Selecione —</option><option value="__todos__">👥 Todos os colaboradores</option>'+COLABS.map(c=>`<option value="${c}">${c}</option>`).join('');
+  sel.innerHTML='<option value="">— Selecione —</option>'+COLABS.map(c=>`<option value="${c}">${c}</option>`).join('');
   const selA=document.getElementById('bhe-new-mes-a');
   if(selA){const y=new Date().getFullYear();selA.innerHTML='<option value="">Ano</option>'+[y-1,y,y+1].map(a=>`<option value="${a}">${a}</option>`).join('');selA.value=String(y);}
   bheCarregarLimiteADM();
@@ -5533,26 +5532,23 @@ function bheRenderColab(){
   const painel=document.getElementById('bhe-painel');
   const empty=document.getElementById('bhe-empty');
   const nomeEl=document.getElementById('bhe-colab-nome');
-  // Modo "Todos"
+  // Modo "Todos" — visualização somente
   if(colab==='__todos__'){
     if(painel)painel.style.display='block';if(empty)empty.style.display='none';
-    if(nomeEl) nomeEl.innerHTML='<span style="font-size:15px;font-weight:700;color:var(--az)">👥 Todos os colaboradores</span>';
-    // Renderizar todos em sequência
-    const container=document.getElementById('bhe-periodos-lista');
-    if(container){
-      container.innerHTML=COLABS.map(c=>{
-        const dados=BANCO_HE.find(b=>b.colab===c);
-        if(!dados||!dados.periodos.length) return `<div style="margin-bottom:1rem"><strong>${c}</strong>: <span style="color:var(--tx2);font-size:12px">Nenhum período</span></div>`;
-        const hoje=HOJE.toISOString().split('T')[0];
-        const rows=dados.periodos.map(p=>{
-          const saldo=bheCalcSaldo(p);
-          const venc=p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—';
-          return`<tr><td>${p.mes_ref||'—'}</td><td>${bheMinToStr((p.h||0)*60+(p.m||0))}</td><td>${venc}</td><td style="font-weight:700;color:${saldo.min>0?'var(--vd)':'var(--vm)'}">${bheMinToStr(saldo.min)}</td></tr>`;
-        }).join('');
-        return`<div style="margin-bottom:1.5rem"><div style="font-weight:700;color:var(--az);margin-bottom:.5rem">👤 ${c}</div>
-          <div class="tw"><table><thead><tr><th>Período</th><th>Total HE</th><th>Vencimento</th><th>Saldo</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
-      }).join('');
-    }
+    if(nomeEl) nomeEl.innerHTML=`
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:.5rem">
+        <span style="font-size:15px;font-weight:700;color:var(--az)">👥 Todos os colaboradores</span>
+        <div class="field-wrap" style="min-width:160px;margin:0">
+          <span class="field-label">Filtrar por status</span>
+          <select id="bhe-filtro-status-todos" onchange="bheRenderTodos()" style="width:100%">
+            <option value="todos">Todos os períodos</option>
+            <option value="andamento">⏳ Em andamento</option>
+            <option value="concluido">✅ Concluídos (folgados)</option>
+            <option value="pago">💳 Pagos</option>
+          </select>
+        </div>
+      </div>`;
+    bheRenderTodos();
     return;
   }
   if(!colab){if(painel)painel.style.display='none';if(empty)empty.style.display='block';return;}
@@ -5575,6 +5571,95 @@ function bheRenderColab(){
   if(!BANCO_HE.find(b=>b.colab===colab))BANCO_HE.push({colab,periodos:[]});
   bheRenderPeriodos(colab);
 }
+function bheGetStatusPeriodo(p){
+  if(p.arquivado){
+    const temPagoAuto=(p.usos||[]).some(u=>u.automatico);
+    return temPagoAuto||p.arquivado_motivo?.includes('automaticamente')?'pago':'concluido';
+  }
+  const tMin=(p.he_h||0)*60+(p.he_m||0);
+  const uMin=(p.usos||[]).reduce((s,u)=>s+(u.h||0)*60+(u.m||0),0);
+  return tMin-uMin>0?'andamento':'concluido';
+}
+function bheRenderTodos(){
+  const container=document.getElementById('bhe-periodos-lista');
+  if(!container) return;
+  const filtro=document.getElementById('bhe-filtro-status-todos')?.value||'todos';
+  const hoje=HOJE.toISOString().split('T')[0];
+  let html='';
+  COLABS.forEach(function(c){
+    if(!BANCO_HE.find(function(b){return b.colab===c;})) BANCO_HE.push({colab:c,periodos:[]});
+    const dados=BANCO_HE.find(function(b){return b.colab===c;});
+    const periodos=filtro==='todos'?dados.periodos:dados.periodos.filter(function(p){return bheGetStatusPeriodo(p)===filtro;});
+    if(!periodos.length) return;
+    let periodosHTML='';
+    periodos.forEach(function(p){
+      const pi=dados.periodos.indexOf(p);
+      const tMin=(p.he_h||0)*60+(p.he_m||0);
+      const uMin=(p.usos||[]).reduce(function(s,u){return s+(u.h||0)*60+(u.m||0);},0);
+      const sMin=tMin-uMin;
+      const sH=Math.floor(Math.abs(sMin)/60);
+      const sM=Math.abs(sMin)%60;
+      const venc=p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—';
+      const vencido=sMin>0&&p.vencimento&&String(p.vencimento).slice(0,10)<hoje;
+      const arq=!!p.arquivado;
+      const corP=arq?'var(--azm)':sMin<=0?'var(--vd)':vencido?'var(--vm)':'var(--am)';
+      const statusP=arq?'💳 Arquivado':sMin<=0?'✅ Zerado':vencido?'⚠️ Vencido':'⏳ Em aberto';
+      let usosHTML='';
+      (p.usos||[]).forEach(function(u,ui){
+        const btnRem=u.automatico?'':'<button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="bheRemUso('+JSON.stringify(c)+','+pi+','+ui+')">✕</button>';
+        usosHTML+='<tr>'
+          +'<td>'+(u.data?u.data.split('-').reverse().join('/'):'—')+'</td>'
+          +'<td style="font-weight:600;color:var(--azm)">'+String(u.h||0).padStart(2,'0')+'h'+String(u.m||0).padStart(2,'0')+'min</td>'
+          +'<td><span class="pl '+(u.tipo==='folga'?'pl-az':'pl-w')+'">'+(u.tipo==='folga'?'🌴 Folga':'💰 Pagamento')+'</span></td>'
+          +'<td style="font-size:11px;color:var(--tx2)">'+(u.obs||'—')+'</td>'
+          +'<td>'+btnRem+'</td></tr>';
+      });
+      let addForm='';
+      const cj=JSON.stringify(c);
+      if(!arq&&sMin>0){
+        addForm='<div style="background:var(--cin);border-radius:10px;padding:1rem;border:1px solid var(--brd);margin-top:.875rem">'
+          +'<div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.875rem;text-transform:uppercase">📅 Registrar folga / pagamento</div>'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.875rem">'
+          +'<div class="field-wrap"><span class="field-label">Data</span><input type="date" id="bhe-uso-data-'+pi+'" style="width:100%"></div>'
+          +'<div class="field-wrap"><span class="field-label">Tipo</span>'
+          +'<select id="bhe-uso-tipo-'+pi+'" style="width:100%"><option value="folga">🌴 Folga</option><option value="pagamento">💰 Pagamento</option></select>'
+          +'</div></div>'
+          +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:.875rem">'
+          +'<input type="number" id="bhe-uso-h-'+pi+'" min="0" max="24" placeholder="0" oninput="bheFmtUso('+pi+')" style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">'
+          +'<span style="font-size:22px;font-weight:700">:</span>'
+          +'<input type="number" id="bhe-uso-m-'+pi+'" min="0" max="59" placeholder="0" oninput="bheFmtUso('+pi+')" style="width:80px;font-size:22px;font-weight:700;color:var(--azm);text-align:center;padding:8px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">'
+          +'<span id="bhe-uso-fmt-'+pi+'" style="font-size:13px;color:var(--azm);font-weight:600;padding:6px 12px;background:#fff;border:1px solid var(--brd);border-radius:8px">= 0h 00min</span>'
+          +'<button class="btn btn-g" onclick="bheAddUso('+cj+','+pi+')" style="margin-left:auto">+ Registrar</button>'
+          +'</div>'
+          +'<div class="field-wrap"><span class="field-label">Observação</span>'
+          +'<input type="text" id="bhe-uso-obs-'+pi+'" placeholder="Ex: folga manhã" style="width:100%"></div>'
+          +'</div>';
+      } else if(arq){
+        addForm='<div style="padding:.625rem .875rem;background:var(--azc);border-radius:8px;font-size:11px;color:var(--azm);font-weight:600;margin-top:.5rem">📁 Arquivado — '+(p.arquivado_motivo||'')+'</div>';
+      } else {
+        addForm='<div style="padding:.5rem;background:var(--vdc);border-radius:8px;font-size:12px;color:var(--vd);font-weight:600;margin-top:.5rem">✅ Saldo zerado</div>';
+      }
+      const usosSection=(p.usos||[]).length
+        ?'<div class="tw" style="margin-bottom:.5rem;max-height:160px"><table><thead><tr><th>Data</th><th>Duração</th><th>Tipo</th><th>Obs.</th><th></th></tr></thead><tbody>'+usosHTML+'</tbody></table></div>'
+        :'';
+      periodosHTML+='<div class="cd" style="border-left:4px solid '+corP+';margin-bottom:.75rem">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">'
+        +'<div><div style="font-size:13px;font-weight:700;color:var(--az)">'+(p.mes_ref||'Período '+(pi+1))+'</div>'
+        +'<div style="font-size:11px;color:var(--tx2);margin-top:2px">Total HE: <strong style="color:var(--am)">'+(p.he_h||0)+'h'+String(p.he_m||0).padStart(2,'0')+'min</strong> · Vence: <strong>'+venc+'</strong></div></div>'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<div style="text-align:center;padding:6px 12px;background:'+(sMin<=0||arq?'var(--vdc)':vencido?'var(--vmc)':'var(--amc)')+';border-radius:8px">'
+        +'<div style="font-size:18px;font-weight:700;color:'+corP+'">'+sH+'h'+String(sM).padStart(2,'0')+'min</div>'
+        +'<div style="font-size:10px;font-weight:600;color:'+corP+'">'+statusP+'</div></div>'
+        +'<button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="bheRemPeriodo('+cj+','+pi+')" title="Remover">🗑</button>'
+        +'</div></div>'+usosSection+addForm+'</div>';
+    });
+    html+='<div style="margin-bottom:1.5rem;border-left:3px solid var(--azm);padding-left:1rem">'
+      +'<div style="font-size:14px;font-weight:700;color:var(--az);margin-bottom:.75rem">👤 '+c+'</div>'
+      +periodosHTML+'</div>';
+  });
+  container.innerHTML=html||'<div class="al al-b">Nenhum período encontrado com este status.</div>';
+}
+
 function bheRenderPeriodos(colab){
   const container=document.getElementById('bhe-periodos-lista');if(!container)return;
   const dados=BANCO_HE.find(b=>b.colab===colab);
