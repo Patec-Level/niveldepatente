@@ -1469,53 +1469,62 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- ── DADOS PCP ADM ── -->
       <div id="adm-pcp-adm" class="adm-tab" style="display:none">
-        <div class="cd">
-          <div class="cd-t">📈 Dados PCP — registrar saídas</div>
-          <div class="al al-b">ℹ Selecione a data e clique em <strong>Auto-preencher da Produção</strong> para carregar os dados automaticamente a partir dos lançamentos do dia.</div>
+
+        <!-- ANÁLISE PCP — filtro por data, auto-preenche da produção -->
+        <div class="cd" style="border-top:3px solid var(--azm)">
+          <div class="cd-t">🔍 Análise PCP — filtro por data</div>
+          <div class="al al-b">ℹ Selecione uma data para visualizar o resumo do Registro PCP. Os dados são preenchidos automaticamente conforme os colaboradores lançam na Gestão de Produção.</div>
           <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">
             <div class="field-wrap" style="min-width:160px">
               <span class="field-label">Data</span>
-              <input type="date" id="adm-pcp-dt" onchange="pcpAutoPreencherDia()" style="width:100%">
+              <input type="date" id="adm-pcp-filtro-dt" onchange="pcpFiltroAnalise()" style="width:100%">
             </div>
-            <button class="btn btn-g" onclick="pcpAutoPreencherDia()" style="align-self:flex-end">⚡ Auto-preencher da Produção</button>
-            <span id="adm-pcp-auto-msg" style="font-size:11px;color:var(--vd);font-weight:600;display:none;align-self:flex-end">✓ Preenchido!</span>
+            <button class="btn btn-g" onclick="pcpFiltroAnalise()" style="align-self:flex-end">🔍 Analisar</button>
+
           </div>
-          <div class="form-grid">
-            <div class="field-wrap">
-              <span class="field-label">PATEC Fin./Parada</span>
-              <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">= 1ª Análise + Em Tratativa + Status B</div>
-              <input type="number" id="adm-pcp-f1" min="0" placeholder="0" style="font-weight:700;font-size:15px">
+          <div id="adm-pcp-analise-result" style="display:none">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:.75rem">
+              <div style="background:var(--azc);border-radius:8px;padding:.75rem;border:1px solid rgba(26,74,138,.15)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">PATEC Fin./Parada</div>
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:5px">1ª Análise + Tratativa + Status B</div>
+                <div style="font-size:22px;font-weight:700;color:var(--azm)" id="pcp-a-f1">—</div>
+              </div>
+              <div style="background:var(--cin);border-radius:8px;padding:.75rem;border:1px solid var(--brd)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">MDG</div>
+                <div style="font-size:22px;font-weight:700;color:var(--az)" id="pcp-a-f2">—</div>
+              </div>
+              <div style="background:var(--cin);border-radius:8px;padding:.75rem;border:1px solid var(--brd)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">XGL</div>
+                <div style="font-size:22px;font-weight:700;color:var(--az)" id="pcp-a-f6">—</div>
+              </div>
+              <div style="background:var(--vdc);border-radius:8px;padding:.75rem;border:1px solid rgba(14,158,106,.2)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">RCs Pedidos</div>
+                <div style="font-size:22px;font-weight:700;color:var(--vd)" id="pcp-a-f3">—</div>
+              </div>
+              <div style="background:var(--vmc);border-radius:8px;padding:.75rem;border:1px solid rgba(217,64,64,.15)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">RCs Devoluções</div>
+                <div style="font-size:22px;font-weight:700;color:var(--vm)" id="pcp-a-f4">—</div>
+              </div>
+              <div style="background:var(--amc);border-radius:8px;padding:.75rem;border:1px solid rgba(192,122,18,.2)">
+                <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">RCs Republicação</div>
+                <div style="font-size:22px;font-weight:700;color:var(--am)" id="pcp-a-f5">—</div>
+              </div>
             </div>
-            <div class="field-wrap">
-              <span class="field-label">MDG + XGL</span>
-              <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">= composição MDG + XGL</div>
-              <input type="number" id="adm-pcp-f2" min="0" placeholder="0" style="font-weight:700;font-size:15px">
-            </div>
-            <div class="field-wrap">
-              <span class="field-label">RCs para Pedidos</span>
-              <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">= composição RCs para Pedidos</div>
-              <input type="number" id="adm-pcp-f3" min="0" placeholder="0" style="font-weight:700;font-size:15px">
-            </div>
-            <div class="field-wrap">
-              <span class="field-label">RCs para Devoluções</span>
-              <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">= composição RCs para Devoluções</div>
-              <input type="number" id="adm-pcp-f4" min="0" placeholder="0" style="font-weight:700;font-size:15px">
-            </div>
-            <div class="field-wrap">
-              <span class="field-label">RCs Republicação</span>
-              <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">= composição Republicação</div>
-              <input type="number" id="adm-pcp-f5" min="0" placeholder="0" style="font-weight:700;font-size:15px">
-            </div>
+            <div id="adm-pcp-analise-colabs" style="font-size:11px;color:var(--tx2);padding:.5rem .75rem;background:var(--cin);border-radius:6px"></div>
           </div>
-          <button class="btn btn-p" onclick="salvarAdmPCP()">Adicionar registro</button>
+          <div id="adm-pcp-analise-empty" style="display:none;font-size:12px;color:var(--vm);padding:.75rem;background:var(--vmc);border-radius:8px">
+            ⚠ Nenhum registro de produção encontrado para esta data.
+          </div>
         </div>
+
+        <!-- TABELA REGISTROS -->
         <div class="cd">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
             <div class="cd-t" style="margin:0">Registros PCP</div>
             <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="exportAdmPCP()">💾 Exportar CSV</button>
           </div>
           <div class="tw"><table>
-            <thead><tr><th>Data</th><th>PATEC Fin./Parada</th><th>MDG+XGL</th><th>RCs Pedidos</th><th>RCs Dev.</th><th>RCs Repub.</th><th>Total</th><th></th></tr></thead>
+            <thead><tr><th>Data</th><th>PATEC Fin./Parada</th><th>MDG</th><th>XGL</th><th>RCs Pedidos</th><th>RCs Dev.</th><th>RCs Repub.</th><th>Total</th><th></th></tr></thead>
             <tbody id="adm-pcp-tb"></tbody>
             <tfoot id="adm-pcp-tf"></tfoot>
           </table></div>
@@ -2466,40 +2475,40 @@ const HISTORICO_INICIAL = [
   {colab:'Ludy',data:'2026-05-15',pres:'Presencial',f:[16,0,0,0,0,0,0,0,0,0]}
 ]
 const PCP_INICIAL = [
-  {data:'2026-03-26',f1:124,f2:10,f3:8,f4:12},
-  {data:'2026-03-27',f1:118,f2:24,f3:13,f4:6},
-  {data:'2026-03-30',f1:128,f2:15,f3:13,f4:19},
-  {data:'2026-03-31',f1:119,f2:11,f3:14,f4:12},
-  {data:'2026-04-01',f1:115,f2:9,f3:24,f4:13},
-  {data:'2026-04-02',f1:104,f2:15,f3:5,f4:11},
-  {data:'2026-04-06',f1:142,f2:20,f3:15,f4:32},
-  {data:'2026-04-07',f1:142,f2:8,f3:8,f4:49},
-  {data:'2026-04-08',f1:103,f2:16,f3:9,f4:16},
-  {data:'2026-04-09',f1:71,f2:4,f3:4,f4:12},
-  {data:'2026-04-10',f1:80,f2:5,f3:8,f4:17},
-  {data:'2026-04-13',f1:47,f2:1,f3:4,f4:17},
-  {data:'2026-04-14',f1:135,f2:1,f3:42,f4:21},
-  {data:'2026-04-15',f1:90,f2:10,f3:4,f4:17},
-  {data:'2026-04-16',f1:86,f2:4,f3:6,f4:27},
-  {data:'2026-04-17',f1:82,f2:10,f3:4,f4:22},
-  {data:'2026-04-20',f1:88,f2:2,f3:3,f4:18},
-  {data:'2026-04-22',f1:96,f2:3,f3:4,f4:13},
-  {data:'2026-04-23',f1:89,f2:3,f3:14,f4:12},
-  {data:'2026-04-24',f1:33,f2:2,f3:5,f4:16},
-  {data:'2026-04-27',f1:79,f2:2,f3:29,f4:7},
-  {data:'2026-04-28',f1:90,f2:1,f3:4,f4:17},
-  {data:'2026-04-29',f1:93,f2:5,f3:41,f4:27},
-  {data:'2026-04-30',f1:46,f2:1,f3:1,f4:10},
-  {data:'2026-05-04',f1:70,f2:3,f3:11,f4:22},
-  {data:'2026-05-05',f1:64,f2:2,f3:6,f4:11},
-  {data:'2026-05-06',f1:131,f2:0,f3:19,f4:7},
-  {data:'2026-05-07',f1:88,f2:0,f3:23,f4:5},
-  {data:'2026-05-08',f1:56,f2:3,f3:0,f4:8},
-  {data:'2026-05-11',f1:68,f2:2,f3:8,f4:10},
-  {data:'2026-05-12',f1:70,f2:0,f3:4,f4:20},
-  {data:'2026-05-13',f1:108,f2:1,f3:41,f4:19},
-  {data:'2026-05-14',f1:65,f2:3,f3:3,f4:24},
-  {data:'2026-05-15',f1:79,f2:1,f3:15,f4:9},
+  {data:'2026-03-26',f1:124,f2:10,f3:8,f4:12,f5:9,f6:0},
+  {data:'2026-03-27',f1:118,f2:24,f3:13,f4:6,f5:16,f6:0},
+  {data:'2026-03-30',f1:128,f2:15,f3:13,f4:19,f5:18,f6:0},
+  {data:'2026-03-31',f1:119,f2:11,f3:14,f4:12,f5:8,f6:0},
+  {data:'2026-04-01',f1:115,f2:9,f3:24,f4:13,f5:28,f6:0},
+  {data:'2026-04-02',f1:104,f2:15,f3:5,f4:11,f5:19,f6:0},
+  {data:'2026-04-06',f1:142,f2:20,f3:15,f4:32,f5:15,f6:1},
+  {data:'2026-04-07',f1:142,f2:8,f3:8,f4:49,f5:45,f6:0},
+  {data:'2026-04-08',f1:103,f2:16,f3:9,f4:16,f5:7,f6:0},
+  {data:'2026-04-09',f1:71,f2:4,f3:4,f4:12,f5:12,f6:0},
+  {data:'2026-04-10',f1:80,f2:5,f3:8,f4:17,f5:11,f6:0},
+  {data:'2026-04-13',f1:47,f2:1,f3:4,f4:17,f5:27,f6:0},
+  {data:'2026-04-14',f1:135,f2:1,f3:42,f4:21,f5:18,f6:0},
+  {data:'2026-04-15',f1:90,f2:10,f3:4,f4:17,f5:15,f6:0},
+  {data:'2026-04-16',f1:86,f2:4,f3:6,f4:27,f5:4,f6:0},
+  {data:'2026-04-17',f1:82,f2:10,f3:4,f4:22,f5:3,f6:0},
+  {data:'2026-04-20',f1:88,f2:2,f3:3,f4:18,f5:1,f6:0},
+  {data:'2026-04-22',f1:96,f2:3,f3:4,f4:13,f5:14,f6:0},
+  {data:'2026-04-23',f1:89,f2:3,f3:14,f4:12,f5:44,f6:1},
+  {data:'2026-04-24',f1:33,f2:2,f3:5,f4:16,f5:4,f6:0},
+  {data:'2026-04-27',f1:79,f2:2,f3:29,f4:7,f5:17,f6:1},
+  {data:'2026-04-28',f1:90,f2:1,f3:4,f4:17,f5:22,f6:0},
+  {data:'2026-04-29',f1:93,f2:5,f3:41,f4:27,f5:8,f6:1},
+  {data:'2026-04-30',f1:46,f2:1,f3:1,f4:10,f5:15,f6:0},
+  {data:'2026-05-04',f1:70,f2:3,f3:11,f4:22,f5:21,f6:0},
+  {data:'2026-05-05',f1:64,f2:2,f3:6,f4:11,f5:14,f6:1},
+  {data:'2026-05-06',f1:131,f2:0,f3:19,f4:7,f5:9,f6:0},
+  {data:'2026-05-07',f1:88,f2:0,f3:23,f4:5,f5:26,f6:0},
+  {data:'2026-05-08',f1:56,f2:3,f3:0,f4:8,f5:9,f6:0},
+  {data:'2026-05-11',f1:68,f2:2,f3:8,f4:10,f5:29,f6:1},
+  {data:'2026-05-12',f1:70,f2:0,f3:4,f4:20,f5:17,f6:0},
+  {data:'2026-05-13',f1:108,f2:1,f3:41,f4:19,f5:47,f6:0},
+  {data:'2026-05-14',f1:65,f2:3,f3:3,f4:24,f5:12,f6:0},
+  {data:'2026-05-15',f1:79,f2:1,f3:15,f4:9,f5:25,f6:1},
 ];
 
 // Senhas dos colaboradores (editáveis pelo ADM via localStorage)
@@ -2685,7 +2694,14 @@ function salvarProducao(){
     const justif=document.getElementById('pr-justif')?.value?.trim();
     if(!justif){alert('Justificativa obrigatória quando abaixo da meta.');document.getElementById('pr-justif')?.focus();return;}
   }
-  registros.push({colab:colabLogado,data:dataAtual,pres:presAtual,f,justif:document.getElementById('pr-justif')?.value||''});
+  const novoReg={colab:colabLogado,data:dataAtual,pres:presAtual,f,justif:document.getElementById('pr-justif')?.value||''};
+  // Remover lançamento anterior do mesmo colaborador/data se existir
+  const idxExist=registros.findIndex(r=>r.colab===colabLogado&&r.data===dataAtual);
+  if(idxExist>=0) registros.splice(idxExist,1);
+  registros.push(novoReg);
+  fbSalvarProducao(novoReg);
+  // Atualizar registro PCP automaticamente
+  pcpAtualizarRegistroDia(dataAtual);
   const ok=document.getElementById('pr-ok-msg');
   if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',3000);}
   limparProd();
@@ -4022,60 +4038,82 @@ async function salvarBancoAdm(){
 }
 
 // ── DADOS PCP ADM ──
-function pcpAutoPreencherDia(){
-  const dt=document.getElementById('adm-pcp-dt')?.value;
-  if(!dt) return;
-  // Agregar todos os registros de produção do dia
-  const regsDay=registros.filter(r=>r.data===dt);
-  if(!regsDay.length){
-    alert('Nenhum registro de produção encontrado para '+fmtDt(dt)+'.');
+// ── Funções PCP ──
+function pcpCalcDia(dt){
+  // f: pf0=1aAnalise,pf1=Tratativa,pf2=StatusB,pf3=Forn,pf4=Req,pf5=MDG,pf6=ValThiago,pf7=XGL,pf8=Repub,pf9=Pedidos,pf10=Devol,pf11=Outros
+  const regs=registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias');
+  if(!regs.length) return null;
+  const soma=(idx)=>regs.reduce((s,r)=>s+(r.f[idx]||0),0);
+  return {
+    f1: soma(0)+soma(1)+soma(2), // PATEC Fin./Parada
+    f2: soma(5),                  // MDG
+    f6: soma(7),                  // XGL
+    f3: soma(9),                  // RCs Pedidos
+    f4: soma(10),                 // RCs Devoluções
+    f5: soma(8),                  // RCs Republicação
+    colabs: [...new Set(regs.map(r=>r.colab))].join(', ')
+  };
+}
+function pcpFiltroAnalise(){
+  const dt=document.getElementById('adm-pcp-filtro-dt')?.value;
+  const resEl=document.getElementById('adm-pcp-analise-result');
+  const emptyEl=document.getElementById('adm-pcp-analise-empty');
+  const btnSalvar=document.getElementById('adm-pcp-salvar-analise');
+  if(!dt){if(resEl)resEl.style.display='none';if(emptyEl)emptyEl.style.display='none';return;}
+  // Buscar do registro PCP (reflexo da produção)
+  const reg=pcpData.find(r=>r.data===dt);
+  if(!reg){
+    if(resEl)resEl.style.display='none';
+    if(emptyEl){emptyEl.style.display='block';emptyEl.textContent='⚠ Nenhum registro PCP encontrado para '+fmtDt(dt)+'. Os dados aparecem aqui quando um colaborador salva a produção do dia.';}
+    if(btnSalvar)btnSalvar.disabled=true;
     return;
   }
-  // f=[pf0,pf1,pf2,pf3,pf4,pf5,pf6,pf7,pf8,pf9,pf10,pf11]
-  // pf0=1aAnalise, pf1=Tratativa, pf2=StatusB
-  // pf3=Forn, pf4=Req, pf5=MDG, pf6=ValThiago, pf7=XGL
-  // pf8=Republicacao, pf9=Pedidos, pf10=Devolucoes, pf11=Outros
-  const soma=(idx)=>regsDay.reduce((s,r)=>s+(r.f[idx]||0),0);
-  const patec = soma(0)+soma(1)+soma(2); // 1aAnalise+Tratativa+StatusB
-  const mdgxgl = soma(5)+soma(7);        // MDG+XGL
-  const pedidos = soma(9);               // RCs Pedidos
-  const devol = soma(10);                // RCs Devoluções
-  const repub = soma(8);                 // Republicação
-  // Preencher campos
-  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
-  set('adm-pcp-f1',patec);
-  set('adm-pcp-f2',mdgxgl);
-  set('adm-pcp-f3',pedidos);
-  set('adm-pcp-f4',devol);
-  set('adm-pcp-f5',repub);
-  // Mostrar confirmação
-  const msg=document.getElementById('adm-pcp-auto-msg');
-  if(msg){
-    msg.textContent='✓ Preenchido! PATEC:'+patec+' | MDG+XGL:'+mdgxgl+' | Pedidos:'+pedidos+' | Dev:'+devol+' | Repub:'+repub;
-    msg.style.display='inline';
-    setTimeout(()=>msg.style.display='none',5000);
-  }
+  if(emptyEl)emptyEl.style.display='none';
+  if(resEl)resEl.style.display='block';
+  if(btnSalvar)btnSalvar.disabled=true; // não precisa salvar, já está no registro
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||0;};
+  set('pcp-a-f1',reg.f1);set('pcp-a-f2',reg.f2);set('pcp-a-f6',reg.f6);
+  set('pcp-a-f3',reg.f3);set('pcp-a-f4',reg.f4);set('pcp-a-f5',reg.f5);
+  const colEl=document.getElementById('adm-pcp-analise-colabs');
+  if(colEl) colEl.textContent='📅 Registro do dia '+fmtDt(dt)+' — Total: '+((reg.f1||0)+(reg.f2||0)+(reg.f6||0)+(reg.f3||0)+(reg.f4||0)+(reg.f5||0))+' itens';
 }
+// pcpSalvarDaAnalise e pcpAutoPreencherDia removidos — registros automáticos via salvarProducao
+function pcpAtualizarRegistroDia(dt){
+  // Calcula e salva automaticamente no pcpData ao salvar produção
+  const calc=pcpCalcDia(dt);
+  if(!calc) return;
+  const novo={data:dt,f1:calc.f1,f2:calc.f2,f6:calc.f6,f3:calc.f3,f4:calc.f4,f5:calc.f5};
+  const idx=pcpData.findIndex(r=>r.data===dt);
+  if(idx>=0) pcpData[idx]=novo;
+  else pcpData.push(novo);
+  // Re-renderizar tabela se estiver visível
+  if(document.getElementById('adm-pcp-adm')?.style.display!=='none') renderAdmPCP();
+}
+
 function renderAdmPCP(){
-  const sums={f1:0,f2:0,f3:0,f4:0,f5:0};
-  pcpData.forEach(r=>{sums.f1+=r.f1||0;sums.f2+=r.f2||0;sums.f3+=r.f3||0;sums.f4+=r.f4||0;sums.f5+=r.f5||0;});
+  const sums={f1:0,f2:0,f6:0,f3:0,f4:0,f5:0};
+  pcpData.forEach(r=>{
+    sums.f1+=r.f1||0;sums.f2+=r.f2||0;sums.f6+=r.f6||0;
+    sums.f3+=r.f3||0;sums.f4+=r.f4||0;sums.f5+=r.f5||0;
+  });
   const sorted=pcpData.slice().sort((a,b)=>a.data.localeCompare(b.data));
   document.getElementById('adm-pcp-tb').innerHTML=sorted.map((r,i)=>{
-    const tot=(r.f1||0)+(r.f2||0)+(r.f3||0)+(r.f4||0)+(r.f5||0);
-    return`<tr><td>${fmtDt(r.data)}</td><td>${r.f1||0}</td><td>${r.f2||0}</td><td>${r.f3||0}</td><td>${r.f4||0}</td><td>${r.f5||0}</td><td style="font-weight:700">${tot}</td><td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="delPCP(${pcpData.indexOf(r)})">✕</button></td></tr>`;
+    const tot=(r.f1||0)+(r.f2||0)+(r.f6||0)+(r.f3||0)+(r.f4||0)+(r.f5||0);
+    const idx=pcpData.indexOf(r);
+    return`<tr><td>${fmtDt(r.data)}</td><td>${r.f1||0}</td><td>${r.f2||0}</td><td>${r.f6||0}</td><td>${r.f3||0}</td><td>${r.f4||0}</td><td>${r.f5||0}</td><td style="font-weight:700">${tot}</td><td><button class="btn btn-r" style="padding:2px 7px;font-size:10px" onclick="delPCP(${idx})">✕</button></td></tr>`;
   }).join('');
-  const gt=sums.f1+sums.f2+sums.f3+sums.f4+sums.f5;
-  document.getElementById('adm-pcp-tf').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>${sums.f1}</td><td>${sums.f2}</td><td>${sums.f3}</td><td>${sums.f4}</td><td>${sums.f5}</td><td style="font-weight:700">${gt}</td><td></td></tr>`;
+  const gt=sums.f1+sums.f2+sums.f6+sums.f3+sums.f4+sums.f5;
+  document.getElementById('adm-pcp-tf').innerHTML=`<tr><td><strong>TOTAL</strong></td><td>${sums.f1}</td><td>${sums.f2}</td><td>${sums.f6}</td><td>${sums.f3}</td><td>${sums.f4}</td><td>${sums.f5}</td><td style="font-weight:700">${gt}</td><td></td></tr>`;
 }
 function delPCP(i){if(confirm('Excluir registro?')){pcpData.splice(i,1);renderAdmPCP();}}
 function salvarAdmPCP(){
   const d=document.getElementById('adm-pcp-dt').value;
   if(!d){alert('Informe a data.');return;}
-  // Verificar se já existe registro para esta data
   const existe=pcpData.findIndex(r=>r.data===d);
   const novo={data:d,
     f1:parseInt(document.getElementById('adm-pcp-f1').value)||0,
     f2:parseInt(document.getElementById('adm-pcp-f2').value)||0,
+    f6:parseInt(document.getElementById('adm-pcp-f6').value)||0,
     f3:parseInt(document.getElementById('adm-pcp-f3').value)||0,
     f4:parseInt(document.getElementById('adm-pcp-f4').value)||0,
     f5:parseInt(document.getElementById('adm-pcp-f5').value)||0
@@ -4086,10 +4124,10 @@ function salvarAdmPCP(){
   } else {
     pcpData.push(novo);
   }
-  ['adm-pcp-f1','adm-pcp-f2','adm-pcp-f3','adm-pcp-f4','adm-pcp-f5'].forEach(id=>document.getElementById(id).value='');
+  ['adm-pcp-f1','adm-pcp-f2','adm-pcp-f6','adm-pcp-f3','adm-pcp-f4','adm-pcp-f5'].forEach(id=>document.getElementById(id).value='');
   renderAdmPCP();
 }
-function exportAdmPCP(){var hd='Data,PATEC Fin./Parada,MDG+XGL,RCs Pedidos,RCs Dev.,RCs Repub.,Total\n';var rows=pcpData.map(function(r){var tot=(r.f1||0)+(r.f2||0)+(r.f3||0)+(r.f4||0)+(r.f5||0);return fmtDt(r.data)+','+(r.f1||0)+','+(r.f2||0)+','+(r.f3||0)+','+(r.f4||0)+','+(r.f5||0)+','+tot;}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();}
+function exportAdmPCP(){var hd='Data,PATEC Fin./Parada,MDG,XGL,RCs Pedidos,RCs Dev.,RCs Repub.,Total\n';var rows=pcpData.map(function(r){var tot=(r.f1||0)+(r.f2||0)+(r.f6||0)+(r.f3||0)+(r.f4||0)+(r.f5||0);return fmtDt(r.data)+','+(r.f1||0)+','+(r.f2||0)+','+(r.f6||0)+','+(r.f3||0)+','+(r.f4||0)+','+(r.f5||0)+','+tot;}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();}
 
 // ── UPLOAD MAPA ADM ──
 let admCruzResult=[];
