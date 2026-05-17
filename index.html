@@ -1381,9 +1381,28 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
         <!-- Prévia ordenada por data de saída -->
         <div class="cd">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
             <div class="cd-t" style="margin:0">Prévia — todos os períodos (ordem de saída)</div>
             <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="exportAdmFerias()">💾 Exportar CSV</button>
+          </div>
+          <!-- Filtros -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.75rem;align-items:flex-end">
+            <div class="field-wrap" style="min-width:160px">
+              <span class="field-label">Colaborador</span>
+              <select id="ferias-filtro-colab" onchange="renderFeriasPreview()" style="width:100%">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="field-wrap" style="min-width:160px">
+              <span class="field-label">Status</span>
+              <select id="ferias-filtro-status" onchange="renderFeriasPreview()" style="width:100%">
+                <option value="">Todos</option>
+                <option value="Em andamento">🟢 Em andamento</option>
+                <option value="Programada">🔵 Programada</option>
+                <option value="Concluída">✅ Concluída</option>
+              </select>
+            </div>
+            <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="limparFiltrosFerias()">Limpar filtros</button>
           </div>
           <div class="tw"><table>
             <thead><tr><th>#</th><th>Colaborador</th><th>Período</th><th>Saída</th><th>Dias</th><th>Retorno</th><th>Status</th></tr></thead>
@@ -1420,6 +1439,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="field-wrap" style="min-width:180px"><span class="field-label">Colaborador</span>
             <select id="bhe-colab-sel" onchange="bheRenderColab()" style="width:100%">
               <option value="">— Selecione —</option>
+              <option value="__todos__">👥 Todos os colaboradores</option>
             </select></div>
           <button class="btn btn-g" onclick="bheSalvarTudo()" style="align-self:flex-end">✓ Salvar tudo no Firebase</button>
           <span id="bhe-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;align-self:flex-end">✓ Salvo!</span>
@@ -3935,13 +3955,45 @@ function calcRetorno(i){
 }
 function atualizarFeriasPreview(){
   const hoje=HOJE.toISOString().split('T')[0];
-  document.getElementById('adm-ferias-preview').innerHTML=FERIAS_DATA.map((r,i)=>{
-    const saida=document.getElementById(`adm-f-saida-${i}`)?.value||r.saida||'';
-    const dias=parseInt(document.getElementById(`adm-f-dias-${i}`)?.value||r.dias||30);
-    const retorno=document.getElementById(`adm-f-retorno-${i}`)?.value||r.retorno||'';
+  // Popular filtro de colaborador nas férias
+  const selColabFerias = document.getElementById('ferias-filtro-colab');
+  if(selColabFerias && selColabFerias.options.length <= 1){
+    [...new Set(FERIAS_DATA.map(r=>r.colab))].sort().forEach(c=>{
+      const opt=document.createElement('option'); opt.value=c; opt.textContent=c;
+      selColabFerias.appendChild(opt);
+    });
+  }
+  renderFeriasPreview();
+}
+function limparFiltrosFerias(){
+  const fc=document.getElementById('ferias-filtro-colab');
+  const fs=document.getElementById('ferias-filtro-status');
+  if(fc) fc.value='';
+  if(fs) fs.value='';
+  renderFeriasPreview();
+}
+function renderFeriasPreview(){
+  const filtColab=document.getElementById('ferias-filtro-colab')?.value||'';
+  const filtStatus=document.getElementById('ferias-filtro-status')?.value||'';
+  const hoje=HOJE.toISOString().split('T')[0];
+  let dados=FERIAS_DATA;
+  if(filtColab) dados=dados.filter(r=>r.colab===filtColab);
+  let contFilt=0;
+  document.getElementById('adm-ferias-preview').innerHTML=dados.map((r,i)=>{
+    const saida=r.saida||'';
+    const retorno=r.retorno||'';
+    const retIso=retorno.includes('/')?retorno.split('/').reverse().join('-'):retorno;
     const saidaFmt=saida?saida.split('-').reverse().join('/'):'—';
-    const st=!saida?'<span class="pl pl-g">A definir</span>':saida>hoje?'<span class="pl pl-az">Programado</span>':hoje<=retorno.split('/').reverse().join('-')?'<span class="pl pl-ok">Em férias</span>':'<span class="pl pl-g">Concluído</span>';
-    return`<tr><td><strong>${i+1}º</strong></td><td>${r.colab}</td><td>${saidaFmt}</td><td>${dias}</td><td>${retorno||'—'}</td><td>${st}</td></tr>`;
+    let stLabel,stClass;
+    if(!saida){stLabel='A definir';stClass='pl-g';}
+    else if(hoje>=saida&&hoje<=retIso){stLabel='Em andamento';stClass='pl-ok';}
+    else if(saida>hoje){stLabel='Programada';stClass='pl-az';}
+    else{stLabel='Concluída';stClass='pl-g';}
+    // Aplicar filtro status
+    if(filtStatus&&filtStatus!==stLabel) return '';
+    contFilt++;
+    const st=`<span class="pl ${stClass}">${stLabel}</span>`;
+    return`<tr><td><strong>${contFilt}º</strong></td><td>${r.colab}</td><td>${saidaFmt}</td><td>${r.dias||30}</td><td>${retorno||'—'}</td><td>${st}</td></tr>`;
   }).join('');
 }
 async function salvarFeriasAdm(){
@@ -5413,6 +5465,28 @@ function bheRenderColab(){
   const painel=document.getElementById('bhe-painel');
   const empty=document.getElementById('bhe-empty');
   const nomeEl=document.getElementById('bhe-colab-nome');
+  // Modo "Todos"
+  if(colab==='__todos__'){
+    if(painel)painel.style.display='block';if(empty)empty.style.display='none';
+    if(nomeEl) nomeEl.innerHTML='<span style="font-size:15px;font-weight:700;color:var(--az)">👥 Todos os colaboradores</span>';
+    // Renderizar todos em sequência
+    const container=document.getElementById('bhe-periodos-lista');
+    if(container){
+      container.innerHTML=COLABS.map(c=>{
+        const dados=BANCO_HE.find(b=>b.colab===c);
+        if(!dados||!dados.periodos.length) return `<div style="margin-bottom:1rem"><strong>${c}</strong>: <span style="color:var(--tx2);font-size:12px">Nenhum período</span></div>`;
+        const hoje=HOJE.toISOString().split('T')[0];
+        const rows=dados.periodos.map(p=>{
+          const saldo=bheCalcSaldo(p);
+          const venc=p.vencimento?String(p.vencimento).slice(0,10).split('-').reverse().join('/'):'—';
+          return`<tr><td>${p.mes_ref||'—'}</td><td>${bheMinToStr((p.h||0)*60+(p.m||0))}</td><td>${venc}</td><td style="font-weight:700;color:${saldo.min>0?'var(--vd)':'var(--vm)'}">${bheMinToStr(saldo.min)}</td></tr>`;
+        }).join('');
+        return`<div style="margin-bottom:1.5rem"><div style="font-weight:700;color:var(--az);margin-bottom:.5rem">👤 ${c}</div>
+          <div class="tw"><table><thead><tr><th>Período</th><th>Total HE</th><th>Vencimento</th><th>Saldo</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+      }).join('');
+    }
+    return;
+  }
   if(!colab){if(painel)painel.style.display='none';if(empty)empty.style.display='block';return;}
   if(painel)painel.style.display='block';if(empty)empty.style.display='none';
   // Cabeçalho com nome + filtro de status
