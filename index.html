@@ -1238,26 +1238,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       </div>
 
 
-        <!-- META MÍNIMA INDIVIDUAL -->
-        <div class="cd" style="border-top:3px solid var(--vd);margin-top:1rem">
-          <div class="cd-t">🎯 Meta mínima individual por dia</div>
-          <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
-            <div class="field-wrap" style="min-width:160px">
-              <span class="field-label">Meta mínima (itens/dia)</span>
-              <input type="number" id="adm-meta-min" placeholder="Ex: 30" min="1"
-                style="width:100%;font-size:22px;font-weight:700;color:var(--vd);text-align:center;padding:8px">
-            </div>
-            <div style="padding:.75rem 1rem;background:var(--vdc);border-radius:8px;border:1px solid rgba(14,158,106,.2);flex:1;min-width:160px">
-              <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">Meta vigente</div>
-              <div style="font-size:20px;font-weight:700;color:var(--vd)" id="adm-cur-metamin">—</div>
-              <div style="font-size:10px;color:var(--tx2);margin-top:2px">itens por dia · usada para avaliar desempenho individual</div>
-            </div>
-            <button class="btn btn-g" onclick="salvarMetaMin()" style="align-self:flex-end">✓ Salvar</button>
-            <span id="adm-metamin-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;align-self:flex-end">✓ Salvo!</span>
-          </div>
-        </div>
-      </div>
-
       <!-- ── SENHAS ── -->
       <div id="adm-senhas" class="adm-tab" style="display:none">
         <div class="cd">
@@ -5634,3 +5614,4 @@ fbCarregarTudo().then(()=>{ initMetaGap(); });
 </script>
 </body>
 </html>
+  
