@@ -1300,23 +1300,45 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div id="adm-hist-prod" class="adm-tab" style="display:none">
         <div class="cd">
           <div class="cd-t">📊 Histórico da Produção — filtros</div>
-          <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
+            <!-- Ciclo de medição -->
+            <div class="field-wrap" style="min-width:170px">
+              <span class="field-label">Ciclo de medição</span>
+              <select id="adm-prod-ciclo" onchange="filtrarHistProdCiclo()" style="width:100%">
+                <option value="">Todos os ciclos</option>
+                <option value="mar-abr">Mar/Abr 2026</option>
+                <option value="abr-mai">Abr/Mai 2026</option>
+              </select>
+            </div>
+            <!-- Colaborador -->
             <div class="field-wrap" style="min-width:150px">
               <span class="field-label">Colaborador</span>
               <select id="adm-prod-colab" onchange="filtrarHistProd()" style="width:100%">
                 <option value="">Todos</option>
               </select>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;align-self:flex-end">
+            <!-- Filtro Meta -->
+            <div class="field-wrap" style="min-width:130px">
+              <span class="field-label">Meta</span>
+              <select id="adm-prod-meta" onchange="filtrarHistProd()" style="width:100%">
+                <option value="">Todos</option>
+                <option value="ok">✓ Atingiu</option>
+                <option value="abaixo">Abaixo</option>
+                <option value="ajuda">Ajuda/Líder</option>
+                <option value="folga">Folga/Férias</option>
+              </select>
+            </div>
+            <!-- Dia ou período -->
+            <div style="display:flex;align-items:center;gap:6px">
               <span style="font-size:12px;color:var(--tx2)">Dia:</span>
               <input type="date" id="adm-prod-dia" style="width:150px;font-size:12px;padding:5px 10px">
             </div>
-            <span style="font-size:11px;color:var(--tx2);align-self:flex-end;padding-bottom:6px">ou período:</span>
-            <input type="date" id="adm-prod-de" style="width:145px;font-size:12px;padding:5px 10px;align-self:flex-end">
-            <span style="font-size:11px;color:var(--tx2);align-self:flex-end;padding-bottom:6px">até</span>
-            <input type="date" id="adm-prod-ate" style="width:145px;font-size:12px;padding:5px 10px;align-self:flex-end">
-            <button class="btn btn-s" style="padding:5px 12px;font-size:11px;align-self:flex-end" onclick="filtrarHistProd()">Filtrar</button>
-            <button class="btn btn-s" style="padding:5px 12px;font-size:11px;align-self:flex-end" onclick="filtrarHistProd('all')">Todos</button>
+            <span style="font-size:11px;color:var(--tx2);padding-bottom:2px">ou período:</span>
+            <input type="date" id="adm-prod-de" style="width:145px;font-size:12px;padding:5px 10px">
+            <span style="font-size:11px;color:var(--tx2);padding-bottom:2px">até</span>
+            <input type="date" id="adm-prod-ate" style="width:145px;font-size:12px;padding:5px 10px">
+            <button class="btn btn-s" style="padding:5px 12px;font-size:11px" onclick="filtrarHistProd()">Filtrar</button>
+            <button class="btn btn-s" style="padding:5px 12px;font-size:11px" onclick="limparFiltrosAdmProd()">Limpar</button>
           </div>
           <div class="tw" style="margin-bottom:1rem">
             <table>
@@ -2631,7 +2653,16 @@ function selecionarData(val){
     // Registrar automaticamente se ainda não existir
     const jaReg = registros.some(r=>r.colab===colabLogado&&r.data===val);
     if(!jaReg){
-      registros.push({colab:colabLogado,data:val,pres:'Férias',f:Array(10).fill(0),justif:'Férias programadas'});
+      // Buscar dados reais de férias
+      const feriasInfo = (FERIAS_DATA||[]).find(f=>{
+        if(f.colab!==colabLogado||!f.saida) return false;
+        const retStr=(f.retorno||'').includes('/')?f.retorno.split('/').reverse().join('-'):f.retorno;
+        return val>=f.saida&&val<=retStr;
+      });
+      const saidaFmt = feriasInfo?.saida ? feriasInfo.saida.split('-').reverse().join('/') : '—';
+      const retornoFmt = feriasInfo?.retorno || '—';
+      const justifFerias = `Férias — Saída: ${saidaFmt} | Retorno: ${retornoFmt}`;
+      registros.push({colab:colabLogado,data:val,pres:'Férias',f:Array(12).fill(0),justif:justifFerias});
       renderMiniHist();
     }
     return;
@@ -2670,7 +2701,20 @@ function selecionarData(val){
       }
       const jaReg = registros.some(r=>r.colab===colabLogado&&r.data===val);
       if(!jaReg){
-        registros.push({colab:colabLogado,data:val,pres:'Folga',f:Array(10).fill(0),justif:'Folga — banco de horas (dia inteiro)'});
+        // Buscar período e vencimento do banco HE
+        let periodoRef = '—', vencRef = '—';
+        if(dadosHE){
+          dadosHE.periodos.forEach(p=>{
+            (p.usos||[]).forEach(u=>{
+              if(u.tipo==='folga'&&u.data===val){
+                periodoRef = p.mes_ref||'—';
+                vencRef = p.vencimento ? String(p.vencimento).slice(0,10).split('-').reverse().join('/') : '—';
+              }
+            });
+          });
+        }
+        const justifFolga = `Folga — Banco de Horas (dia inteiro) | Período: ${periodoRef} | Vencimento: ${vencRef}`;
+        registros.push({colab:colabLogado,data:val,pres:'Folga',f:Array(12).fill(0),justif:justifFolga});
         renderMiniHist();
       }
       return;
@@ -2683,7 +2727,19 @@ function selecionarData(val){
       const mFolga = String(folgaDia.m).padStart(2,'0');
       // Guardar meta ajustada temporariamente
       window._metaAjustadaTemp = metaAjustada;
-      window._folgaParcialInfo = `Folga parcial de banco de horas: ${hFolga}h${mFolga}min. Meta reduzida de ${metaOriginal} para ${metaAjustada} itens (${Math.round(trabMin/60*10)/10}h trabalhadas).`;
+      // Buscar período e vencimento do banco HE para folga parcial
+      let periodoRefP = '—', vencRefP = '—';
+      if(dadosHE){
+        dadosHE.periodos.forEach(p=>{
+          (p.usos||[]).forEach(u=>{
+            if(u.tipo==='folga'&&u.data===val){
+              periodoRefP = p.mes_ref||'—';
+              vencRefP = p.vencimento ? String(p.vencimento).slice(0,10).split('-').reverse().join('/') : '—';
+            }
+          });
+        });
+      }
+      window._folgaParcialInfo = `Folga parcial — Banco de Horas: ${hFolga}h${mFolga}min | Período: ${periodoRefP} | Vencimento: ${vencRefP} | Meta reduzida de ${metaOriginal} para ${metaAjustada} itens (${Math.round(trabMin/60*10)/10}h trabalhadas).`;
       // Mostrar aviso
       const avFolga = document.getElementById('pr-aviso-ferias');
       if(avFolga){
@@ -3682,11 +3738,45 @@ function filtrarHistMapaCiclo(){
 }
 
 // ── HISTÓRICO PRODUÇÃO ──
+// Ciclos de medição — datas
+const CICLOS_PROD = {
+  'mar-abr': {de:'2026-03-26', ate:'2026-04-24', nome:'Mar/Abr 2026'},
+  'abr-mai': {de:'2026-04-27', ate:'2026-05-29', nome:'Abr/Mai 2026'},
+};
+function filtrarHistProdCiclo(){
+  const ciclo = document.getElementById('adm-prod-ciclo')?.value||'';
+  if(ciclo && CICLOS_PROD[ciclo]){
+    document.getElementById('adm-prod-de').value = CICLOS_PROD[ciclo].de;
+    document.getElementById('adm-prod-ate').value = CICLOS_PROD[ciclo].ate;
+    document.getElementById('adm-prod-dia').value = '';
+  } else {
+    document.getElementById('adm-prod-de').value = '';
+    document.getElementById('adm-prod-ate').value = '';
+  }
+  filtrarHistProd();
+}
+function limparFiltrosAdmProd(){
+  ['adm-prod-ciclo','adm-prod-colab','adm-prod-meta','adm-prod-dia','adm-prod-de','adm-prod-ate'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  filtrarHistProd('all');
+}
+function getMetaPill(r, tot, metaVal){
+  const semMeta = COLABS_SEM_META.includes(r.colab);
+  const isAndre = r.colab === 'André';
+  if(r.pres==='Folga'||r.pres==='Férias') return '<span class="pl pl-g">'+r.pres+'</span>';
+  if(semMeta) return isAndre
+    ? '<span class="pl pl-az">Líder</span>'
+    : '<span class="pl pl-az">Ajuda</span>';
+  if(tot>=metaVal) return '<span class="pl pl-ok">✓ Meta</span>';
+  return '<span class="pl pl-b">Abaixo</span>';
+}
 function filtrarHistProd(modo){
   let regs=[];
   if(modo==='all'){regs=[...registros];}
   else {
     const colab=document.getElementById('adm-prod-colab').value;
+    const metaFiltro=document.getElementById('adm-prod-meta')?.value||'';
     const dia=document.getElementById('adm-prod-dia').value;
     const de=document.getElementById('adm-prod-de').value;
     const ate=document.getElementById('adm-prod-ate').value;
@@ -3694,27 +3784,32 @@ function filtrarHistProd(modo){
     if(colab) regs=regs.filter(r=>r.colab===colab);
     if(dia) regs=regs.filter(r=>r.data===dia);
     else if(de&&ate) regs=regs.filter(r=>r.data>=de&&r.data<=ate);
+    // Filtro meta
+    if(metaFiltro){
+      const metaVal=getMeta();
+      regs=regs.filter(r=>{
+        const tot=(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0);
+        const semMeta=COLABS_SEM_META.includes(r.colab);
+        const folga=r.pres==='Folga'||r.pres==='Férias';
+        if(metaFiltro==='ok') return !semMeta&&!folga&&tot>=metaVal;
+        if(metaFiltro==='abaixo') return !semMeta&&!folga&&tot<metaVal;
+        if(metaFiltro==='ajuda') return semMeta;
+        if(metaFiltro==='folga') return folga;
+        return true;
+      });
+    }
   }
-  const sums=Array(10).fill(0);let totT=0;
+  const sums=Array(12).fill(0);let totT=0;
   document.getElementById('adm-prod-tb').innerHTML=regs.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(r=>{
-    const tot=(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0); // apenas 1ª análise + tratativa + status B
+    const tot=(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0);
     totT+=tot;r.f.forEach((v,i)=>sums[i]+=v);
-    const meta=getMeta();
-    const pill=tot>=meta?'<span class="pl pl-ok">✓ Meta</span>':r.pres==='Folga'?'<span class="pl pl-g">Folga</span>':'<span class="pl pl-b">Abaixo</span>';
+    const metaVal=getMeta();
     const fOrdem = [r.f[0],r.f[1],r.f[2],r.f[11],r.f[3],r.f[4],r.f[5],r.f[6],r.f[7],r.f[8],r.f[9],r.f[10]];
-    const semMeta = COLABS_SEM_META.includes(r.colab);
-    const metaVal = getMeta();
-    const metaPill = r.pres==='Folga'||r.pres==='Férias'
-      ? '<span class="pl pl-g">'+r.pres+'</span>'
-      : semMeta
-        ? '<span class="pl pl-az">Ajuda</span>'
-        : tot>=metaVal
-          ? '<span class="pl pl-ok">✓ Meta</span>'
-          : '<span class="pl pl-b">Abaixo</span>';
+    const metaPill = getMetaPill(r, tot, metaVal);
     return`<tr><td>${fmtDt(r.data)}</td><td><strong>${r.colab}</strong></td><td>${presPill(r.pres)}</td>${fOrdem.map(v=>`<td>${v||'—'}</td>`).join('')}<td style="font-weight:700">${tot}</td><td>${metaPill}</td><td style="font-size:10px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.justif||'—'}</td></tr>`;
   }).join('');
   const sumsOrdem = [sums[0],sums[1],sums[2],sums[11],sums[3],sums[4],sums[5],sums[6],sums[7],sums[8],sums[9],sums[10]];
-  const totMeta = sums[0]+sums[1]+sums[2]; // total meta = 1ª análise + tratativa + status B
+  const totMeta = sums[0]+sums[1]+sums[2];
   document.getElementById('adm-prod-tf').innerHTML=`<tr><td colspan="3"><strong>TOTAL</strong></td>${sumsOrdem.map(v=>`<td style="font-weight:700">${v||'—'}</td>`).join('')}<td style="font-weight:700">${totMeta}</td><td>—</td></tr>`;
 }
 
