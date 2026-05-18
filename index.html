@@ -2806,10 +2806,14 @@ function renderPainelEstrategico(){
   const mediaEquipe = nDias>0?Math.round(totalAnalis/nDias):0;
   const metaDia = getMeta();
 
-  // Melhor e pior dia
-  const porDia = pcpPer.map(r=>({dt:r.data,tot:r.f1||0}));
+  // Melhor e pior dia = pf0+pf1+pf2+pf11 (1aAnalise+Tratativa+StatusB+Outros)
+  const porDia = dias.map(dt=>{
+    const regsD=registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias');
+    const tot=regsD.reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0)+(r.f[11]||0),0);
+    return{dt,tot};
+  });
   const melhor = porDia.length?porDia.reduce((a,b)=>b.tot>a.tot?b:a):{dt:'—',tot:0};
-  const pior = porDia.length?porDia.reduce((a,b)=>b.tot<a.tot?b:a):{dt:'—',tot:0};
+  const pior = porDia.filter(d=>d.tot>0).length?porDia.filter(d=>d.tot>0).reduce((a,b)=>b.tot<a.tot?b:a):{dt:'—',tot:0};
   const totalMapaAn = totalAnalis;
 
   // ── Cards de análise ──
@@ -2817,7 +2821,7 @@ function renderPainelEstrategico(){
   if(analEl){
     const cards2=[
       {label:'Itens analisados',sub:nDias+' dia(s)',val:totalAnalis.toLocaleString('pt-BR'),cor:'var(--vd)'},
-      {label:'Total de ações',sub:'',val:totalAnalis.toLocaleString('pt-BR'),cor:'var(--az)'},
+
       {label:'Média diária equipe',sub:'meta '+metaDia+'/colaborador',val:mediaEquipe,cor:'var(--azm)'},
       {label:'Dias analisados',sub:'',val:nDias,cor:'var(--azm)'},
       {label:'🏆 Melhor dia',sub:fmtDt(melhor.dt),val:melhor.tot,cor:'var(--vd)'},
