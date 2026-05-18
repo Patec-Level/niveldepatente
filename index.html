@@ -355,7 +355,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
   <div class="sb-mod">◈ ESTRATÉGICO</div>
   <div class="sb-it active" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
-  <div class="sb-it" onclick="go('radar',this)">📡 Radar Operacional</div>
+  <div class="sb-it" onclick="go('radar',this)">📡 Radar Estratégico</div>
   <div class="sb-it" onclick="go('vg-visao',this)">📊 Visão Executiva</div>
   <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ EXECUÇÃO</div>
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
@@ -894,7 +894,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('upload-adm',this)">⬆ Upload MAPA</button>
         <button class="stab" onclick="setAdmTab('export-adm',this)">💾 Exportar</button>
         <button class="stab" onclick="setAdmTab('resultado-medicao',this)">📊 Resultado de Medição</button>
-        <button class="stab" onclick="setAdmTab('radar-adm',this)">📡 Radar Operacional</button>
+        <button class="stab" onclick="setAdmTab('radar-adm',this)">📡 Radar Estratégico</button>
       </div>
 
       <!-- ── GESTÃO DE CICLOS ── -->
@@ -2101,8 +2101,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="btn btn-s" style="font-size:11px" onclick="renderRadarOperacional()">↺ Atualizar</button>
       </div>
 
-      <!-- CARDS PRINCIPAIS -->
-      <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem"></div>
+      <!-- ── FILTRO ANALISTA AUTOMÁTICO (Col D) ── -->
+      <div class="cd" style="margin-bottom:1rem;padding:.875rem 1.1rem">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">📡 Analista Automático</div>
+          <div id="radar-filtro-status-wrap" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+          <button onclick="radarFiltroStatusReset()" style="margin-left:auto;font-size:10px;padding:4px 10px;border:1px solid var(--brd);border-radius:6px;background:var(--cin);cursor:pointer;color:var(--tx2);font-weight:600">✕ Limpar filtro</button>
+        </div>
+      </div>
+
+      <!-- CARDS PRINCIPAIS (dinâmicos conforme filtro) -->
+      <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:1rem"></div>
 
       <!-- TABELAS -->
       <div class="g2" style="margin-bottom:1rem">
@@ -2118,10 +2127,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- ATRASADOS DETALHADOS -->
+      <!-- ITENS DETALHADOS -->
       <div class="cd">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
-          <div class="cd-t" style="margin:0">⚠ Itens atrasados</div>
+          <div class="cd-t" style="margin:0">📋 Itens detalhados</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <select id="radar-filtro-analista" style="font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px" onchange="renderRadarTabela()">
               <option value="">Todos analistas</option>
@@ -2131,9 +2140,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </select>
           </div>
         </div>
-        <div class="tw" style="max-height:400px;overflow-y:auto">
+        <div class="tw" style="max-height:420px;overflow-y:auto">
           <table>
-            <thead><tr><th>RC</th><th>Fila</th><th>Analista</th><th>SLA</th><th>Status</th><th>Prazo Retorno</th></tr></thead>
+            <thead><tr><th>RC</th><th>Fila</th><th>Analista</th><th>SLA</th><th>Controle</th><th>Status</th><th>Prazo Retorno</th></tr></thead>
             <tbody id="radar-tb-atrasados"></tbody>
           </table>
         </div>
@@ -5502,10 +5511,11 @@ async function salvarMetaGap(){ salvarMetaCard(); salvarPatecCard(); salvarMetaP
 
 
 // ════════════════════════════════════════════
-// RADAR OPERACIONAL
+// RADAR ESTRATÉGICO
 // ════════════════════════════════════════════
-let _radarDados = [];     // dados da planilha em memória
-let _radarTs    = null;   // timestamp da última atualização
+let _radarDados = [];
+let _radarTs    = null;
+let _radarFiltroStatus = ''; // filtro ativo da col D (ANALISTA_AUTOMATICO)
 
 // ── Carregar do Firebase ao iniciar ──
 async function fbCarregarRadar(){
@@ -5545,7 +5555,6 @@ async function radarOnFile(file){
     const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
     if(msgEl) msgEl.textContent='Processando '+raw.length+' registros...';
 
-    // Normalizar colunas
     const rows=raw.filter(r=>r['RC']&&r['RC']!=='RC').map(r=>({
       analista_auto: String(r['ANALISTA_AUTOMATICO']||'').trim(),
       rc:            String(r['RC']||'').trim(),
@@ -5554,7 +5563,6 @@ async function radarOnFile(file){
       sla:           Number(r['SLA LevelBoard']||0),
       fila:          String(r['Fila ']||r['Fila']||'').trim(),
       analista:      String(r['Analista ']||r['Analista']||'').trim(),
-      dt_enc:        r['DATA_ENCERRAMENTO_OPORTUNIDADE']||0,
       controle:      String(r['Controle ']||r['Controle']||'').trim(),
       prazo:         r['PRAZO DE RETORNO']||0,
       status:        String(r['STATUS']||'').trim(),
@@ -5610,7 +5618,6 @@ function radarInitADM(){
   set('radar-sla-critico',r.sla_critico);
   set('radar-prazo-alerta',r.prazo_alerta);
   set('radar-prazo-critico',r.prazo_critico);
-  // Preview
   const prev=document.getElementById('radar-regras-preview');
   if(prev) prev.innerHTML=
     '🟡 <strong>Alerta</strong>: SLA > '+r.sla_alerta+' dias <strong>OU</strong> prazo de enc. ≤ '+r.prazo_alerta+' dias<br>'+
@@ -5631,98 +5638,144 @@ function radarSalvarRegras(){
   renderRadarOperacional();
 }
 
-// ── Render Radar ──
+// ── Botões de filtro: Analista Automático (Col D) ──
+function radarRenderFiltroStatus(rows){
+  const wrap=document.getElementById('radar-filtro-status-wrap');
+  if(!wrap) return;
+  // Pega todos os valores únicos de analista_auto
+  const vals=[...new Set(rows.map(r=>r.analista_auto).filter(Boolean))].sort();
+  // Paleta de cores por valor
+  const cores={
+    'Analisar PATEC Finalizado':     {bg:'var(--azc)',  cor:'var(--azm)',  brd:'rgba(26,74,138,.3)'},
+    'Abrir PATEC identico não':      {bg:'var(--amc)',  cor:'var(--am)',   brd:'rgba(192,122,18,.3)'},
+    'Aguardar PATEC ser Finalizado': {bg:'var(--cin)',  cor:'var(--tx2)', brd:'var(--brd)'},
+    'PATEC Finalizado sem fornecedores aprovados':{bg:'var(--vmc)',cor:'var(--vm)',brd:'rgba(217,64,64,.3)'},
+    'Abrir PATEC Grupo de Mercadoria Obrigatório':{bg:'rgba(14,158,106,.1)',cor:'var(--vd)',brd:'rgba(14,158,106,.3)'},
+  };
+  wrap.innerHTML = vals.map(v=>{
+    const c=cores[v]||{bg:'var(--cin)',cor:'var(--tx2)',brd:'var(--brd)'};
+    const ativo=_radarFiltroStatus===v;
+    const tot=rows.filter(r=>r.analista_auto===v).length;
+    return `<button onclick="radarSetFiltroStatus('${v.replace(/'/g,"\'")}',this)"
+      style="font-size:10px;font-weight:${ativo?'700':'600'};padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .15s;
+      background:${ativo?c.cor:'#fff'};color:${ativo?'#fff':c.cor};
+      border:1.5px solid ${c.brd};box-shadow:${ativo?'0 2px 8px rgba(0,0,0,.12)':'none'}">
+      ${v} <span style="opacity:.75">(${tot})</span>
+    </button>`;
+  }).join('');
+}
+
+function radarSetFiltroStatus(val, btn){
+  _radarFiltroStatus = (_radarFiltroStatus===val)?'':val; // toggle
+  renderRadarOperacional();
+}
+
+function radarFiltroStatusReset(){
+  _radarFiltroStatus='';
+  renderRadarOperacional();
+}
+
+// ── Render principal ──
 function renderRadarOperacional(){
   if(!_radarDados.length) return;
-  const rows=_radarDados;
+  const todosRows=_radarDados;
   const r=radarGetRegras();
-  const hoje2=new Date(); hoje2.setHours(12,0,0,0);
 
-  // Calcular critérios
-  const total=rows.length;
-  const xlToDate=n=>{if(!n||isNaN(n))return null;return new Date((n-25569)*86400000);};
-  const itensSlaAlerta   = rows.filter(r=>r.sla>r.sla_alerta||r.sla>r.sla_alerta).length;
-  // Recalc com regras corretas
-  const nSlaAlerta    = rows.filter(d=>Number(d.sla)>r.sla_alerta).length;
-  const nSlaCritico   = rows.filter(d=>Number(d.sla)>r.sla_critico).length;
-  const nPrazoCritico = rows.filter(d=>{
-    const dt=xlToDate(d.dt_enc);if(!dt)return false;
-    const diff=Math.round((dt-hoje2)/86400000);
-    return diff<=r.prazo_critico&&diff>=0;
-  }).length;
-  const nPrazoAlerta  = rows.filter(d=>{
-    const dt=xlToDate(d.dt_enc);if(!dt)return false;
-    const diff=Math.round((dt-hoje2)/86400000);
-    return diff<=r.prazo_alerta&&diff>r.prazo_critico;
-  }).length;
+  // Render botões de filtro (sempre com todos os dados para mostrar contagens totais)
+  radarRenderFiltroStatus(todosRows);
 
-  let saude,saudeIco,saudeCor;
-  if(nSlaCritico>0||nPrazoCritico>0){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
-  else if(nSlaAlerta>0||nPrazoAlerta>0){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
-  else{saude='Operação Estável';saudeIco='🟢';saudeCor='var(--vd)';}
+  // Aplicar filtro da Col D
+  const rows = _radarFiltroStatus
+    ? todosRows.filter(d=>d.analista_auto===_radarFiltroStatus)
+    : todosRows;
 
-  const atrasados=rows.filter(d=>d.status==='Atrasado').length;
-  const pctAt=total>0?Math.round(atrasados/total*100):0;
-
+  // Status badge
   const stEl=document.getElementById('radar-status-txt');
   const icoEl=document.getElementById('radar-status-ico');
   const attEl=document.getElementById('radar-ultima-att');
-  if(stEl){stEl.textContent=saude;stEl.style.color=saudeCor;}
+  const nSlaCritico=rows.filter(d=>Number(d.sla)>r.sla_critico).length;
+  const nSlaAlerta=rows.filter(d=>Number(d.sla)>r.sla_alerta).length;
+  let saude,saudeIco,saudeCor;
+  if(nSlaCritico>0){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
+  else if(nSlaAlerta>0){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
+  else{saude='Operação Estável';saudeIco='🟢';saudeCor='var(--vd)';}
+  if(stEl){stEl.textContent=saude+(_radarFiltroStatus?' · '+_radarFiltroStatus:'');stEl.style.color=saudeCor;}
   if(icoEl) icoEl.textContent=saudeIco;
   if(attEl&&_radarTs){
     const d=new Date(_radarTs);
     attEl.textContent='Última atualização: '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+d.toLocaleDateString('pt-BR');
   }
 
-  // Cards
-  const noPrazo=rows.filter(r=>r.status==='Dentro do Prazo').length;
-  const concluidos=rows.filter(r=>r.status==='Concluído').length;
-  const semAnalista=rows.filter(r=>!r.analista||r.analista==='#N/A').length;
-  const slaAlto=rows.filter(r=>r.sla>100).length;
+  // ── CARDS conforme filtro ──
+  const total      = rows.length;
+  const totalRCs   = [...new Set(rows.map(r=>r.rc).filter(Boolean))].length;
+  const maiorSLA   = rows.length ? Math.max(...rows.map(d=>Number(d.sla)||0)) : 0;
+  const criticos   = rows.filter(d=>Number(d.sla)>r.sla_critico).length;
+  const atrasados  = rows.filter(d=>d.status==='Atrasado').length;
+  const dentroP    = rows.filter(d=>d.status==='Dentro do Prazo').length;
+  // Controle (Col L) — normalizar espaços para comparação
+  const normCtrl   = v=>String(v||'').trim().toLowerCase();
+  const agTrat     = rows.filter(d=>normCtrl(d.controle)==='ag. tratamento').length;
+  const agForn     = rows.filter(d=>normCtrl(d.controle)==='fornecedor').length;
+  const mdg        = rows.filter(d=>normCtrl(d.controle)==='mdg').length;
+  const requisit   = rows.filter(d=>normCtrl(d.controle)==='requisitante').length;
+  const valTiago   = rows.filter(d=>normCtrl(d.controle)==='validação thiago').length;
+
+  const pctAt=total>0?Math.round(atrasados/total*100):0;
+
   const cardsEl=document.getElementById('radar-cards');
   if(cardsEl) cardsEl.innerHTML=[
-    {label:'Total na fila',       val:total,                         cor:'var(--az)', bg:'var(--azc)'},
-    {label:'Atrasados',            val:atrasados+' ('+pctAt+'%)',     cor:'var(--vm)', bg:'var(--vmc)'},
-    {label:'SLA Crítico (>'+r.sla_critico+'d)',  val:nSlaCritico,    cor:'var(--vm)', bg:'var(--vmc)'},
-    {label:'Prazo Crítico (≤'+r.prazo_critico+'d)',val:nPrazoCritico,cor:'var(--vm)', bg:'var(--vmc)'},
-    {label:'SLA Alerta (>'+r.sla_alerta+'d)',    val:nSlaAlerta,     cor:'var(--am)', bg:'var(--amc)'},
-    {label:'Prazo Alerta (≤'+r.prazo_alerta+'d)',val:nPrazoAlerta,   cor:'var(--am)', bg:'var(--amc)'},
-    {label:'Sem analista',         val:semAnalista,                   cor:'var(--am)', bg:'var(--cin)'},
-    {label:'Concluídos',           val:concluidos,                    cor:'var(--vd)', bg:'var(--cin)'},
-  ].map(c=>'<div style="background:'+c.bg+';border-radius:10px;padding:.875rem;text-align:center;border:1px solid rgba(0,0,0,.07)"><div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px">'+c.label+'</div><div style="font-size:22px;font-weight:700;color:'+c.cor+'">'+c.val+'</div></div>').join('');
+    {label:'Total de RCs',         val:totalRCs,                   cor:'var(--az)',  bg:'var(--azc)',  ico:'🗂'},
+    {label:'Maior SLA',            val:maiorSLA+' dias',           cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⏱'},
+    {label:'Itens Críticos',       val:criticos,                   cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
+    {label:'Itens em Atraso',      val:atrasados+' ('+pctAt+'%)', cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⚠️'},
+    {label:'Dentro do Prazo',      val:dentroP,                    cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✅'},
+    {label:'Ag. Tratamento',       val:agTrat,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🕐'},
+    {label:'Ag. Fornecedor',       val:agForn,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🏭'},
+    {label:'MDG',                  val:mdg,                        cor:'var(--azm)', bg:'var(--azc)',  ico:'📦'},
+    {label:'Requisitante',         val:requisit,                   cor:'var(--azm)', bg:'var(--azc)',  ico:'👤'},
+    {label:'Validação Tiago',      val:valTiago,                   cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✔️'},
+  ].map(c=>`<div style="background:${c.bg};border-radius:10px;padding:.875rem .75rem;text-align:center;border:1px solid rgba(0,0,0,.07)">
+    <div style="font-size:16px;margin-bottom:4px">${c.ico}</div>
+    <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px;line-height:1.3">${c.label}</div>
+    <div style="font-size:22px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
+  </div>`).join('');
 
   // Por analista
   const porAn={};
-  rows.forEach(r=>{
-    const a=(!r.analista||r.analista==='#N/A')?'Sem analista':r.analista;
+  rows.forEach(d=>{
+    const a=(!d.analista||d.analista==='#N/A')?'Sem analista':d.analista.trim();
     if(!porAn[a])porAn[a]={total:0,atrasado:0};
     porAn[a].total++;
-    if(r.status==='Atrasado')porAn[a].atrasado++;
+    if(d.status==='Atrasado')porAn[a].atrasado++;
   });
   const anEl=document.getElementById('radar-por-analista');
   const selAn=document.getElementById('radar-filtro-analista');
+  const curAn=selAn?.value||'';
   if(selAn){
-    const opts=Object.keys(porAn).filter(a=>a!=='Sem analista'&&a!=='Analista').sort();
-    selAn.innerHTML='<option value="">Todos analistas</option>'+opts.map(a=>'<option>'+a+'</option>').join('');
+    const opts=Object.keys(porAn).sort();
+    selAn.innerHTML='<option value="">Todos analistas</option>'+opts.map(a=>`<option${a===curAn?' selected':''}>${a}</option>`).join('');
   }
+  const lim=radarGetRegras();
   if(anEl) anEl.innerHTML='<table style="width:100%"><thead><tr><th>Analista</th><th>Total</th><th>Atrasados</th><th>%</th></tr></thead><tbody>'+
     Object.entries(porAn).sort((a,b)=>b[1].atrasado-a[1].atrasado).map(([a,d])=>{
       const pct=d.total>0?Math.round(d.atrasado/d.total*100):0;
-      const cor=pct>=lim.critico?'var(--vm)':pct>=lim.alerta?'var(--am)':'var(--vd)';
+      const cor=pct>=50?'var(--vm)':pct>=25?'var(--am)':'var(--vd)';
       return'<tr><td><strong>'+a+'</strong></td><td>'+d.total+'</td><td style="color:var(--vm);font-weight:700">'+d.atrasado+'</td><td style="font-weight:700;color:'+cor+'">'+pct+'%</td></tr>';
     }).join('')+'</tbody></table>';
 
   // Por fila
   const porFila={};
-  rows.forEach(r=>{
-    const f=r.fila||'—';
+  rows.forEach(d=>{
+    const f=d.fila||'—';
     if(!porFila[f])porFila[f]={total:0,atrasado:0};
     porFila[f].total++;
-    if(r.status==='Atrasado')porFila[f].atrasado++;
+    if(d.status==='Atrasado')porFila[f].atrasado++;
   });
   const filaEl=document.getElementById('radar-por-fila');
   const selFila=document.getElementById('radar-filtro-fila');
-  if(selFila) selFila.innerHTML='<option value="">Todas filas</option>'+Object.keys(porFila).sort().map(f=>'<option>'+f+'</option>').join('');
+  const curFila=selFila?.value||'';
+  if(selFila) selFila.innerHTML='<option value="">Todas filas</option>'+Object.keys(porFila).sort().map(f=>`<option${f===curFila?' selected':''}>${f}</option>`).join('');
   if(filaEl) filaEl.innerHTML='<table style="width:100%"><thead><tr><th>Fila</th><th>Total</th><th>Atrasados</th></tr></thead><tbody>'+
     Object.entries(porFila).sort((a,b)=>b[1].total-a[1].total).map(([f,d])=>
       '<tr><td>'+f+'</td><td>'+d.total+'</td><td style="color:var(--vm);font-weight:700">'+d.atrasado+'</td></tr>'
@@ -5734,22 +5787,29 @@ function renderRadarOperacional(){
 function renderRadarTabela(){
   const filAn=document.getElementById('radar-filtro-analista')?.value||'';
   const filFila=document.getElementById('radar-filtro-fila')?.value||'';
-  let rows=_radarDados.filter(r=>r.status==='Atrasado');
-  if(filAn) rows=rows.filter(r=>r.analista===filAn||(!r.analista&&filAn==='Sem analista'));
+  // Aplica filtro Col D + filtros da tabela
+  let rows=_radarFiltroStatus
+    ? _radarDados.filter(r=>r.analista_auto===_radarFiltroStatus)
+    : _radarDados;
+  if(filAn){
+    if(filAn==='Sem analista') rows=rows.filter(r=>!r.analista||r.analista==='#N/A');
+    else rows=rows.filter(r=>(r.analista||'').trim()===filAn);
+  }
   if(filFila) rows=rows.filter(r=>r.fila===filFila);
-  // Converter serial Excel para data
   const xlDate=n=>{if(!n||isNaN(n))return'—';const d=new Date((n-25569)*86400000);return d.toLocaleDateString('pt-BR');};
+  const corStatus=s=>s==='Atrasado'?'var(--vmc);color:var(--vm)':s==='Dentro do Prazo'?'var(--vdc);color:var(--vd)':'var(--cin);color:var(--tx2)';
   const tb=document.getElementById('radar-tb-atrasados');
   const cnt=document.getElementById('radar-tb-count');
   if(tb) tb.innerHTML=rows.map(r=>`<tr>
     <td style="font-family:monospace;font-size:11px">${r.rc}</td>
-    <td>${r.fila}</td>
-    <td><strong>${r.analista||'—'}</strong></td>
-    <td style="font-weight:700;color:var(--vm)">${r.sla} dias</td>
-    <td><span style="background:var(--vmc);color:var(--vm);padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700">${r.status}</span></td>
+    <td>${r.fila||'—'}</td>
+    <td><strong>${(!r.analista||r.analista==='#N/A')?'—':r.analista}</strong></td>
+    <td style="font-weight:700;color:${r.sla>90?'var(--vm)':r.sla>60?'var(--am)':'var(--tx)'}">${r.sla} dias</td>
+    <td><span style="font-size:10px;padding:2px 7px;border-radius:5px;background:var(--azc);color:var(--azm);font-weight:600">${r.controle||'—'}</span></td>
+    <td><span style="background:${corStatus(r.status)};padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700">${r.status||'—'}</span></td>
     <td>${xlDate(r.prazo)}</td>
-  </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:1rem">Nenhum item atrasado com este filtro</td></tr>';
-  if(cnt) cnt.textContent=rows.length+' itens atrasados'+(filAn||filFila?' (filtrado)':'');
+  </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:1rem">Nenhum item com este filtro</td></tr>';
+  if(cnt) cnt.textContent=rows.length+' itens'+(filAn||filFila||_radarFiltroStatus?' (filtrado)':'');
 }
 
 // ════════════════════════════════════════════
