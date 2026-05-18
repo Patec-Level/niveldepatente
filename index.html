@@ -1933,6 +1933,76 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+      <!-- DISTRIBUIÇÃO POR LINHA -->
+      <div class="cd" style="margin-top:1rem">
+        <div class="cd-t">📊 Distribuição por linha — análise por colaborador</div>
+
+        <!-- FILTROS -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:1.25rem">
+          <div class="field-wrap">
+            <span class="field-label">Colaborador</span>
+            <select id="dist-colab" onchange="renderDistribuicao()" style="width:100%;padding:6px 10px;font-size:13px">
+              <option value="">Selecione...</option>
+              <option>Lory</option>
+              <option>Ludy</option>
+              <option>Wanessa</option>
+              <option>André</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ABAS: Ciclo / Comparativo -->
+        <div class="stabs" id="dist-tabs" style="margin-bottom:1rem">
+          <button class="stab active" onclick="setDistTab('ciclo',this)">📅 Visão por ciclo</button>
+          <button class="stab" onclick="setDistTab('comparar',this)">⚖ Comparar períodos</button>
+        </div>
+
+        <!-- ABA: VISÃO POR CICLO -->
+        <div id="dist-tab-ciclo">
+          <div class="form-grid" style="margin-bottom:1rem">
+            <div class="field-wrap">
+              <span class="field-label">Ciclo de medição</span>
+              <select id="dist-ciclo-sel" onchange="renderDistribuicao()" style="width:100%;padding:6px 10px;font-size:13px">
+                <option value="atual">Ciclo atual (27/04 – hoje)</option>
+                <option value="marabr">Ciclo Mar/Abr 2026 (26/03 – 24/04)</option>
+                <option value="custom">Período personalizado</option>
+              </select>
+            </div>
+            <div id="dist-custom-wrap" style="display:none" class="field-wrap">
+              <span class="field-label">De</span>
+              <input type="date" id="dist-de" onchange="renderDistribuicao()" style="width:100%">
+            </div>
+            <div id="dist-custom-wrap2" style="display:none" class="field-wrap">
+              <span class="field-label">Até</span>
+              <input type="date" id="dist-ate" onchange="renderDistribuicao()" style="width:100%">
+            </div>
+          </div>
+          <div id="dist-ciclo-result"></div>
+        </div>
+
+        <!-- ABA: COMPARATIVO -->
+        <div id="dist-tab-comparar" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--azm);margin-bottom:.5rem">📅 Período 1</div>
+              <div class="form-grid">
+                <div class="field-wrap"><span class="field-label">De</span><input type="date" id="dist-p1-de" onchange="renderComparativo()" style="width:100%"></div>
+                <div class="field-wrap"><span class="field-label">Até</span><input type="date" id="dist-p1-ate" onchange="renderComparativo()" style="width:100%"></div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--am);margin-bottom:.5rem">📅 Período 2</div>
+              <div class="form-grid">
+                <div class="field-wrap"><span class="field-label">De</span><input type="date" id="dist-p2-de" onchange="renderComparativo()" style="width:100%"></div>
+                <div class="field-wrap"><span class="field-label">Até</span><input type="date" id="dist-p2-ate" onchange="renderComparativo()" style="width:100%"></div>
+              </div>
+            </div>
+          </div>
+          <div id="dist-comparar-result"></div>
+        </div>
+
+      </div>
+
     </div>
 
     <!-- ══════════════════════════════════════════
@@ -2822,6 +2892,111 @@ function renderEstPCP(){
     totalEl.style.display='block';
     totalEl.innerHTML='📋 Registro do dia '+fmtDt(dt)+' — Análise: <strong>'+vAnalise+'</strong> · Total: <strong>'+totalDia+' itens</strong>'+(dtAnt?' · Dia anterior: '+fmtDt(dtAnt):'');
   }
+}
+
+
+// ════════════════════════════════════════════
+// DISTRIBUIÇÃO POR LINHA
+// ════════════════════════════════════════════
+function setDistTab(id, btn){
+  ['ciclo','comparar'].forEach(t=>{
+    const el=document.getElementById('dist-tab-'+t);
+    if(el) el.style.display=t===id?'block':'none';
+  });
+  document.querySelectorAll('#dist-tabs .stab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(id==='ciclo') renderDistribuicao();
+  else renderComparativo();
+}
+
+function distGetPeriodo(){
+  const sel=document.getElementById('dist-ciclo-sel')?.value||'atual';
+  const hoje=HOJE.toISOString().split('T')[0];
+  if(sel==='atual')  return{de:CICLO_ATUAL.inicio, ate:hoje};
+  if(sel==='marabr') return{de:'2026-03-26', ate:'2026-04-24'};
+  return{de:document.getElementById('dist-de')?.value||CICLO_ATUAL.inicio,
+         ate:document.getElementById('dist-ate')?.value||hoje};
+}
+
+function distCalc(colab, de, ate){
+  const regs=registros.filter(r=>r.colab===colab&&r.data>=de&&r.data<=ate&&r.pres!=='Folga'&&r.pres!=='Férias');
+  const soma=i=>regs.reduce((s,r)=>s+(r.f[i]||0),0);
+  const dias=[...new Set(regs.map(r=>r.data))].length;
+  const analise=soma(0)+soma(1)+soma(2)+soma(11);
+  return{
+    dias,
+    analise, tratativa:soma(1), pf0:soma(0), pf2:soma(2), pf11:soma(11),
+    forn:soma(3), req:soma(4), mdg:soma(5), val:soma(6),
+    xgl:soma(7), repub:soma(8), pedidos:soma(9), devol:soma(10),
+    total:analise+soma(3)+soma(4)+soma(5)+soma(6)+soma(7)+soma(8)+soma(9)+soma(10)
+  };
+}
+
+function distBarraHTML(label, val, max, cor){
+  const pct=max>0?Math.round(val/max*100):0;
+  const pctW=Math.max(0,Math.min(100,pct));
+  return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <div style="width:130px;font-size:12px;font-weight:600;color:var(--tx)">${label}</div>
+    <div style="flex:1;height:8px;background:var(--cin);border-radius:4px;overflow:hidden">
+      <div style="width:${pctW}%;height:100%;background:${cor};border-radius:4px;transition:width .4s"></div>
+    </div>
+    <div style="width:45px;text-align:right;font-size:13px;font-weight:700;color:${cor}">${val||'—'}</div>
+  </div>`;
+}
+
+function distResultHTML(d, titulo, cor){
+  const max=Math.max(d.analise,d.forn,d.req,d.mdg,d.val,d.xgl,d.repub,d.pedidos,d.devol)||1;
+  return`
+    <div>
+      <div style="font-size:12px;font-weight:700;color:${cor};margin-bottom:.875rem">${titulo}</div>
+      <div style="font-size:11px;color:var(--tx2);margin-bottom:.75rem">${d.dias} dia(s) · Total: ${d.total} itens</div>
+      <div style="font-size:11px;color:var(--tx2);margin-bottom:.25rem;font-weight:600">Analisados</div>
+      ${distBarraHTML('Analisados', d.analise, d.analise, '#2563EB')}
+      <div style="font-size:11px;color:var(--tx2);margin:.75rem 0 .25rem;font-weight:600">Composição</div>
+      ${distBarraHTML('Tratativa',   d.tratativa, max, '#64748B')}
+      ${distBarraHTML('Fornecedor',  d.forn,      max, '#64748B')}
+      ${distBarraHTML('Requisitante',d.req,       max, '#64748B')}
+      ${distBarraHTML('MDG',         d.mdg,       max, '#64748B')}
+      ${distBarraHTML('Val.Thiago',  d.val,       max, '#64748B')}
+      ${distBarraHTML('XGL',         d.xgl,       max, '#64748B')}
+      ${distBarraHTML('Republicação',d.repub,     max, '#F97316')}
+      ${distBarraHTML('Pedidos',     d.pedidos,   max, '#16A34A')}
+      ${distBarraHTML('Devoluções',  d.devol,     max, '#DC2626')}
+    </div>`;
+}
+
+function renderDistribuicao(){
+  const colab=document.getElementById('dist-colab')?.value;
+  const sel=document.getElementById('dist-ciclo-sel')?.value||'atual';
+  // Mostrar/esconder custom dates
+  const cw=document.getElementById('dist-custom-wrap');
+  const cw2=document.getElementById('dist-custom-wrap2');
+  if(cw) cw.style.display=sel==='custom'?'block':'none';
+  if(cw2) cw2.style.display=sel==='custom'?'block':'none';
+  const el=document.getElementById('dist-ciclo-result');
+  if(!el) return;
+  if(!colab){el.innerHTML='<div class="al al-b">ℹ Selecione um colaborador para ver a distribuição.</div>';return;}
+  const {de,ate}=distGetPeriodo();
+  const d=distCalc(colab,de,ate);
+  el.innerHTML=distResultHTML(d, colab+' · '+fmtDt(de)+' a '+fmtDt(ate), 'var(--azm)');
+}
+
+function renderComparativo(){
+  const colab=document.getElementById('dist-colab')?.value;
+  const el=document.getElementById('dist-comparar-result');
+  if(!el) return;
+  if(!colab){el.innerHTML='<div class="al al-b">ℹ Selecione um colaborador para comparar.</div>';return;}
+  const de1=document.getElementById('dist-p1-de')?.value;
+  const ate1=document.getElementById('dist-p1-ate')?.value;
+  const de2=document.getElementById('dist-p2-de')?.value;
+  const ate2=document.getElementById('dist-p2-ate')?.value;
+  if(!de1||!ate1||!de2||!ate2){el.innerHTML='<div class="al al-b">ℹ Preencha as datas dos dois períodos.</div>';return;}
+  const d1=distCalc(colab,de1,ate1);
+  const d2=distCalc(colab,de2,ate2);
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    ${distResultHTML(d1,'Período 1 · '+fmtDt(de1)+' a '+fmtDt(ate1),'var(--azm)')}
+    ${distResultHTML(d2,'Período 2 · '+fmtDt(de2)+' a '+fmtDt(ate2),'var(--am)')}
+  </div>`;
 }
 
 function renderPainelEstrategico(){
