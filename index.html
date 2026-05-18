@@ -1910,6 +1910,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- CARDS DE ANÁLISE -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem" id="est-cards-analise"></div>
 
+      <!-- ALERTA DO CICLO -->
+      <div id="est-alerta-ciclo" style="padding:.75rem 1rem;border-radius:8px;font-weight:700;font-size:13px;margin-bottom:1rem;text-align:center">—</div>
+
       <!-- GRÁFICOS -->
       <div class="g2" style="margin-bottom:1rem">
         <div class="cd">
@@ -2676,12 +2679,12 @@ function renderCardsDia(){
   const totPatecAnt=mapaAnt?(l3a+l4a+l5a+l6a):null;
 
   const cards=[
-    {label:'PATEC Finalizado',    sub:'L3 — Analisar PATEC Finalizado',  val:l3,  ant:l3a, cor:'#3266AD',bg:'#EBF0FA'},
-    {label:'Ag. PATEC Finalizar', sub:'L4 — Aguardar PATEC Finalizado',  val:l4,  ant:l4a, cor:'#3266AD',bg:'#EBF0FA'},
-    {label:'100% Reprovado',      sub:'L5 — PATEC Fin. sem forn. aprov.',val:l5,  ant:l5a, cor:'var(--vd)',bg:'var(--vdc)'},
-    {label:'PATEC Cancelado',     sub:'L6 — Analisar PATEC Cancelado',   val:l6,  ant:l6a, cor:'var(--vd)',bg:'var(--vdc)'},
-    {label:'Abrir ID Não',        sub:'L7 — Abrir PATEC Idêntico Não',   val:l7,  ant:l7a, cor:'var(--am)',bg:'var(--amc)'},
-    {label:'Abrir PATEC Obrig.',  sub:'L8 — Abrir PATEC Grupo Merc.',    val:l8,  ant:l8a, cor:'var(--am)',bg:'var(--amc)'},
+    {label:'PATEC Finalizado',    sub:'Analisar PATEC Finalizado',  val:l3,  ant:l3a, cor:'#3266AD',bg:'#EBF0FA'},
+    {label:'Ag. PATEC Finalizar', sub:'Aguardar PATEC Finalizado',  val:l4,  ant:l4a, cor:'#3266AD',bg:'#EBF0FA'},
+    {label:'100% Reprovado',      sub:'PATEC Fin. sem forn. aprovados',val:l5,  ant:l5a, cor:'var(--vd)',bg:'var(--vdc)'},
+    {label:'PATEC Cancelado',     sub:'Analisar PATEC Cancelado',   val:l6,  ant:l6a, cor:'var(--vd)',bg:'var(--vdc)'},
+    {label:'Abrir ID Não',        sub:'Abrir PATEC Idêntico Não',   val:l7,  ant:l7a, cor:'var(--am)',bg:'var(--amc)'},
+    {label:'Abrir PATEC Obrig.',  sub:'Abrir PATEC Grupo Mercadológico',    val:l8,  ant:l8a, cor:'var(--am)',bg:'var(--amc)'},
     {label:'Total PATEC',         sub:'L3+L4+L5+L6',                     val:totPatec,ant:totPatecAnt,cor:'var(--azm)',bg:'var(--azc)'},
     {label:'Total Geral',         sub:'L3 a L8',                         val:totGeral,ant:mapaAnt?(l3a+l4a+l5a+l6a+l7a+l8a):null,cor:'var(--az)',bg:'var(--cin)'},
   ];
@@ -2823,7 +2826,7 @@ function renderPainelEstrategico(){
       {label:'Itens analisados',sub:nDias+' dia(s)',val:totalAnalis.toLocaleString('pt-BR'),cor:'var(--vd)'},
 
       {label:'Média diária equipe',sub:'meta '+metaDia+'/colaborador',val:mediaEquipe,cor:'var(--azm)'},
-      {label:'Dias analisados',sub:'',val:nDias,cor:'var(--azm)'},
+
       {label:'🏆 Melhor dia',sub:fmtDt(melhor.dt),val:melhor.tot,cor:'var(--vd)'},
       {label:'📉 Pior dia',sub:fmtDt(pior.dt),val:pior.tot,cor:'var(--vm)'},
       {label:'RCs Pedidos',sub:'acumulado',val:totalPed,cor:'var(--vd)'},
@@ -2832,6 +2835,41 @@ function renderPainelEstrategico(){
       {label:'XGL',sub:'acumulado',val:totalXgl,cor:'var(--az)'},
       {label:'MDG',sub:'acumulado',val:totalMDG,cor:'var(--az)'},
     ];
+    // Cards extras calculados
+    const progAcumTotal = nDias * META_EQUIPE;
+    const gap = totalAnalis - progAcumTotal;
+    const gapStr = (gap>=0?'+':'')+gap.toLocaleString('pt-BR');
+    const gapCor = gap>=0?'var(--vd)':'var(--vm)';
+    // Ritmo atual = media diária
+    const ritmo = nDias>0?Math.round(totalAnalis/nDias):0;
+    // Meta necessária: dias restantes do ciclo
+    const cicloInicio = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
+    const cicloMeta = (_cicloAtivo?.meta||CICLO_ATUAL.meta_ciclo);
+    const hoje2 = HOJE.toISOString().split('T')[0];
+    const todosUteis = pcpData.filter(r=>r.data>=cicloInicio).length;
+    const diasRestantes = Math.max(0, Math.round((new Date(cicloMeta+'T12:00:00')-HOJE)/(86400000*7/5))||0);
+    const faltam = Math.max(0, cicloMeta - totalAnalis);
+    const metaNec = diasRestantes>0?Math.ceil(faltam/diasRestantes):faltam;
+    // Alerta
+    let alertaMsg='', alertaCor='var(--vd)', alertaBg='var(--vdc)';
+    if(gap<-50){alertaMsg='⚠ Abaixo do planejado';alertaCor='var(--vm)';alertaBg='var(--vmc)';}
+    else if(gap<0){alertaMsg='⚡ Ligeiramente abaixo';alertaCor='var(--am)';alertaBg='var(--amc)';}
+    else{alertaMsg='✅ Dentro do planejado';alertaCor='var(--vd)';alertaBg='var(--vdc)';}
+    const extraCards=[
+      {label:'Gap',sub:'Analisado − Planejado',val:gapStr,cor:gapCor,bg:gap>=0?'var(--vdc)':'var(--vmc)'},
+      {label:'Ritmo atual',sub:'itens/dia equipe',val:ritmo,cor:'var(--azm)',bg:'var(--azc)'},
+      {label:'Meta necessária/dia',sub:'para completar ciclo',val:metaNec>0?metaNec:'—',cor:metaNec>META_EQUIPE?'var(--vm)':'var(--vd)',bg:'var(--cin)'},
+    ];
+    const analEl2=document.getElementById('est-cards-analise');
+    if(analEl2) analEl2.innerHTML+=extraCards.map(c=>`
+      <div class="cd" style="padding:.75rem;text-align:center;background:${c.bg||'var(--cin)'}">
+        <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
+        <div style="font-size:24px;font-weight:700;color:${c.cor}">${c.val}</div>
+        ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">${c.sub}</div>`:''}
+      </div>`).join('');
+    // Card de alerta separado (full width)
+    const analEl3=document.getElementById('est-alerta-ciclo');
+    if(analEl3){analEl3.style.background=alertaBg;analEl3.style.color=alertaCor;analEl3.textContent=alertaMsg;}
     analEl.innerHTML=cards2.map(c=>`
       <div class="cd" style="padding:.75rem;text-align:center">
         <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
