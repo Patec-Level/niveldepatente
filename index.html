@@ -1923,12 +1923,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div class="g2" style="margin-bottom:1rem">
         <div class="cd">
           <div class="cd-t">📈 Programado × Realizado × Saídas — Produção</div>
-          <div style="font-size:10px;color:var(--tx2);margin-bottom:.5rem">Analisado = 1ª Análise + Em Tratativa · Saídas = Pedidos + Devoluções + XGL + Republicação</div>
+
           <canvas id="est-chart-prod" height="110"></canvas>
         </div>
         <div class="cd">
-          <div class="cd-t">📈 Programado × Realizado × Saídas — Mapa</div>
-          <div style="font-size:10px;color:var(--tx2);margin-bottom:.5rem">Planejado = meta/dia × colaboradores · Analisado = 1ª Análise + Em Tratativa</div>
+          <div class="cd-t">📈 Programado × Realizado — Mapa</div>
+
           <canvas id="est-chart-mapa" height="110"></canvas>
         </div>
       </div>
@@ -2861,11 +2861,20 @@ function renderPainelEstrategico(){
         ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">${c.sub}</div>`:''}
       </div>`).join('');
   }
-    // Alerta no estilo ciclo-box
-    // cicloMetaTotal já declarado acima
-    const cicloInicioD   = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
-    const projecao = nDias>0?Math.round(totalAnalis/nDias*((new Date()-new Date(cicloInicioD+'T12:00:00'))/(86400000)+diasRestantes)):totalAnalis;
+    // Alerta no estilo ciclo-box — padrão: Ritmo X/dia · projeção X itens · necessário X/dia · ritmo piorou/melhorou
+    const cicloInicioD = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
+    const diasDecorridos = Math.max(1, Math.round((HOJE - new Date(cicloInicioD+'T12:00:00'))/86400000));
+    const projecao = Math.round(ritmo * (diasDecorridos + diasRestantes));
     const abaixo = gap < 0;
+    // Variação vs ontem: pegar último e penúltimo dia do PCP
+    const pcpSort2 = pcpPer.slice().sort((a,b)=>a.data.localeCompare(b.data));
+    const ultDia = pcpSort2[pcpSort2.length-1]?.f1||0;
+    const penDia = pcpSort2[pcpSort2.length-2]?.f1||0;
+    const vsOntem = pcpSort2.length>1 ? ultDia - penDia : 0;
+    const vsStr = vsOntem>=0
+      ? 'ritmo melhorou '+vsOntem+' vs ontem ('+penDia+'/dia)'
+      : 'ritmo piorou '+Math.abs(vsOntem)+' vs ontem ('+penDia+'/dia)';
+    const vsColor = vsOntem>=0?'var(--vd)':'var(--vm)';
     const box = document.getElementById('est-alerta-box');
     const icoEl = document.getElementById('est-alerta-ico');
     const titEl = document.getElementById('est-alerta-titulo');
@@ -2874,6 +2883,7 @@ function renderPainelEstrategico(){
       box.style.display='flex';
       if(abaixo){
         box.className='ciclo-box ciclo-amarelo';
+        box.style.background=''; box.style.borderColor='';
         if(icoEl)icoEl.textContent='⚠';
         titEl.textContent='Atenção — ciclo abaixo da meta';
       } else {
@@ -2883,9 +2893,6 @@ function renderPainelEstrategico(){
         if(icoEl)icoEl.textContent='✅';
         titEl.textContent='Ciclo dentro do planejado';
       }
-      const vsOntem = nDias>1?(realProd[realProd.length-1]-(realProd[realProd.length-2]||0)):0;
-      const vsStr = vsOntem>=0?`ritmo melhorou ${vsOntem} vs ontem`:`ritmo piorou ${Math.abs(vsOntem)} vs ontem`;
-      const vsColor = vsOntem>=0?'var(--vd)':'var(--vm)';
       msgEl.innerHTML='Ritmo <strong>'+ritmo+'/dia</strong> · projeção <strong>'+projecao.toLocaleString('pt-BR')+' itens</strong> (meta: '+cicloMetaTotal.toLocaleString('pt-BR')+') · necessário <strong>'+metaNec+'/dia</strong> nos '+diasRestantes+' dias restantes · <span style="color:'+vsColor+';font-weight:600">'+vsStr+'</span>';
     }
 
