@@ -1000,19 +1000,57 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <!-- REGRA DE SAÚDE OPERACIONAL -->
         <div class="cd">
           <div class="cd-t">🩺 Regra de saúde operacional</div>
-          <div class="al al-b" style="margin-bottom:1rem">ℹ Defina os limites para cada indicador de saúde. Eles determinam o status exibido no topo do Radar.</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:1rem">
-            <div class="field-wrap">
-              <span class="field-label">% Atrasados — Alerta (laranja)</span>
-              <input type="number" id="radar-limite-alerta" placeholder="Ex: 20" min="0" max="100" style="width:100%">
-              <span style="font-size:10px;color:var(--tx2)">% do total</span>
+          <div class="al al-b" style="margin-bottom:1rem">ℹ Configure os limites de cada critério. Quando qualquer critério crítico for atingido, o status passa para 🔴 Crítico. Alerta ativa o 🟡.</div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1rem">
+
+            <!-- Regra 1: SLA -->
+            <div class="cd" style="padding:.875rem;border:1.5px solid var(--brd)">
+              <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.75rem">⏱ Regra 1 — SLA do item</div>
+              <div class="field-wrap">
+                <span class="field-label">SLA máximo — Alerta (laranja)</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="number" id="radar-sla-alerta" placeholder="Ex: 60" min="0" style="flex:1">
+                  <span style="font-size:12px;color:var(--tx2);white-space:nowrap">dias</span>
+                </div>
+              </div>
+              <div class="field-wrap" style="margin-top:.5rem">
+                <span class="field-label">SLA máximo — Crítico (vermelho)</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="number" id="radar-sla-critico" placeholder="Ex: 90" min="0" style="flex:1">
+                  <span style="font-size:12px;color:var(--tx2);white-space:nowrap">dias</span>
+                </div>
+              </div>
+              <div style="font-size:10px;color:var(--tx2);margin-top:.5rem">SLA = coluna "SLA LevelBoard" da planilha</div>
             </div>
-            <div class="field-wrap">
-              <span class="field-label">% Atrasados — Crítico (vermelho)</span>
-              <input type="number" id="radar-limite-critico" placeholder="Ex: 40" min="0" max="100" style="width:100%">
-              <span style="font-size:10px;color:var(--tx2)">% do total</span>
+
+            <!-- Regra 2: Prazo de encerramento -->
+            <div class="cd" style="padding:.875rem;border:1.5px solid var(--brd)">
+              <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.75rem">📅 Regra 2 — Prazo de encerramento</div>
+              <div class="field-wrap">
+                <span class="field-label">Prazo — Alerta (laranja)</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="number" id="radar-prazo-alerta" placeholder="Ex: 30" min="0" style="flex:1">
+                  <span style="font-size:12px;color:var(--tx2);white-space:nowrap">dias até enc.</span>
+                </div>
+              </div>
+              <div class="field-wrap" style="margin-top:.5rem">
+                <span class="field-label">Prazo — Crítico (vermelho)</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="number" id="radar-prazo-critico" placeholder="Ex: 60" min="0" style="flex:1">
+                  <span style="font-size:12px;color:var(--tx2);white-space:nowrap">dias até enc.</span>
+                </div>
+              </div>
+              <div style="font-size:10px;color:var(--tx2);margin-top:.5rem">Prazo = Data encerramento OP (col. I) − hoje</div>
             </div>
+
           </div>
+
+          <!-- Preview das regras ativas -->
+          <div id="radar-regras-preview" style="padding:.75rem;background:var(--cin);border-radius:8px;font-size:11px;color:var(--tx2);margin-bottom:1rem;line-height:1.8">
+            Carregando regras...
+          </div>
+
           <button class="btn btn-g" onclick="radarSalvarRegras()">✓ Salvar regras</button>
           <span id="radar-regras-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Salvo!</span>
         </div>
@@ -5561,18 +5599,34 @@ async function radarSalvarFirebase(){
 }
 
 // ── Regras de saúde ──
+function radarGetRegras(){
+  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60}');
+}
+
 function radarInitADM(){
-  const lim=JSON.parse(localStorage.getItem('patec_radar_limites')||'{"alerta":20,"critico":40}');
-  const a=document.getElementById('radar-limite-alerta');
-  const c=document.getElementById('radar-limite-critico');
-  if(a) a.value=lim.alerta;
-  if(c) c.value=lim.critico;
+  const r=radarGetRegras();
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+  set('radar-sla-alerta',r.sla_alerta);
+  set('radar-sla-critico',r.sla_critico);
+  set('radar-prazo-alerta',r.prazo_alerta);
+  set('radar-prazo-critico',r.prazo_critico);
+  // Preview
+  const prev=document.getElementById('radar-regras-preview');
+  if(prev) prev.innerHTML=
+    '🟡 <strong>Alerta</strong>: SLA > '+r.sla_alerta+' dias <strong>OU</strong> prazo de enc. ≤ '+r.prazo_alerta+' dias<br>'+
+    '🔴 <strong>Crítico</strong>: SLA > '+r.sla_critico+' dias <strong>OU</strong> prazo de enc. ≤ '+r.prazo_critico+' dias';
 }
 
 function radarSalvarRegras(){
-  const alerta=parseInt(document.getElementById('radar-limite-alerta')?.value||'20');
-  const critico=parseInt(document.getElementById('radar-limite-critico')?.value||'40');
-  localStorage.setItem('patec_radar_limites',JSON.stringify({alerta,critico}));
+  const get=id=>parseInt(document.getElementById(id)?.value||'0');
+  const regras={
+    sla_alerta:   get('radar-sla-alerta')||60,
+    sla_critico:  get('radar-sla-critico')||90,
+    prazo_alerta: get('radar-prazo-alerta')||30,
+    prazo_critico:get('radar-prazo-critico')||60,
+  };
+  localStorage.setItem('patec_radar_regras',JSON.stringify(regras));
+  radarInitADM();
   _flash('radar-regras-ok');
   renderRadarOperacional();
 }
@@ -5581,16 +5635,34 @@ function radarSalvarRegras(){
 function renderRadarOperacional(){
   if(!_radarDados.length) return;
   const rows=_radarDados;
-  const lim=JSON.parse(localStorage.getItem('patec_radar_limites')||'{"alerta":20,"critico":40}');
+  const r=radarGetRegras();
+  const hoje2=new Date(); hoje2.setHours(12,0,0,0);
 
-  // Status de saúde
+  // Calcular critérios
   const total=rows.length;
-  const atrasados=rows.filter(r=>r.status==='Atrasado').length;
-  const pctAt=total>0?Math.round(atrasados/total*100):0;
+  const xlToDate=n=>{if(!n||isNaN(n))return null;return new Date((n-25569)*86400000);};
+  const itensSlaAlerta   = rows.filter(r=>r.sla>r.sla_alerta||r.sla>r.sla_alerta).length;
+  // Recalc com regras corretas
+  const nSlaAlerta    = rows.filter(d=>Number(d.sla)>r.sla_alerta).length;
+  const nSlaCritico   = rows.filter(d=>Number(d.sla)>r.sla_critico).length;
+  const nPrazoCritico = rows.filter(d=>{
+    const dt=xlToDate(d.dt_enc);if(!dt)return false;
+    const diff=Math.round((dt-hoje2)/86400000);
+    return diff<=r.prazo_critico&&diff>=0;
+  }).length;
+  const nPrazoAlerta  = rows.filter(d=>{
+    const dt=xlToDate(d.dt_enc);if(!dt)return false;
+    const diff=Math.round((dt-hoje2)/86400000);
+    return diff<=r.prazo_alerta&&diff>r.prazo_critico;
+  }).length;
+
   let saude,saudeIco,saudeCor;
-  if(pctAt>=lim.critico){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
-  else if(pctAt>=lim.alerta){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
+  if(nSlaCritico>0||nPrazoCritico>0){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
+  else if(nSlaAlerta>0||nPrazoAlerta>0){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
   else{saude='Operação Estável';saudeIco='🟢';saudeCor='var(--vd)';}
+
+  const atrasados=rows.filter(d=>d.status==='Atrasado').length;
+  const pctAt=total>0?Math.round(atrasados/total*100):0;
 
   const stEl=document.getElementById('radar-status-txt');
   const icoEl=document.getElementById('radar-status-ico');
@@ -5609,12 +5681,14 @@ function renderRadarOperacional(){
   const slaAlto=rows.filter(r=>r.sla>100).length;
   const cardsEl=document.getElementById('radar-cards');
   if(cardsEl) cardsEl.innerHTML=[
-    {label:'Total na fila',val:total,cor:'var(--az)',bg:'var(--azc)'},
-    {label:'Atrasados',val:atrasados+' ('+pctAt+'%)',cor:'var(--vm)',bg:'var(--vmc)'},
-    {label:'Dentro do prazo',val:noPrazo,cor:'var(--vd)',bg:'var(--vdc)'},
-    {label:'Concluídos',val:concluidos,cor:'var(--vd)',bg:'var(--cin)'},
-    {label:'Sem analista',val:semAnalista,cor:'var(--am)',bg:'var(--amc)'},
-    {label:'SLA > 100 dias',val:slaAlto,cor:'var(--vm)',bg:'var(--cin)'},
+    {label:'Total na fila',       val:total,                         cor:'var(--az)', bg:'var(--azc)'},
+    {label:'Atrasados',            val:atrasados+' ('+pctAt+'%)',     cor:'var(--vm)', bg:'var(--vmc)'},
+    {label:'SLA Crítico (>'+r.sla_critico+'d)',  val:nSlaCritico,    cor:'var(--vm)', bg:'var(--vmc)'},
+    {label:'Prazo Crítico (≤'+r.prazo_critico+'d)',val:nPrazoCritico,cor:'var(--vm)', bg:'var(--vmc)'},
+    {label:'SLA Alerta (>'+r.sla_alerta+'d)',    val:nSlaAlerta,     cor:'var(--am)', bg:'var(--amc)'},
+    {label:'Prazo Alerta (≤'+r.prazo_alerta+'d)',val:nPrazoAlerta,   cor:'var(--am)', bg:'var(--amc)'},
+    {label:'Sem analista',         val:semAnalista,                   cor:'var(--am)', bg:'var(--cin)'},
+    {label:'Concluídos',           val:concluidos,                    cor:'var(--vd)', bg:'var(--cin)'},
   ].map(c=>'<div style="background:'+c.bg+';border-radius:10px;padding:.875rem;text-align:center;border:1px solid rgba(0,0,0,.07)"><div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px">'+c.label+'</div><div style="font-size:22px;font-weight:700;color:'+c.cor+'">'+c.val+'</div></div>').join('');
 
   // Por analista
