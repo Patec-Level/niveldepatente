@@ -3079,7 +3079,7 @@ function renderPainelEstrategico(){
     const cards2=[
       {label:'Itens analisados',   sub:nDias+' dia(s)',            val:totalAnalis.toLocaleString('pt-BR'), cor:'var(--vd)',  bg:'var(--vdc)'},
       {label:'Gap',                sub:'Analisado − Planejado',    val:gapStr,                              cor:gapCor,      bg:gap>=0?'var(--vdc)':'var(--vmc)'},
-      {label:'Ritmo atual',        sub:'itens/dia equipe',         val:ritmo,                               cor:'var(--azm)',bg:'var(--azc)'},
+
       {label:'Meta necessária/dia',sub:'para completar o ciclo',   val:metaNec,                             cor:metaNec>META_EQUIPE?'var(--vm)':'var(--vd)',bg:'var(--cin)'},
       {label:'Média diária equipe',sub:'meta '+metaDia+'/colab',   val:mediaEquipe,                         cor:'var(--azm)',bg:'var(--cin)'},
       {label:'🏆 Melhor dia',      sub:fmtDt(melhor.dt),          val:melhor.tot,                          cor:'var(--vd)', bg:'var(--cin)'},
