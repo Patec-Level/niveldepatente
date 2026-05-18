@@ -1914,7 +1914,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div class="g2" style="margin-bottom:1rem">
         <div class="cd">
           <div class="cd-t">📈 Programado × Realizado × Saídas — Produção</div>
-          <div style="font-size:10px;color:var(--tx2);margin-bottom:.5rem">Realizado = 1ª Análise + Tratativa + Status B · Saídas = Pedidos + Devoluções + XGL + Republicação</div>
+          <div style="font-size:10px;color:var(--tx2);margin-bottom:.5rem">Analisado = 1ª Análise + Em Tratativa · Saídas = Pedidos + Devoluções + XGL + Republicação</div>
           <canvas id="est-chart-prod" height="110"></canvas>
         </div>
         <div class="cd">
@@ -2788,8 +2788,8 @@ function renderPainelEstrategico(){
   const dias = [...new Set(regs.map(r=>r.data))].sort();
   const soma = (idx) => regs.reduce((s,r)=>s+(r.f[idx]||0),0);
 
-  const totalAnalis = soma(0)+soma(1)+soma(2);   // pf0+pf1+pf2
-  const totalMapaAn = soma(0)+soma(1);            // pf0+pf1 (sem Status B)
+  const totalAnalis = soma(0)+soma(1);   // pf0+pf1 (1ª Análise + Em Tratativa, igual planilha)
+  const totalMapaAn = soma(0)+soma(1);   // pf0+pf1 (sem Status B)
   const totalPed = soma(9), totalDev = soma(10), totalXgl = soma(7), totalRep = soma(8);
   const totalSaidas = totalPed+totalDev+totalXgl+totalRep;
   const nDias = dias.length;
@@ -2834,8 +2834,9 @@ function renderPainelEstrategico(){
   // ── Dados para os gráficos (por dia) ──
   const labels = dias.map(fmtDt);
   const prog = dias.map(()=> metaDia * [...new Set(registros.filter(r=>r.data>=dtDe&&r.data<=dtAte&&r.pres!=='Folga'&&r.pres!=='Férias').map(r=>r.colab))].length);
-  const realProd = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias').reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0),0));
-  const realMapa = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias').reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0),0));
+  // Analisado = pf0 (1ª Análise) + pf1 (Em Tratativa) — igual à planilha de medição
+  const realProd = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias'&&!COLABS_SEM_META.includes(r.colab)).reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0),0));
+  const realMapa = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias'&&!COLABS_SEM_META.includes(r.colab)).reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0),0));
   const saidasDia = dias.map(dt=>registros.filter(r=>r.data===dt).reduce((s,r)=>s+(r.f[9]||0)+(r.f[10]||0)+(r.f[7]||0)+(r.f[8]||0),0));
   // Programado: meta fixa 270/dia (3 colaboradores × 90) — sempre constante
   const META_EQUIPE = 90; // 30 Wanessa + 30 Lory + 30 Ludy
