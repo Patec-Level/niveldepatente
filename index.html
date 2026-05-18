@@ -356,7 +356,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-mod">◈ ESTRATÉGICO</div>
   <div class="sb-it active" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
   <div class="sb-it" onclick="go('radar',this)">📡 Radar Estratégico</div>
-  <div class="sb-it" onclick="go('vg-visao',this)">📊 Visão Executiva</div>
   <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ EXECUÇÃO</div>
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('pr-estrategico',this)">🎯 Painel Estratégico</div>
@@ -412,164 +411,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
 
     <!-- ══════════════════ VISÃO GERAL ══════════════════ -->
-    <div id="p-vg-visao" class="page active">
-
-      <!-- ── LINHA 1: KPIs PRINCIPAIS ── -->
-      <div class="kgrid" style="grid-template-columns:repeat(auto-fit,minmax(138px,1fr))">
-        <div class="kc ok">
-          <div class="kc-l">Total PATEC (L12)</div>
-          <div class="kc-v">2.682</div>
-          <div class="kc-s">L3+L4+L5+L6</div>
-          <div class="kc-trend t-up">▲ +265 vs 8/mai</div>
-        </div>
-        <div class="kc">
-          <div class="kc-l">Realizado acumulado</div>
-          <div class="kc-v" style="color:var(--azm)">743</div>
-          <div class="kc-s">10 dias registrados</div>
-          <div class="kc-trend t-dn">▼ −157 vs programado</div>
-        </div>
-        <div class="kc warn">
-          <div class="kc-l">Gap vs programado</div>
-          <div class="kc-v" id="vg-gap-val">−157</div>
-          <div class="kc-s" id="vg-gap-sub">Prog.: 900 · 82,6%</div>
-          <div class="kc-trend t-dn" id="vg-gap-trend">▼ piorou −18 vs ontem</div>
-        </div>
-        <div class="kc warn">
-          <div class="kc-l">Ritmo atual</div>
-          <div class="kc-v">74/dia</div>
-          <div class="kc-s">média 10 dias · meta 90</div>
-          <div class="kc-trend t-dn" id="vg-ritmo-trend">▼ −4 vs dia anterior (78)</div>
-        </div>
-        <div class="kc">
-          <div class="kc-l">Meta necessária</div>
-          <div class="kc-v" style="color:var(--am)">103/dia</div>
-          <div class="kc-s">12 dias restantes</div>
-          <div class="kc-trend" style="color:var(--am)">+14% acima da base</div>
-        </div>
-        <div class="kc">
-          <div class="kc-l">Saídas acumuladas</div>
-          <div class="kc-v" style="color:var(--az)">439</div>
-          <div class="kc-s">44/dia em média</div>
-          <div class="kc-trend t-up">▲ +18 vs dia anterior</div>
-        </div>
-      </div>
-
-      <!-- ── LINHA 2: KPIs OPERACIONAIS (Pedidos, Rep., Dev., XGL) ── -->
-      <div class="kgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:1rem">
-        <div class="kc ok" style="border-top-color:#3266AD">
-          <div class="kc-l">RCs para Pedidos</div>
-          <div class="kc-v" style="color:var(--azm);font-size:24px">136</div>
-          <div class="kc-s">acumulado ciclo</div>
-          <div class="kc-trend t-up">▲ +23 ontem</div>
-        </div>
-        <div class="kc" style="border-top-color:#BA7517">
-          <div class="kc-l">Republicação</div>
-          <div class="kc-v" style="color:var(--am);font-size:24px">89</div>
-          <div class="kc-s">acumulado ciclo</div>
-          <div class="kc-trend t-dn">▼ −5 ontem</div>
-        </div>
-        <div class="kc" style="border-top-color:#E24B4A">
-          <div class="kc-l">RCs Devoluções</div>
-          <div class="kc-v" style="color:var(--vm);font-size:24px">108</div>
-          <div class="kc-s">acumulado ciclo</div>
-          <div class="kc-trend t-dn">▼ −8 ontem</div>
-        </div>
-        <div class="kc" style="border-top-color:#7B4FD8">
-          <div class="kc-l">XGL</div>
-          <div class="kc-v" style="color:#7B4FD8;font-size:24px">18</div>
-          <div class="kc-s">acumulado ciclo</div>
-          <div class="kc-trend t-eq">— igual ontem</div>
-        </div>
-      </div>
-
-      <!-- ── ALERTA DINÂMICO ── -->
-      <div class="ciclo-box ciclo-amarelo" id="vg-alerta" style="margin-bottom:1rem">
-        <span style="font-size:22px;flex-shrink:0">⚠</span>
-        <div>
-          <div style="font-size:13px;font-weight:700;margin-bottom:2px">Atenção — ciclo abaixo da meta</div>
-          <div style="font-size:12px;color:var(--tx2);line-height:1.5">
-            Ritmo <strong>74/dia</strong> · projeção <strong>1.631 itens</strong> (meta: 1.980) · necessário <strong>103/dia</strong> nos 12 dias restantes · <span id="vg-vs-ontem" style="color:var(--vm);font-weight:600">ritmo piorou 4 vs ontem (78/dia)</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── LINHA 3: GRÁFICO PRINCIPAL + FAIXAS + MÉDIA COLAB ── -->
-      <div class="g24" style="margin-bottom:1rem">
-        <div class="cd">
-          <div class="cd-t">📈 Programado × Realizado × Saídas (acumulado + projeção)</div>
-          <canvas id="ch-vg-acum" height="150"></canvas>
-          <div style="display:flex;gap:1rem;margin-top:.5rem;font-size:10px;flex-wrap:wrap">
-            <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:3px;background:#3266AD;display:inline-block;border-radius:2px"></span>Programado</span>
-            <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:3px;background:#1D9E75;display:inline-block;border-radius:2px"></span>Realizado</span>
-            <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#BA7517;display:inline-block;border-radius:2px;border-top:1px dashed #BA7517"></span>Projeção</span>
-            <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#7B4FD8;display:inline-block;border-radius:2px"></span>Saídas acum.</span>
-          </div>
-        </div>
-        <div class="cd">
-          <div class="cd-t" style="margin-bottom:.625rem">Faixas — período completo (22 dias)</div>
-          <div class="faixa-grid" style="margin-bottom:.875rem">
-            <div class="faixa" style="border-top:3px solid var(--vd)">
-              <div style="font-size:24px;font-weight:700;color:var(--vd)" id="vg-f1">3</div>
-              <div style="font-size:10px;color:var(--tx2)">≥100%<br>≥90</div>
-            </div>
-            <div class="faixa" style="border-top:3px solid var(--am)">
-              <div style="font-size:24px;font-weight:700;color:var(--am)" id="vg-f2">2</div>
-              <div style="font-size:10px;color:var(--tx2)">80–99%<br>72–89</div>
-            </div>
-            <div class="faixa" style="border-top:3px solid var(--vm)">
-              <div style="font-size:24px;font-weight:700;color:var(--vm)" id="vg-f3">5</div>
-              <div style="font-size:10px;color:var(--tx2)">≤79%<br>&lt;72</div>
-            </div>
-          </div>
-          <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.5rem;padding-top:.5rem;border-top:1px solid var(--brd)">Média/dia por colaborador</div>
-          <div id="colab-bars"></div>
-        </div>
-      </div>
-
-      <!-- ── LINHA 4: BARRAS DIÁRIAS + MAPA ── -->
-      <div class="g2" style="margin-bottom:1rem">
-        <div class="cd">
-          <div class="cd-t">📊 Produção diária — 10 dias (com gap vs dia anterior)</div>
-          <canvas id="ch-vg-diario" height="150"></canvas>
-          <div id="vg-gap-diario" style="display:flex;gap:6px;margin-top:.5rem;flex-wrap:wrap"></div>
-        </div>
-        <div class="cd">
-          <div class="cd-t">📋 Mapa PATEC — posição atual</div>
-          <div id="vg-mapa-mini"></div>
-        </div>
-      </div>
-
-      <!-- ── LINHA 5: CASCATA L12 ── -->
-      <div class="cd" style="margin-bottom:1rem">
-        <div class="cd-t">📉 Cascata — Evolução L12 (fila PATEC no Level Board)</div>
-        <div style="font-size:11px;color:var(--tx2);margin-bottom:.75rem">Acompanhamento diário do volume de itens PATEC · variação acumulada = redução (<span style="color:var(--vd)">verde</span>) ou aumento (<span style="color:var(--vm)">vermelho</span>) da fila</div>
-        <canvas id="ch-vg-cascata" height="110"></canvas>
-      </div>
-
-      <!-- ── LINHA 6: TABELA RESUMO ── -->
-      <div class="cd">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px">
-          <div class="cd-t" style="margin:0">Resumo completo — 10 dias · gap vs dia anterior</div>
-          <button class="btn btn-s" onclick="exportResumo()">💾 Exportar Excel</button>
-        </div>
-        <div class="tw">
-          <table>
-            <thead>
-              <tr>
-                <th>Dia</th><th>Data</th>
-                <th>Program.</th><th>Realizado</th>
-                <th>Ac.Prog.</th><th>Ac.Real.</th>
-                <th>Gap</th><th>%</th>
-                <th>Saídas</th><th>Vs ontem</th>
-              </tr>
-            </thead>
-            <tbody id="tb-resumo"></tbody>
-            <tfoot id="tf-resumo"></tfoot>
-          </table>
-        </div>
-      </div>
-    </div>
-
+    
     <!-- ══════════════════ MAPA L10/L12 ══════════════════ -->
     <div id="p-vg-mapa" class="page">
       <div class="al al-b">ℹ Valores calculados automaticamente via Level Board · Fila: col BN (Status_Desc) · Data de referência: 14/05/2026</div>
@@ -2843,7 +2685,7 @@ function go(id, el) {
   if (page) page.classList.add('active');
   if (el) el.classList.add('active');
   const icons = {
-    'vg-visao':'📊','vg-validade':'⏱',
+    'vg-validade':'⏱',
     'pr-lancar':'✏️','pr-estrategico':'🎯','pr-equipe':'👥','pr-producao':'📋','pr-bancoferias':'🗓',
     'adm':'🔐'
   };
@@ -2854,7 +2696,7 @@ function go(id, el) {
   const centroIco = document.querySelector('.topbar [style*="translateX"] div');
   if(centroIco) centroIco.textContent = ico;
   const titles = {
-    'vg-visao':'Visão Executiva','vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
+    'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
     'adm':'Administração',
@@ -5846,10 +5688,10 @@ function renderRadarOperacional(){
   const totalRCs   = rows.length; // total de itens (linhas), não RCs únicos
   const maiorSLA   = rows.length ? Math.max(...rows.map(d=>Number(d.sla)||0)) : 0;
   const criticos   = rows.filter(d=>Number(d.sla)>r.sla_critico).length;
-  const atrasados  = rows.filter(d=>d.status==='Atrasado').length;
-  const dentroP    = rows.filter(d=>d.status==='Dentro do Prazo').length;
-  // Controle (Col L) — normalizar espaços para comparação
+  // Controle (Col L) — normCtrl ANTES de atrasados para poder usar no filtro
   const normCtrl   = v=>String(v||'').trim().toLowerCase();
+  const atrasados  = rows.filter(d=>d.status==='Atrasado' && normCtrl(d.controle)!=='ag. tratamento').length;
+  const dentroP    = rows.filter(d=>d.status==='Dentro do Prazo').length;
   const agTrat     = rows.filter(d=>normCtrl(d.controle)==='ag. tratamento').length;
   const agForn     = rows.filter(d=>normCtrl(d.controle)==='fornecedor').length;
   const mdg        = rows.filter(d=>normCtrl(d.controle)==='mdg').length;
