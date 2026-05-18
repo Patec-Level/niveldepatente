@@ -2101,19 +2101,25 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="btn btn-s" style="font-size:11px" onclick="renderRadarOperacional()">↺ Atualizar</button>
       </div>
 
-      <!-- ── FILTRO ANALISTA AUTOMÁTICO (Col D) ── -->
+      <!-- ── FILTRO ANALISTA AUTOMÁTICO (Col D) — DROPDOWN ── -->
       <div class="cd" style="margin-bottom:1rem;padding:.875rem 1.1rem">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">📡 Analista Automático</div>
-          <div id="radar-filtro-status-wrap" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-          <button onclick="radarFiltroStatusReset()" style="margin-left:auto;font-size:10px;padding:4px 10px;border:1px solid var(--brd);border-radius:6px;background:var(--cin);cursor:pointer;color:var(--tx2);font-weight:600">✕ Limpar filtro</button>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">📡 Filtrar por Analista Automático</div>
+          <div style="position:relative;flex:1;min-width:220px;max-width:420px">
+            <select id="radar-sel-status" onchange="radarSetFiltroStatusSel(this.value)"
+              style="width:100%;font-size:12px;font-weight:500;padding:7px 36px 7px 12px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;color:var(--tx);cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
+              <option value="">Todos os analistas automáticos</option>
+            </select>
+            <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:12px">▾</span>
+          </div>
+          <div id="radar-filtro-badge" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--azc);color:var(--azm);font-weight:600;border:1px solid rgba(26,74,138,.2)"></div>
         </div>
       </div>
 
       <!-- CARDS PRINCIPAIS (dinâmicos conforme filtro) -->
       <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:1rem"></div>
 
-      <!-- TABELAS -->
+      <!-- TABELAS + GRÁFICO DONUT -->
       <div class="g2" style="margin-bottom:1rem">
         <!-- Por Analista -->
         <div class="cd">
@@ -2124,6 +2130,43 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div class="cd">
           <div class="cd-t">📋 Por fila (Level Board)</div>
           <div id="radar-por-fila"></div>
+        </div>
+      </div>
+
+      <!-- GRÁFICO DONUT — PRAZO (Col C) -->
+      <div class="cd" style="margin-bottom:1rem">
+        <div class="cd-t">📊 Distribuição por Prazo (Col C)</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:2rem;flex-wrap:wrap;padding:.5rem 0">
+          <div style="position:relative;width:200px;height:200px;flex-shrink:0">
+            <canvas id="radar-chart-prazo" width="200" height="200"></canvas>
+            <div id="radar-donut-center" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+              <div id="radar-donut-total" style="font-size:26px;font-weight:700;color:var(--az);line-height:1">—</div>
+              <div style="font-size:10px;color:var(--tx2);font-weight:500;margin-top:2px">total</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:14px;height:14px;border-radius:3px;background:#D94040;flex-shrink:0"></div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--tx)">Vencida (≥ 91 dias)</div>
+                <div id="radar-donut-lbl-vencida" style="font-size:20px;font-weight:700;color:#D94040;line-height:1.2">—</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:14px;height:14px;border-radius:3px;background:#E87722;flex-shrink:0"></div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--tx)">Próximo do vencimento (60–90 dias)</div>
+                <div id="radar-donut-lbl-alerta" style="font-size:20px;font-weight:700;color:#E87722;line-height:1.2">—</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:14px;height:14px;border-radius:3px;background:#3A7D44;flex-shrink:0"></div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--tx)">Dentro do prazo (≤ 59 dias)</div>
+                <div id="radar-donut-lbl-ok" style="font-size:20px;font-weight:700;color:#3A7D44;line-height:1.2">—</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -5565,6 +5608,7 @@ async function radarOnFile(file){
       analista:      String(r['Analista ']||r['Analista']||'').trim(),
       controle:      String(r['Controle ']||r['Controle']||'').trim(),
       prazo:         r['PRAZO DE RETORNO']||0,
+      prazo_c:       Number(r['PRAZO ']||r['PRAZO']||0),  // Col C — usado no gráfico donut
       status:        String(r['STATUS']||'').trim(),
       finalizou:     r['FINALIZOU']||0,
     }));
@@ -5638,41 +5682,96 @@ function radarSalvarRegras(){
   renderRadarOperacional();
 }
 
-// ── Botões de filtro: Analista Automático (Col D) ──
+// ── Dropdown filtro: Analista Automático (Col D) ──
+let _radarChartPrazo = null; // instância Chart.js do donut
+
 function radarRenderFiltroStatus(rows){
-  const wrap=document.getElementById('radar-filtro-status-wrap');
-  if(!wrap) return;
-  // Pega todos os valores únicos de analista_auto
+  const sel=document.getElementById('radar-sel-status');
+  if(!sel) return;
   const vals=[...new Set(rows.map(r=>r.analista_auto).filter(Boolean))].sort();
-  // Paleta de cores por valor
-  const cores={
-    'Analisar PATEC Finalizado':     {bg:'var(--azc)',  cor:'var(--azm)',  brd:'rgba(26,74,138,.3)'},
-    'Abrir PATEC identico não':      {bg:'var(--amc)',  cor:'var(--am)',   brd:'rgba(192,122,18,.3)'},
-    'Aguardar PATEC ser Finalizado': {bg:'var(--cin)',  cor:'var(--tx2)', brd:'var(--brd)'},
-    'PATEC Finalizado sem fornecedores aprovados':{bg:'var(--vmc)',cor:'var(--vm)',brd:'rgba(217,64,64,.3)'},
-    'Abrir PATEC Grupo de Mercadoria Obrigatório':{bg:'rgba(14,158,106,.1)',cor:'var(--vd)',brd:'rgba(14,158,106,.3)'},
-  };
-  wrap.innerHTML = vals.map(v=>{
-    const c=cores[v]||{bg:'var(--cin)',cor:'var(--tx2)',brd:'var(--brd)'};
-    const ativo=_radarFiltroStatus===v;
-    const tot=rows.filter(r=>r.analista_auto===v).length;
-    return `<button onclick="radarSetFiltroStatus('${v.replace(/'/g,"\'")}',this)"
-      style="font-size:10px;font-weight:${ativo?'700':'600'};padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .15s;
-      background:${ativo?c.cor:'#fff'};color:${ativo?'#fff':c.cor};
-      border:1.5px solid ${c.brd};box-shadow:${ativo?'0 2px 8px rgba(0,0,0,.12)':'none'}">
-      ${v} <span style="opacity:.75">(${tot})</span>
-    </button>`;
-  }).join('');
+  const cur=_radarFiltroStatus;
+  sel.innerHTML='<option value="">Todos os analistas automáticos</option>'+
+    vals.map(v=>{
+      const tot=rows.filter(r=>r.analista_auto===v).length;
+      return `<option value="${v}"${cur===v?' selected':''}>${v} (${tot})</option>`;
+    }).join('');
+  // Badge de filtro ativo
+  const badge=document.getElementById('radar-filtro-badge');
+  if(badge){
+    if(cur){
+      const tot=rows.filter(r=>r.analista_auto===cur).length;
+      badge.style.display='inline-block';
+      badge.textContent='Filtrando: '+tot+' itens';
+    } else {
+      badge.style.display='none';
+    }
+  }
 }
 
-function radarSetFiltroStatus(val, btn){
-  _radarFiltroStatus = (_radarFiltroStatus===val)?'':val; // toggle
+function radarSetFiltroStatusSel(val){
+  _radarFiltroStatus=val;
   renderRadarOperacional();
 }
 
 function radarFiltroStatusReset(){
   _radarFiltroStatus='';
+  const sel=document.getElementById('radar-sel-status');
+  if(sel) sel.value='';
   renderRadarOperacional();
+}
+
+// ── Gráfico Donut — Prazo Col C ──
+function renderRadarChartPrazo(rows){
+  const canvas=document.getElementById('radar-chart-prazo');
+  if(!canvas) return;
+
+  // Regras Col C (PRAZO ):
+  // <= 59 dias  → Dentro do prazo
+  // 60–90 dias  → Próximo do vencimento
+  // >= 91 dias  → Vencida
+  const nOk      = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v<=59; }).length;
+  const nAlerta  = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60 && v<=90; }).length;
+  const nVencida = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=91; }).length;
+  const total    = nOk + nAlerta + nVencida;
+
+  const pct = n => total>0 ? Math.round(n/total*100) : 0;
+
+  // Atualizar labels laterais
+  const lblOk  =document.getElementById('radar-donut-lbl-ok');
+  const lblAl  =document.getElementById('radar-donut-lbl-alerta');
+  const lblVenc=document.getElementById('radar-donut-lbl-vencida');
+  const lblTot =document.getElementById('radar-donut-total');
+  if(lblOk)   lblOk.textContent   = nOk+' ('+pct(nOk)+'%)';
+  if(lblAl)   lblAl.textContent   = nAlerta+' ('+pct(nAlerta)+'%)';
+  if(lblVenc) lblVenc.textContent = nVencida+' ('+pct(nVencida)+'%)';
+  if(lblTot)  lblTot.textContent  = total;
+
+  // Destruir instância anterior se existir
+  if(_radarChartPrazo){ _radarChartPrazo.destroy(); _radarChartPrazo=null; }
+
+  const data = total===0 ? [1] : [nVencida, nAlerta, nOk];
+  const bg   = total===0 ? ['#e0e0e0'] : ['#D94040','#E87722','#3A7D44'];
+  const lbls = ['Vencida (≥ 91 dias)','Próximo do vencimento (60–90 dias)','Dentro do prazo (≤ 59 dias)'];
+
+  _radarChartPrazo = new Chart(canvas, {
+    type:'doughnut',
+    data:{ datasets:[{ data, backgroundColor:bg, borderWidth:2, borderColor:'#fff', hoverOffset:8 }] },
+    options:{
+      cutout:'68%',
+      animation:{ animateRotate:true, duration:700 },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          callbacks:{
+            label: ctx => {
+              if(total===0) return ' Sem dados';
+              return ' '+lbls[ctx.dataIndex]+': '+ctx.parsed+' ('+Math.round(ctx.parsed/total*100)+'%)';
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // ── Render principal ──
@@ -5781,6 +5880,7 @@ function renderRadarOperacional(){
       '<tr><td>'+f+'</td><td>'+d.total+'</td><td style="color:var(--vm);font-weight:700">'+d.atrasado+'</td></tr>'
     ).join('')+'</tbody></table>';
 
+  renderRadarChartPrazo(rows);
   renderRadarTabela();
 }
 
