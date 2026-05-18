@@ -2789,29 +2789,28 @@ function renderPainelEstrategico(){
     dtAte = hoje;
   }
 
-  // ── Registros do período ──
-  const regs = registros.filter(r=>r.data>=dtDe&&r.data<=dtAte&&r.pres!=='Folga'&&r.pres!=='Férias');
-  const dias = [...new Set(regs.map(r=>r.data))].sort();
-  const soma = (idx) => regs.reduce((s,r)=>s+(r.f[idx]||0),0);
-
-  const totalAnalis = soma(0)+soma(1);   // pf0+pf1 (1ª Análise + Em Tratativa, igual planilha)
-  const totalMapaAn = soma(0)+soma(1);   // pf0+pf1 (sem Status B)
-  const totalPed = soma(9), totalDev = soma(10), totalXgl = soma(7), totalRep = soma(8);
-  const totalSaidas = totalPed+totalDev+totalXgl+totalRep;
+  // ── Usar pcpData como fonte única de verdade (dados validados) ──
+  const pcpPer = pcpData.filter(r=>r.data>=dtDe&&r.data<=dtAte);
+  const dias = pcpPer.map(r=>r.data).sort();
   const nDias = dias.length;
+
+  // Analisado = f1 (PATEC Fin/Parada = 1ª Análise + Tratativa + StatusB)
+  // Saída = f3+f4+f5+f6 (Pedidos+Devol+Repub+XGL)
+  const totalAnalis = pcpPer.reduce((s,r)=>s+(r.f1||0),0);
+  const totalPed = pcpPer.reduce((s,r)=>s+(r.f3||0),0);
+  const totalDev = pcpPer.reduce((s,r)=>s+(r.f4||0),0);
+  const totalRep = pcpPer.reduce((s,r)=>s+(r.f5||0),0);
+  const totalXgl = pcpPer.reduce((s,r)=>s+(r.f6||0),0);
+  const totalMDG = pcpPer.reduce((s,r)=>s+(r.f2||0),0);
+  const totalSaidas = totalPed+totalDev+totalRep+totalXgl;
   const mediaEquipe = nDias>0?Math.round(totalAnalis/nDias):0;
   const metaDia = getMeta();
 
-  // Melhor e pior dia (por total da equipe)
-  const porDia = dias.map(dt=>{
-    const r=registros.filter(x=>x.data===dt&&x.pres!=='Folga'&&x.pres!=='Férias');
-    return{dt,tot:r.reduce((s,x)=>s+(x.f[0]||0)+(x.f[1]||0)+(x.f[2]||0),0)};
-  });
+  // Melhor e pior dia
+  const porDia = pcpPer.map(r=>({dt:r.data,tot:r.f1||0}));
   const melhor = porDia.length?porDia.reduce((a,b)=>b.tot>a.tot?b:a):{dt:'—',tot:0};
   const pior = porDia.length?porDia.reduce((a,b)=>b.tot<a.tot?b:a):{dt:'—',tot:0};
-
-  // MDG total do período
-  const totalMDG = soma(5);
+  const totalMapaAn = totalAnalis;
 
   // ── Cards de análise ──
   const analEl = document.getElementById('est-cards-analise');
@@ -2837,16 +2836,16 @@ function renderPainelEstrategico(){
       </div>`).join('');
   }
 
-  // ── Dados para os gráficos (por dia) ──
-  const labels = dias.map(fmtDt);
-  const prog = dias.map(()=> metaDia * [...new Set(registros.filter(r=>r.data>=dtDe&&r.data<=dtAte&&r.pres!=='Folga'&&r.pres!=='Férias').map(r=>r.colab))].length);
-  // Analisado = pf0 (1ª Análise) + pf1 (Em Tratativa) — igual à planilha de medição
-  const realProd = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias'&&!COLABS_SEM_META.includes(r.colab)).reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0),0));
-  const realMapa = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias'&&!COLABS_SEM_META.includes(r.colab)).reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0),0));
-  const saidasDia = dias.map(dt=>registros.filter(r=>r.data===dt).reduce((s,r)=>s+(r.f[9]||0)+(r.f[10]||0)+(r.f[7]||0)+(r.f[8]||0),0));
-  // Programado: meta fixa 270/dia (3 colaboradores × 90) — sempre constante
+  // ── Dados para os gráficos usando pcpData (fonte validada) ──
+  const pcpPerSort = pcpPer.slice().sort((a,b)=>a.data.localeCompare(b.data));
+  const labels = pcpPerSort.map(r=>fmtDt(r.data));
+  // Analisado = f1 do PCP (PATEC Fin/Parada = valor validado na planilha)
+  const realProd = pcpPerSort.map(r=>r.f1||0);
+  const realMapa = pcpPerSort.map(r=>r.f1||0);
+  // Saída = pedidos(f3)+devol(f4)+repub(f5)+xgl(f6)
+  const saidasDia = pcpPerSort.map(r=>(r.f3||0)+(r.f4||0)+(r.f5||0)+(r.f6||0));
   const META_EQUIPE = 90; // 30 Wanessa + 30 Lory + 30 Ludy
-  const progDia = dias.map(() => META_EQUIPE);
+  const progDia = pcpPerSort.map(() => META_EQUIPE);
 
   // Acumular valores dia a dia
   const acum = arr => arr.reduce((acc,v,i)=>{acc.push((acc[i-1]||0)+v);return acc;},[]);
