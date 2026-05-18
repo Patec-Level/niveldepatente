@@ -1901,7 +1901,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
         <div class="cd">
           <div class="cd-t">📈 Programado × Realizado × Saídas — Mapa</div>
-          <div style="font-size:10px;color:var(--tx2);margin-bottom:.5rem">Realizado = 1ª Análise + Tratativa · Saídas = Pedidos + Devoluções + XGL + Republicação</div>
+          <div style="font-size:10px;color:var(--tx2);margin-bottom:.5rem">Planejado = meta/dia × colaboradores · Analisado = 1ª Análise + Em Tratativa</div>
           <canvas id="est-chart-mapa" height="110"></canvas>
         </div>
       </div>
@@ -2777,11 +2777,25 @@ function renderPainelEstrategico(){
     if(_estChartProd){_estChartProd.destroy();}
     _estChartProd=new Chart(ctx1,chartCfg(realProdAcum));
   }
-  // Gráfico 2 — Mapa (acumulado)
+  // Gráfico 2 — Mapa (acumulado, só Programado × Analisado)
   const ctx2=document.getElementById('est-chart-mapa');
   if(ctx2){
     if(_estChartMapa){_estChartMapa.destroy();}
-    _estChartMapa=new Chart(ctx2,chartCfg(realMapaAcum));
+    _estChartMapa=new Chart(ctx2,{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'Planejado',  data:progAcum,     borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,.08)',borderWidth:2,pointRadius:3,pointHoverRadius:5,fill:true,tension:.3},
+        {label:'Analisado',  data:realMapaAcum, borderColor:'#F97316',backgroundColor:'rgba(249,115,22,.08)',borderWidth:2,pointRadius:3,pointHoverRadius:5,fill:false,tension:.3},
+      ]},
+      options:{
+        responsive:true,
+        plugins:{legend:{position:'top',labels:{font:{size:11},usePointStyle:true}}},
+        scales:{
+          y:{beginAtZero:true,ticks:{font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},
+          x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}}
+        }
+      }
+    });
   }
 }
 
