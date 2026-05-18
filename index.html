@@ -1864,6 +1864,24 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px" id="est-cards-dia"></div>
       </div>
 
+      <!-- ANÁLISE PCP DO DIA -->
+      <div class="cd" style="border-top:3px solid var(--azm);margin-bottom:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="cd-t" style="margin:0">🔍 Análise PCP</div>
+            <input type="date" id="est-pcp-dt" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--brd);border-radius:6px;color:var(--az);font-weight:600" onchange="renderEstPCP()">
+            <span style="font-size:11px;color:var(--tx2)" id="est-pcp-label"></span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-s" style="font-size:11px" onclick="estPcpHoje()">📅 Hoje</button>
+            <button class="btn btn-g" style="font-size:11px" onclick="renderEstPCP()">🔍 Analisar</button>
+          </div>
+        </div>
+        <div id="est-pcp-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px"></div>
+        <div id="est-pcp-total" style="font-size:11px;color:var(--tx2);margin-top:.75rem;padding:.5rem .75rem;background:var(--cin);border-radius:6px;display:none"></div>
+        <div id="est-pcp-empty" style="font-size:12px;color:var(--vm);padding:.75rem;background:var(--vmc);border-radius:8px;display:none">⚠ Nenhum registro PCP encontrado para esta data.</div>
+      </div>
+
       <!-- FILTRO DE MEDIÇÃO -->
       <div class="cd" style="margin-bottom:1rem">
         <div class="cd-t">🔍 Filtro de medição</div>
@@ -2572,6 +2590,7 @@ function go(id, el) {
     const sel=document.getElementById('est-dia-sel');
     if(sel&&!sel.value) sel.value=HOJE.toISOString().split('T')[0];
     renderCardsDia();
+    estPcpHoje();
     renderPainelEstrategico();
   }
 
@@ -2669,6 +2688,82 @@ function renderCardsDia(){
       ${varStr(c.val,c.ant)}
     </div>`).join('');
 }
+function estPcpHoje(){
+  const sel=document.getElementById('est-pcp-dt');
+  // Buscar último dia com dados PCP
+  const hoje=HOJE.toISOString().split('T')[0];
+  const temHoje=pcpData.find(r=>r.data===hoje);
+  if(temHoje){ if(sel)sel.value=hoje; }
+  else {
+    const allDates=pcpData.map(r=>r.data).sort();
+    const last=allDates.filter(d=>d<=hoje).slice(-1)[0]||hoje;
+    if(sel)sel.value=last;
+  }
+  renderEstPCP();
+}
+
+function renderEstPCP(){
+  const sel=document.getElementById('est-pcp-dt');
+  const dt=sel?.value||(()=>{
+    const hoje=HOJE.toISOString().split('T')[0];
+    const all=pcpData.map(r=>r.data).sort();
+    return all.filter(d=>d<=hoje).slice(-1)[0]||hoje;
+  })();
+  if(sel&&!sel.value) sel.value=dt;
+
+  const lbl=document.getElementById('est-pcp-label');
+  if(lbl) lbl.textContent=fmtDt(dt);
+
+  const reg=pcpData.find(r=>r.data===dt);
+  const emptyEl=document.getElementById('est-pcp-empty');
+  const cardsEl=document.getElementById('est-pcp-cards');
+  const totalEl=document.getElementById('est-pcp-total');
+
+  if(!reg){
+    if(emptyEl)emptyEl.style.display='block';
+    if(cardsEl)cardsEl.innerHTML='';
+    if(totalEl)totalEl.style.display='none';
+    return;
+  }
+  if(emptyEl)emptyEl.style.display='none';
+
+  // Dia anterior com dados PCP
+  const dtAnt=estGetDiaAnterior(dt);
+  const regAnt=dtAnt?pcpData.find(r=>r.data===dtAnt):null;
+
+  const varStr=(v,ant)=>{
+    if(!ant&&ant!==0) return'';
+    const d=v-ant;
+    if(d===0) return'<div style="font-size:10px;color:var(--tx2);margin-top:3px">— igual ao dia ant.</div>';
+    const cor=d>0?'var(--vm)':'var(--vd)';
+    const ico=d>0?'▲':'▼';
+    return`<div style="font-size:10px;font-weight:700;color:${cor};margin-top:3px">${ico} ${d>0?'+':''}${d} vs ${fmtDt(dtAnt)}</div>`;
+  };
+
+  const cards=[
+    {label:'PATEC Fin./Parada', sub:'1ª Análise + Tratativa + Status B', val:reg.f1||0, ant:regAnt?regAnt.f1:null, cor:'var(--azm)', bg:'var(--azc)'},
+    {label:'MDG',               sub:'composição MDG',                     val:reg.f2||0, ant:regAnt?regAnt.f2:null, cor:'var(--az)',  bg:'var(--cin)'},
+    {label:'XGL',               sub:'composição XGL',                     val:reg.f6||0, ant:regAnt?regAnt.f6:null, cor:'var(--az)',  bg:'var(--cin)'},
+    {label:'RCs Pedidos',       sub:'composição pedidos',                 val:reg.f3||0, ant:regAnt?regAnt.f3:null, cor:'var(--vd)', bg:'var(--vdc)'},
+    {label:'RCs Devoluções',    sub:'composição devoluções',              val:reg.f4||0, ant:regAnt?regAnt.f4:null, cor:'var(--vm)', bg:'var(--vmc)'},
+    {label:'RCs Republicação',  sub:'composição republicação',            val:reg.f5||0, ant:regAnt?regAnt.f5:null, cor:'var(--am)', bg:'var(--amc)'},
+  ];
+
+  if(cardsEl) cardsEl.innerHTML=cards.map(c=>`
+    <div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.07)">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:5px">${c.sub}</div>
+      <div style="font-size:26px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
+      ${varStr(c.val,c.ant)}
+    </div>`).join('');
+
+  const total=(reg.f1||0)+(reg.f2||0)+(reg.f6||0)+(reg.f3||0)+(reg.f4||0)+(reg.f5||0);
+  if(totalEl){
+    totalEl.style.display='block';
+    totalEl.innerHTML='📋 Registro do dia '+fmtDt(dt)+' — Total: <strong>'+total+' itens</strong>'+(regAnt?' · Dia anterior: '+fmtDt(dtAnt):'');
+  }
+}
+
 function renderPainelEstrategico(){
   const hoje = HOJE.toISOString().split('T')[0];
   const label = document.getElementById('est-hoje-label');
