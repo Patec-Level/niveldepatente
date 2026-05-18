@@ -2742,10 +2742,9 @@ function renderPainelEstrategico(){
   const realProd = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias').reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0),0));
   const realMapa = dias.map(dt=>registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias').reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0),0));
   const saidasDia = dias.map(dt=>registros.filter(r=>r.data===dt).reduce((s,r)=>s+(r.f[9]||0)+(r.f[10]||0)+(r.f[7]||0)+(r.f[8]||0),0));
-  const progDia = dias.map(dt=>{
-    const colabs=[...new Set(registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias'&&!COLABS_SEM_META.includes(r.colab)).map(r=>r.colab))];
-    return colabs.length*metaDia;
-  });
+  // Programado: meta fixa 270/dia (3 colaboradores × 90) — sempre constante
+  const META_EQUIPE = 90; // 30 Wanessa + 30 Lory + 30 Ludy
+  const progDia = dias.map(() => META_EQUIPE);
 
   // Acumular valores dia a dia
   const acum = arr => arr.reduce((acc,v,i)=>{acc.push((acc[i-1]||0)+v);return acc;},[]);
