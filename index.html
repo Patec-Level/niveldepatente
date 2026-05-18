@@ -2397,6 +2397,12 @@ async function fbCarregarTudo(){
   renderBHECards();
   console.log('✓ Firebase: todos os dados carregados e renderizados');
     fbCarregarMapaDiario();
+  // Atualizar Painel Estratégico se estiver aberto
+  if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
+    renderCardsDia();
+    estPcpHoje();
+    renderPainelEstrategico();
+  }
 }
 
 
