@@ -1401,6 +1401,67 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <div id="adm-ia-prod-txt" style="font-size:13px;color:var(--tx);line-height:1.7;white-space:pre-wrap"></div>
           </div>
         </div>
+
+        <!-- DISTRIBUIÇÃO POR LINHA -->
+        <div class="cd" style="margin-top:1rem">
+          <div class="cd-t">📊 Distribuição por linha — análise por colaborador</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:1.25rem">
+            <div class="field-wrap">
+              <span class="field-label">Colaborador</span>
+              <select id="dist-colab" onchange="renderDistribuicao()" style="width:100%;padding:6px 10px;font-size:13px">
+                <option value="">Selecione...</option>
+                <option>Lory</option>
+                <option>Ludy</option>
+                <option>Wanessa</option>
+                <option>André</option>
+              </select>
+            </div>
+          </div>
+          <div class="stabs" id="dist-tabs" style="margin-bottom:1rem">
+            <button class="stab active" onclick="setDistTab('ciclo',this)">📅 Visão por ciclo</button>
+            <button class="stab" onclick="setDistTab('comparar',this)">⚖ Comparar períodos</button>
+          </div>
+          <div id="dist-tab-ciclo">
+            <div class="form-grid" style="margin-bottom:1rem">
+              <div class="field-wrap">
+                <span class="field-label">Ciclo de medição</span>
+                <select id="dist-ciclo-sel" onchange="renderDistribuicao()" style="width:100%;padding:6px 10px;font-size:13px">
+                  <option value="atual">Ciclo atual (27/04 – hoje)</option>
+                  <option value="marabr">Ciclo Mar/Abr 2026 (26/03 – 24/04)</option>
+                  <option value="custom">Período personalizado</option>
+                </select>
+              </div>
+              <div id="dist-custom-wrap" style="display:none" class="field-wrap">
+                <span class="field-label">De</span>
+                <input type="date" id="dist-de" onchange="renderDistribuicao()" style="width:100%">
+              </div>
+              <div id="dist-custom-wrap2" style="display:none" class="field-wrap">
+                <span class="field-label">Até</span>
+                <input type="date" id="dist-ate" onchange="renderDistribuicao()" style="width:100%">
+              </div>
+            </div>
+            <div id="dist-ciclo-result"></div>
+          </div>
+          <div id="dist-tab-comparar" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--azm);margin-bottom:.5rem">📅 Período 1</div>
+                <div class="form-grid">
+                  <div class="field-wrap"><span class="field-label">De</span><input type="date" id="dist-p1-de" onchange="renderComparativo()" style="width:100%"></div>
+                  <div class="field-wrap"><span class="field-label">Até</span><input type="date" id="dist-p1-ate" onchange="renderComparativo()" style="width:100%"></div>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--am);margin-bottom:.5rem">📅 Período 2</div>
+                <div class="form-grid">
+                  <div class="field-wrap"><span class="field-label">De</span><input type="date" id="dist-p2-de" onchange="renderComparativo()" style="width:100%"></div>
+                  <div class="field-wrap"><span class="field-label">Até</span><input type="date" id="dist-p2-ate" onchange="renderComparativo()" style="width:100%"></div>
+                </div>
+              </div>
+            </div>
+            <div id="dist-comparar-result"></div>
+          </div>
+        </div>
       </div>
 
       <!-- ── FÉRIAS ADM ── -->
@@ -1930,75 +1991,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- DISTRIBUIÇÃO POR LINHA -->
-      <div class="cd" style="margin-top:1rem">
-        <div class="cd-t">📊 Distribuição por linha — análise por colaborador</div>
-
-        <!-- FILTROS -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:1.25rem">
-          <div class="field-wrap">
-            <span class="field-label">Colaborador</span>
-            <select id="dist-colab" onchange="renderDistribuicao()" style="width:100%;padding:6px 10px;font-size:13px">
-              <option value="">Selecione...</option>
-              <option>Lory</option>
-              <option>Ludy</option>
-              <option>Wanessa</option>
-              <option>André</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ABAS: Ciclo / Comparativo -->
-        <div class="stabs" id="dist-tabs" style="margin-bottom:1rem">
-          <button class="stab active" onclick="setDistTab('ciclo',this)">📅 Visão por ciclo</button>
-          <button class="stab" onclick="setDistTab('comparar',this)">⚖ Comparar períodos</button>
-        </div>
-
-        <!-- ABA: VISÃO POR CICLO -->
-        <div id="dist-tab-ciclo">
-          <div class="form-grid" style="margin-bottom:1rem">
-            <div class="field-wrap">
-              <span class="field-label">Ciclo de medição</span>
-              <select id="dist-ciclo-sel" onchange="renderDistribuicao()" style="width:100%;padding:6px 10px;font-size:13px">
-                <option value="atual">Ciclo atual (27/04 – hoje)</option>
-                <option value="marabr">Ciclo Mar/Abr 2026 (26/03 – 24/04)</option>
-                <option value="custom">Período personalizado</option>
-              </select>
-            </div>
-            <div id="dist-custom-wrap" style="display:none" class="field-wrap">
-              <span class="field-label">De</span>
-              <input type="date" id="dist-de" onchange="renderDistribuicao()" style="width:100%">
-            </div>
-            <div id="dist-custom-wrap2" style="display:none" class="field-wrap">
-              <span class="field-label">Até</span>
-              <input type="date" id="dist-ate" onchange="renderDistribuicao()" style="width:100%">
-            </div>
-          </div>
-          <div id="dist-ciclo-result"></div>
-        </div>
-
-        <!-- ABA: COMPARATIVO -->
-        <div id="dist-tab-comparar" style="display:none">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-            <div>
-              <div style="font-size:11px;font-weight:700;color:var(--azm);margin-bottom:.5rem">📅 Período 1</div>
-              <div class="form-grid">
-                <div class="field-wrap"><span class="field-label">De</span><input type="date" id="dist-p1-de" onchange="renderComparativo()" style="width:100%"></div>
-                <div class="field-wrap"><span class="field-label">Até</span><input type="date" id="dist-p1-ate" onchange="renderComparativo()" style="width:100%"></div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:11px;font-weight:700;color:var(--am);margin-bottom:.5rem">📅 Período 2</div>
-              <div class="form-grid">
-                <div class="field-wrap"><span class="field-label">De</span><input type="date" id="dist-p2-de" onchange="renderComparativo()" style="width:100%"></div>
-                <div class="field-wrap"><span class="field-label">Até</span><input type="date" id="dist-p2-ate" onchange="renderComparativo()" style="width:100%"></div>
-              </div>
-            </div>
-          </div>
-          <div id="dist-comparar-result"></div>
-        </div>
-
-      </div>
 
     </div>
 
@@ -4173,6 +4165,7 @@ function setAdmTab(id,btn){
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
   if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
   if(id==='hist-mapa') setTimeout(renderAdmMapaHistorico,50);
+  if(id==='hist-prod') setTimeout(renderDistribuicao,50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
   document.querySelectorAll('#adm-tabs .stab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
