@@ -1911,7 +1911,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem" id="est-cards-analise"></div>
 
       <!-- ALERTA DO CICLO -->
-      <div id="est-alerta-ciclo" style="padding:.75rem 1rem;border-radius:8px;font-weight:700;font-size:13px;margin-bottom:1rem;text-align:center">—</div>
+      <div id="est-alerta-box" class="ciclo-box ciclo-amarelo" style="margin-bottom:1rem;display:none">
+        <span style="font-size:22px;flex-shrink:0" id="est-alerta-ico">⚠</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:2px" id="est-alerta-titulo">—</div>
+          <div style="font-size:12px;color:var(--tx2);line-height:1.5" id="est-alerta-msg">—</div>
+        </div>
+      </div>
 
       <!-- GRÁFICOS -->
       <div class="g2" style="margin-bottom:1rem">
@@ -2821,63 +2827,67 @@ function renderPainelEstrategico(){
   const totalMapaAn = totalAnalis;
 
   // ── Cards de análise ──
+  const progAcumTotal = nDias * META_EQUIPE;
+  const gap = totalAnalis - progAcumTotal;
+  const gapStr = (gap>=0?'+':'')+gap.toLocaleString('pt-BR');
+  const gapCor = gap>=0?'var(--vd)':'var(--vm)';
+  const ritmo = nDias>0?Math.round(totalAnalis/nDias):0;
+  const cicloInicio = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
+  const cicloMetaTotal = (_cicloAtivo?.meta||CICLO_ATUAL.meta_ciclo);
+  const diasRestantes = Math.max(1, Math.round((new Date(CICLO_ATUAL.fim+'T12:00:00')-HOJE)/86400000)||12);
+  const faltam = Math.max(0, cicloMetaTotal - totalAnalis);
+  const metaNec = Math.ceil(faltam/diasRestantes);
+
   const analEl = document.getElementById('est-cards-analise');
   if(analEl){
     const cards2=[
-      {label:'Itens analisados',sub:nDias+' dia(s)',val:totalAnalis.toLocaleString('pt-BR'),cor:'var(--vd)'},
-
-      {label:'Média diária equipe',sub:'meta '+metaDia+'/colaborador',val:mediaEquipe,cor:'var(--azm)'},
-
-      {label:'🏆 Melhor dia',sub:fmtDt(melhor.dt),val:melhor.tot,cor:'var(--vd)'},
-      {label:'📉 Pior dia',sub:fmtDt(pior.dt),val:pior.tot,cor:'var(--vm)'},
-      {label:'RCs Pedidos',sub:'acumulado',val:totalPed,cor:'var(--vd)'},
-      {label:'Republicação',sub:'acumulado',val:totalRep,cor:'var(--am)'},
-      {label:'Devoluções',sub:'acumulado',val:totalDev,cor:'var(--vm)'},
-      {label:'XGL',sub:'acumulado',val:totalXgl,cor:'var(--az)'},
-      {label:'MDG',sub:'acumulado',val:totalMDG,cor:'var(--az)'},
+      {label:'Itens analisados',   sub:nDias+' dia(s)',            val:totalAnalis.toLocaleString('pt-BR'), cor:'var(--vd)',  bg:'var(--vdc)'},
+      {label:'Gap',                sub:'Analisado − Planejado',    val:gapStr,                              cor:gapCor,      bg:gap>=0?'var(--vdc)':'var(--vmc)'},
+      {label:'Ritmo atual',        sub:'itens/dia equipe',         val:ritmo,                               cor:'var(--azm)',bg:'var(--azc)'},
+      {label:'Meta necessária/dia',sub:'para completar o ciclo',   val:metaNec,                             cor:metaNec>META_EQUIPE?'var(--vm)':'var(--vd)',bg:'var(--cin)'},
+      {label:'Média diária equipe',sub:'meta '+metaDia+'/colab',   val:mediaEquipe,                         cor:'var(--azm)',bg:'var(--cin)'},
+      {label:'🏆 Melhor dia',      sub:fmtDt(melhor.dt),          val:melhor.tot,                          cor:'var(--vd)', bg:'var(--cin)'},
+      {label:'📉 Pior dia',        sub:fmtDt(pior.dt),            val:pior.tot,                            cor:'var(--vm)', bg:'var(--cin)'},
+      {label:'RCs Pedidos',        sub:'acumulado',                val:totalPed,                            cor:'var(--vd)', bg:'var(--cin)'},
+      {label:'Republicação',       sub:'acumulado',                val:totalRep,                            cor:'var(--am)', bg:'var(--cin)'},
+      {label:'Devoluções',         sub:'acumulado',                val:totalDev,                            cor:'var(--vm)', bg:'var(--cin)'},
+      {label:'XGL',                sub:'acumulado',                val:totalXgl,                            cor:'var(--az)', bg:'var(--cin)'},
+      {label:'MDG',                sub:'acumulado',                val:totalMDG,                            cor:'var(--az)', bg:'var(--cin)'},
     ];
-    // Cards extras calculados
-    const progAcumTotal = nDias * META_EQUIPE;
-    const gap = totalAnalis - progAcumTotal;
-    const gapStr = (gap>=0?'+':'')+gap.toLocaleString('pt-BR');
-    const gapCor = gap>=0?'var(--vd)':'var(--vm)';
-    // Ritmo atual = media diária
-    const ritmo = nDias>0?Math.round(totalAnalis/nDias):0;
-    // Meta necessária: dias restantes do ciclo
-    const cicloInicio = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
-    const cicloMeta = (_cicloAtivo?.meta||CICLO_ATUAL.meta_ciclo);
-    const hoje2 = HOJE.toISOString().split('T')[0];
-    const todosUteis = pcpData.filter(r=>r.data>=cicloInicio).length;
-    const diasRestantes = Math.max(0, Math.round((new Date(cicloMeta+'T12:00:00')-HOJE)/(86400000*7/5))||0);
-    const faltam = Math.max(0, cicloMeta - totalAnalis);
-    const metaNec = diasRestantes>0?Math.ceil(faltam/diasRestantes):faltam;
-    // Alerta
-    let alertaMsg='', alertaCor='var(--vd)', alertaBg='var(--vdc)';
-    if(gap<-50){alertaMsg='⚠ Abaixo do planejado';alertaCor='var(--vm)';alertaBg='var(--vmc)';}
-    else if(gap<0){alertaMsg='⚡ Ligeiramente abaixo';alertaCor='var(--am)';alertaBg='var(--amc)';}
-    else{alertaMsg='✅ Dentro do planejado';alertaCor='var(--vd)';alertaBg='var(--vdc)';}
-    const extraCards=[
-      {label:'Gap',sub:'Analisado − Planejado',val:gapStr,cor:gapCor,bg:gap>=0?'var(--vdc)':'var(--vmc)'},
-      {label:'Ritmo atual',sub:'itens/dia equipe',val:ritmo,cor:'var(--azm)',bg:'var(--azc)'},
-      {label:'Meta necessária/dia',sub:'para completar ciclo',val:metaNec>0?metaNec:'—',cor:metaNec>META_EQUIPE?'var(--vm)':'var(--vd)',bg:'var(--cin)'},
-    ];
-    const analEl2=document.getElementById('est-cards-analise');
-    if(analEl2) analEl2.innerHTML+=extraCards.map(c=>`
+    analEl.innerHTML=cards2.map(c=>`
       <div class="cd" style="padding:.75rem;text-align:center;background:${c.bg||'var(--cin)'}">
         <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
         <div style="font-size:24px;font-weight:700;color:${c.cor}">${c.val}</div>
         ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">${c.sub}</div>`:''}
       </div>`).join('');
-    // Card de alerta separado (full width)
-    const analEl3=document.getElementById('est-alerta-ciclo');
-    if(analEl3){analEl3.style.background=alertaBg;analEl3.style.color=alertaCor;analEl3.textContent=alertaMsg;}
-    analEl.innerHTML=cards2.map(c=>`
-      <div class="cd" style="padding:.75rem;text-align:center">
-        <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
-        <div style="font-size:24px;font-weight:700;color:${c.cor}">${c.val}</div>
-        ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">${c.sub}</div>`:''}
-      </div>`).join('');
   }
+    // Alerta no estilo ciclo-box
+    // cicloMetaTotal já declarado acima
+    const cicloInicioD   = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
+    const projecao = nDias>0?Math.round(totalAnalis/nDias*((new Date()-new Date(cicloInicioD+'T12:00:00'))/(86400000)+diasRestantes)):totalAnalis;
+    const abaixo = gap < 0;
+    const box = document.getElementById('est-alerta-box');
+    const icoEl = document.getElementById('est-alerta-ico');
+    const titEl = document.getElementById('est-alerta-titulo');
+    const msgEl = document.getElementById('est-alerta-msg');
+    if(box && titEl && msgEl){
+      box.style.display='flex';
+      if(abaixo){
+        box.className='ciclo-box ciclo-amarelo';
+        if(icoEl)icoEl.textContent='⚠';
+        titEl.textContent='Atenção — ciclo abaixo da meta';
+      } else {
+        box.className='ciclo-box';
+        box.style.background='var(--vdc)';
+        box.style.borderColor='rgba(14,158,106,.3)';
+        if(icoEl)icoEl.textContent='✅';
+        titEl.textContent='Ciclo dentro do planejado';
+      }
+      const vsOntem = nDias>1?(realProd[realProd.length-1]-(realProd[realProd.length-2]||0)):0;
+      const vsStr = vsOntem>=0?`ritmo melhorou ${vsOntem} vs ontem`:`ritmo piorou ${Math.abs(vsOntem)} vs ontem`;
+      const vsColor = vsOntem>=0?'var(--vd)':'var(--vm)';
+      msgEl.innerHTML='Ritmo <strong>'+ritmo+'/dia</strong> · projeção <strong>'+projecao.toLocaleString('pt-BR')+' itens</strong> (meta: '+cicloMetaTotal.toLocaleString('pt-BR')+') · necessário <strong>'+metaNec+'/dia</strong> nos '+diasRestantes+' dias restantes · <span style="color:'+vsColor+';font-weight:600">'+vsStr+'</span>';
+    }
 
   // ── Dados para os gráficos usando pcpData (fonte validada) ──
   const pcpPerSort = pcpPer.slice().sort((a,b)=>a.data.localeCompare(b.data));
