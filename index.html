@@ -2774,6 +2774,7 @@ function renderEstPCP(){
 }
 
 function renderPainelEstrategico(){
+  const META_EQUIPE = 90; // 30 Wanessa + 30 Lory + 30 Ludy
   const hoje = HOJE.toISOString().split('T')[0];
   const label = document.getElementById('est-hoje-label');
   if(label) label.textContent = fmtDt(hoje);
@@ -2886,7 +2887,6 @@ function renderPainelEstrategico(){
   const realMapa = pcpPerSort.map(r=>r.f1||0);
   // Saída = pedidos(f3)+devol(f4)+repub(f5)+xgl(f6)
   const saidasDia = pcpPerSort.map(r=>(r.f3||0)+(r.f4||0)+(r.f5||0)+(r.f6||0));
-  const META_EQUIPE = 90; // 30 Wanessa + 30 Lory + 30 Ludy
   const progDia = pcpPerSort.map(() => META_EQUIPE);
 
   // Acumular valores dia a dia
