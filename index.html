@@ -2695,13 +2695,20 @@ function renderCardsDia(){
     {label:'Total Geral',         sub:'',                         val:totGeral,ant:mapaAnt?(l3a+l4a+l5a+l6a+l7a+l8a):null,cor:'var(--az)',bg:'var(--cin)'},
   ];
   const cardsEl=document.getElementById('est-cards-dia');
-  if(cardsEl) cardsEl.innerHTML=cards.map(c=>`
-    <div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.07)">
-      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
-      <div style="font-size:10px;color:var(--tx2);margin-bottom:5px">${c.sub}</div>
-      <div style="font-size:26px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
+  const META_DIA_EQUIPE = 90;
+  if(cardsEl) cardsEl.innerHTML=cards.map(c=>{
+    const metaTag = c.isMeta
+      ? (c.val>=META_DIA_EQUIPE
+          ? '<span style="float:right;font-size:13px;background:var(--vdc);color:var(--vd);padding:2px 7px;border-radius:5px;font-weight:700">✓ Meta</span>'
+          : '<span style="float:right;font-size:13px;background:var(--vmc);color:var(--vm);padding:2px 7px;border-radius:5px;font-weight:700">✗ Meta</span>')
+      : '';
+    return `<div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.07)">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${metaTag}${c.label}</div>
+      ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-bottom:5px">${c.sub}</div>`:''}
+      <div style="font-size:26px;font-weight:700;color:${c.cor};line-height:1;margin-top:${c.sub?'0':'6px'}">${c.val}</div>
       ${varStr(c.val,c.ant)}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function estPcpHoje(){
   const sel=document.getElementById('est-pcp-dt');
@@ -2783,7 +2790,7 @@ function renderEstPCP(){
   const aDevol     = dtAnt?somaFAnt(10):null;
 
   const cards=[
-    {label:'Análise',          sub:'1ª Análise + Tratativa + Status B + Outros', val:vAnalise,   ant:aAnalise,   cor:'var(--azm)', bg:'var(--azc)'},
+    {label:'Análise',          sub:'1ª Análise + Tratativa + Status B + Outros', val:vAnalise,   ant:aAnalise,   cor:'var(--azm)', bg:'var(--azc)', isMeta:true},
     {label:'Fornecedor',       sub:'',  val:vForn,      ant:aForn,      cor:'var(--az)',  bg:'var(--cin)'},
     {label:'Requisitante',     sub:'',  val:vReq,       ant:aReq,       cor:'var(--az)',  bg:'var(--cin)'},
     {label:'MDG',              sub:'',  val:vMDG,       ant:aMDG,       cor:'var(--az)',  bg:'var(--cin)'},
@@ -2794,13 +2801,20 @@ function renderEstPCP(){
     {label:'RCs Devoluções',   sub:'',  val:vDevol,     ant:aDevol,     cor:'var(--vm)', bg:'var(--vmc)'},
   ];
 
-  if(cardsEl) cardsEl.innerHTML=cards.map(c=>`
-    <div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.07)">
-      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
-      <div style="font-size:10px;color:var(--tx2);margin-bottom:5px">${c.sub}</div>
-      <div style="font-size:26px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
+  const META_DIA_EQUIPE = 90;
+  if(cardsEl) cardsEl.innerHTML=cards.map(c=>{
+    const metaTag = c.isMeta
+      ? (c.val>=META_DIA_EQUIPE
+          ? '<span style="float:right;font-size:13px;background:var(--vdc);color:var(--vd);padding:2px 7px;border-radius:5px;font-weight:700">✓ Meta</span>'
+          : '<span style="float:right;font-size:13px;background:var(--vmc);color:var(--vm);padding:2px 7px;border-radius:5px;font-weight:700">✗ Meta</span>')
+      : '';
+    return `<div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.07)">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${metaTag}${c.label}</div>
+      ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-bottom:5px">${c.sub}</div>`:''}
+      <div style="font-size:26px;font-weight:700;color:${c.cor};line-height:1;margin-top:${c.sub?'0':'6px'}">${c.val}</div>
       ${varStr(c.val,c.ant)}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   const total=(reg.f1||0)+(reg.f2||0)+(reg.f6||0)+(reg.f3||0)+(reg.f4||0)+(reg.f5||0);
   const totalDia = vAnalise+vForn+vReq+vMDG+vValThiago+vXGL+vRepub+vPedidos+vDevol;
