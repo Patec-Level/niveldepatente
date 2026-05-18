@@ -354,9 +354,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   </div>
 
   <div class="sb-mod">◈ ESTRATÉGICO</div>
-  <div class="sb-it active" onclick="go('vg-visao',this)">📊 Visão Executiva</div>
-  <div class="sb-it" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
-  <div class="sb-it" onclick="go('vg-validade',this)">⏱ Validade Oportunidades</div>
+  <div class="sb-it active" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
+  <div class="sb-it" onclick="go('vg-visao',this)">📊 Visão Executiva</div>
   <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ EXECUÇÃO</div>
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('pr-estrategico',this)">🎯 Painel Estratégico</div>
@@ -1961,6 +1960,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <input type="date" id="est-ate" style="width:100%">
             </div>
           </div>
+          <div class="field-wrap" style="min-width:160px">
+            <span class="field-label">📅 Previsão de encerramento</span>
+            <input type="date" id="est-fim-ciclo" style="width:100%;border-color:var(--azm);font-weight:600"
+              onchange="estSalvarFim()">
+            <div style="font-size:10px;color:var(--tx2);margin-top:2px" id="est-fim-label">—</div>
+          </div>
           <button class="btn btn-g" onclick="renderPainelEstrategico()" style="align-self:flex-end">🔍 Analisar</button>
         </div>
       </div>
@@ -2663,6 +2668,7 @@ function go(id, el) {
   if (id==='pr-estrategico') {
     const sel=document.getElementById('est-dia-sel');
     if(sel&&!sel.value) sel.value=HOJE.toISOString().split('T')[0];
+    estInitFim();
     renderCardsDia();
     estPcpHoje();
     renderPainelEstrategico();
@@ -2988,6 +2994,24 @@ function renderComparativo(){
   </div>`;
 }
 
+function estSalvarFim(){
+  const val=document.getElementById('est-fim-ciclo')?.value;
+  if(!val) return;
+  localStorage.setItem('patec_fim_ciclo', val);
+  const lbl=document.getElementById('est-fim-label');
+  const hoje=HOJE.toISOString().split('T')[0];
+  const dias=Math.round((new Date(val+'T12:00:00')-HOJE)/86400000);
+  if(lbl) lbl.textContent=dias>0?dias+' dias úteis restantes':dias===0?'Encerra hoje':'Já encerrado';
+  renderPainelEstrategico();
+}
+function estInitFim(){
+  const saved=localStorage.getItem('patec_fim_ciclo')||CICLO_ATUAL.fim;
+  const el=document.getElementById('est-fim-ciclo');
+  if(el&&!el.value) el.value=saved;
+  const lbl=document.getElementById('est-fim-label');
+  const dias=Math.round((new Date(saved+'T12:00:00')-HOJE)/86400000);
+  if(lbl) lbl.textContent=dias>0?dias+' dias restantes':dias===0?'Encerra hoje':'Já encerrado';
+}
 function renderPainelEstrategico(){
   const META_EQUIPE = 90; // 30 Wanessa + 30 Lory + 30 Ludy
   const hoje = HOJE.toISOString().split('T')[0];
@@ -3043,7 +3067,10 @@ function renderPainelEstrategico(){
   const ritmo = nDias>0?Math.round(totalAnalis/nDias):0;
   const cicloInicio = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
   const cicloMetaTotal = (_cicloAtivo?.meta||CICLO_ATUAL.meta_ciclo);
-  const diasRestantes = Math.max(1, Math.round((new Date(CICLO_ATUAL.fim+'T12:00:00')-HOJE)/86400000)||12);
+  // Usar data de encerramento salva pelo usuário ou fallback para CICLO_ATUAL.fim
+  const _fimSalvo = localStorage.getItem('patec_fim_ciclo')||CICLO_ATUAL.fim;
+  const _fimDate = new Date(_fimSalvo+'T12:00:00');
+  const diasRestantes = Math.max(1, Math.round((_fimDate - HOJE)/86400000));
   const faltam = Math.max(0, cicloMetaTotal - totalAnalis);
   const metaNec = Math.ceil(faltam/diasRestantes);
 
