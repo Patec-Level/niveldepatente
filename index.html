@@ -2135,7 +2135,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- GRÁFICO DONUT — PRAZO (Col C) -->
       <div class="cd" style="margin-bottom:1rem">
-        <div class="cd-t">📊 Distribuição por Prazo (Col C)</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:.75rem">
+          <div class="cd-t" style="margin:0">📊 Distribuição por Prazo (Col C)</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;font-weight:600;color:var(--tx2);white-space:nowrap">Filtrar por Analista Automático:</span>
+            <div style="position:relative;min-width:200px">
+              <select id="radar-donut-filtro-status" onchange="radarAtualizarDonut()"
+                style="width:100%;font-size:11px;font-weight:500;padding:6px 28px 6px 10px;border:1.5px solid var(--brd);border-radius:7px;background:#fff;color:var(--tx);cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
+                <option value="">Todos</option>
+              </select>
+              <span style="pointer-events:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:11px">▾</span>
+            </div>
+          </div>
+        </div>
         <div style="display:flex;align-items:center;justify-content:center;gap:2rem;flex-wrap:wrap;padding:.5rem 0">
           <div style="position:relative;width:200px;height:200px;flex-shrink:0">
             <canvas id="radar-chart-prazo" width="200" height="200"></canvas>
@@ -5721,22 +5733,17 @@ function radarFiltroStatusReset(){
 }
 
 // ── Gráfico Donut — Prazo Col C ──
-function renderRadarChartPrazo(rows){
+function _desenharDonut(rows){
+  // Núcleo do gráfico — recebe as linhas já filtradas
   const canvas=document.getElementById('radar-chart-prazo');
   if(!canvas) return;
 
-  // Regras Col C (PRAZO ):
-  // <= 59 dias  → Dentro do prazo
-  // 60–90 dias  → Próximo do vencimento
-  // >= 91 dias  → Vencida
   const nOk      = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v<=59; }).length;
   const nAlerta  = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60 && v<=90; }).length;
   const nVencida = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=91; }).length;
   const total    = nOk + nAlerta + nVencida;
+  const pct      = n => total>0 ? Math.round(n/total*100) : 0;
 
-  const pct = n => total>0 ? Math.round(n/total*100) : 0;
-
-  // Atualizar labels laterais
   const lblOk  =document.getElementById('radar-donut-lbl-ok');
   const lblAl  =document.getElementById('radar-donut-lbl-alerta');
   const lblVenc=document.getElementById('radar-donut-lbl-vencida');
@@ -5746,7 +5753,6 @@ function renderRadarChartPrazo(rows){
   if(lblVenc) lblVenc.textContent = nVencida+' ('+pct(nVencida)+'%)';
   if(lblTot)  lblTot.textContent  = total;
 
-  // Destruir instância anterior se existir
   if(_radarChartPrazo){ _radarChartPrazo.destroy(); _radarChartPrazo=null; }
 
   const data = total===0 ? [1] : [nVencida, nAlerta, nOk];
@@ -5772,6 +5778,36 @@ function renderRadarChartPrazo(rows){
       }
     }
   });
+}
+
+function renderRadarChartPrazo(rowsBase){
+  // Chamada pelo render principal — popula o dropdown do gráfico com base nos dados atuais
+  const sel=document.getElementById('radar-donut-filtro-status');
+  if(sel){
+    const vals=[...new Set(rowsBase.map(r=>r.analista_auto).filter(Boolean))].sort();
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Todos</option>'+
+      vals.map(v=>{
+        const tot=rowsBase.filter(r=>r.analista_auto===v).length;
+        return `<option value="${v}"${cur===v?' selected':''}>${v} (${tot})</option>`;
+      }).join('');
+    // Garantir valor correto após re-render
+    sel.value = vals.includes(cur) ? cur : '';
+  }
+  // Desenhar com filtro atual do dropdown
+  radarAtualizarDonut();
+}
+
+function radarAtualizarDonut(){
+  // Filtro independente do gráfico — usa _radarDados completo (não o filtro principal)
+  const sel=document.getElementById('radar-donut-filtro-status');
+  const val=sel?.value||'';
+  // Base: todos os dados OU filtro principal se ativo (mantém coerência)
+  const base = _radarFiltroStatus
+    ? _radarDados.filter(r=>r.analista_auto===_radarFiltroStatus)
+    : _radarDados;
+  const rows = val ? base.filter(r=>r.analista_auto===val) : base;
+  _desenharDonut(rows);
 }
 
 // ── Render principal ──
@@ -5807,7 +5843,7 @@ function renderRadarOperacional(){
 
   // ── CARDS conforme filtro ──
   const total      = rows.length;
-  const totalRCs   = [...new Set(rows.map(r=>r.rc).filter(Boolean))].length;
+  const totalRCs   = rows.length; // total de itens (linhas), não RCs únicos
   const maiorSLA   = rows.length ? Math.max(...rows.map(d=>Number(d.sla)||0)) : 0;
   const criticos   = rows.filter(d=>Number(d.sla)>r.sla_critico).length;
   const atrasados  = rows.filter(d=>d.status==='Atrasado').length;
