@@ -2685,14 +2685,14 @@ function renderCardsDia(){
   const totPatecAnt=mapaAnt?(l3a+l4a+l5a+l6a):null;
 
   const cards=[
-    {label:'PATEC Finalizado',    sub:'Analisar PATEC Finalizado',  val:l3,  ant:l3a, cor:'#3266AD',bg:'#EBF0FA'},
-    {label:'Ag. PATEC Finalizar', sub:'Aguardar PATEC Finalizado',  val:l4,  ant:l4a, cor:'#3266AD',bg:'#EBF0FA'},
-    {label:'100% Reprovado',      sub:'PATEC Fin. sem forn. aprovados',val:l5,  ant:l5a, cor:'var(--vd)',bg:'var(--vdc)'},
-    {label:'PATEC Cancelado',     sub:'Analisar PATEC Cancelado',   val:l6,  ant:l6a, cor:'var(--vd)',bg:'var(--vdc)'},
-    {label:'Abrir ID Não',        sub:'Abrir PATEC Idêntico Não',   val:l7,  ant:l7a, cor:'var(--am)',bg:'var(--amc)'},
-    {label:'Abrir PATEC Obrig.',  sub:'Abrir PATEC Grupo Mercadológico',    val:l8,  ant:l8a, cor:'var(--am)',bg:'var(--amc)'},
-    {label:'Total PATEC',         sub:'L3+L4+L5+L6',                     val:totPatec,ant:totPatecAnt,cor:'var(--azm)',bg:'var(--azc)'},
-    {label:'Total Geral',         sub:'L3 a L8',                         val:totGeral,ant:mapaAnt?(l3a+l4a+l5a+l6a+l7a+l8a):null,cor:'var(--az)',bg:'var(--cin)'},
+    {label:'PATEC Finalizado',    sub:'',  val:l3,  ant:l3a, cor:'#3266AD',bg:'#EBF0FA'},
+    {label:'Ag. PATEC Finalizar', sub:'',  val:l4,  ant:l4a, cor:'#3266AD',bg:'#EBF0FA'},
+    {label:'100% Reprovado',      sub:'',val:l5,  ant:l5a, cor:'var(--vd)',bg:'var(--vdc)'},
+    {label:'PATEC Cancelado',     sub:'',   val:l6,  ant:l6a, cor:'var(--vd)',bg:'var(--vdc)'},
+    {label:'Abrir ID Não',        sub:'',   val:l7,  ant:l7a, cor:'var(--am)',bg:'var(--amc)'},
+    {label:'Abrir PATEC Obrig.',  sub:'',    val:l8,  ant:l8a, cor:'var(--am)',bg:'var(--amc)'},
+    {label:'Total PATEC',         sub:'',                     val:totPatec,ant:totPatecAnt,cor:'var(--azm)',bg:'var(--azc)'},
+    {label:'Total Geral',         sub:'',                         val:totGeral,ant:mapaAnt?(l3a+l4a+l5a+l6a+l7a+l8a):null,cor:'var(--az)',bg:'var(--cin)'},
   ];
   const cardsEl=document.getElementById('est-cards-dia');
   if(cardsEl) cardsEl.innerHTML=cards.map(c=>`
@@ -2755,13 +2755,43 @@ function renderEstPCP(){
     return`<div style="font-size:10px;font-weight:700;color:${cor};margin-top:3px">${ico} ${d>0?'+':''}${d} vs ${fmtDt(dtAnt)}</div>`;
   };
 
+  // Buscar dados individuais por colaborador para o dia (do array registros)
+  const regsEstDia = registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias');
+  const somaF = (idx) => regsEstDia.reduce((s,r)=>s+(r.f[idx]||0),0);
+  const regsEstAnt = dtAnt?registros.filter(r=>r.data===dtAnt&&r.pres!=='Folga'&&r.pres!=='Férias'):[];
+  const somaFAnt = (idx) => regsEstAnt.reduce((s,r)=>s+(r.f[idx]||0),0);
+
+  // Análise = pf0+pf1+pf2+pf11 (1ªAnalise+Tratativa+StatusB+Outros)
+  const vAnalise   = somaF(0)+somaF(1)+somaF(2)+somaF(11);
+  const vForn      = somaF(3);
+  const vReq       = somaF(4);
+  const vMDG       = somaF(5);
+  const vValThiago = somaF(6);
+  const vXGL       = somaF(7);
+  const vRepub     = somaF(8);
+  const vPedidos   = somaF(9);
+  const vDevol     = somaF(10);
+
+  const aAnalise   = dtAnt?somaFAnt(0)+somaFAnt(1)+somaFAnt(2)+somaFAnt(11):null;
+  const aForn      = dtAnt?somaFAnt(3):null;
+  const aReq       = dtAnt?somaFAnt(4):null;
+  const aMDG       = dtAnt?somaFAnt(5):null;
+  const aValThiago = dtAnt?somaFAnt(6):null;
+  const aXGL       = dtAnt?somaFAnt(7):null;
+  const aRepub     = dtAnt?somaFAnt(8):null;
+  const aPedidos   = dtAnt?somaFAnt(9):null;
+  const aDevol     = dtAnt?somaFAnt(10):null;
+
   const cards=[
-    {label:'PATEC Fin./Parada', sub:'1ª Análise + Tratativa + Status B', val:reg.f1||0, ant:regAnt?regAnt.f1:null, cor:'var(--azm)', bg:'var(--azc)'},
-    {label:'MDG',               sub:'composição MDG',                     val:reg.f2||0, ant:regAnt?regAnt.f2:null, cor:'var(--az)',  bg:'var(--cin)'},
-    {label:'XGL',               sub:'composição XGL',                     val:reg.f6||0, ant:regAnt?regAnt.f6:null, cor:'var(--az)',  bg:'var(--cin)'},
-    {label:'RCs Pedidos',       sub:'composição pedidos',                 val:reg.f3||0, ant:regAnt?regAnt.f3:null, cor:'var(--vd)', bg:'var(--vdc)'},
-    {label:'RCs Devoluções',    sub:'composição devoluções',              val:reg.f4||0, ant:regAnt?regAnt.f4:null, cor:'var(--vm)', bg:'var(--vmc)'},
-    {label:'RCs Republicação',  sub:'composição republicação',            val:reg.f5||0, ant:regAnt?regAnt.f5:null, cor:'var(--am)', bg:'var(--amc)'},
+    {label:'Análise',          sub:'1ª Análise + Tratativa + Status B + Outros', val:vAnalise,   ant:aAnalise,   cor:'var(--azm)', bg:'var(--azc)'},
+    {label:'Fornecedor',       sub:'',  val:vForn,      ant:aForn,      cor:'var(--az)',  bg:'var(--cin)'},
+    {label:'Requisitante',     sub:'',  val:vReq,       ant:aReq,       cor:'var(--az)',  bg:'var(--cin)'},
+    {label:'MDG',              sub:'',  val:vMDG,       ant:aMDG,       cor:'var(--az)',  bg:'var(--cin)'},
+    {label:'Val. Thiago',      sub:'',  val:vValThiago, ant:aValThiago, cor:'var(--az)',  bg:'var(--cin)'},
+    {label:'XGL',              sub:'',  val:vXGL,       ant:aXGL,       cor:'var(--az)',  bg:'var(--cin)'},
+    {label:'Republicação',     sub:'',  val:vRepub,     ant:aRepub,     cor:'var(--am)',  bg:'var(--amc)'},
+    {label:'RCs Pedidos',      sub:'',  val:vPedidos,   ant:aPedidos,   cor:'var(--vd)', bg:'var(--vdc)'},
+    {label:'RCs Devoluções',   sub:'',  val:vDevol,     ant:aDevol,     cor:'var(--vm)', bg:'var(--vmc)'},
   ];
 
   if(cardsEl) cardsEl.innerHTML=cards.map(c=>`
@@ -2773,9 +2803,10 @@ function renderEstPCP(){
     </div>`).join('');
 
   const total=(reg.f1||0)+(reg.f2||0)+(reg.f6||0)+(reg.f3||0)+(reg.f4||0)+(reg.f5||0);
+  const totalDia = vAnalise+vForn+vReq+vMDG+vValThiago+vXGL+vRepub+vPedidos+vDevol;
   if(totalEl){
     totalEl.style.display='block';
-    totalEl.innerHTML='📋 Registro do dia '+fmtDt(dt)+' — Total: <strong>'+total+' itens</strong>'+(regAnt?' · Dia anterior: '+fmtDt(dtAnt):'');
+    totalEl.innerHTML='📋 Registro do dia '+fmtDt(dt)+' — Análise: <strong>'+vAnalise+'</strong> · Total: <strong>'+totalDia+' itens</strong>'+(dtAnt?' · Dia anterior: '+fmtDt(dtAnt):'');
   }
 }
 
