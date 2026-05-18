@@ -2909,7 +2909,8 @@ function renderPainelEstrategico(){
     // Alerta no estilo ciclo-box — padrão: Ritmo X/dia · projeção X itens · necessário X/dia · ritmo piorou/melhorou
     const cicloInicioD = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
     const diasDecorridos = Math.max(1, Math.round((HOJE - new Date(cicloInicioD+'T12:00:00'))/86400000));
-    const projecao = Math.round(ritmo * (diasDecorridos + diasRestantes));
+    // Projeção = já realizado + (ritmo atual × dias restantes)
+    const projecao = totalAnalis + Math.round(ritmo * diasRestantes);
     const abaixo = gap < 0;
     // Variação vs ontem: pegar último e penúltimo dia do PCP
     const pcpSort2 = pcpPer.slice().sort((a,b)=>a.data.localeCompare(b.data));
