@@ -1935,6 +1935,54 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+
+
+    <!-- ══════════════════════════════════════════
+         RADAR ESTRATÉGICO
+    ══════════════════════════════════════════ -->
+    <div id="p-radar" class="page">
+
+      <!-- STATUS / ÚLTIMA ATUALIZAÇÃO -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="radar-status-ico" style="font-size:18px">⚪</span>
+          <div>
+            <div id="radar-status-txt" style="font-size:13px;font-weight:700;color:var(--tx2)">Aguardando dados...</div>
+            <div id="radar-ultima-att" style="font-size:11px;color:var(--tx2)">—</div>
+          </div>
+        </div>
+        <button class="btn btn-s" style="font-size:11px" onclick="renderRadarOperacional()">↺ Atualizar</button>
+      </div>
+
+      <!-- FILTRO ANALISTA AUTOMÁTICO -->
+      <div class="cd" style="margin-bottom:1rem;padding:.875rem 1.1rem">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">📡 Filtrar por Analista Automático</div>
+          <div style="position:relative;flex:1;min-width:220px;max-width:420px">
+            <select id="radar-sel-status" onchange="radarSetFiltroStatusSel(this.value)"
+              style="width:100%;font-size:12px;font-weight:500;padding:7px 36px 7px 12px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;color:var(--tx);cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
+              <option value="">Todos os analistas automáticos</option>
+            </select>
+            <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:12px">▾</span>
+          </div>
+          <div id="radar-filtro-badge" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--azc);color:var(--azm);font-weight:600;border:1px solid rgba(26,74,138,.2)"></div>
+        </div>
+      </div>
+
+      <!-- CARDS CUSTOMIZÁVEIS (SLA acima X dias + Próximo vencimento) -->
+      <div id="radar-cards-custom" style="display:none;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:1rem"></div>
+
+      <!-- KPI CARDS -->
+      <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1rem"></div>
+
+      <!-- POR FILA -->
+      <div style="margin-bottom:1rem">
+        <div class="cd">
+          <div class="cd-t">📋 Por fila (Level Board)</div>
+          <div id="radar-por-fila"></div>
+        </div>
+      </div>
+
       <!-- GRÁFICO DONUT — PRAZO (Col C) -->
       <div class="cd" style="margin-bottom:1rem">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:.75rem">
@@ -1987,6 +2035,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
 
     </div>
+
+    </div>
+
 
     <!-- ══════════════════════════════════════════
          OPERAÇÃO — VISÃO POR EQUIPE
