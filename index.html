@@ -5662,6 +5662,9 @@ function radarAtualizarDonut(){
 function renderRadarOperacional(){
   console.log('[Radar] renderRadarOperacional chamado, dados:', _radarDados.length);
   if(!_radarDados.length){ console.warn('[Radar] sem dados'); return; }
+  try { _renderRadarCore(); } catch(e){ console.error('[Radar] ERRO INTERNO:', e.message, e.stack); }
+}
+function _renderRadarCore(){
   const todosRows=_radarDados;
   const r=radarGetRegras();
 
@@ -5747,6 +5750,7 @@ function renderRadarOperacional(){
   renderRadarCardsCustom(rows);
   renderRadarChartPrazo(rows);
   renderRadarTabela();
+  console.log('[Radar] render concluído OK');
 }
 
 // ── Cards Customizáveis ──
