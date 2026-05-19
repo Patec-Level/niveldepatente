@@ -2704,7 +2704,7 @@ function go(id, el) {
   // Triggers de render
   if (id==='vg-validade') renderValidade();
   if (id==='pr-equipe') { renderEquipe(); }
-  if (id==='radar') { renderRadarOperacional(); }
+  if (id==='radar') { try{ renderRadarOperacional(); }catch(e){ console.error('[Radar] ERRO render:', e); } }
   if (id==='pr-estrategico') { renderRadarSaude(_radarFiltroStatus?_radarDados.filter(r=>r.analista_auto===_radarFiltroStatus):_radarDados); }
   if (id==='pr-estrategico') {
     const sel=document.getElementById('est-dia-sel');
@@ -5660,7 +5660,8 @@ function radarAtualizarDonut(){
 
 // ── Render principal ──
 function renderRadarOperacional(){
-  if(!_radarDados.length) return;
+  console.log('[Radar] renderRadarOperacional chamado, dados:', _radarDados.length);
+  if(!_radarDados.length){ console.warn('[Radar] sem dados'); return; }
   const todosRows=_radarDados;
   const r=radarGetRegras();
 
