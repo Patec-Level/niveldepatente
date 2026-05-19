@@ -5872,6 +5872,7 @@ function _renderRadarCore(){
   const segOp    = rows.filter(d=>d.seguimento==='Operacional').length;
   const segCrit  = rows.filter(d=>d.seguimento==='Crítica').length;
   const segPag   = rows.filter(d=>d.seguimento==='Página amarela').length;
+  const segEstr  = rows.filter(d=>d.seguimento==='Estratégica').length;
   const patecObr = rows.filter(d=>d.patec_obrig==='Sim').length;
   const patecNao = rows.filter(d=>!d.patec_obrig).length;
   // Controle (Col L) — normCtrl ANTES de atrasados para poder usar no filtro
@@ -5901,6 +5902,7 @@ function _renderRadarCore(){
     {label:'Seg. Operacional',          val:segOp,                      cor:'var(--az)',  bg:'var(--azc)',  ico:'⚙️'},
     {label:'Seg. Crítico',              val:segCrit,                    cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
     {label:'Página Amarela',            val:segPag,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🟡'},
+    {label:'Seg. Estratégico',          val:segEstr,                    cor:'var(--vd)',  bg:'var(--vdc)',  ico:'🎯'},
     {label:'PATEC Obrigatório',         val:patecObr,                   cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✅'},
     {label:'PATEC ID Não',              val:patecNao,                   cor:'var(--tx2)', bg:'var(--cin)',  ico:'🚫'},
   ].map(c=>`<div style="background:${c.bg};border-radius:10px;padding:.875rem .75rem;text-align:center;border:1px solid rgba(0,0,0,.07)">
