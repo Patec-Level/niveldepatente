@@ -888,6 +888,23 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
           </div>
 
+          <!-- ── CARD CUSTOMIZÁVEL — SLA ── -->
+          <div style="margin-bottom:1rem;padding:1rem;background:var(--azc);border-radius:10px;border:1px solid rgba(26,74,138,.15)">
+            <div style="font-size:11px;font-weight:700;color:var(--azm);margin-bottom:.625rem;text-transform:uppercase;letter-spacing:.6px">🗂 Card — SLA acima de X dias</div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="flex:1;min-width:160px">
+                <label style="font-size:10px;color:var(--tx2);font-weight:600;display:block;margin-bottom:4px">Limiar de dias (X)</label>
+                <input type="number" id="radar-card-sla-dias" placeholder="Ex: 90" min="1"
+                  style="width:100%;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px;font-size:13px;font-weight:700;color:var(--azm)">
+                <div style="font-size:10px;color:var(--tx2);margin-top:3px">Conta RCs com SLA &gt; este valor</div>
+              </div>
+              <div style="padding:.75rem 1rem;background:#fff;border-radius:8px;border:1px solid rgba(26,74,138,.15);text-align:center;min-width:110px">
+                <div style="font-size:10px;color:var(--tx2);font-weight:600;margin-bottom:2px">Prévia do título</div>
+                <div id="radar-card-sla-preview" style="font-size:12px;font-weight:700;color:var(--azm)">SLA acima de — dias</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Preview das regras ativas -->
           <div id="radar-regras-preview" style="padding:.75rem;background:var(--cin);border-radius:8px;font-size:11px;color:var(--tx2);margin-bottom:1rem;line-height:1.8">
             Carregando regras...
@@ -1961,6 +1978,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- CARDS PRINCIPAIS (dinâmicos conforme filtro) -->
       <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:1rem"></div>
 
+      <!-- CARDS CUSTOMIZÁVEIS -->
+      <div id="radar-cards-custom" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:1rem"></div>
+
       <!-- TABELAS + GRÁFICO DONUT -->
       <div class="g2" style="margin-bottom:1rem">
         <!-- Por Analista -->
@@ -1972,6 +1992,72 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div class="cd">
           <div class="cd-t">📋 Por fila (Level Board)</div>
           <div id="radar-por-fila"></div>
+        </div>
+      </div>
+
+      <!-- ── BARRAS DE SAÚDE OPERACIONAL ── -->
+      <div class="cd" style="margin-bottom:1rem">
+        <div class="cd-t">🩺 Saúde Operacional</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem" id="radar-saude-wrap">
+
+          <!-- SLA -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:12px;font-weight:700;color:var(--tx)">⏱ SLA (Col I)</div>
+              <div id="radar-saude-sla-badge" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;background:var(--cin)">—</div>
+            </div>
+            <!-- Barra segmentada -->
+            <div style="height:14px;border-radius:8px;overflow:hidden;display:flex;background:#eee;margin-bottom:8px">
+              <div id="radar-saude-sla-bar-ok"   style="height:100%;background:#3A7D44;transition:width .5s ease"></div>
+              <div id="radar-saude-sla-bar-crit" style="height:100%;background:#D94040;transition:width .5s ease"></div>
+            </div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:5px">
+                <div style="width:10px;height:10px;border-radius:2px;background:#3A7D44;flex-shrink:0"></div>
+                <span style="font-size:10px;color:var(--tx2)">Saudável (&lt; 90 dias)</span>
+                <strong id="radar-saude-sla-ok" style="font-size:11px;color:#3A7D44">—</strong>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px">
+                <div style="width:10px;height:10px;border-radius:2px;background:#D94040;flex-shrink:0"></div>
+                <span style="font-size:10px;color:var(--tx2)">Crítico (≥ 90 dias)</span>
+                <strong id="radar-saude-sla-crit" style="font-size:11px;color:#D94040">—</strong>
+              </div>
+            </div>
+            <div id="radar-saude-sla-sub" style="font-size:10px;color:var(--tx2);margin-top:5px"></div>
+          </div>
+
+          <!-- PRAZO VALIDADE -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:12px;font-weight:700;color:var(--tx)">📅 Prazo de Validade (Col C)</div>
+              <div id="radar-saude-prazo-badge" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;background:var(--cin)">—</div>
+            </div>
+            <!-- Barra segmentada 3 faixas -->
+            <div style="height:14px;border-radius:8px;overflow:hidden;display:flex;background:#eee;margin-bottom:8px">
+              <div id="radar-saude-prazo-bar-ok"    style="height:100%;background:#3A7D44;transition:width .5s ease"></div>
+              <div id="radar-saude-prazo-bar-alert"  style="height:100%;background:#E87722;transition:width .5s ease"></div>
+              <div id="radar-saude-prazo-bar-venc"   style="height:100%;background:#D94040;transition:width .5s ease"></div>
+            </div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:5px">
+                <div style="width:10px;height:10px;border-radius:2px;background:#3A7D44;flex-shrink:0"></div>
+                <span style="font-size:10px;color:var(--tx2)">Dentro (≤ 59d)</span>
+                <strong id="radar-saude-prazo-ok" style="font-size:11px;color:#3A7D44">—</strong>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px">
+                <div style="width:10px;height:10px;border-radius:2px;background:#E87722;flex-shrink:0"></div>
+                <span style="font-size:10px;color:var(--tx2)">Próximo (60–90d)</span>
+                <strong id="radar-saude-prazo-alert" style="font-size:11px;color:#E87722">—</strong>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px">
+                <div style="width:10px;height:10px;border-radius:2px;background:#D94040;flex-shrink:0"></div>
+                <span style="font-size:10px;color:var(--tx2)">Vencida (≥ 91d)</span>
+                <strong id="radar-saude-prazo-venc" style="font-size:11px;color:#D94040">—</strong>
+              </div>
+            </div>
+            <div id="radar-saude-prazo-sub" style="font-size:10px;color:var(--tx2);margin-top:5px"></div>
+          </div>
+
         </div>
       </div>
 
@@ -5506,7 +5592,7 @@ async function radarSalvarFirebase(){
 
 // ── Regras de saúde ──
 function radarGetRegras(){
-  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60}');
+  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60,"sla_card_dias":90}');
 }
 
 function radarInitADM(){
@@ -5516,10 +5602,22 @@ function radarInitADM(){
   set('radar-sla-critico',r.sla_critico);
   set('radar-prazo-alerta',r.prazo_alerta);
   set('radar-prazo-critico',r.prazo_critico);
+  set('radar-card-sla-dias',r.sla_card_dias||90);
+  // Preview do título do card customizável
   const prev=document.getElementById('radar-regras-preview');
   if(prev) prev.innerHTML=
     '🟡 <strong>Alerta</strong>: SLA > '+r.sla_alerta+' dias <strong>OU</strong> prazo de enc. ≤ '+r.prazo_alerta+' dias<br>'+
     '🔴 <strong>Crítico</strong>: SLA > '+r.sla_critico+' dias <strong>OU</strong> prazo de enc. ≤ '+r.prazo_critico+' dias';
+  radarCardSlaPreview();
+  // Atualizar preview ao digitar
+  const inp=document.getElementById('radar-card-sla-dias');
+  if(inp) inp.oninput=radarCardSlaPreview;
+}
+
+function radarCardSlaPreview(){
+  const dias=document.getElementById('radar-card-sla-dias')?.value||'—';
+  const el=document.getElementById('radar-card-sla-preview');
+  if(el) el.textContent='SLA acima de '+dias+' dias';
 }
 
 function radarSalvarRegras(){
@@ -5529,6 +5627,7 @@ function radarSalvarRegras(){
     sla_critico:  get('radar-sla-critico')||90,
     prazo_alerta: get('radar-prazo-alerta')||30,
     prazo_critico:get('radar-prazo-critico')||60,
+    sla_card_dias:get('radar-card-sla-dias')||90,
   };
   localStorage.setItem('patec_radar_regras',JSON.stringify(regras));
   radarInitADM();
@@ -5758,8 +5857,137 @@ function renderRadarOperacional(){
       '<tr><td>'+f+'</td><td>'+d.total+'</td><td style="color:var(--vm);font-weight:700">'+d.atrasado+'</td></tr>'
     ).join('')+'</tbody></table>';
 
+  renderRadarCardsCustom(rows);
+  renderRadarSaude(rows);
   renderRadarChartPrazo(rows);
   renderRadarTabela();
+}
+
+// ── Cards Customizáveis ──
+function renderRadarCardsCustom(rows){
+  const el=document.getElementById('radar-cards-custom');
+  if(!el) return;
+  const r=radarGetRegras();
+  const dias=Number(r.sla_card_dias)||90;
+
+  // Card 1: SLA acima de X dias
+  const nSlaX = rows.filter(d=>Number(d.sla||0)>dias).length;
+  const total  = rows.length;
+  const pctSlaX= total>0?Math.round(nSlaX/total*100):0;
+  const corSla = nSlaX===0?'var(--vd)':pctSlaX>=30?'var(--vm)':'var(--am)';
+  const bgSla  = nSlaX===0?'var(--vdc)':pctSlaX>=30?'var(--vmc)':'var(--amc)';
+  const icoSla = nSlaX===0?'🟢':pctSlaX>=30?'🔴':'🟡';
+
+  // Card 2: Próximo do vencimento (prazo 60–90 dias) — fixo
+  const nProx  = rows.filter(d=>{ const v=Number(d.prazo_c||0); return v>=60&&v<=90; }).length;
+  const pctPrx = total>0?Math.round(nProx/total*100):0;
+  const corPrx = nProx===0?'var(--vd)':pctPrx>=20?'var(--vm)':'var(--am)';
+  const bgPrx  = nProx===0?'var(--vdc)':pctPrx>=20?'var(--vmc)':'var(--amc)';
+  const icoPrx = nProx===0?'🟢':pctPrx>=20?'🔴':'🟡';
+
+  el.innerHTML=`
+    <div style="background:${bgSla};border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(0,0,0,.07);display:flex;align-items:center;gap:1rem">
+      <div style="font-size:28px;line-height:1">${icoSla}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:2px">SLA acima de ${dias} dias</div>
+        <div style="font-size:30px;font-weight:700;color:${corSla};line-height:1">${nSlaX}</div>
+        <div style="font-size:10px;color:var(--tx2);margin-top:3px">${pctSlaX}% do total · ${total} itens na base</div>
+      </div>
+    </div>
+    <div style="background:${bgPrx};border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(0,0,0,.07);display:flex;align-items:center;gap:1rem">
+      <div style="font-size:28px;line-height:1">${icoPrx}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:2px">Próximo do vencimento (60–90 dias)</div>
+        <div style="font-size:30px;font-weight:700;color:${corPrx};line-height:1">${nProx}</div>
+        <div style="font-size:10px;color:var(--tx2);margin-top:3px">${pctPrx}% do total · prazo Col C</div>
+      </div>
+    </div>`;
+}
+
+// ── Barras de Saúde Operacional ──
+function renderRadarSaude(rows){
+  const total = rows.length;
+  if(!total) return;
+
+  // ── SLA (Col I) ──
+  const slaOk   = rows.filter(d=>Number(d.sla||0) < 90).length;
+  const slaCrit = rows.filter(d=>Number(d.sla||0) >= 90).length;
+  const pctSlaCrit = Math.round(slaCrit/total*100);
+  const pctSlaOk   = 100 - pctSlaCrit;
+
+  // Barra
+  const bSlaOk  = document.getElementById('radar-saude-sla-bar-ok');
+  const bSlaCr  = document.getElementById('radar-saude-sla-bar-crit');
+  if(bSlaOk)  bSlaOk.style.width  = pctSlaOk+'%';
+  if(bSlaCr)  bSlaCr.style.width  = pctSlaCrit+'%';
+
+  // Legendas
+  const eSlaOk   = document.getElementById('radar-saude-sla-ok');
+  const eSlaCr   = document.getElementById('radar-saude-sla-crit');
+  const eSlaSub  = document.getElementById('radar-saude-sla-sub');
+  const eSlaBadg = document.getElementById('radar-saude-sla-badge');
+  if(eSlaOk)  eSlaOk.textContent  = slaOk+' ('+pctSlaOk+'%)';
+  if(eSlaCr)  eSlaCr.textContent  = slaCrit+' ('+pctSlaCrit+'%)';
+
+  // SLA máximo e médio
+  const slaMax = rows.length ? Math.max(...rows.map(d=>Number(d.sla)||0)) : 0;
+  const slaAvg = rows.length ? Math.round(rows.reduce((s,d)=>s+Number(d.sla||0),0)/rows.length) : 0;
+  if(eSlaSub) eSlaSub.textContent = 'Máximo: '+slaMax+' dias · Média: '+slaAvg+' dias';
+
+  // Badge de status SLA
+  if(eSlaBadg){
+    if(pctSlaCrit >= 30){
+      eSlaBadg.textContent='🔴 Crítico';
+      eSlaBadg.style.cssText+='background:var(--vmc);color:var(--vm);border:1px solid rgba(217,64,64,.3)';
+    } else if(pctSlaCrit >= 10){
+      eSlaBadg.textContent='🟡 Atenção';
+      eSlaBadg.style.cssText+='background:var(--amc);color:var(--am);border:1px solid rgba(192,122,18,.3)';
+    } else {
+      eSlaBadg.textContent='🟢 Saudável';
+      eSlaBadg.style.cssText+='background:var(--vdc);color:var(--vd);border:1px solid rgba(14,158,106,.3)';
+    }
+  }
+
+  // ── PRAZO VALIDADE (Col C) ──
+  const pOk    = rows.filter(d=>Number(d.prazo_c||0) <= 59).length;
+  const pAlert = rows.filter(d=>{ const v=Number(d.prazo_c||0); return v>=60&&v<=90; }).length;
+  const pVenc  = rows.filter(d=>Number(d.prazo_c||0) >= 91).length;
+  const pctOk    = Math.round(pOk/total*100);
+  const pctAlert = Math.round(pAlert/total*100);
+  const pctVenc  = 100 - pctOk - pctAlert;
+
+  const bPOk    = document.getElementById('radar-saude-prazo-bar-ok');
+  const bPAlert = document.getElementById('radar-saude-prazo-bar-alert');
+  const bPVenc  = document.getElementById('radar-saude-prazo-bar-venc');
+  if(bPOk)    bPOk.style.width    = pctOk+'%';
+  if(bPAlert) bPAlert.style.width = pctAlert+'%';
+  if(bPVenc)  bPVenc.style.width  = pctVenc+'%';
+
+  const ePOk    = document.getElementById('radar-saude-prazo-ok');
+  const ePAlert = document.getElementById('radar-saude-prazo-alert');
+  const ePVenc  = document.getElementById('radar-saude-prazo-venc');
+  const ePSub   = document.getElementById('radar-saude-prazo-sub');
+  const ePBadg  = document.getElementById('radar-saude-prazo-badge');
+  if(ePOk)    ePOk.textContent    = pOk+' ('+pctOk+'%)';
+  if(ePAlert) ePAlert.textContent = pAlert+' ('+pctAlert+'%)';
+  if(ePVenc)  ePVenc.textContent  = pVenc+' ('+pctVenc+'%)';
+
+  const prazoAvg = rows.length ? Math.round(rows.reduce((s,d)=>s+Number(d.prazo_c||0),0)/rows.length) : 0;
+  if(ePSub) ePSub.textContent = 'Média de prazo: '+prazoAvg+' dias';
+
+  // Badge de status Prazo
+  if(ePBadg){
+    if(pVenc > 0){
+      ePBadg.textContent='🔴 Vencida';
+      ePBadg.style.cssText+='background:var(--vmc);color:var(--vm);border:1px solid rgba(217,64,64,.3)';
+    } else if(pctAlert >= 20){
+      ePBadg.textContent='🟡 Atenção';
+      ePBadg.style.cssText+='background:var(--amc);color:var(--am);border:1px solid rgba(192,122,18,.3)';
+    } else {
+      ePBadg.textContent='🟢 Saudável';
+      ePBadg.style.cssText+='background:var(--vdc);color:var(--vd);border:1px solid rgba(14,158,106,.3)';
+    }
+  }
 }
 
 function renderRadarTabela(){
