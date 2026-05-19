@@ -7277,11 +7277,10 @@ function renderCascata(){
   if(!dtInicioEl?.value) return;
 
   const r         = radarGetRegras();
-  const dtQuarta  = dtInicioEl.value; // A quarta é o ponto zero — não entra no gráfico
-  // Dias úteis começam no DIA SEGUINTE à quarta inicial
-  const dtInicioGraf = new Date(dtQuarta); dtInicioGraf.setDate(dtInicioGraf.getDate()+1);
-  const dtFimDate    = new Date(dtQuarta); dtFimDate.setDate(dtFimDate.getDate()+8);
-  const diasUteis    = paDiasUteis(dtInicioGraf.toISOString().split('T')[0], dtFimDate.toISOString().split('T')[0]);
+  const dtQuarta  = dtInicioEl.value; // Quarta inicial — incluída no gráfico
+  // Período: da quarta inicial até 7 dias úteis depois
+  const dtFimDate = new Date(dtQuarta); dtFimDate.setDate(dtFimDate.getDate()+8);
+  const diasUteis = paDiasUteis(dtQuarta, dtFimDate.toISOString().split('T')[0]);
 
   // Backlog inicial (configurado no ADM)
   const backlogBase = Number(r.pa_backlog_val)||505;
