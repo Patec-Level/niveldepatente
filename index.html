@@ -5727,18 +5727,7 @@ function renderRadarOperacional(){
     porAn[a].total++;
     if(d.status==='Atrasado')porAn[a].atrasado++;
   });
-  const anEl=document.getElementById('radar-por-analista');
-  const selAn=document.getElementById('radar-filtro-analista');
-  const curAn=selAn?.value||'';
-  if(selAn){
-    const opts=Object.keys(porAn).sort();
-    selAn.innerHTML='<option value="">Todos analistas</option>'+opts.map(a=>`<option${a===curAn?' selected':''}>${a}</option>`).join('');
-  }
-  const lim=radarGetRegras();
-  if(anEl) anEl.innerHTML='<table style="width:100%"><thead><tr><th>ANALISTA</th><th>TOTAL</th></tr></thead><tbody>'+
-    Object.entries(porAn).sort((a,b)=>b[1].total-a[1].total).map(([a,d])=>{
-      return'<tr><td><strong>'+a+'</strong></td><td style="font-weight:700;color:var(--az)">'+d.total+'</td></tr>';
-    }).join('')+'</tbody></table>';
+  // por analista (elemento removido do HTML — ignorado)
 
   // Por fila
   const porFila={};
@@ -5749,9 +5738,6 @@ function renderRadarOperacional(){
     if(d.status==='Atrasado')porFila[f].atrasado++;
   });
   const filaEl=document.getElementById('radar-por-fila');
-  const selFila=document.getElementById('radar-filtro-fila');
-  const curFila=selFila?.value||'';
-  if(selFila) selFila.innerHTML='<option value="">Todas filas</option>'+Object.keys(porFila).sort().map(f=>`<option${f===curFila?' selected':''}>${f}</option>`).join('');
   if(filaEl) filaEl.innerHTML='<table style="width:100%"><thead><tr><th>FILA</th><th>TOTAL</th></tr></thead><tbody>'+
     Object.entries(porFila).sort((a,b)=>b[1].total-a[1].total).map(([f,d])=>
       '<tr><td>'+f+'</td><td style="font-weight:700;color:var(--az)">'+d.total+'</td></tr>'
@@ -5893,10 +5879,6 @@ function renderRadarSaude(rows){
 function renderRadarTabela(){
   // Tabela removida — função mantida para compatibilidade
   return;
-  const filAn=''; const filFila='';
-  let rows=_radarFiltroStatus
-    ? _radarDados.filter(r=>r.analista_auto===_radarFiltroStatus)
-    : _radarDados;
   const xlDate=n=>{if(!n||isNaN(n))return'—';const d=new Date((n-25569)*86400000);return d.toLocaleDateString('pt-BR');};
   const corStatus=s=>s==='Atrasado'?'var(--vmc);color:var(--vm)':s==='Dentro do Prazo'?'var(--vdc);color:var(--vd)':'var(--cin);color:var(--tx2)';
   const tb=document.getElementById('radar-tb-atrasados');
