@@ -2034,19 +2034,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- CARDS CUSTOMIZÁVEIS (SLA acima X dias + Próximo vencimento) -->
       <div id="radar-cards-custom" style="display:none;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:1rem"></div>
 
-      <!-- KPI CARDS -->
-      <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1rem"></div>
-
-      <!-- TOP 5 FAMÍLIAS -->
-      <div class="cd" style="margin-bottom:1rem">
-        <div class="cd-t">📦 Top 5 Famílias com mais RCs</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
-          <div id="radar-top-familias-bars"></div>
-          <div style="position:relative;height:220px">
+      <!-- KPI CARDS + TOP 5 -->
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:10px;margin-bottom:1rem;align-items:start">
+        <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px"></div>
+        <!-- TOP 5 FAMÍLIAS — ocupa toda a altura dos cards -->
+        <div class="cd" style="margin:0;padding:.875rem">
+          <div style="font-size:11px;font-weight:700;color:var(--az);margin-bottom:.75rem;display:flex;align-items:center;gap:6px">📦 Top 5 Famílias</div>
+          <div id="radar-top-familias-bars" style="margin-bottom:.75rem"></div>
+          <div style="position:relative;height:160px">
             <canvas id="radar-chart-familias"></canvas>
           </div>
         </div>
       </div>
+
 
       <!-- POR FILA + DONUT SIDE BY SIDE -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;align-items:start">
