@@ -5614,7 +5614,7 @@ async function radarOnFile(file){
       validade:      String(r['Validade da \nProposta ']||'').trim(),
       finalizou:     r['FINALIZOU']||0,
       seguimento:    (()=>{ const v=String(r['Seguimento']||'').trim(); return v==='#N/A'?'':v; })(),
-      patec_obrig:   (()=>{ const v=String(r['Patec \nObrigatorio ']||r['Patec \nObrigatorio']||'').trim(); return v==='#N/A'?'':v; })(),
+      patec_obrig:   (()=>{ const v=String(r['Patec \nObrigatorio ']||r['Patec \nObrigatorio']||'').trim(); return v==='Sim'?'Sim':'Não'; })(),
     }));
 
     _radarDados=rows;
@@ -5874,7 +5874,7 @@ function _renderRadarCore(){
   const segPag   = rows.filter(d=>d.seguimento==='Página amarela').length;
   const segEstr  = rows.filter(d=>d.seguimento==='Estratégica').length;
   const patecObr = rows.filter(d=>d.patec_obrig==='Sim').length;
-  const patecNao = rows.filter(d=>!d.patec_obrig).length;
+  const patecNao = rows.filter(d=>d.patec_obrig==='Não').length;
   // Controle (Col L) — normCtrl ANTES de atrasados para poder usar no filtro
   const normCtrl   = v=>String(v||'').trim().toLowerCase();
   // Próximo do Vencimento = Prazo 60-90 dias (consistente com card customizável)
@@ -5958,7 +5958,7 @@ function renderRadarAnalise(rows){
   // PATEC
   const patecData = [
     {label:'Obrigatório (Sim)', val:rows.filter(d=>d.patec_obrig==='Sim').length,  cor:'var(--vd)', bg:'var(--vdc)'},
-    {label:'Não Obrigatório',   val:rows.filter(d=>!d.patec_obrig).length,         cor:'var(--tx2)',bg:'var(--cin)'},
+    {label:'Não Obrigatório',   val:rows.filter(d=>d.patec_obrig==='Não').length,         cor:'var(--tx2)',bg:'var(--cin)'},
   ];
 
   const barraHTML = (item) => {
