@@ -7202,76 +7202,22 @@ function paVoltarHoje(){
 
 // ── Cards do Dia (igual Painel Estratégico) ──
 function renderPlanoAcaoCardsDia(){
-  const sel = document.getElementById('pa-dia-sel');
-  const lbl = document.getElementById('pa-hoje-label');
-  const dt  = sel?.value || HOJE.toISOString().split('T')[0];
-  const hojeStr = HOJE.toISOString().split('T')[0];
-  if(lbl) lbl.textContent = dt === hojeStr ? hojeStr.split('-').reverse().join('/') + ' (hoje)' : dt.split('-').reverse().join('/');
+  const sel    = document.getElementById('pa-dia-sel');
+  const lbl    = document.getElementById('pa-hoje-label');
+  const dt     = sel?.value || HOJE.toISOString().split('T')[0];
+  const hojeStr= HOJE.toISOString().split('T')[0];
+  if(lbl) lbl.textContent = dt+(dt===hojeStr?' (hoje)':'');
 
-  const regsD = registros.filter(r => r.data === dt);
-  const el = document.getElementById('pa-cards-dia');
-  if(!el) return;
+  // Sincronizar data com o seletor do Painel Estratégico e reusar renderCardsDia
+  const estSel = document.getElementById('est-dia-sel');
+  if(estSel) estSel.value = dt;
 
-  if(!regsD.length){
-    el.innerHTML = '<div style="font-size:12px;color:var(--tx2);padding:.5rem">Sem registros para esta data.</div>';
-    return;
-  }
-
-  // Redirecionar para o mesmo elemento do Painel Estratégico via renderCardsDia
-  // mas usando o div do Plano de Ação
-  const getMapa=(d)=>{
-    const fb=mapaFirebase.find(r=>r.data===d);
-    if(fb) return fb;
-    const idx=DATAS_ISO_MAPA.indexOf(d);
-    if(idx>=0) return{l3:L[3][idx]||0,l4:L[4][idx]||0,l5:L[5][idx]||0,l6:L[6][idx]||0,l7:L[7][idx]||0,l8:L[8][idx]||0};
-    return{l3:0,l4:0,l5:0,l6:0,l7:0,l8:0};
-  };
-  const dtAnt2 = estGetDiaAnterior(dt);
-  const mapa2  = getMapa(dt);
-  const mapaAnt2 = dtAnt2 ? getMapa(dtAnt2) : null;
-  const l3=mapa2.l3||0,l4=mapa2.l4||0,l5=mapa2.l5||0,l6=mapa2.l6||0,l7=mapa2.l7||0,l8=mapa2.l8||0;
-  const l3a=mapaAnt2?.l3??null,l4a=mapaAnt2?.l4??null,l5a=mapaAnt2?.l5??null;
-  const l6a=mapaAnt2?.l6??null,l7a=mapaAnt2?.l7??null,l8a=mapaAnt2?.l8??null;
-  const totPatec2=l3+l4+l5+l6, totAbrir2=l7+l8, totGeral2=l3+l4+l5+l6+l7+l8;
-  const totPatecAnt2=mapaAnt2?(l3a+l4a+l5a+l6a):null;
-  const totAbrirAnt2=mapaAnt2?(l7a+l8a):null;
-  const totGeralAnt2=mapaAnt2?(l3a+l4a+l5a+l6a+l7a+l8a):null;
-
-  const varStr2=(v,ant)=>{
-    if(ant===null||ant===undefined) return'';
-    const d=v-ant;
-    if(d===0) return'<div style="font-size:11px;font-weight:600;color:var(--tx2);margin-top:4px">— igual ao dia ant.</div>';
-    const cor=d>0?'var(--vm)':'var(--vd)';
-    return`<div style="font-size:11px;font-weight:700;color:${cor};margin-top:4px">${d>0?'▲':'▼'} ${d>0?'+':''}${d} vs dia ant.</div>`;
-  };
-  const cH2=(c,big=false)=>`<div style="background:${c.bg};border-radius:10px;padding:${big?'1rem 1.25rem':'.875rem'};border:1px solid rgba(0,0,0,.07)">
-    <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
-    <div style="font-size:${big?'32':'26'}px;font-weight:700;color:${c.cor};line-height:1;margin-top:4px">${c.val}</div>
-    ${varStr2(c.val,c.ant)}</div>`;
-
-  el.innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(5,1fr) 1.8fr;grid-template-rows:auto auto;gap:10px">
-      ${cH2({label:'PATEC Finalizado',    val:l3,ant:l3a,cor:'#3266AD',bg:'#EBF0FA'})}
-      ${cH2({label:'Ag. PATEC Finalizar', val:l4,ant:l4a,cor:'#3266AD',bg:'#EBF0FA'})}
-      ${cH2({label:'100% Reprovado',      val:l5,ant:l5a,cor:'var(--vd)',bg:'var(--vdc)'})}
-      ${cH2({label:'PATEC Cancelado',     val:l6,ant:l6a,cor:'var(--vd)',bg:'var(--vdc)'})}
-      ${cH2({label:'Total PATEC',         val:totPatec2,ant:totPatecAnt2,cor:'var(--azm)',bg:'var(--azc)'})}
-      <div style="grid-column:6;grid-row:1/3;background:var(--cin);border-radius:10px;padding:1.25rem 1.5rem;border:1px solid rgba(0,0,0,.07);display:flex;flex-direction:column;justify-content:center">
-        <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Total Geral</div>
-        <div style="font-size:38px;font-weight:700;color:var(--az);line-height:1">${totGeral2}</div>
-        ${varStr2(totGeral2,totGeralAnt2)}
-      </div>
-      ${cH2({label:'Abrir ID Não',        val:l7,ant:l7a,cor:'var(--am)',bg:'var(--amc)'})}
-      ${cH2({label:'Abrir PATEC Obrig.',  val:l8,ant:l8a,cor:'var(--am)',bg:'var(--amc)'})}
-      ${cH2({label:'Soma (Abrir)',        val:totAbrir2,ant:totAbrirAnt2,cor:'var(--am)',bg:'var(--amc)'})}
-    </div>`;
-}
-
-// ── Helpers de data para cascata ──
-function xlSerialToISO(n){
-  if(!n||isNaN(n)) return null;
-  const d = new Date((Number(n)-25569)*86400000);
-  return d.toISOString().split('T')[0];
+  // Renderizar no container do Painel Estratégico temporariamente
+  // e copiar o HTML para pa-cards-dia
+  renderCardsDia();
+  const fonte = document.getElementById('est-cards-dia');
+  const dest  = document.getElementById('pa-cards-dia');
+  if(fonte && dest) dest.innerHTML = fonte.innerHTML;
 }
 
 // ── Gráfico Cascata ──
