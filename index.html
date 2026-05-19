@@ -5686,6 +5686,11 @@ async function radarOnFile(file){
     radarRenderPreview(rows);
     if(progEl) progEl.style.display='none';
     document.getElementById('radar-upload-preview').style.display='block';
+    // Auto-salvar no Firebase imediatamente
+    if(msgEl) msgEl.textContent='Salvando no Firebase...';
+    if(progEl) progEl.style.display='block';
+    await radarSalvarFirebase();
+    if(progEl) progEl.style.display='none';
   } catch(err){
     if(msgEl) msgEl.textContent='Erro: '+err.message;
     console.error(err);
@@ -5711,9 +5716,15 @@ async function radarSalvarFirebase(){
   try {
     const db=getDB(); if(!db){alert('Firebase não conectado.');return;}
     const payload={rows:_radarDados, ts:_radarTs, n:_radarDados.length};
+    // Forçar substituição completa
     await db.collection('config').doc('radar_dados').set(payload);
+    console.log('✓ Radar salvo no Firebase:', _radarDados.length, 'registros');
     const ok=document.getElementById('radar-salvo-ok');
-    if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',4000);}
+    if(ok){
+      ok.style.display='inline';
+      ok.textContent='✓ Salvo! '+_radarDados.length+' registros.';
+      setTimeout(()=>{ok.style.display='none';ok.textContent='✓ Salvo! Radar atualizado.';},5000);
+    }
     renderRadarOperacional();
   } catch(e){ alert('Erro ao salvar: '+e.message); }
 }
