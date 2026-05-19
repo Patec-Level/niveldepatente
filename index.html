@@ -1938,58 +1938,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
     </div>
 
-    <!-- ══════════════════════════════════════════
-         RADAR OPERACIONAL
-    ══════════════════════════════════════════ -->
-    <div id="p-radar" class="page">
-
-      <!-- STATUS / ÚLTIMA ATUALIZAÇÃO -->
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span id="radar-status-ico" style="font-size:18px">⚪</span>
-          <div>
-            <div id="radar-status-txt" style="font-size:13px;font-weight:700;color:var(--tx2)">Aguardando dados...</div>
-            <div id="radar-ultima-att" style="font-size:11px;color:var(--tx2)">—</div>
-          </div>
-        </div>
-        <button class="btn btn-s" style="font-size:11px" onclick="renderRadarOperacional()">↺ Atualizar</button>
-      </div>
-
-      <!-- ── FILTRO ANALISTA AUTOMÁTICO (Col D) — DROPDOWN ── -->
-      <div class="cd" style="margin-bottom:1rem;padding:.875rem 1.1rem">
-        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">📡 Filtrar por Analista Automático</div>
-          <div style="position:relative;flex:1;min-width:220px;max-width:420px">
-            <select id="radar-sel-status" onchange="radarSetFiltroStatusSel(this.value)"
-              style="width:100%;font-size:12px;font-weight:500;padding:7px 36px 7px 12px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;color:var(--tx);cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
-              <option value="">Todos os analistas automáticos</option>
-            </select>
-            <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:12px">▾</span>
-          </div>
-          <div id="radar-filtro-badge" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--azc);color:var(--azm);font-weight:600;border:1px solid rgba(26,74,138,.2)"></div>
-        </div>
-      </div>
-
-      <!-- CARDS PRINCIPAIS (dinâmicos conforme filtro) -->
-      <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:1rem"></div>
-
-      <!-- CARDS CUSTOMIZÁVEIS -->
-      <div id="radar-cards-custom" style="display:none;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:1rem"></div>
-
-      <!-- TABELAS + GRÁFICO DONUT -->
-      <div class="g2" style="margin-bottom:1rem">
-        <!-- Por Analista -->
-        <div class="cd">
-          <div class="cd-t">👤 Por analista</div>
-          <div id="radar-por-analista"></div>
-        </div>
-        <!-- Por Fila -->
-        <div class="cd">
-          <div class="cd-t">📋 Por fila (Level Board)</div>
-          <div id="radar-por-fila"></div>
-        </div>
-      </div>
-
       <!-- ── BARRAS DE SAÚDE OPERACIONAL ── -->
       <div class="cd" style="margin-bottom:1rem">
         <div class="cd-t">🩺 Saúde Operacional</div>
@@ -2056,6 +2004,65 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+    <!-- ══════════════════════════════════════════
+         RADAR OPERACIONAL
+    ══════════════════════════════════════════ -->
+    <div id="p-radar" class="page">
+
+      <!-- STATUS / ÚLTIMA ATUALIZAÇÃO -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="radar-status-ico" style="font-size:18px">⚪</span>
+          <div>
+            <div id="radar-status-txt" style="font-size:13px;font-weight:700;color:var(--tx2)">Aguardando dados...</div>
+            <div id="radar-ultima-att" style="font-size:11px;color:var(--tx2)">—</div>
+          </div>
+        </div>
+        <button class="btn btn-s" style="font-size:11px" onclick="renderRadarOperacional()">↺ Atualizar</button>
+      </div>
+
+      <!-- ── FILTRO ANALISTA AUTOMÁTICO (Col D) — DROPDOWN ── -->
+      <div class="cd" style="margin-bottom:1rem;padding:.875rem 1.1rem">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">📡 Filtrar por Analista Automático</div>
+          <div style="position:relative;flex:1;min-width:220px;max-width:420px">
+            <select id="radar-sel-status" onchange="radarSetFiltroStatusSel(this.value)"
+              style="width:100%;font-size:12px;font-weight:500;padding:7px 36px 7px 12px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;color:var(--tx);cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
+              <option value="">Todos os analistas automáticos</option>
+            </select>
+            <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:12px">▾</span>
+          </div>
+          <div id="radar-filtro-badge" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--azc);color:var(--azm);font-weight:600;border:1px solid rgba(26,74,138,.2)"></div>
+        </div>
+      </div>
+
+      <!-- CARDS CUSTOMIZÁVEIS — logo abaixo do filtro -->
+      <div id="radar-cards-custom" style="display:none;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:1rem"></div>
+
+      <!-- CARDS PRINCIPAIS (dinâmicos conforme filtro) -->
+      <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1rem"></div>
+
+      <!-- TABELAS: Por Analista + Por Fila + Controle -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">
+        <!-- Por Analista (só Analisar PATEC Finalizado) -->
+        <div class="cd">
+          <div class="cd-t">👤 Por analista</div>
+          <div id="radar-por-analista"></div>
+        </div>
+        <!-- Por Fila -->
+        <div class="cd">
+          <div class="cd-t">📋 Por fila (Level Board)</div>
+          <div id="radar-por-fila"></div>
+        </div>
+        <!-- Controle (Ag. Tratamento, Fornecedor, MDG, Requisitante, Validação Tiago) -->
+        <div class="cd">
+          <div class="cd-t">🗂 Por controle</div>
+          <div id="radar-por-controle"></div>
+        </div>
+      </div>
+
+
+
       <!-- GRÁFICO DONUT — PRAZO (Col C) -->
       <div class="cd" style="margin-bottom:1rem">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:.75rem">
@@ -2105,27 +2112,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- ITENS DETALHADOS -->
-      <div class="cd">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
-          <div class="cd-t" style="margin:0">📋 Itens detalhados</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <select id="radar-filtro-analista" style="font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px" onchange="renderRadarTabela()">
-              <option value="">Todos analistas</option>
-            </select>
-            <select id="radar-filtro-fila" style="font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px" onchange="renderRadarTabela()">
-              <option value="">Todas filas</option>
-            </select>
-          </div>
-        </div>
-        <div class="tw" style="max-height:420px;overflow-y:auto">
-          <table>
-            <thead><tr><th>RC</th><th>Fila</th><th>Analista</th><th>SLA</th><th>Controle</th><th>Status</th><th>Prazo Retorno</th></tr></thead>
-            <tbody id="radar-tb-atrasados"></tbody>
-          </table>
-        </div>
-        <div id="radar-tb-count" style="font-size:11px;color:var(--tx2);margin-top:.5rem"></div>
-      </div>
+
 
     </div>
 
@@ -2796,6 +2783,7 @@ function go(id, el) {
   if (id==='vg-validade') renderValidade();
   if (id==='pr-equipe') { renderEquipe(); }
   if (id==='radar') { renderRadarOperacional(); }
+  if (id==='pr-estrategico') { renderRadarSaude(_radarFiltroStatus?_radarDados.filter(r=>r.analista_auto===_radarFiltroStatus):_radarDados); }
   if (id==='pr-estrategico') {
     const sel=document.getElementById('est-dia-sel');
     if(sel&&!sel.value) sel.value=HOJE.toISOString().split('T')[0];
@@ -5795,25 +5783,22 @@ function renderRadarOperacional(){
 
   const cardsEl=document.getElementById('radar-cards');
   if(cardsEl) cardsEl.innerHTML=[
-    {label:'Total de RCs',         val:totalRCs,                   cor:'var(--az)',  bg:'var(--azc)',  ico:'🗂'},
-    {label:'Maior SLA',            val:maiorSLA+' dias',           cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⏱'},
-    {label:'Itens Críticos',       val:criticos,                   cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
-    {label:'Itens em Atraso',      val:atrasados+' ('+pctAt+'%)', cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⚠️'},
-    {label:'Dentro do Prazo',      val:dentroP,                    cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✅'},
-    {label:'Ag. Tratamento',       val:agTrat,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🕐'},
-    {label:'Ag. Fornecedor',       val:agForn,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🏭'},
-    {label:'MDG',                  val:mdg,                        cor:'var(--azm)', bg:'var(--azc)',  ico:'📦'},
-    {label:'Requisitante',         val:requisit,                   cor:'var(--azm)', bg:'var(--azc)',  ico:'👤'},
-    {label:'Validação Tiago',      val:valTiago,                   cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✔️'},
+    {label:'Total de RCs',        val:totalRCs,                   cor:'var(--az)',  bg:'var(--azc)',  ico:'🗂'},
+    {label:'Maior SLA',           val:maiorSLA+' dias',           cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⏱'},
+    {label:'Itens Críticos',      val:criticos,                   cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
+    {label:'Itens em Atraso',     val:atrasados+' ('+pctAt+'%)', cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⚠️'},
+    {label:'Dentro do Prazo',     val:dentroP,                    cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✅'},
   ].map(c=>`<div style="background:${c.bg};border-radius:10px;padding:.875rem .75rem;text-align:center;border:1px solid rgba(0,0,0,.07)">
     <div style="font-size:16px;margin-bottom:4px">${c.ico}</div>
     <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px;line-height:1.3">${c.label}</div>
     <div style="font-size:22px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
   </div>`).join('');
+  renderRadarPorControle(rows);
 
-  // Por analista
+  // Por analista — apenas itens "Analisar PATEC Finalizado"
+  const rowsAnalista = rows.filter(d=>d.analista_auto==='Analisar PATEC Finalizado');
   const porAn={};
-  rows.forEach(d=>{
+  rowsAnalista.forEach(d=>{
     const a=(!d.analista||d.analista==='#N/A')?'Sem analista':d.analista.trim();
     if(!porAn[a])porAn[a]={total:0,atrasado:0};
     porAn[a].total++;
@@ -5827,11 +5812,9 @@ function renderRadarOperacional(){
     selAn.innerHTML='<option value="">Todos analistas</option>'+opts.map(a=>`<option${a===curAn?' selected':''}>${a}</option>`).join('');
   }
   const lim=radarGetRegras();
-  if(anEl) anEl.innerHTML='<table style="width:100%"><thead><tr><th>Analista</th><th>Total</th><th>Atrasados</th><th>%</th></tr></thead><tbody>'+
-    Object.entries(porAn).sort((a,b)=>b[1].atrasado-a[1].atrasado).map(([a,d])=>{
-      const pct=d.total>0?Math.round(d.atrasado/d.total*100):0;
-      const cor=pct>=50?'var(--vm)':pct>=25?'var(--am)':'var(--vd)';
-      return'<tr><td><strong>'+a+'</strong></td><td>'+d.total+'</td><td style="color:var(--vm);font-weight:700">'+d.atrasado+'</td><td style="font-weight:700;color:'+cor+'">'+pct+'%</td></tr>';
+  if(anEl) anEl.innerHTML='<table style="width:100%"><thead><tr><th>ANALISTA</th><th>TOTAL</th></tr></thead><tbody>'+
+    Object.entries(porAn).sort((a,b)=>b[1].total-a[1].total).map(([a,d])=>{
+      return'<tr><td><strong>'+a+'</strong></td><td style="font-weight:700;color:var(--az)">'+d.total+'</td></tr>';
     }).join('')+'</tbody></table>';
 
   // Por fila
@@ -5846,15 +5829,34 @@ function renderRadarOperacional(){
   const selFila=document.getElementById('radar-filtro-fila');
   const curFila=selFila?.value||'';
   if(selFila) selFila.innerHTML='<option value="">Todas filas</option>'+Object.keys(porFila).sort().map(f=>`<option${f===curFila?' selected':''}>${f}</option>`).join('');
-  if(filaEl) filaEl.innerHTML='<table style="width:100%"><thead><tr><th>Fila</th><th>Total</th><th>Atrasados</th></tr></thead><tbody>'+
+  if(filaEl) filaEl.innerHTML='<table style="width:100%"><thead><tr><th>FILA</th><th>TOTAL</th></tr></thead><tbody>'+
     Object.entries(porFila).sort((a,b)=>b[1].total-a[1].total).map(([f,d])=>
-      '<tr><td>'+f+'</td><td>'+d.total+'</td><td style="color:var(--vm);font-weight:700">'+d.atrasado+'</td></tr>'
+      '<tr><td>'+f+'</td><td style="font-weight:700;color:var(--az)">'+d.total+'</td></tr>'
     ).join('')+'</tbody></table>';
 
   renderRadarCardsCustom(rows);
-  renderRadarSaude(rows);
   renderRadarChartPrazo(rows);
   renderRadarTabela();
+}
+
+// ── Tabela Por Controle ──
+function renderRadarPorControle(rows){
+  const el=document.getElementById('radar-por-controle');
+  if(!el) return;
+  const norm=v=>String(v||'').trim().toLowerCase();
+  const itens=[
+    {label:'Ag. Tratamento',  ico:'🕐', val:rows.filter(d=>norm(d.controle)==='ag. tratamento').length,  cor:'var(--am)'},
+    {label:'Ag. Fornecedor',  ico:'🏭', val:rows.filter(d=>norm(d.controle)==='fornecedor').length,       cor:'var(--am)'},
+    {label:'MDG',             ico:'📦', val:rows.filter(d=>norm(d.controle)==='mdg').length,              cor:'var(--azm)'},
+    {label:'Requisitante',    ico:'👤', val:rows.filter(d=>norm(d.controle)==='requisitante').length,     cor:'var(--azm)'},
+    {label:'Validação Tiago', ico:'✔️', val:rows.filter(d=>norm(d.controle)==='validação thiago').length, cor:'var(--vd)'},
+  ];
+  el.innerHTML='<table style="width:100%"><thead><tr><th>CONTROLE</th><th>TOTAL</th></tr></thead><tbody>'+
+    itens.map(i=>`<tr>
+      <td><span style="margin-right:5px">${i.ico}</span><strong>${i.label}</strong></td>
+      <td style="font-weight:700;color:${i.cor}">${i.val}</td>
+    </tr>`).join('')+
+  '</tbody></table>';
 }
 
 // ── Cards Customizáveis ──
@@ -5986,17 +5988,12 @@ function renderRadarSaude(rows){
 }
 
 function renderRadarTabela(){
-  const filAn=document.getElementById('radar-filtro-analista')?.value||'';
-  const filFila=document.getElementById('radar-filtro-fila')?.value||'';
-  // Aplica filtro Col D + filtros da tabela
+  // Tabela removida — função mantida para compatibilidade
+  return;
+  const filAn=''; const filFila='';
   let rows=_radarFiltroStatus
     ? _radarDados.filter(r=>r.analista_auto===_radarFiltroStatus)
     : _radarDados;
-  if(filAn){
-    if(filAn==='Sem analista') rows=rows.filter(r=>!r.analista||r.analista==='#N/A');
-    else rows=rows.filter(r=>(r.analista||'').trim()===filAn);
-  }
-  if(filFila) rows=rows.filter(r=>r.fila===filFila);
   const xlDate=n=>{if(!n||isNaN(n))return'—';const d=new Date((n-25569)*86400000);return d.toLocaleDateString('pt-BR');};
   const corStatus=s=>s==='Atrasado'?'var(--vmc);color:var(--vm)':s==='Dentro do Prazo'?'var(--vdc);color:var(--vd)':'var(--cin);color:var(--tx2)';
   const tb=document.getElementById('radar-tb-atrasados');
