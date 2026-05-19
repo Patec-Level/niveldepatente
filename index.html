@@ -2048,9 +2048,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div class="cd" style="margin:0;padding:.875rem">
           <div style="font-size:11px;font-weight:700;color:var(--az);margin-bottom:.75rem;display:flex;align-items:center;gap:6px">📦 Top 5 Famílias</div>
           <div id="radar-top-familias-bars" style="margin-bottom:.75rem"></div>
-          <div style="position:relative;height:160px">
-            <canvas id="radar-chart-familias"></canvas>
-          </div>
+
         </div>
       </div>
 
@@ -5984,12 +5982,9 @@ function _renderRadarCore(){
 }
 
 // ── Top 5 Famílias ──
-let _radarChartFamilias = null;
-
 function renderRadarTopFamilias(rows){
   const barsEl  = document.getElementById('radar-top-familias-bars');
-  const canvas  = document.getElementById('radar-chart-familias');
-  if(!barsEl || !canvas) return;
+  if(!barsEl) return;
 
   // Contar por família
   const contagem = {};
@@ -6029,39 +6024,7 @@ function renderRadarTopFamilias(rows){
     </div>`;
   }).join('');
 
-  // Gráfico de rosca
-  if(_radarChartFamilias){_radarChartFamilias.destroy();_radarChartFamilias=null;}
-  _radarChartFamilias = new Chart(canvas, {
-    type:'doughnut',
-    data:{
-      labels: top5.map(([f])=>f),
-      datasets:[{
-        data:    top5.map(([,c])=>c),
-        backgroundColor: cores,
-        borderWidth: 2,
-        borderColor: '#fff',
-        hoverOffset: 8,
-      }]
-    },
-    options:{
-      cutout:'62%',
-      plugins:{
-        legend:{
-          display:true,
-          position:'bottom',
-          labels:{font:{size:10}, boxWidth:10, padding:8}
-        },
-        tooltip:{
-          callbacks:{
-            label:(ctx)=>{
-              const pct=Math.round(ctx.parsed/total*100);
-              return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
-            }
-          }
-        }
-      }
-    }
-  });
+
 }
 
 // ── Análise de Segmento e PATEC ──
