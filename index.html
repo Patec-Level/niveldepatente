@@ -2677,7 +2677,7 @@ function go(id, el) {
   const icons = {
     'vg-validade':'⏱',
     'pr-lancar':'✏️','pr-estrategico':'🎯','pr-equipe':'👥','pr-producao':'📋','pr-bancoferias':'🗓',
-    'adm':'🔐'
+    'radar':'📡','adm':'🔐'
   };
   const ico = icons[id] || '◈';
   const iconEl = document.querySelector('.topbar .topbar-l + div span');
@@ -2689,8 +2689,7 @@ function go(id, el) {
     'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
-    'adm':'Administração',
-    
+    'radar':'Radar Estratégico','adm':'Administração',
     };
   document.getElementById('ttl').textContent = titles[id] || id;
   if(id==='pr-bancoferias'){renderFerias();renderBanco();renderBHECards();}
@@ -5415,6 +5414,9 @@ async function fbCarregarRadar(){
       _radarDados=d.rows||[];
       _radarTs=d.ts||null;
       console.log('Radar: '+_radarDados.length+' registros');
+      // Renderizar automaticamente se a página radar estiver visível
+      const pg=document.getElementById('p-radar');
+      if(pg&&pg.classList.contains('active')) renderRadarOperacional();
     }
   } catch(e){ console.warn('Radar load:',e); }
 }
@@ -7080,7 +7082,7 @@ initMetaGap();
 
 
 // Carregar Firebase e aplicar na topbar
-fbCarregarTudo().then(()=>{ initMetaGap(); });
+fbCarregarTudo().then(()=>{ initMetaGap(); const pg=document.getElementById('p-radar'); if(pg&&pg.classList.contains('active')) renderRadarOperacional(); });
 
 </script>
 </body>
