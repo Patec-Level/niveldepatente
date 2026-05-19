@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PATEC — Sistema de Gestão de Compras</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Firebase SDK carregado dinamicamente via JS -->
 <style>
@@ -7346,75 +7347,140 @@ function renderCascata(){
     <td style="font-weight:700;color:${l.saldo<0?'var(--vd)':l.saldo>0?'var(--vm)':'var(--tx)'}">${l.backlogFim}</td>
   </tr>`).join('');
 
-  // ── Chart Cascata flutuante (estilo foto 2) ──
+  // ── Chart Cascata com floating bars [min,max] ──
   const canvas = document.getElementById('pa-chart-cascata');
   if(!canvas) return;
   if(_paChartCascata){ _paChartCascata.destroy(); _paChartCascata=null; }
 
-  // Labels: Backlog Inicial + dias em dd/mm + Backlog Atual
   const labels = ['Backlog Inicial', ...linhas.map(l=>fmtDptBR(l.data)), 'Backlog Atual'];
 
-  // Dataset 1: pilares fixos (backlog inicial cinza + backlog atual azul)
-  const barFixa = [backlogBase, ...linhas.map(()=>null), backlogAtual];
-  const barFixaCor = ['rgba(176,190,197,0.9)', ...linhas.map(()=>null), 'rgba(0,105,135,0.9)'];
+  // Barras fixas: backlog inicial (cinza) e backlog atual (azul) — formato [0, valor]
+  const barFixaData = [
+    [0, backlogBase],
+    ...linhas.map(()=>null),
+    [0, backlogAtual]
+  ];
+  const barFixaCor = [
+    'rgba(176,190,197,0.85)',
+    ...linhas.map(()=>null),
+    'rgba(0,105,135,0.85)'
+  ];
 
-  // Dataset 2 (stack): espaçador invisível — base da barra flutuante
-  // Dataset 3 (stack): barra colorida — altura = |saldo|, base = min(inicio,fim)
-  const bases = [null, ...linhas.map(l=>Math.min(l.backlogInicio, l.backlogFim)), null];
-  const alts  = [null, ...linhas.map(l=>Math.abs(l.saldo)), null];
-  const cores = [null, ...linhas.map(l=>l.saldo<0?'rgba(46,125,50,0.85)':'rgba(211,47,47,0.85)'), null];
-
-  // Anotações de valor sobre cada barra
-  const datalabels = [...Array(labels.length)].map((_,i)=>{
-    if(i===0) return backlogBase;
-    if(i===labels.length-1) return backlogAtual;
-    const l = linhas[i-1];
-    return l ? (l.saldo===0?null:(l.saldo<0?l.saldo:'+'+l.saldo)) : null;
-  });
+  // Barras flutuantes diárias — formato [backlogFim, backlogInicio] (floating bar Chart.js)
+  // Verde se reduziu (backlogFim < backlogInicio), vermelho se aumentou
+  const barDiariaData = [
+    null,
+    ...linhas.map(l=>[l.backlogFim, l.backlogInicio]),
+    null
+  ];
+  const barDiariaCor = [
+    null,
+    ...linhas.map(l=>l.saldo<0?'rgba(46,125,50,0.85)':l.saldo>0?'rgba(211,47,47,0.85)':'rgba(150,150,150,0.5)'),
+    null
+  ];
 
   _paChartCascata = new Chart(canvas, {
     type:'bar',
     data:{
       labels,
       datasets:[
-        { label:'Backlog', data:barFixa, backgroundColor:barFixaCor, borderRadius:4,
-          categoryPercentage:0.5, barPercentage:0.85, order:2 },
-        { label:'_base', data:bases, backgroundColor:'transparent',
-          stack:'cas', categoryPercentage:0.5, barPercentage:0.85, order:3 },
-        { label:'Variação', data:alts, backgroundColor:cores, borderRadius:4,
-          stack:'cas', categoryPercentage:0.5, barPercentage:0.85, order:1 },
+        {
+          label:'Backlog',
+          data: barFixaData,
+          backgroundColor: barFixaCor,
+          borderRadius:4,
+          categoryPercentage:0.55,
+          barPercentage:0.85,
+        },
+        {
+          label:'Variação',
+          data: barDiariaData,
+          backgroundColor: barDiariaCor,
+          borderRadius:4,
+          categoryPercentage:0.55,
+          barPercentage:0.85,
+        },
       ]
     },
+    plugins:[ChartDataLabels],
     options:{
-      responsive:true, maintainAspectRatio:false,
+      responsive:true,
+      maintainAspectRatio:false,
       plugins:{
         legend:{display:false},
         tooltip:{
           callbacks:{
+            title:(items)=> items[0]?.label||'',
             label:(ctx)=>{
-              if(ctx.datasetIndex===0) return ' Backlog: '+ctx.parsed.y;
-              if(ctx.datasetIndex===2 && ctx.parsed.y!=null){
-                const l=linhas[ctx.dataIndex-1];
-                if(!l) return '';
-                return [
-                  ` Saídas: −${l.saidas}`,
-                  ` Entradas: +${l.entrada}`,
-                  ` Saldo: ${l.saldo>=0?'+':''}${l.saldo}`,
-                  ` Backlog fim: ${l.backlogFim}`
-                ];
+              const i=ctx.dataIndex;
+              if(i===0||i===labels.length-1){
+                const v=Array.isArray(ctx.raw)?ctx.raw[1]:ctx.raw;
+                return ` Backlog: ${v}`;
               }
-              return null;
-            },
-            filter:(item)=>item.datasetIndex!==1
+              const l=linhas[i-1];
+              if(!l) return '';
+              return [
+                ` Saídas: −${l.saidas}`,
+                ` Entradas: ${l.entrada>0?'+'+l.entrada:'—'}`,
+                ` Saldo: ${l.saldo>=0?'+':''}${l.saldo}`,
+                ` Backlog fim: ${l.backlogFim}`
+              ];
+            }
           }
+        },
+        datalabels:{
+          display:(ctx)=>{
+            const i=ctx.dataIndex;
+            // Mostrar em todas as barras
+            if(ctx.datasetIndex===0){
+              // Barras fixas: mostrar valor do backlog no topo
+              return i===0 || i===labels.length-1;
+            }
+            // Barras diárias: mostrar saldo
+            return ctx.datasetIndex===1 && i>0 && i<labels.length-1;
+          },
+          formatter:(val,ctx)=>{
+            const i=ctx.dataIndex;
+            if(ctx.datasetIndex===0){
+              // Backlog inicial ou atual
+              return Array.isArray(val)?val[1]:val;
+            }
+            // Saldo do dia
+            const l=linhas[i-1];
+            if(!l) return '';
+            return l.saldo===0?'0':(l.saldo<0?l.saldo:'+'+l.saldo);
+          },
+          color:(ctx)=>{
+            if(ctx.datasetIndex===0) return '#555';
+            const i=ctx.dataIndex;
+            const l=linhas[i-1];
+            return l?.saldo<0?'rgba(30,100,30,1)':l?.saldo>0?'rgba(180,20,20,1)':'#888';
+          },
+          anchor:(ctx)=>{
+            if(ctx.datasetIndex===0) return 'end';
+            const i=ctx.dataIndex;
+            const l=linhas[i-1];
+            // Saldo negativo (reduziu): label acima do topo da barra (backlogInicio)
+            // Saldo positivo (aumentou): label acima do topo (backlogFim)
+            return 'end';
+          },
+          align:'end',
+          offset:4,
+          font:{size:11, weight:'700'},
+          clamp:false,
         }
       },
       scales:{
-        x:{ stacked:true, grid:{display:false},
-          ticks:{ font:{size:11}, maxRotation:0 } },
-        y:{ stacked:false, grid:{color:'rgba(0,0,0,.06)'},
+        x:{
+          grid:{display:false},
+          ticks:{font:{size:11}, maxRotation:0}
+        },
+        y:{
+          grid:{color:'rgba(0,0,0,.06)'},
           ticks:{font:{size:11}},
-          title:{display:true, text:'Backlog (itens PATEC)', font:{size:11}, color:'#888'} }
+          title:{display:true, text:'Backlog (itens PATEC)', font:{size:11}, color:'#888'},
+          min:0
+        }
       }
     }
   });
