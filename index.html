@@ -5580,17 +5580,18 @@ async function radarOnFile(file){
     if(msgEl) msgEl.textContent='Processando '+raw.length+' registros...';
 
     const rows=raw.filter(r=>r['RC']&&r['RC']!=='RC').map(r=>({
-      analista_auto: String(r['ANALISTA_AUTOMATICO']||'').trim(),
+      analista_auto: String(r['STATUS MAPA ']||r['ANALISTA_AUTOMATICO']||'').trim(),
       rc:            String(r['RC']||'').trim(),
       seq:           String(r['SEQ']||'').trim(),
-      num_oport:     String(r['NUMERO_OPORTUNIDADE']||'').trim(),
-      sla:           Number(r['SLA LevelBoard']||0),
-      fila:          String(r['Fila ']||r['Fila']||'').trim(),
-      analista:      String(r['Analista ']||r['Analista']||'').trim(),
-      controle:      String(r['Controle ']||r['Controle']||'').trim(),
+      num_oport:     String(r['OPORTUNIDADE']||r['NUMERO_OPORTUNIDADE']||'').trim(),
+      sla:           Number(r['SLA']||r['SLA LevelBoard']||0),
+      fila:          String(r['Fila ( esteira) ']||r['Fila ']||r['Fila']||'').trim(),
+      analista:      String(r['Analista PATEC']||r['Analista ']||r['Analista']||'').trim(),
+      controle:      String(r['Controle (gov)']||r['Controle ']||r['Controle']||'').trim(),
       prazo:         r['PRAZO DE RETORNO']||0,
-      prazo_c:       Number(r['PRAZO ']||r['PRAZO']||0),  // Col C — usado no gráfico donut
-      status:        String(r['STATUS']||'').trim(),
+      prazo_c:       Number(r['PRAZO ']||r['PRAZO']||0),
+      status:        String(r['Status (GOV)']||r['STATUS']||'').trim(),
+      validade:      String(r['Validade da \nProposta ']||'').trim(),
       finalizou:     r['FINALIZOU']||0,
     }));
 
@@ -5609,7 +5610,7 @@ function radarRenderPreview(rows){
   const total=rows.length;
   const atrasados=rows.filter(r=>r.status==='Atrasado').length;
   const concluidos=rows.filter(r=>r.status==='Concluído').length;
-  const noPrazo=rows.filter(r=>r.status==='Dentro do Prazo').length;
+  const noPrazo=rows.filter(r=>r.status==='Concluído').length;
   const pctAt=total>0?Math.round(atrasados/total*100):0;
   const el=document.getElementById('radar-preview-cards');
   if(el) el.innerHTML=[
@@ -5840,13 +5841,14 @@ function _renderRadarCore(){
   const criticos   = rows.filter(d=>Number(d.sla)>90 || Number(d.prazo_c||0)>=60).length; // SLA>90 OU Prazo>=60
   // Controle (Col L) — normCtrl ANTES de atrasados para poder usar no filtro
   const normCtrl   = v=>String(v||'').trim().toLowerCase();
-  const atrasados  = rows.filter(d=>d.status==='Atrasado' && normCtrl(d.controle)!=='ag. tratamento').length;
+  const atrasados  = rows.filter(d=>d.status==='Atrasado').length;
   const dentroP    = rows.filter(d=>d.status==='Dentro do Prazo').length;
-  const agTrat     = rows.filter(d=>normCtrl(d.controle)==='ag. tratamento').length;
-  const agForn     = rows.filter(d=>normCtrl(d.controle)==='fornecedor').length;
-  const mdg        = rows.filter(d=>normCtrl(d.controle)==='mdg').length;
-  const requisit   = rows.filter(d=>normCtrl(d.controle)==='requisitante').length;
-  const valTiago   = rows.filter(d=>normCtrl(d.controle)==='validação thiago').length;
+  const normCtrlV  = v=>String(v||'').trim().toLowerCase();
+  const agTrat     = rows.filter(d=>normCtrlV(d.controle).startsWith('ag. tratamento')).length;
+  const agForn     = rows.filter(d=>normCtrlV(d.controle).startsWith('fornecedor')).length;
+  const mdg        = rows.filter(d=>normCtrlV(d.controle)==='mdg').length;
+  const requisit   = rows.filter(d=>normCtrlV(d.controle)==='requisitante').length;
+  const valTiago   = rows.filter(d=>normCtrlV(d.controle).startsWith('validação')).length;
 
   const pctAt=total>0?Math.round(atrasados/total*100):0;
 
@@ -5855,7 +5857,12 @@ function _renderRadarCore(){
     {label:'Total de RCs',        val:totalRCs,                   cor:'var(--az)',  bg:'var(--azc)',  ico:'🗂'},
     {label:'Maior SLA',           val:maiorSLA+' dias',           cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⏱'},
     {label:'Itens Críticos',      val:criticos,                   cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
-    {label:'Tratativa em Atraso',     val:atrasados+' ('+pctAt+'%)', cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⚠️'},
+    {label:'Próximo do Vencimento',   val:atrasados+' ('+pctAt+'%)', cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⚠️'},
+    {label:'Ag. Tratamento',           val:agTrat,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🕐'},
+    {label:'Ag. Fornecedor',           val:agForn,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🏭'},
+    {label:'MDG',                      val:mdg,                        cor:'var(--azm)', bg:'var(--azc)',  ico:'📦'},
+    {label:'Requisitante',             val:requisit,                   cor:'var(--azm)', bg:'var(--azc)',  ico:'👤'},
+    {label:'Validação Tiago',          val:valTiago,                   cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✔️'},
   ].map(c=>`<div style="background:${c.bg};border-radius:10px;padding:.875rem .75rem;text-align:center;border:1px solid rgba(0,0,0,.07)">
     <div style="font-size:16px;margin-bottom:4px">${c.ico}</div>
     <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px;line-height:1.3">${c.label}</div>
