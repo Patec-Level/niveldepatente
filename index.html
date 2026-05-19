@@ -2036,7 +2036,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- KPI CARDS + TOP 5 -->
       <div style="display:grid;grid-template-columns:1fr 280px;gap:10px;margin-bottom:1rem;align-items:start">
-        <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <!-- Linha 1: 5 cards -->
+          <div id="radar-cards-l1" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px"></div>
+          <!-- Linha 2: 6 cards -->
+          <div id="radar-cards-l2" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px"></div>
+        </div>
+        <!-- manter id original para compatibilidade -->
+        <div id="radar-cards" style="display:none"></div>
         <!-- TOP 5 FAMÍLIAS — ocupa toda a altura dos cards -->
         <div class="cd" style="margin:0;padding:.875rem">
           <div style="font-size:11px;font-weight:700;color:var(--az);margin-bottom:.75rem;display:flex;align-items:center;gap:6px">📦 Top 5 Famílias</div>
@@ -2861,7 +2868,7 @@ function go(id, el) {
   // Triggers de render
   if (id==='vg-validade') renderValidade();
   if (id==='pr-equipe') { renderEquipe(); }
-  if (id==='radar') { try{ renderRadarOperacional(); }catch(e){ console.error('[Radar] ERRO render:', e); } }
+  if (id==='radar') { if(_radarDados.length) { try{ renderRadarOperacional(); }catch(e){ console.error('[Radar] ERRO render:', e); } } }
   if (id==='plano-acao') { renderPlanoAcao(); }
   if (id==='pr-estrategico') { renderRadarSaude(_radarFiltroStatus?_radarDados.filter(r=>r.analista_auto===_radarFiltroStatus):_radarDados); }
   if (id==='pr-estrategico') {
@@ -5916,24 +5923,32 @@ function _renderRadarCore(){
 
   const pctAt=total>0?Math.round(atrasados/total*100):0;
 
-  const cardsEl=document.getElementById('radar-cards');
-  if(cardsEl) cardsEl.innerHTML=[
-    {label:'Total de RCs',        val:totalRCs,                   cor:'var(--az)',  bg:'var(--azc)',  ico:'🗂'},
-    {label:'Maior SLA',           val:maiorSLA+' dias',           cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⏱'},
-    {label:'Itens Críticos',      val:criticos,                   cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
-    {label:'Ag. Tratamento',           val:agTrat,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🕐'},
-    {label:'Em Tratativa',             val:emTrat,                     cor:'var(--azm)', bg:'var(--azc)',  ico:'🔄'},
-    {label:'Seg. Operacional',          val:segOp,                      cor:'var(--az)',  bg:'var(--azc)',  ico:'⚙️'},
-    {label:'Seg. Crítico',              val:segCrit,                    cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
-    {label:'Página Amarela',            val:segPag,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🟡'},
-    {label:'Seg. Estratégico',          val:segEstr,                    cor:'var(--vd)',  bg:'var(--vdc)',  ico:'🎯'},
-    {label:'PATEC Obrigatório',         val:patecObr,                   cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✅'},
-    {label:'PATEC ID Não',              val:patecNao,                   cor:'var(--tx2)', bg:'var(--cin)',  ico:'🚫'},
-  ].map(c=>`<div style="background:${c.bg};border-radius:10px;padding:.875rem .75rem;text-align:center;border:1px solid rgba(0,0,0,.07)">
+  const cardHTML = c => `<div style="background:${c.bg};border-radius:10px;padding:.875rem .75rem;text-align:center;border:1px solid rgba(0,0,0,.07)">
     <div style="font-size:16px;margin-bottom:4px">${c.ico}</div>
     <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px;line-height:1.3">${c.label}</div>
     <div style="font-size:22px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
-  </div>`).join('');
+  </div>`;
+
+  const linha1 = [
+    {label:'Total de RCs',   val:totalRCs,         cor:'var(--az)',  bg:'var(--azc)',  ico:'🗂'},
+    {label:'Maior SLA',      val:maiorSLA+' dias',  cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⏱'},
+    {label:'Itens Críticos', val:criticos,          cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
+    {label:'Ag. Tratamento', val:agTrat,            cor:'var(--am)',  bg:'var(--amc)',  ico:'🕐'},
+    {label:'Em Tratativa',   val:emTrat,            cor:'var(--azm)', bg:'var(--azc)',  ico:'🔄'},
+  ];
+  const linha2 = [
+    {label:'Seg. Operacional', val:segOp,    cor:'var(--az)',  bg:'var(--azc)',  ico:'⚙️'},
+    {label:'Seg. Crítico',     val:segCrit,  cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
+    {label:'Página Amarela',   val:segPag,   cor:'var(--am)',  bg:'var(--amc)',  ico:'🟡'},
+    {label:'Seg. Estratégico', val:segEstr,  cor:'var(--vd)',  bg:'var(--vdc)',  ico:'🎯'},
+    {label:'PATEC Obrigatório',val:patecObr, cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✅'},
+    {label:'PATEC ID Não',     val:patecNao, cor:'var(--tx2)', bg:'var(--cin)',  ico:'🚫'},
+  ];
+
+  const l1El = document.getElementById('radar-cards-l1');
+  const l2El = document.getElementById('radar-cards-l2');
+  if(l1El) l1El.innerHTML = linha1.map(cardHTML).join('');
+  if(l2El) l2El.innerHTML = linha2.map(cardHTML).join('');
 
   // Por analista — apenas itens "Analisar PATEC Finalizado"
   const rowsAnalista = rows.filter(d=>d.analista_auto==='Analisar PATEC Finalizado');
