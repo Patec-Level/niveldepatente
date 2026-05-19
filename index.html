@@ -2016,18 +2016,40 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="btn btn-s" style="font-size:11px" onclick="renderRadarOperacional()">↺ Atualizar</button>
       </div>
 
-      <!-- FILTRO ANALISTA AUTOMÁTICO -->
+      <!-- FILTROS -->
       <div class="cd" style="margin-bottom:1rem;padding:.875rem 1.1rem">
-        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">📡 Filtrar por Analista Automático</div>
-          <div style="position:relative;flex:1;min-width:220px;max-width:420px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+
+          <!-- Filtro 1: Analista Automático -->
+          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">📡 Analista Automático</div>
+          <div style="position:relative;min-width:220px;max-width:340px;flex:1">
             <select id="radar-sel-status" onchange="radarSetFiltroStatusSel(this.value)"
               style="width:100%;font-size:12px;font-weight:500;padding:7px 36px 7px 12px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;color:var(--tx);cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
               <option value="">Todos os analistas automáticos</option>
             </select>
             <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:12px">▾</span>
           </div>
+
+          <!-- Separador -->
+          <div style="width:1px;height:28px;background:var(--brd);flex-shrink:0"></div>
+
+          <!-- Filtro 2: Visão de grupo -->
+          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">👁 Visão</div>
+          <div style="position:relative;min-width:240px;max-width:380px;flex:1">
+            <select id="radar-sel-grupo" onchange="radarSetFiltroGrupo(this.value)"
+              style="width:100%;font-size:12px;font-weight:500;padding:7px 36px 7px 12px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;color:var(--tx);cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
+              <option value="">Todos os registros</option>
+              <option value="em_analise">🔵 Em Análise (PATEC Finalizado)</option>
+              <option value="aguardando">🟡 Aguardando PATEC ser Finalizado</option>
+              <option value="concluidos">🟢 Concluídos (Sem Fornec. + Cancelados)</option>
+              <option value="abrir_patec">🟠 Abrir PATEC (Idêntico Não + Grupo Merc.)</option>
+              <option value="patec_completo">📋 PATEC Completo (Análise + Concluídos)</option>
+            </select>
+            <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:12px">▾</span>
+          </div>
+
           <div id="radar-filtro-badge" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--azc);color:var(--azm);font-weight:600;border:1px solid rgba(26,74,138,.2)"></div>
+          <button id="radar-limpar-filtros" onclick="radarLimparFiltros()" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--vmc);color:var(--vm);border:1px solid rgba(217,64,64,.2);cursor:pointer;font-weight:600">✕ Limpar filtros</button>
         </div>
       </div>
 
@@ -5572,7 +5594,16 @@ async function salvarMetaGap(){ salvarMetaCard(); salvarPatecCard(); salvarMetaP
 // ════════════════════════════════════════════
 let _radarDados = [];
 let _radarTs    = null;
-let _radarFiltroStatus = ''; // filtro ativo da col D (ANALISTA_AUTOMATICO)
+let _radarFiltroStatus = ''; // filtro ativo da col D
+let _radarFiltroGrupo  = ''; // filtro de grupo/visão
+
+const RADAR_GRUPOS = {
+  em_analise:     ['Analisar PATEC Finalizado'],
+  aguardando:     ['Aguardar PATEC ser Finalizado'],
+  concluidos:     ['PATEC Finalizado sem fornecedores aprovados', 'Analisar PATEC Cancelado'],
+  abrir_patec:    ['Abrir PATEC identico não', 'Abrir PATEC Grupo de Mercadoria Obrigatório'],
+  patec_completo: ['Analisar PATEC Finalizado','PATEC Finalizado sem fornecedores aprovados','Analisar PATEC Cancelado'],
+};
 
 // ── Carregar do Firebase ao iniciar ──
 async function fbCarregarRadar(){
@@ -5750,19 +5781,50 @@ function radarRenderFiltroStatus(rows){
   // Badge de filtro ativo
   const badge=document.getElementById('radar-filtro-badge');
   if(badge){
-    if(cur){
-      const tot=rows.filter(r=>r.analista_auto===cur).length;
+    if(_radarFiltroGrupo||_radarFiltroStatus){
       badge.style.display='inline-block';
-      badge.textContent='Filtrando: '+tot+' itens';
+      badge.textContent='Filtrando: '+rows.length+' itens';
     } else {
       badge.style.display='none';
     }
   }
+  radarAtualizarBotaoLimpar();
 }
 
 function radarSetFiltroStatusSel(val){
   _radarFiltroStatus=val;
+  // Resetar grupo ao mudar analista
+  _radarFiltroGrupo='';
+  const sg=document.getElementById('radar-sel-grupo');
+  if(sg) sg.value='';
+  radarAtualizarBotaoLimpar();
   renderRadarOperacional();
+}
+
+function radarSetFiltroGrupo(val){
+  _radarFiltroGrupo=val;
+  // Resetar analista ao mudar grupo
+  _radarFiltroStatus='';
+  const ss=document.getElementById('radar-sel-status');
+  if(ss) ss.value='';
+  radarAtualizarBotaoLimpar();
+  renderRadarOperacional();
+}
+
+function radarLimparFiltros(){
+  _radarFiltroStatus='';
+  _radarFiltroGrupo='';
+  const ss=document.getElementById('radar-sel-status');
+  const sg=document.getElementById('radar-sel-grupo');
+  if(ss) ss.value='';
+  if(sg) sg.value='';
+  radarAtualizarBotaoLimpar();
+  renderRadarOperacional();
+}
+
+function radarAtualizarBotaoLimpar(){
+  const btn=document.getElementById('radar-limpar-filtros');
+  if(btn) btn.style.display=(_radarFiltroStatus||_radarFiltroGrupo)?'inline-block':'none';
 }
 
 function radarFiltroStatusReset(){
@@ -5863,10 +5925,16 @@ function _renderRadarCore(){
   // Render botões de filtro (sempre com todos os dados para mostrar contagens totais)
   radarRenderFiltroStatus(todosRows);
 
-  // Aplicar filtro da Col D
-  const rows = _radarFiltroStatus
-    ? todosRows.filter(d=>d.analista_auto===_radarFiltroStatus)
-    : todosRows;
+  // Aplicar filtro — grupo tem prioridade sobre analista individual
+  let rows;
+  if(_radarFiltroGrupo && RADAR_GRUPOS[_radarFiltroGrupo]){
+    const grupo = RADAR_GRUPOS[_radarFiltroGrupo];
+    rows = todosRows.filter(d=>grupo.includes(d.analista_auto));
+  } else if(_radarFiltroStatus){
+    rows = todosRows.filter(d=>d.analista_auto===_radarFiltroStatus);
+  } else {
+    rows = todosRows;
+  }
 
   // Status badge
   const stEl=document.getElementById('radar-status-txt');
