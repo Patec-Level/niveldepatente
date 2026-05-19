@@ -2033,19 +2033,29 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <!-- Separador -->
           <div style="width:1px;height:28px;background:var(--brd);flex-shrink:0"></div>
 
-          <!-- Filtro 2: Visão de grupo -->
-          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">👁 Visão</div>
+          <!-- Filtro 2: Combinação de Analistas (multi-select) -->
+          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">🔀 Combinação</div>
           <div style="position:relative;min-width:240px;max-width:380px;flex:1">
-            <select id="radar-sel-grupo" onchange="radarSetFiltroGrupo(this.value)"
-              style="width:100%;font-size:12px;font-weight:500;padding:7px 36px 7px 12px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;color:var(--tx);cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
-              <option value="">Todos os registros</option>
-              <option value="em_analise">🔵 Em Análise (PATEC Finalizado)</option>
-              <option value="aguardando">🟡 Aguardando PATEC ser Finalizado</option>
-              <option value="concluidos">🟢 Concluídos (Sem Fornec. + Cancelados)</option>
-              <option value="abrir_patec">🟠 Abrir PATEC (Idêntico Não + Grupo Merc.)</option>
-              <option value="patec_completo">📋 PATEC Completo (Análise + Concluídos)</option>
-            </select>
+            <!-- Botão que abre o dropdown -->
+            <div id="radar-combo-btn" onclick="radarToggleCombo()"
+              style="width:100%;font-size:12px;font-weight:500;padding:7px 36px 7px 12px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;color:var(--tx);cursor:pointer;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              Selecionar analistas...
+            </div>
             <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:12px">▾</span>
+            <!-- Dropdown com checkboxes -->
+            <div id="radar-combo-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:340px;background:#fff;border:1.5px solid var(--brd);border-radius:10px;box-shadow:0 8px 24px rgba(13,35,71,.12);z-index:999;padding:.625rem 0">
+              <div style="padding:6px 14px 8px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px">Selecionar combinação</span>
+                <div style="display:flex;gap:8px">
+                  <button onclick="radarComboMarcarTodos()" style="font-size:10px;color:var(--azm);background:none;border:none;cursor:pointer;font-weight:600;padding:0">Todos</button>
+                  <button onclick="radarComboLimpar()" style="font-size:10px;color:var(--vm);background:none;border:none;cursor:pointer;font-weight:600;padding:0">Limpar</button>
+                </div>
+              </div>
+              <div id="radar-combo-lista" style="padding:.5rem 0;max-height:260px;overflow-y:auto"></div>
+              <div style="padding:8px 14px 0;border-top:1px solid var(--brd)">
+                <button onclick="radarComboAplicar()" class="btn btn-p" style="width:100%;justify-content:center;font-size:12px;padding:7px">✓ Aplicar</button>
+              </div>
+            </div>
           </div>
 
           <div id="radar-filtro-badge" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--azc);color:var(--azm);font-weight:600;border:1px solid rgba(26,74,138,.2)"></div>
@@ -5597,13 +5607,7 @@ let _radarTs    = null;
 let _radarFiltroStatus = ''; // filtro ativo da col D
 let _radarFiltroGrupo  = ''; // filtro de grupo/visão
 
-const RADAR_GRUPOS = {
-  em_analise:     ['Analisar PATEC Finalizado'],
-  aguardando:     ['Aguardar PATEC ser Finalizado'],
-  concluidos:     ['PATEC Finalizado sem fornecedores aprovados', 'Analisar PATEC Cancelado'],
-  abrir_patec:    ['Abrir PATEC identico não', 'Abrir PATEC Grupo de Mercadoria Obrigatório'],
-  patec_completo: ['Analisar PATEC Finalizado','PATEC Finalizado sem fornecedores aprovados','Analisar PATEC Cancelado'],
-};
+
 
 // ── Carregar do Firebase ao iniciar ──
 async function fbCarregarRadar(){
@@ -5802,22 +5806,98 @@ function radarSetFiltroStatusSel(val){
 }
 
 function radarSetFiltroGrupo(val){
-  _radarFiltroGrupo=val;
-  // Resetar analista ao mudar grupo
+  // mantida para compatibilidade
+}
+
+let _radarComboSelecionados = []; // lista de analistas_auto selecionados
+
+function radarToggleCombo(){
+  const dd = document.getElementById('radar-combo-dropdown');
+  if(!dd) return;
+  const aberto = dd.style.display !== 'none';
+  if(aberto){ dd.style.display='none'; return; }
+  // Popular lista com valores únicos
+  radarPopularComboLista();
+  dd.style.display='block';
+  // Fechar ao clicar fora
+  setTimeout(()=>{
+    document.addEventListener('click', function _close(e){
+      const dd2=document.getElementById('radar-combo-dropdown');
+      const btn=document.getElementById('radar-combo-btn');
+      if(!dd2||dd2.contains(e.target)||btn.contains(e.target)) return;
+      dd2.style.display='none';
+      document.removeEventListener('click',_close);
+    });
+  },10);
+}
+
+function radarPopularComboLista(){
+  const el = document.getElementById('radar-combo-lista');
+  if(!el) return;
+  const vals = [...new Set(_radarDados.map(r=>r.analista_auto).filter(Boolean))].sort();
+  el.innerHTML = vals.map(v=>{
+    const tot = _radarDados.filter(r=>r.analista_auto===v).length;
+    const checked = _radarComboSelecionados.includes(v);
+    return `<label style="display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;transition:background .15s" 
+      onmouseover="this.style.background='var(--cin)'" onmouseout="this.style.background=''"
+      onclick="event.stopPropagation()">
+      <input type="checkbox" value="${v}" ${checked?'checked':''} 
+        onchange="radarComboToggleItem('${v.replace(/'/g,"\'")}',this.checked)"
+        style="width:14px;height:14px;cursor:pointer;accent-color:var(--azm)">
+      <span style="flex:1;font-size:12px;font-weight:500;color:var(--tx)">${v}</span>
+      <span style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:1px 7px;border-radius:5px">${tot}</span>
+    </label>`;
+  }).join('');
+}
+
+function radarComboToggleItem(val, checked){
+  if(checked){ if(!_radarComboSelecionados.includes(val)) _radarComboSelecionados.push(val); }
+  else { _radarComboSelecionados = _radarComboSelecionados.filter(v=>v!==val); }
+}
+
+function radarComboMarcarTodos(){
+  _radarComboSelecionados = [...new Set(_radarDados.map(r=>r.analista_auto).filter(Boolean))];
+  radarPopularComboLista();
+}
+
+function radarComboLimpar(){
+  _radarComboSelecionados = [];
+  radarPopularComboLista();
+}
+
+function radarComboAplicar(){
+  // Fechar dropdown
+  const dd = document.getElementById('radar-combo-dropdown');
+  if(dd) dd.style.display='none';
+  // Resetar filtro individual
   _radarFiltroStatus='';
   const ss=document.getElementById('radar-sel-status');
   if(ss) ss.value='';
+  // Atualizar label do botão
+  const btn = document.getElementById('radar-combo-btn');
+  if(btn){
+    if(!_radarComboSelecionados.length){
+      btn.textContent='Selecionar analistas...';
+      btn.style.color='var(--tx)';
+    } else if(_radarComboSelecionados.length===1){
+      btn.textContent=_radarComboSelecionados[0];
+      btn.style.color='var(--azm)';
+    } else {
+      btn.textContent=_radarComboSelecionados.length+' analistas selecionados';
+      btn.style.color='var(--azm)';
+    }
+  }
   radarAtualizarBotaoLimpar();
   renderRadarOperacional();
 }
 
 function radarLimparFiltros(){
   _radarFiltroStatus='';
-  _radarFiltroGrupo='';
+  _radarComboSelecionados=[];
   const ss=document.getElementById('radar-sel-status');
-  const sg=document.getElementById('radar-sel-grupo');
   if(ss) ss.value='';
-  if(sg) sg.value='';
+  const btn=document.getElementById('radar-combo-btn');
+  if(btn){btn.textContent='Selecionar analistas...';btn.style.color='var(--tx)';}
   radarAtualizarBotaoLimpar();
   renderRadarOperacional();
 }
@@ -5925,11 +6005,10 @@ function _renderRadarCore(){
   // Render botões de filtro (sempre com todos os dados para mostrar contagens totais)
   radarRenderFiltroStatus(todosRows);
 
-  // Aplicar filtro — grupo tem prioridade sobre analista individual
+  // Aplicar filtro — combo multi > analista individual > todos
   let rows;
-  if(_radarFiltroGrupo && RADAR_GRUPOS[_radarFiltroGrupo]){
-    const grupo = RADAR_GRUPOS[_radarFiltroGrupo];
-    rows = todosRows.filter(d=>grupo.includes(d.analista_auto));
+  if(_radarComboSelecionados && _radarComboSelecionados.length){
+    rows = todosRows.filter(d=>_radarComboSelecionados.includes(d.analista_auto));
   } else if(_radarFiltroStatus){
     rows = todosRows.filter(d=>d.analista_auto===_radarFiltroStatus);
   } else {
