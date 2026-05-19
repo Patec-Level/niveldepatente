@@ -7251,13 +7251,13 @@ function renderCascata(){
   const backlogBase = Number(r.pa_backlog_val)||505;
   const backlogDtBase = r.pa_backlog_dt||'2026-05-14';
 
-  // Saídas por dia — itens Fila=PATEC com FINALIZOU convertido para data
-  // da base do Radar (_radarDados)
-  const patecRows = _radarDados.filter(d=>(d.fila||'').trim()==='PATEC');
+  // Saídas por dia — histórico de produção, coluna 1ª Análise (f[0] = L3)
+  // soma todos os colaboradores por dia
   const saidasPorDia = {};
-  patecRows.forEach(d=>{
-    const dtFin = xlSerialToISO(d.finalizou);
-    if(dtFin) saidasPorDia[dtFin] = (saidasPorDia[dtFin]||0)+1;
+  registros.forEach(r=>{
+    if(!r.data || !r.f) return;
+    const v = r.f[0]||0;
+    if(v > 0) saidasPorDia[r.data] = (saidasPorDia[r.data]||0) + v;
   });
 
   // Montar série cascata a partir do backlog base
