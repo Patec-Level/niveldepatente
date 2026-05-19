@@ -844,6 +844,37 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1rem">
 
+            <!-- Regra 0: Limiares Itens Críticos -->
+            <div class="cd" style="padding:.875rem;border:2px solid var(--azm);background:var(--azc)">
+              <div style="font-size:12px;font-weight:700;color:var(--azm);margin-bottom:.75rem">🔴 Limiares — Status Operacional (Itens Críticos)</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:.875rem;line-height:1.6">
+                Define quando o indicador muda de cor com base no <strong>% de Itens Críticos</strong> sobre o total.
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+                <div>
+                  <label style="font-size:10px;font-weight:700;color:var(--vd);display:block;margin-bottom:4px">🟢 Estável — abaixo de (%)</label>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <input type="number" id="radar-limiar-estavel" placeholder="10" min="0" max="100"
+                      style="width:100%;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px;font-size:16px;font-weight:700;color:var(--vd)">
+                    <span style="font-size:14px;color:var(--tx2)">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:10px;font-weight:700;color:var(--am);display:block;margin-bottom:4px">🟡 Alerta — entre X e (%)</label>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <input type="number" id="radar-limiar-alerta" placeholder="25" min="0" max="100"
+                      style="width:100%;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px;font-size:16px;font-weight:700;color:var(--am)">
+                    <span style="font-size:14px;color:var(--tx2)">%</span>
+                  </div>
+                </div>
+                <div style="padding:.75rem;background:#fff;border-radius:8px;border:1px solid var(--brd);text-align:center">
+                  <div style="font-size:10px;color:var(--tx2);margin-bottom:6px">🔴 Crítico — acima de</div>
+                  <div id="radar-limiar-critico-preview" style="font-size:22px;font-weight:700;color:var(--vm)">25%</div>
+                  <div style="font-size:10px;color:var(--tx2);margin-top:2px">calculado automaticamente</div>
+                </div>
+              </div>
+            </div>
+
             <!-- Regra 1: SLA -->
             <div class="cd" style="padding:.875rem;border:1.5px solid var(--brd)">
               <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.75rem">⏱ Regra 1 — SLA do item</div>
@@ -5731,7 +5762,7 @@ async function radarSalvarFirebase(){
 
 // ── Regras de saúde ──
 function radarGetRegras(){
-  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60,"sla_card_dias":90,"pa_backlog_val":505,"pa_backlog_dt":"2026-05-14","pa_meta_dia":30}');
+  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60,"sla_card_dias":90,"pa_backlog_val":505,"pa_backlog_dt":"2026-05-14","pa_meta_dia":30,"limiar_estavel":10,"limiar_alerta":25}');
 }
 
 function radarInitADM(){
@@ -5745,6 +5776,14 @@ function radarInitADM(){
   set('pa-backlog-inicial-val', r.pa_backlog_val||505);
   set('pa-backlog-inicial-dt',  r.pa_backlog_dt||'2026-05-14');
   set('pa-meta-dia', r.pa_meta_dia||30);
+  set('radar-limiar-estavel', r.limiar_estavel||10);
+  set('radar-limiar-alerta',  r.limiar_alerta||25);
+  // Atualizar preview "Crítico"
+  const lcEl = document.getElementById('radar-limiar-critico-preview');
+  if(lcEl) lcEl.textContent = (r.limiar_alerta||25) + '%';
+  // Listener para atualizar preview ao digitar
+  const laEl = document.getElementById('radar-limiar-alerta');
+  if(laEl) laEl.oninput = ()=>{ if(lcEl) lcEl.textContent=(laEl.value||25)+'%'; };
   // Preview do título do card customizável
   const prev=document.getElementById('radar-regras-preview');
   if(prev) prev.innerHTML=
@@ -5773,6 +5812,8 @@ function radarSalvarRegras(){
     pa_backlog_val:   parseInt(document.getElementById('pa-backlog-inicial-val')?.value||'505'),
     pa_backlog_dt:    document.getElementById('pa-backlog-inicial-dt')?.value||'2026-05-14',
     pa_meta_dia:      parseInt(document.getElementById('pa-meta-dia')?.value||'30'),
+    limiar_estavel:   parseInt(document.getElementById('radar-limiar-estavel')?.value||'10'),
+    limiar_alerta:    parseInt(document.getElementById('radar-limiar-alerta')?.value||'25'),
   };
   localStorage.setItem('patec_radar_regras',JSON.stringify(regras));
   radarInitADM();
@@ -6050,10 +6091,12 @@ function _renderRadarCore(){
   // Críticos = SLA>90 OU Prazo>=60 (união dos dois cards principais — sem exclusão)
   const criticos = rows.filter(d=>Number(d.sla)>90 || Number(d.prazo_c||0)>=60).length;
 
-  // Status usa EXATAMENTE o mesmo número do card Itens Críticos
-  const pctCriticos = rows.length>0 ? Math.round(criticos/rows.length*100) : 0;
-  if(pctCriticos>=25){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
-  else if(pctCriticos>=10){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
+  // Status usa EXATAMENTE o mesmo número do card Itens Críticos + limiares do ADM
+  const pctCriticos   = rows.length>0 ? Math.round(criticos/rows.length*100) : 0;
+  const limiarEstavel = r.limiar_estavel||10;
+  const limiarAlerta  = r.limiar_alerta||25;
+  if(pctCriticos>=limiarAlerta){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
+  else if(pctCriticos>=limiarEstavel){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
   else{saude='Operação Estável';saudeIco='🟢';saudeCor='var(--vd)';}
   if(stEl){stEl.textContent=saude+' · '+criticos+' itens críticos ('+pctCriticos+'%)';stEl.style.color=saudeCor;}
   if(icoEl) icoEl.textContent=saudeIco;
