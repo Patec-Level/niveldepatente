@@ -5620,8 +5620,12 @@ async function radarOnFile(file){
       })(),
       patec_obrig:   (()=>{
         const k=Object.keys(r).find(k=>k.includes('Patec')&&k.toLowerCase().includes('obrig'));
-        const v=k?String(r[k]||'').trim():'';
-        return v==='Sim'?'Sim':'Não';
+        const raw=k?String(r[k]||'').trim():'';
+        // Aceita 'Sim' (obrigatório) e 'Não' (não obrigatório)
+        // #N/A, vazio, qualquer outro valor → 'Não'
+        if(raw==='Sim') return 'Sim';
+        if(raw==='Não'||raw==='NAO'||raw.toLowerCase()==='não'||raw.toLowerCase()==='nao') return 'Não';
+        return 'Não'; // #N/A, vazio, etc
       })(),
     }));
 
