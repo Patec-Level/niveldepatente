@@ -1975,16 +1975,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- KPI CARDS -->
       <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1rem"></div>
 
-      <!-- POR FILA -->
-      <div style="margin-bottom:1rem">
+      <!-- POR FILA + DONUT SIDE BY SIDE -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;align-items:start">
         <div class="cd">
           <div class="cd-t">📋 Por fila (Level Board)</div>
           <div id="radar-por-fila"></div>
         </div>
-      </div>
-
-      <!-- GRÁFICO DONUT — PRAZO (Col C) -->
-      <div class="cd" style="margin-bottom:1rem">
+        <div class="cd">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:.75rem">
           <div class="cd-t" style="margin:0">📊 Distribuição por Prazo (Col C)</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -2029,6 +2026,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
 
