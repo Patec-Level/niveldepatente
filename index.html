@@ -906,6 +906,24 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             Carregando regras...
           </div>
 
+          <!-- ── PLANO DE AÇÃO — Backlog Inicial ── -->
+          <div style="margin-bottom:1rem;padding:1rem;background:var(--vdc);border-radius:10px;border:1px solid rgba(14,158,106,.15)">
+            <div style="font-size:11px;font-weight:700;color:var(--vd);margin-bottom:.625rem;text-transform:uppercase;letter-spacing:.6px">📉 Plano de Ação — Backlog Inicial</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end">
+              <div>
+                <label style="font-size:10px;color:var(--tx2);font-weight:600;display:block;margin-bottom:4px">Quantidade de itens no backlog inicial</label>
+                <input type="number" id="pa-backlog-inicial-val" placeholder="Ex: 505" min="0"
+                  style="width:100%;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px;font-size:14px;font-weight:700;color:var(--vd)">
+              </div>
+              <div>
+                <label style="font-size:10px;color:var(--tx2);font-weight:600;display:block;margin-bottom:4px">Data do backlog inicial</label>
+                <input type="date" id="pa-backlog-inicial-dt"
+                  style="width:100%;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px;font-size:13px;font-weight:600;color:var(--tx)">
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--tx2);margin-top:6px">O gráfico de cascata usará este valor como ponto de partida</div>
+          </div>
+
           <button class="btn btn-g" onclick="radarSalvarRegras()">✓ Salvar regras</button>
           <span id="radar-regras-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Salvo!</span>
         </div>
@@ -5561,7 +5579,7 @@ async function radarSalvarFirebase(){
 
 // ── Regras de saúde ──
 function radarGetRegras(){
-  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60,"sla_card_dias":90}');
+  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60,"sla_card_dias":90,"pa_backlog_val":505,"pa_backlog_dt":"2026-05-14"}');
 }
 
 function radarInitADM(){
@@ -5572,6 +5590,8 @@ function radarInitADM(){
   set('radar-prazo-alerta',r.prazo_alerta);
   set('radar-prazo-critico',r.prazo_critico);
   set('radar-card-sla-dias',r.sla_card_dias||90);
+  set('pa-backlog-inicial-val', r.pa_backlog_val||505);
+  set('pa-backlog-inicial-dt',  r.pa_backlog_dt||'2026-05-14');
   // Preview do título do card customizável
   const prev=document.getElementById('radar-regras-preview');
   if(prev) prev.innerHTML=
@@ -5596,7 +5616,9 @@ function radarSalvarRegras(){
     sla_critico:  get('radar-sla-critico')||90,
     prazo_alerta: get('radar-prazo-alerta')||30,
     prazo_critico:get('radar-prazo-critico')||60,
-    sla_card_dias:get('radar-card-sla-dias')||90,
+    sla_card_dias:    get('radar-card-sla-dias')||90,
+    pa_backlog_val:   parseInt(document.getElementById('pa-backlog-inicial-val')?.value||'505'),
+    pa_backlog_dt:    document.getElementById('pa-backlog-inicial-dt')?.value||'2026-05-14',
   };
   localStorage.setItem('patec_radar_regras',JSON.stringify(regras));
   radarInitADM();
@@ -7207,38 +7229,49 @@ function renderPlanoAcaoCardsDia(){
     </div>`).join('');
 }
 
+// ── Helpers de data para cascata ──
+function xlSerialToISO(n){
+  if(!n||isNaN(n)) return null;
+  const d = new Date((Number(n)-25569)*86400000);
+  return d.toISOString().split('T')[0];
+}
+
 // ── Gráfico Cascata ──
 function renderCascata(){
   const dtInicioEl = document.getElementById('pa-dt-inicio');
   if(!dtInicioEl?.value) return;
 
-  const dtInicio = dtInicioEl.value;
-  // Fim = quarta seguinte (7 dias depois)
+  const r         = radarGetRegras();
+  const dtInicio  = dtInicioEl.value;
   const dtFimDate = new Date(dtInicio); dtFimDate.setDate(dtFimDate.getDate()+7);
-  const dtFim = dtFimDate.toISOString().split('T')[0];
+  const dtFim     = dtFimDate.toISOString().split('T')[0];
   const diasUteis = paDiasUteis(dtInicio, dtFim);
 
-  // Backlog inicial = itens com fila PATEC no radar
-  const backlogBase = _radarDados.filter(d=>(d.fila||'').trim()==='PATEC').length;
+  // Backlog inicial — usa valor do ADM (padrão 505 em 14/05)
+  const backlogBase = Number(r.pa_backlog_val)||505;
+  const backlogDtBase = r.pa_backlog_dt||'2026-05-14';
 
-  // Saídas por dia (f[0] = 1ª Análise = L3)
+  // Saídas por dia — itens Fila=PATEC com FINALIZOU convertido para data
+  // da base do Radar (_radarDados)
+  const patecRows = _radarDados.filter(d=>(d.fila||'').trim()==='PATEC');
   const saidasPorDia = {};
-  diasUteis.forEach(d=>{
-    saidasPorDia[d] = registros
-      .filter(r=>r.data===d)
-      .reduce((s,r)=>s+(r.f[0]||0),0);
+  patecRows.forEach(d=>{
+    const dtFin = xlSerialToISO(d.finalizou);
+    if(dtFin) saidasPorDia[dtFin] = (saidasPorDia[dtFin]||0)+1;
   });
 
-  // Montar série cascata
+  // Montar série cascata a partir do backlog base
   const linhas = [];
-  let backlogDia = backlogBase;
+  let backlogAtual = backlogBase;
 
-  diasUteis.forEach((d,i)=>{
-    const saidas  = saidasPorDia[d] || 0;
-    const entrada = i===0 ? 0 : Math.max(0, backlogDia - (linhas[i-1]?.backlogFim||backlogDia) + saidas);
-    const backlogFim = backlogDia - saidas + entrada;
-    linhas.push({ data:d, backlogInicio:backlogDia, saidas, entrada, backlogFim });
-    backlogDia = backlogFim;
+  diasUteis.forEach(d=>{
+    const saidas     = saidasPorDia[d]||0;
+    const backlogFim = Math.max(0, backlogAtual - saidas);
+    // Entradas = diferença entre o que deveria ser e o que foi
+    // (para período futuro ou dias sem dados, entrada = 0)
+    const entrada    = 0; // por enquanto sem dado de entrada explícito
+    linhas.push({ data:d, backlogInicio:backlogAtual, saidas, entrada, backlogFim });
+    backlogAtual = backlogFim;
   });
 
   // ── KPIs do período ──
@@ -7370,9 +7403,12 @@ function renderPlanoAcao(){
   if(sel && !sel.value) sel.value = HOJE.toISOString().split('T')[0];
   renderPlanoAcaoCardsDia();
 
-  // Inicializar gráfico cascata com semana atual
+  // Inicializar gráfico cascata — usar data do backlog configurado no ADM como início
   const dtSel = document.getElementById('pa-dt-inicio');
-  if(dtSel && !dtSel.value) dtSel.value = paQuartaAtual();
+  if(dtSel && !dtSel.value){
+    const r = radarGetRegras();
+    dtSel.value = r.pa_backlog_dt || paQuartaAtual();
+  }
   renderCascata();
 }
 
