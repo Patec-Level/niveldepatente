@@ -7277,11 +7277,11 @@ function renderCascata(){
   // ── KPIs do período ──
   const totalSaidas  = linhas.reduce((s,l)=>s+l.saidas,0);
   const totalEntrada = linhas.reduce((s,l)=>s+l.entrada,0);
-  const reducao      = backlogBase - backlogDia;
+  const reducao      = backlogBase - backlogAtual;
   const kpiEl = document.getElementById('pa-kpis');
   if(kpiEl) kpiEl.innerHTML = [
     {label:'Backlog Inicial', val:backlogBase,  cor:'var(--az)',  bg:'var(--azc)'},
-    {label:'Backlog Atual',   val:backlogDia,   cor:backlogDia<backlogBase?'var(--vd)':'var(--vm)', bg:backlogDia<backlogBase?'var(--vdc)':'var(--vmc)'},
+    {label:'Backlog Atual',   val:backlogAtual,   cor:backlogAtual<backlogBase?'var(--vd)':'var(--vm)', bg:backlogAtual<backlogBase?'var(--vdc)':'var(--vmc)'},
     {label:'Total Saídas',    val:totalSaidas,  cor:'var(--vd)',  bg:'var(--vdc)'},
     {label:'Total Entradas',  val:totalEntrada, cor:'var(--am)',  bg:'var(--amc)'},
     {label:'Redução',         val:(reducao>=0?'-':'+')+ Math.abs(reducao), cor:reducao>0?'var(--vd)':'var(--vm)', bg:reducao>0?'var(--vdc)':'var(--vmc)'},
@@ -7313,7 +7313,7 @@ function renderCascata(){
   // Para cada dia: barra flutuante = [backlogFim, backlogInicio] se caiu (verde) ou [backlogInicio,backlogFim] se subiu (vermelho)
   // Vamos usar dataset de barra empilhada com "espaçador transparente"
 
-  const barBacklog   = [backlogBase, ...linhas.map(()=>null), backlogDia];
+  const barBacklog   = [backlogBase, ...linhas.map(()=>null), backlogAtual];
   const barCor       = ['rgba(176,190,197,0.9)', ...linhas.map(()=>null), 'rgba(0,105,135,0.9)'];
 
   // Para cada dia: base invisível + barra colorida
