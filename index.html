@@ -5838,6 +5838,11 @@ function _renderRadarCore(){
   const total      = rows.length;
   const totalRCs   = rows.length; // total de itens (linhas), não RCs únicos
   const maiorSLA   = rows.length ? Math.max(...rows.map(d=>Number(d.sla)||0)) : 0;
+  // Constantes para filtros de fila — declaradas aqui para uso em todos os filtros abaixo
+  const FILAS_AG_TRAT = ['patec','análise de oportunidade'];
+  const FILAS_EM_TRAT = ['item em parada','mdg'];
+  const normF = v=>String(v||'').trim().toLowerCase();
+
   const criticos   = rows.filter(d=>
     (Number(d.sla)>90 || Number(d.prazo_c||0)>=60) &&
     !(d.analista_auto==='Analisar PATEC Finalizado' && FILAS_AG_TRAT.includes(normF(d.fila)))
@@ -5850,9 +5855,6 @@ function _renderRadarCore(){
   ).length;
   const dentroP    = rows.filter(d=>d.status==='Dentro do Prazo').length;
   // Ag. Tratamento: Analisar PATEC Finalizado + Fila PATEC ou Análise de Oportunidade
-  const FILAS_AG_TRAT = ['patec','análise de oportunidade'];
-  const FILAS_EM_TRAT = ['item em parada','mdg'];
-  const normF = v=>String(v||'').trim().toLowerCase();
   const agTrat = rows.filter(d=>
     d.analista_auto==='Analisar PATEC Finalizado' &&
     FILAS_AG_TRAT.includes(normF(d.fila))
