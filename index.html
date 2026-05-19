@@ -2870,31 +2870,34 @@ function renderCardsDia(){
   const totPatec=l3+l4+l5+l6, totGeral=l3+l4+l5+l6+l7+l8;
   const totPatecAnt=mapaAnt?(l3a+l4a+l5a+l6a):null;
 
-  const cards=[
-    {label:'PATEC Finalizado',    sub:'',  val:l3,  ant:l3a, cor:'#3266AD',bg:'#EBF0FA'},
-    {label:'Ag. PATEC Finalizar', sub:'',  val:l4,  ant:l4a, cor:'#3266AD',bg:'#EBF0FA'},
-    {label:'100% Reprovado',      sub:'',val:l5,  ant:l5a, cor:'var(--vd)',bg:'var(--vdc)'},
-    {label:'PATEC Cancelado',     sub:'',   val:l6,  ant:l6a, cor:'var(--vd)',bg:'var(--vdc)'},
-    {label:'Abrir ID Não',        sub:'',   val:l7,  ant:l7a, cor:'var(--am)',bg:'var(--amc)'},
-    {label:'Abrir PATEC Obrig.',  sub:'',    val:l8,  ant:l8a, cor:'var(--am)',bg:'var(--amc)'},
-    {label:'Total PATEC',         sub:'',                     val:totPatec,ant:totPatecAnt,cor:'var(--azm)',bg:'var(--azc)'},
-    {label:'Total Geral',         sub:'',                         val:totGeral,ant:mapaAnt?(l3a+l4a+l5a+l6a+l7a+l8a):null,cor:'var(--az)',bg:'var(--cin)'},
-  ];
-  const cardsEl=document.getElementById('est-cards-dia');
-  const META_DIA_EQUIPE = 90;
-  if(cardsEl) cardsEl.innerHTML=cards.map(c=>{
-    const metaTag = c.isMeta
-      ? (c.val>=META_DIA_EQUIPE
-          ? '<span style="float:right;font-size:13px;background:var(--vdc);color:var(--vd);padding:2px 7px;border-radius:5px;font-weight:700">✓ Meta</span>'
-          : '<span style="float:right;font-size:13px;background:var(--vmc);color:var(--vm);padding:2px 7px;border-radius:5px;font-weight:700">✗ Meta</span>')
-      : '';
-    return `<div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.07)">
-      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${metaTag}${c.label}</div>
-      ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-bottom:5px">${c.sub}</div>`:''}
-      <div style="font-size:26px;font-weight:700;color:${c.cor};line-height:1;margin-top:${c.sub?'0':'6px'}">${c.val}</div>
+  const totAbrir    = l7+l8;
+  const totAbrirAnt = mapaAnt?(l7a+l8a):null;
+  const totGeralAnt = mapaAnt?(l3a+l4a+l5a+l6a+l7a+l8a):null;
+
+  const cardHTML = (c, big=false) => `
+    <div style="background:${c.bg};border-radius:10px;padding:${big?'1rem 1.25rem':'.875rem'};border:1px solid rgba(0,0,0,.07);${big?'display:flex;flex-direction:column;justify-content:center':''}">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
+      <div style="font-size:${big?'32':'26'}px;font-weight:700;color:${c.cor};line-height:1;margin-top:4px">${c.val}</div>
       ${varStr(c.val,c.ant)}
     </div>`;
-  }).join('');
+
+  const cardsEl=document.getElementById('est-cards-dia');
+  if(cardsEl) cardsEl.innerHTML=`
+    <!-- LINHA 1: PATEC + Total PATEC -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr) 1.2fr;gap:10px;margin-bottom:10px">
+      ${cardHTML({label:'PATEC Finalizado',    val:l3, ant:l3a, cor:'#3266AD', bg:'#EBF0FA'})}
+      ${cardHTML({label:'Ag. PATEC Finalizar', val:l4, ant:l4a, cor:'#3266AD', bg:'#EBF0FA'})}
+      ${cardHTML({label:'100% Reprovado',      val:l5, ant:l5a, cor:'var(--vd)', bg:'var(--vdc)'})}
+      ${cardHTML({label:'PATEC Cancelado',     val:l6, ant:l6a, cor:'var(--vd)', bg:'var(--vdc)'})}
+      ${cardHTML({label:'Total PATEC',         val:totPatec, ant:totPatecAnt, cor:'var(--azm)', bg:'var(--azc)'})}
+    </div>
+    <!-- LINHA 2: Abrir + Soma Abrir + Total Geral (maior) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1.8fr;gap:10px">
+      ${cardHTML({label:'Abrir ID Não',         val:l7, ant:l7a, cor:'var(--am)', bg:'var(--amc)'})}
+      ${cardHTML({label:'Abrir PATEC Obrig.',   val:l8, ant:l8a, cor:'var(--am)', bg:'var(--amc)'})}
+      ${cardHTML({label:'Soma (Abrir)',         val:totAbrir, ant:totAbrirAnt, cor:'var(--am)', bg:'var(--amc)'})}
+      ${cardHTML({label:'TOTAL GERAL',         val:totGeral, ant:totGeralAnt, cor:'var(--az)', bg:'var(--cin)'}, true)}
+    </div>`;
 }
 function estPcpHoje(){
   const sel=document.getElementById('est-pcp-dt');
@@ -7211,22 +7214,52 @@ function renderPlanoAcaoCardsDia(){
     return;
   }
 
-  const sum = (idx) => regsD.reduce((s,r)=>s+(r.f[idx]||0),0);
-  const CARD_DEFS = [
-    {label:'PATEC Finalizado', val:sum(0), cor:'var(--vd)',  bg:'var(--vdc)'},
-    {label:'Ag. PATEC Finalizar', val:sum(1), cor:'var(--az)',  bg:'var(--azc)'},
-    {label:'100% Reprovado',  val:sum(2), cor:'var(--vm)',  bg:'var(--vmc)'},
-    {label:'PATEC Cancelado', val:sum(4), cor:'var(--vm)',  bg:'var(--vmc)'},
-    {label:'Abrir ID Não',    val:sum(6), cor:'var(--am)',  bg:'var(--amc)'},
-    {label:'Abrir PATEC Obrig.', val:sum(7), cor:'var(--am)', bg:'var(--amc)'},
-    {label:'Total PATEC',     val:sum(0)+sum(1)+sum(2)+sum(4), cor:'var(--az)', bg:'var(--cin)'},
-  ];
+  // Redirecionar para o mesmo elemento do Painel Estratégico via renderCardsDia
+  // mas usando o div do Plano de Ação
+  const getMapa=(d)=>{
+    const fb=mapaFirebase.find(r=>r.data===d);
+    if(fb) return fb;
+    const idx=DATAS_ISO_MAPA.indexOf(d);
+    if(idx>=0) return{l3:L[3][idx]||0,l4:L[4][idx]||0,l5:L[5][idx]||0,l6:L[6][idx]||0,l7:L[7][idx]||0,l8:L[8][idx]||0};
+    return{l3:0,l4:0,l5:0,l6:0,l7:0,l8:0};
+  };
+  const dtAnt2 = estGetDiaAnterior(dt);
+  const mapa2  = getMapa(dt);
+  const mapaAnt2 = dtAnt2 ? getMapa(dtAnt2) : null;
+  const l3=mapa2.l3||0,l4=mapa2.l4||0,l5=mapa2.l5||0,l6=mapa2.l6||0,l7=mapa2.l7||0,l8=mapa2.l8||0;
+  const l3a=mapaAnt2?.l3??null,l4a=mapaAnt2?.l4??null,l5a=mapaAnt2?.l5??null;
+  const l6a=mapaAnt2?.l6??null,l7a=mapaAnt2?.l7??null,l8a=mapaAnt2?.l8??null;
+  const totPatec2=l3+l4+l5+l6, totAbrir2=l7+l8, totGeral2=l3+l4+l5+l6+l7+l8;
+  const totPatecAnt2=mapaAnt2?(l3a+l4a+l5a+l6a):null;
+  const totAbrirAnt2=mapaAnt2?(l7a+l8a):null;
+  const totGeralAnt2=mapaAnt2?(l3a+l4a+l5a+l6a+l7a+l8a):null;
 
-  el.innerHTML = CARD_DEFS.map(c=>`
-    <div style="background:${c.bg};border-radius:10px;padding:.875rem;border:1px solid rgba(0,0,0,.06)">
-      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px">${c.label}</div>
-      <div style="font-size:24px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
-    </div>`).join('');
+  const varStr2=(v,ant)=>{
+    if(ant===null||ant===undefined) return'';
+    const d=v-ant;
+    if(d===0) return'<div style="font-size:11px;font-weight:600;color:var(--tx2);margin-top:4px">— igual ao dia ant.</div>';
+    const cor=d>0?'var(--vm)':'var(--vd)';
+    return`<div style="font-size:11px;font-weight:700;color:${cor};margin-top:4px">${d>0?'▲':'▼'} ${d>0?'+':''}${d} vs dia ant.</div>`;
+  };
+  const cH2=(c,big=false)=>`<div style="background:${c.bg};border-radius:10px;padding:${big?'1rem 1.25rem':'.875rem'};border:1px solid rgba(0,0,0,.07)">
+    <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
+    <div style="font-size:${big?'32':'26'}px;font-weight:700;color:${c.cor};line-height:1;margin-top:4px">${c.val}</div>
+    ${varStr2(c.val,c.ant)}</div>`;
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr) 1.2fr;gap:10px;margin-bottom:10px">
+      ${cH2({label:'PATEC Finalizado',    val:l3,ant:l3a,cor:'#3266AD',bg:'#EBF0FA'})}
+      ${cH2({label:'Ag. PATEC Finalizar', val:l4,ant:l4a,cor:'#3266AD',bg:'#EBF0FA'})}
+      ${cH2({label:'100% Reprovado',      val:l5,ant:l5a,cor:'var(--vd)',bg:'var(--vdc)'})}
+      ${cH2({label:'PATEC Cancelado',     val:l6,ant:l6a,cor:'var(--vd)',bg:'var(--vdc)'})}
+      ${cH2({label:'Total PATEC',         val:totPatec2,ant:totPatecAnt2,cor:'var(--azm)',bg:'var(--azc)'})}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1.8fr;gap:10px">
+      ${cH2({label:'Abrir ID Não',        val:l7,ant:l7a,cor:'var(--am)',bg:'var(--amc)'})}
+      ${cH2({label:'Abrir PATEC Obrig.',  val:l8,ant:l8a,cor:'var(--am)',bg:'var(--amc)'})}
+      ${cH2({label:'Soma (Abrir)',        val:totAbrir2,ant:totAbrirAnt2,cor:'var(--am)',bg:'var(--amc)'})}
+      ${cH2({label:'TOTAL GERAL',         val:totGeral2,ant:totGeralAnt2,cor:'var(--az)',bg:'var(--cin)'},true)}
+    </div>`;
 }
 
 // ── Helpers de data para cascata ──
