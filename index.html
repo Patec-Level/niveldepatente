@@ -733,6 +733,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('export-adm',this)">💾 Exportar</button>
         <button class="stab" onclick="setAdmTab('resultado-medicao',this)">📊 Resultado de Medição</button>
         <button class="stab" onclick="setAdmTab('radar-adm',this)">📡 Radar Estratégico</button>
+        <button class="stab" onclick="setAdmTab('pa-entradas',this)">📥 Entradas Plano de Ação</button>
       </div>
 
       <!-- ── GESTÃO DE CICLOS ── -->
@@ -927,6 +928,34 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <button class="btn btn-g" onclick="radarSalvarRegras()">✓ Salvar regras</button>
           <span id="radar-regras-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Salvo!</span>
         </div>
+      </div>
+
+      <!-- ── PLANO DE AÇÃO — ENTRADAS MANUAIS ── -->
+      <div id="adm-pa-entradas" class="adm-tab" style="display:none">
+        <div class="cd-t">📥 Plano de Ação — Entradas por Data</div>
+        <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem;line-height:1.6">
+          Cadastre aqui os itens que <strong>entraram</strong> na fila PATEC por data.<br>
+          As saídas são calculadas automaticamente pela base de produção.
+        </p>
+
+        <!-- Formulário de nova entrada -->
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-bottom:1rem;padding:1rem;background:var(--cin);border-radius:10px;border:1px solid var(--brd)">
+          <div>
+            <label style="font-size:10px;font-weight:700;color:var(--tx2);display:block;margin-bottom:4px">Data</label>
+            <input type="date" id="pa-ent-dt" style="width:100%;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px;font-size:13px">
+          </div>
+          <div>
+            <label style="font-size:10px;font-weight:700;color:var(--tx2);display:block;margin-bottom:4px">Itens que entraram</label>
+            <input type="number" id="pa-ent-val" min="0" placeholder="Ex: 45" style="width:100%;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px;font-size:13px;font-weight:700">
+          </div>
+          <button class="btn btn-p" onclick="paEntradaAdicionar()" style="white-space:nowrap">+ Adicionar</button>
+        </div>
+
+        <!-- Lista de entradas cadastradas -->
+        <div id="pa-ent-lista" style="margin-bottom:1rem"></div>
+
+        <button class="btn btn-g" onclick="paEntradaSalvarFirebase()">💾 Salvar entradas no Firebase</button>
+        <span id="pa-ent-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Salvo!</span>
       </div>
 
       <!-- ── RESULTADO DE MEDIÇÃO ── -->
@@ -2780,6 +2809,7 @@ function go(id, el) {
     const login=document.getElementById('adm-login');
     if(login&&login.style.display!=='none') admLogin();
   },50);
+  if(id==='adm') setTimeout(paEntradaInitADM, 100);
   // Triggers de render
   if (id==='vg-validade') renderValidade();
   if (id==='pr-equipe') { renderEquipe(); }
@@ -4316,6 +4346,7 @@ function setAdmTab(id,btn){
   if(id==='ciclos') setTimeout(()=>{cicloCarregarAtivo().then(initCicloADM);},50);
   if(id==='resultado-medicao') setTimeout(renderResultadoMedicao,50);
   if(id==='radar-adm') setTimeout(radarInitADM,50);
+  if(id==='pa-entradas') setTimeout(paEntradaInitADM,50);
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
   if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
@@ -7159,6 +7190,7 @@ initMetaGap();
 
 
 // Carregar Firebase e aplicar na topbar
+paEntradaCarregarFirebase();
 fbCarregarTudo().then(()=>{ initMetaGap(); const pg=document.getElementById('p-radar'); if(pg&&pg.classList.contains('active')) renderRadarOperacional(); });
 
 // ════════════════════════════════════════════
@@ -7253,9 +7285,10 @@ function renderCascata(){
     const backlogFim = Math.max(0, backlogAtual - saidas);
     // Entradas = diferença entre o que deveria ser e o que foi
     // (para período futuro ou dias sem dados, entrada = 0)
-    const entrada    = 0; // por enquanto sem dado de entrada explícito
-    linhas.push({ data:d, backlogInicio:backlogAtual, saidas, entrada, backlogFim });
-    backlogAtual = backlogFim;
+    const entrada    = _paEntradas.find(e=>e.dt===d)?.val || 0;
+    const backlogFimCalc = Math.max(0, backlogAtual - saidas + entrada);
+    linhas.push({ data:d, backlogInicio:backlogAtual, saidas, entrada, backlogFim:backlogFimCalc });
+    backlogAtual = backlogFimCalc;
   });
 
   // ── KPIs do período ──
@@ -7394,6 +7427,85 @@ function renderPlanoAcao(){
     dtSel.value = r.pa_backlog_dt || paQuartaAtual();
   }
   renderCascata();
+}
+
+
+// ════════════════════════════════════════════
+// PLANO DE AÇÃO — ENTRADAS MANUAIS
+// ════════════════════════════════════════════
+let _paEntradas = []; // [{dt:'2026-05-14', val:45}, ...]
+
+async function paEntradaCarregarFirebase(){
+  try {
+    const db=getDB(); if(!db) return;
+    const doc=await db.collection('config').doc('pa_entradas').get();
+    if(doc.exists){
+      _paEntradas = doc.data().lista || [];
+      console.log('PA Entradas carregadas:', _paEntradas.length);
+    }
+  } catch(e){ console.warn('PA Entradas load:', e); }
+}
+
+async function paEntradaSalvarFirebase(){
+  try {
+    const db=getDB(); if(!db){alert('Firebase não conectado.');return;}
+    await db.collection('config').doc('pa_entradas').set({lista:_paEntradas, ts:new Date().toISOString()});
+    _flash('pa-ent-ok');
+    renderCascata();
+  } catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+
+function paEntradaInitADM(){
+  // Preencher data de hoje se vazio
+  const dtEl = document.getElementById('pa-ent-dt');
+  if(dtEl && !dtEl.value) dtEl.value = HOJE.toISOString().split('T')[0];
+  paEntradaRenderLista();
+}
+
+function paEntradaAdicionar(){
+  const dt  = document.getElementById('pa-ent-dt')?.value;
+  const val = parseInt(document.getElementById('pa-ent-val')?.value||'0');
+  if(!dt){ alert('Informe a data.'); return; }
+  if(!val || val<=0){ alert('Informe a quantidade de itens.'); return; }
+
+  // Se já existe uma entrada para essa data, atualizar
+  const idx = _paEntradas.findIndex(e=>e.dt===dt);
+  if(idx>=0){
+    if(!confirm(`Já existe uma entrada de ${_paEntradas[idx].val} itens para ${dt.split('-').reverse().join('/')}.
+Deseja substituir pelo valor ${val}?`)) return;
+    _paEntradas[idx].val = val;
+  } else {
+    _paEntradas.push({dt, val});
+  }
+  _paEntradas.sort((a,b)=>a.dt.localeCompare(b.dt));
+
+  // Limpar campo de valor
+  const valEl = document.getElementById('pa-ent-val');
+  if(valEl) valEl.value = '';
+
+  paEntradaRenderLista();
+}
+
+function paEntradaRemover(dt){
+  _paEntradas = _paEntradas.filter(e=>e.dt!==dt);
+  paEntradaRenderLista();
+}
+
+function paEntradaRenderLista(){
+  const el = document.getElementById('pa-ent-lista');
+  if(!el) return;
+  if(!_paEntradas.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--tx2);padding:.5rem">Nenhuma entrada cadastrada.</div>';
+    return;
+  }
+  el.innerHTML=`<table style="width:100%">
+    <thead><tr><th>Data</th><th>Itens Entrados</th><th>Ação</th></tr></thead>
+    <tbody>${_paEntradas.map(e=>`<tr>
+      <td style="font-weight:600">${e.dt.split('-').reverse().join('/')}</td>
+      <td style="font-weight:700;color:var(--vm)">+${e.val}</td>
+      <td><button onclick="paEntradaRemover('${e.dt}')" style="font-size:10px;padding:2px 8px;border:1px solid var(--vm);border-radius:5px;color:var(--vm);background:#fff;cursor:pointer">✕ Remover</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
 }
 
 
