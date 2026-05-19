@@ -2092,6 +2092,26 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+      <!-- ── ANÁLISE DE SEGMENTO E PATEC ── -->
+      <div class="cd" style="margin-top:1rem">
+        <div class="cd-t">🔍 Análise por Segmento e PATEC</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+
+          <!-- Segmento -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.625rem;text-transform:uppercase;letter-spacing:.6px">Por Segmento</div>
+            <div id="radar-analise-segmento"></div>
+          </div>
+
+          <!-- PATEC -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.625rem;text-transform:uppercase;letter-spacing:.6px">PATEC Obrigatório</div>
+            <div id="radar-analise-patec"></div>
+          </div>
+
+        </div>
+      </div>
+
 
 
     </div>
@@ -5593,6 +5613,8 @@ async function radarOnFile(file){
       status:        String(r['Status (GOV)']||r['STATUS']||'').trim(),
       validade:      String(r['Validade da \nProposta ']||'').trim(),
       finalizou:     r['FINALIZOU']||0,
+      seguimento:    String(r['Seguimento']||'').trim(),
+      patec_obrig:   String(r['Patec \nObrigatorio ']||r['Patec \nObrigatorio']||'').trim(),
     }));
 
     _radarDados=rows;
@@ -5843,16 +5865,19 @@ function _renderRadarCore(){
   const FILAS_EM_TRAT = ['item em parada','mdg'];
   const normF = v=>String(v||'').trim().toLowerCase();
 
-  const criticos   = rows.filter(d=>
-    (Number(d.sla)>90 || Number(d.prazo_c||0)>=60) &&
-    !(d.analista_auto==='Analisar PATEC Finalizado' && FILAS_AG_TRAT.includes(normF(d.fila)))
-  ).length; // SLA>90 OU Prazo>=60, excluindo Ag. Tratamento
+  // Críticos = SLA>90 OU Prazo>=60 (união dos dois cards principais — sem exclusão)
+  const criticos = rows.filter(d=>Number(d.sla)>90 || Number(d.prazo_c||0)>=60).length;
+
+  // Segmento e PATEC
+  const segOp    = rows.filter(d=>d.seguimento==='Operacional').length;
+  const segCrit  = rows.filter(d=>d.seguimento==='Crítica').length;
+  const segPag   = rows.filter(d=>d.seguimento==='Página amarela').length;
+  const patecObr = rows.filter(d=>d.patec_obrig==='Sim').length;
+  const patecNao = rows.filter(d=>!d.patec_obrig).length;
   // Controle (Col L) — normCtrl ANTES de atrasados para poder usar no filtro
   const normCtrl   = v=>String(v||'').trim().toLowerCase();
-  const atrasados  = rows.filter(d=>
-    d.status==='Atrasado' &&
-    !(d.analista_auto==='Analisar PATEC Finalizado' && FILAS_AG_TRAT.includes(normF(d.fila)))
-  ).length;
+  // Próximo do Vencimento = Prazo 60-90 dias (consistente com card customizável)
+  const atrasados = rows.filter(d=>{ const v=Number(d.prazo_c||0); return v>=60 && v<=90; }).length;
   const dentroP    = rows.filter(d=>d.status==='Dentro do Prazo').length;
   // Ag. Tratamento: Analisar PATEC Finalizado + Fila PATEC ou Análise de Oportunidade
   const agTrat = rows.filter(d=>
@@ -5871,9 +5896,13 @@ function _renderRadarCore(){
     {label:'Total de RCs',        val:totalRCs,                   cor:'var(--az)',  bg:'var(--azc)',  ico:'🗂'},
     {label:'Maior SLA',           val:maiorSLA+' dias',           cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⏱'},
     {label:'Itens Críticos',      val:criticos,                   cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
-    {label:'Próximo do Vencimento',   val:atrasados+' ('+pctAt+'%)', cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⚠️'},
     {label:'Ag. Tratamento',           val:agTrat,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🕐'},
     {label:'Em Tratativa',             val:emTrat,                     cor:'var(--azm)', bg:'var(--azc)',  ico:'🔄'},
+    {label:'Seg. Operacional',          val:segOp,                      cor:'var(--az)',  bg:'var(--azc)',  ico:'⚙️'},
+    {label:'Seg. Crítico',              val:segCrit,                    cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
+    {label:'Página Amarela',            val:segPag,                     cor:'var(--am)',  bg:'var(--amc)',  ico:'🟡'},
+    {label:'PATEC Obrigatório',         val:patecObr,                   cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✅'},
+    {label:'PATEC ID Não',              val:patecNao,                   cor:'var(--tx2)', bg:'var(--cin)',  ico:'🚫'},
   ].map(c=>`<div style="background:${c.bg};border-radius:10px;padding:.875rem .75rem;text-align:center;border:1px solid rgba(0,0,0,.07)">
     <div style="font-size:16px;margin-bottom:4px">${c.ico}</div>
     <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px;line-height:1.3">${c.label}</div>
@@ -5907,8 +5936,47 @@ function _renderRadarCore(){
 
   renderRadarCardsCustom(rows);
   renderRadarChartPrazo(rows);
+  renderRadarAnalise(rows);
   renderRadarTabela();
   console.log('[Radar] render concluído OK');
+}
+
+// ── Análise de Segmento e PATEC ──
+function renderRadarAnalise(rows){
+  const total = rows.length || 1;
+
+  // Segmento
+  const segData = [
+    {label:'Operacional',   val:rows.filter(d=>d.seguimento==='Operacional').length,    cor:'var(--az)',  bg:'var(--azc)'},
+    {label:'Crítica',       val:rows.filter(d=>d.seguimento==='Crítica').length,        cor:'var(--vm)',  bg:'var(--vmc)'},
+    {label:'Página Amarela',val:rows.filter(d=>d.seguimento==='Página amarela').length, cor:'var(--am)',  bg:'var(--amc)'},
+    {label:'Estratégica',   val:rows.filter(d=>d.seguimento==='Estratégica').length,    cor:'var(--vd)',  bg:'var(--vdc)'},
+  ];
+
+  // PATEC
+  const patecData = [
+    {label:'Obrigatório (Sim)', val:rows.filter(d=>d.patec_obrig==='Sim').length,  cor:'var(--vd)', bg:'var(--vdc)'},
+    {label:'Não Obrigatório',   val:rows.filter(d=>!d.patec_obrig).length,         cor:'var(--tx2)',bg:'var(--cin)'},
+  ];
+
+  const barraHTML = (item) => {
+    const pct = Math.round(item.val/total*100);
+    return `<div style="margin-bottom:.625rem">
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:3px">
+        <span>${item.label}</span>
+        <span style="color:${item.cor}">${item.val} <span style="color:var(--tx2);font-weight:400">(${pct}%)</span></span>
+      </div>
+      <div style="height:8px;background:var(--cin);border-radius:4px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${item.cor};border-radius:4px;transition:width .4s"></div>
+      </div>
+    </div>`;
+  };
+
+  const segEl = document.getElementById('radar-analise-segmento');
+  if(segEl) segEl.innerHTML = segData.map(barraHTML).join('');
+
+  const patecEl = document.getElementById('radar-analise-patec');
+  if(patecEl) patecEl.innerHTML = patecData.map(barraHTML).join('');
 }
 
 // ── Cards Customizáveis ──
