@@ -2037,6 +2037,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- KPI CARDS -->
       <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1rem"></div>
 
+      <!-- TOP 5 FAMÍLIAS -->
+      <div class="cd" style="margin-bottom:1rem">
+        <div class="cd-t">📦 Top 5 Famílias com mais RCs</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+          <div id="radar-top-familias-bars"></div>
+          <div style="position:relative;height:220px">
+            <canvas id="radar-chart-familias"></canvas>
+          </div>
+        </div>
+      </div>
+
       <!-- POR FILA + DONUT SIDE BY SIDE -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;align-items:start">
         <div class="cd">
@@ -5613,6 +5624,7 @@ async function radarOnFile(file){
       status:        String(r['Status (GOV)']||r['STATUS']||'').trim(),
       validade:      String(r['Validade da \nProposta ']||'').trim(),
       finalizou:     r['FINALIZOU']||0,
+      familia:       String(r['Familia']||r['FAMILIA']||'').trim(),
       seguimento:    (()=>{
         const k=Object.keys(r).find(k=>k==='Seguimento');
         const v=k?String(r[k]||'').trim():'';
@@ -5951,8 +5963,90 @@ function _renderRadarCore(){
   renderRadarCardsCustom(rows);
   renderRadarChartPrazo(rows);
   renderRadarAnalise(rows);
+  renderRadarTopFamilias(rows);
   renderRadarTabela();
   console.log('[Radar] render concluído OK');
+}
+
+// ── Top 5 Famílias ──
+let _radarChartFamilias = null;
+
+function renderRadarTopFamilias(rows){
+  const barsEl  = document.getElementById('radar-top-familias-bars');
+  const canvas  = document.getElementById('radar-chart-familias');
+  if(!barsEl || !canvas) return;
+
+  // Contar por família
+  const contagem = {};
+  rows.forEach(d=>{
+    const f = d.familia ? String(d.familia).trim() : '';
+    if(!f || f==='0' || f==='undefined') return;
+    contagem[f] = (contagem[f]||0) + 1;
+  });
+
+  // Top 5
+  const top5 = Object.entries(contagem)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,5);
+
+  if(!top5.length){
+    barsEl.innerHTML='<div style="font-size:12px;color:var(--tx2);padding:.5rem">Sem dados de família disponíveis.</div>';
+    if(_radarChartFamilias){_radarChartFamilias.destroy();_radarChartFamilias=null;}
+    return;
+  }
+
+  const total  = rows.length || 1;
+  const maxVal = top5[0][1];
+  const cores  = ['#1A4A8A','#0E9E6A','#C07A12','#D94040','#6C63FF'];
+
+  // Barras horizontais
+  barsEl.innerHTML = top5.map(([fam, cnt], i)=>{
+    const pct = Math.round(cnt/total*100);
+    const w   = Math.round(cnt/maxVal*100);
+    return `<div style="margin-bottom:.875rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:700;color:var(--tx)">${fam}</span>
+        <span style="font-size:12px;font-weight:700;color:${cores[i]}">${cnt} <span style="font-size:10px;color:var(--tx2);font-weight:400">(${pct}%)</span></span>
+      </div>
+      <div style="height:10px;background:var(--cin);border-radius:5px;overflow:hidden">
+        <div style="width:${w}%;height:100%;background:${cores[i]};border-radius:5px;transition:width .4s"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Gráfico de rosca
+  if(_radarChartFamilias){_radarChartFamilias.destroy();_radarChartFamilias=null;}
+  _radarChartFamilias = new Chart(canvas, {
+    type:'doughnut',
+    data:{
+      labels: top5.map(([f])=>f),
+      datasets:[{
+        data:    top5.map(([,c])=>c),
+        backgroundColor: cores,
+        borderWidth: 2,
+        borderColor: '#fff',
+        hoverOffset: 8,
+      }]
+    },
+    options:{
+      cutout:'62%',
+      plugins:{
+        legend:{
+          display:true,
+          position:'bottom',
+          labels:{font:{size:10}, boxWidth:10, padding:8}
+        },
+        tooltip:{
+          callbacks:{
+            label:(ctx)=>{
+              const pct=Math.round(ctx.parsed/total*100);
+              return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // ── Análise de Segmento e PATEC ──
