@@ -5692,7 +5692,7 @@ function _renderRadarCore(){
   const total      = rows.length;
   const totalRCs   = rows.length; // total de itens (linhas), não RCs únicos
   const maiorSLA   = rows.length ? Math.max(...rows.map(d=>Number(d.sla)||0)) : 0;
-  const criticos   = rows.filter(d=>Number(d.sla)>r.sla_critico).length;
+  const criticos   = rows.filter(d=>Number(d.sla)>90 || Number(d.prazo_c||0)>=60).length; // SLA>90 OU Prazo>=60
   // Controle (Col L) — normCtrl ANTES de atrasados para poder usar no filtro
   const normCtrl   = v=>String(v||'').trim().toLowerCase();
   const atrasados  = rows.filter(d=>d.status==='Atrasado' && normCtrl(d.controle)!=='ag. tratamento').length;
