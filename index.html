@@ -6019,13 +6019,14 @@ function _renderRadarCore(){
   const stEl=document.getElementById('radar-status-txt');
   const icoEl=document.getElementById('radar-status-ico');
   const attEl=document.getElementById('radar-ultima-att');
-  const nSlaCritico=rows.filter(d=>Number(d.sla)>r.sla_critico).length;
-  const nSlaAlerta=rows.filter(d=>Number(d.sla)>r.sla_alerta).length;
+  // Status = mesma lógica do card Itens Críticos (SLA>90 OU Prazo>=60, sem dupla contagem)
+  const nCriticos = rows.filter(d=>Number(d.sla)>90 || Number(d.prazo_c||0)>=60).length;
+  const pctCriticos = rows.length>0 ? Math.round(nCriticos/rows.length*100) : 0;
   let saude,saudeIco,saudeCor;
-  if(nSlaCritico>0){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
-  else if(nSlaAlerta>0){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
+  if(pctCriticos>=25){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
+  else if(pctCriticos>=10){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
   else{saude='Operação Estável';saudeIco='🟢';saudeCor='var(--vd)';}
-  if(stEl){stEl.textContent=saude+(_radarFiltroStatus?' · '+_radarFiltroStatus:'');stEl.style.color=saudeCor;}
+  if(stEl){stEl.textContent=saude+' · '+nCriticos+' itens críticos ('+pctCriticos+'%)'+(_radarFiltroStatus?' · '+_radarFiltroStatus:'');stEl.style.color=saudeCor;}
   if(icoEl) icoEl.textContent=saudeIco;
   if(attEl&&_radarTs){
     const d=new Date(_radarTs);
