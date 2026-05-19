@@ -1935,134 +1935,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-
-    </div>
-
-      <!-- ── BARRAS DE SAÚDE OPERACIONAL ── -->
-      <div class="cd" style="margin-bottom:1rem">
-        <div class="cd-t">🩺 Saúde Operacional</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem" id="radar-saude-wrap">
-
-          <!-- SLA -->
-          <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-              <div style="font-size:12px;font-weight:700;color:var(--tx)">⏱ SLA (Col I)</div>
-              <div id="radar-saude-sla-badge" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;background:var(--cin)">—</div>
-            </div>
-            <!-- Barra segmentada -->
-            <div style="height:14px;border-radius:8px;overflow:hidden;display:flex;background:#eee;margin-bottom:8px">
-              <div id="radar-saude-sla-bar-ok"   style="height:100%;background:#3A7D44;transition:width .5s ease"></div>
-              <div id="radar-saude-sla-bar-crit" style="height:100%;background:#D94040;transition:width .5s ease"></div>
-            </div>
-            <div style="display:flex;gap:1rem;flex-wrap:wrap">
-              <div style="display:flex;align-items:center;gap:5px">
-                <div style="width:10px;height:10px;border-radius:2px;background:#3A7D44;flex-shrink:0"></div>
-                <span style="font-size:10px;color:var(--tx2)">Saudável (&lt; 90 dias)</span>
-                <strong id="radar-saude-sla-ok" style="font-size:11px;color:#3A7D44">—</strong>
-              </div>
-              <div style="display:flex;align-items:center;gap:5px">
-                <div style="width:10px;height:10px;border-radius:2px;background:#D94040;flex-shrink:0"></div>
-                <span style="font-size:10px;color:var(--tx2)">Crítico (≥ 90 dias)</span>
-                <strong id="radar-saude-sla-crit" style="font-size:11px;color:#D94040">—</strong>
-              </div>
-            </div>
-            <div id="radar-saude-sla-sub" style="font-size:10px;color:var(--tx2);margin-top:5px"></div>
-          </div>
-
-          <!-- PRAZO VALIDADE -->
-          <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-              <div style="font-size:12px;font-weight:700;color:var(--tx)">📅 Prazo de Validade (Col C)</div>
-              <div id="radar-saude-prazo-badge" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;background:var(--cin)">—</div>
-            </div>
-            <!-- Barra segmentada 3 faixas -->
-            <div style="height:14px;border-radius:8px;overflow:hidden;display:flex;background:#eee;margin-bottom:8px">
-              <div id="radar-saude-prazo-bar-ok"    style="height:100%;background:#3A7D44;transition:width .5s ease"></div>
-              <div id="radar-saude-prazo-bar-alert"  style="height:100%;background:#E87722;transition:width .5s ease"></div>
-              <div id="radar-saude-prazo-bar-venc"   style="height:100%;background:#D94040;transition:width .5s ease"></div>
-            </div>
-            <div style="display:flex;gap:1rem;flex-wrap:wrap">
-              <div style="display:flex;align-items:center;gap:5px">
-                <div style="width:10px;height:10px;border-radius:2px;background:#3A7D44;flex-shrink:0"></div>
-                <span style="font-size:10px;color:var(--tx2)">Dentro (≤ 59d)</span>
-                <strong id="radar-saude-prazo-ok" style="font-size:11px;color:#3A7D44">—</strong>
-              </div>
-              <div style="display:flex;align-items:center;gap:5px">
-                <div style="width:10px;height:10px;border-radius:2px;background:#E87722;flex-shrink:0"></div>
-                <span style="font-size:10px;color:var(--tx2)">Próximo (60–90d)</span>
-                <strong id="radar-saude-prazo-alert" style="font-size:11px;color:#E87722">—</strong>
-              </div>
-              <div style="display:flex;align-items:center;gap:5px">
-                <div style="width:10px;height:10px;border-radius:2px;background:#D94040;flex-shrink:0"></div>
-                <span style="font-size:10px;color:var(--tx2)">Vencida (≥ 91d)</span>
-                <strong id="radar-saude-prazo-venc" style="font-size:11px;color:#D94040">—</strong>
-              </div>
-            </div>
-            <div id="radar-saude-prazo-sub" style="font-size:10px;color:var(--tx2);margin-top:5px"></div>
-          </div>
-
-        </div>
-      </div>
-
-    <!-- ══════════════════════════════════════════
-         RADAR OPERACIONAL
-    ══════════════════════════════════════════ -->
-    <div id="p-radar" class="page">
-
-      <!-- STATUS / ÚLTIMA ATUALIZAÇÃO -->
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span id="radar-status-ico" style="font-size:18px">⚪</span>
-          <div>
-            <div id="radar-status-txt" style="font-size:13px;font-weight:700;color:var(--tx2)">Aguardando dados...</div>
-            <div id="radar-ultima-att" style="font-size:11px;color:var(--tx2)">—</div>
-          </div>
-        </div>
-        <button class="btn btn-s" style="font-size:11px" onclick="renderRadarOperacional()">↺ Atualizar</button>
-      </div>
-
-      <!-- ── FILTRO ANALISTA AUTOMÁTICO (Col D) — DROPDOWN ── -->
-      <div class="cd" style="margin-bottom:1rem;padding:.875rem 1.1rem">
-        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-          <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">📡 Filtrar por Analista Automático</div>
-          <div style="position:relative;flex:1;min-width:220px;max-width:420px">
-            <select id="radar-sel-status" onchange="radarSetFiltroStatusSel(this.value)"
-              style="width:100%;font-size:12px;font-weight:500;padding:7px 36px 7px 12px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;color:var(--tx);cursor:pointer;appearance:none;-webkit-appearance:none;outline:none">
-              <option value="">Todos os analistas automáticos</option>
-            </select>
-            <span style="pointer-events:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:12px">▾</span>
-          </div>
-          <div id="radar-filtro-badge" style="display:none;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--azc);color:var(--azm);font-weight:600;border:1px solid rgba(26,74,138,.2)"></div>
-        </div>
-      </div>
-
-      <!-- CARDS CUSTOMIZÁVEIS — logo abaixo do filtro -->
-      <div id="radar-cards-custom" style="display:none;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:1rem"></div>
-
-      <!-- CARDS PRINCIPAIS (dinâmicos conforme filtro) -->
-      <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:1rem"></div>
-
-      <!-- TABELAS: Por Analista + Por Fila + Controle -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">
-        <!-- Por Analista (só Analisar PATEC Finalizado) -->
-        <div class="cd">
-          <div class="cd-t">👤 Por analista</div>
-          <div id="radar-por-analista"></div>
-        </div>
-        <!-- Por Fila -->
-        <div class="cd">
-          <div class="cd-t">📋 Por fila (Level Board)</div>
-          <div id="radar-por-fila"></div>
-        </div>
-        <!-- Controle (Ag. Tratamento, Fornecedor, MDG, Requisitante, Validação Tiago) -->
-        <div class="cd">
-          <div class="cd-t">🗂 Por controle</div>
-          <div id="radar-por-controle"></div>
-        </div>
-      </div>
-
-
-
       <!-- GRÁFICO DONUT — PRAZO (Col C) -->
       <div class="cd" style="margin-bottom:1rem">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:.75rem">
@@ -5787,13 +5659,11 @@ function renderRadarOperacional(){
     {label:'Maior SLA',           val:maiorSLA+' dias',           cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⏱'},
     {label:'Itens Críticos',      val:criticos,                   cor:'var(--vm)',  bg:'var(--vmc)',  ico:'🔴'},
     {label:'Itens em Atraso',     val:atrasados+' ('+pctAt+'%)', cor:'var(--vm)',  bg:'var(--vmc)',  ico:'⚠️'},
-    {label:'Dentro do Prazo',     val:dentroP,                    cor:'var(--vd)',  bg:'var(--vdc)',  ico:'✅'},
   ].map(c=>`<div style="background:${c.bg};border-radius:10px;padding:.875rem .75rem;text-align:center;border:1px solid rgba(0,0,0,.07)">
     <div style="font-size:16px;margin-bottom:4px">${c.ico}</div>
     <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px;line-height:1.3">${c.label}</div>
     <div style="font-size:22px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
   </div>`).join('');
-  renderRadarPorControle(rows);
 
   // Por analista — apenas itens "Analisar PATEC Finalizado"
   const rowsAnalista = rows.filter(d=>d.analista_auto==='Analisar PATEC Finalizado');
@@ -5837,26 +5707,6 @@ function renderRadarOperacional(){
   renderRadarCardsCustom(rows);
   renderRadarChartPrazo(rows);
   renderRadarTabela();
-}
-
-// ── Tabela Por Controle ──
-function renderRadarPorControle(rows){
-  const el=document.getElementById('radar-por-controle');
-  if(!el) return;
-  const norm=v=>String(v||'').trim().toLowerCase();
-  const itens=[
-    {label:'Ag. Tratamento',  ico:'🕐', val:rows.filter(d=>norm(d.controle)==='ag. tratamento').length,  cor:'var(--am)'},
-    {label:'Ag. Fornecedor',  ico:'🏭', val:rows.filter(d=>norm(d.controle)==='fornecedor').length,       cor:'var(--am)'},
-    {label:'MDG',             ico:'📦', val:rows.filter(d=>norm(d.controle)==='mdg').length,              cor:'var(--azm)'},
-    {label:'Requisitante',    ico:'👤', val:rows.filter(d=>norm(d.controle)==='requisitante').length,     cor:'var(--azm)'},
-    {label:'Validação Tiago', ico:'✔️', val:rows.filter(d=>norm(d.controle)==='validação thiago').length, cor:'var(--vd)'},
-  ];
-  el.innerHTML='<table style="width:100%"><thead><tr><th>CONTROLE</th><th>TOTAL</th></tr></thead><tbody>'+
-    itens.map(i=>`<tr>
-      <td><span style="margin-right:5px">${i.ico}</span><strong>${i.label}</strong></td>
-      <td style="font-weight:700;color:${i.cor}">${i.val}</td>
-    </tr>`).join('')+
-  '</tbody></table>';
 }
 
 // ── Cards Customizáveis ──
