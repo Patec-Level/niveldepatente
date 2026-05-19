@@ -90,7 +90,7 @@ body{
   min-width:0;min-height:100vh;
 }
 .ct{
-  padding:1.25rem 1.5rem;
+  padding:0.75rem 1.5rem 1.25rem;
   margin-top:var(--tbh);
   flex:1;width:100%;
 }
@@ -1979,7 +1979,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div id="radar-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:1rem"></div>
 
       <!-- CARDS CUSTOMIZÁVEIS -->
-      <div id="radar-cards-custom" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:1rem"></div>
+      <div id="radar-cards-custom" style="display:none;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:1rem"></div>
 
       <!-- TABELAS + GRÁFICO DONUT -->
       <div class="g2" style="margin-bottom:1rem">
@@ -5867,6 +5867,7 @@ function renderRadarOperacional(){
 function renderRadarCardsCustom(rows){
   const el=document.getElementById('radar-cards-custom');
   if(!el) return;
+  el.style.display='grid';
   const r=radarGetRegras();
   const dias=Number(r.sla_card_dias)||90;
 
