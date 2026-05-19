@@ -5624,7 +5624,7 @@ async function radarOnFile(file){
       status:        String(r['Status (GOV)']||r['STATUS']||'').trim(),
       validade:      String(r['Validade da \nProposta ']||'').trim(),
       finalizou:     r['FINALIZOU']||0,
-      familia:       String(r['Familia']||r['FAMILIA']||'').trim(),
+      familia:       (()=>{ const v=String(r['Familia']||r['FAMILIA']||'').trim(); return v.endsWith('.0')?v.slice(0,-2):v; })(),
       seguimento:    (()=>{
         const k=Object.keys(r).find(k=>k==='Seguimento');
         const v=k?String(r[k]||'').trim():'';
