@@ -5613,8 +5613,8 @@ async function radarOnFile(file){
       status:        String(r['Status (GOV)']||r['STATUS']||'').trim(),
       validade:      String(r['Validade da \nProposta ']||'').trim(),
       finalizou:     r['FINALIZOU']||0,
-      seguimento:    String(r['Seguimento']||'').trim(),
-      patec_obrig:   String(r['Patec \nObrigatorio ']||r['Patec \nObrigatorio']||'').trim(),
+      seguimento:    (()=>{ const v=String(r['Seguimento']||'').trim(); return v==='#N/A'?'':v; })(),
+      patec_obrig:   (()=>{ const v=String(r['Patec \nObrigatorio ']||r['Patec \nObrigatorio']||'').trim(); return v==='#N/A'?'':v; })(),
     }));
 
     _radarDados=rows;
