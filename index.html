@@ -3398,7 +3398,6 @@ function renderPainelEstrategico(){
     const cards2=[
       {label:'Itens analisados',   sub:nDias+' dia(s)',            val:totalAnalis.toLocaleString('pt-BR'), cor:'var(--vd)',  bg:'var(--vdc)'},
       {label:'Gap',                sub:'Analisado − Planejado',    val:gapStr,                              cor:gapCor,      bg:gap>=0?'var(--vdc)':'var(--vmc)'},
-
       {label:'Média diária equipe',sub:'meta '+metaDia+'/colab',   val:mediaEquipe,                         cor:'var(--azm)',bg:'var(--cin)'},
       {label:'🏆 Melhor dia',      sub:fmtDt(melhor.dt),          val:melhor.tot,                          cor:'var(--vd)', bg:'var(--cin)'},
       {label:'📉 Pior dia',        sub:fmtDt(pior.dt),            val:pior.tot,                            cor:'var(--vm)', bg:'var(--cin)'},
