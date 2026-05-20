@@ -7860,13 +7860,17 @@ function renderCascata(){
   const dtAnterior = _dAnterior.toISOString().split('T')[0];
 
   let backlogBase = backlogConfig;
-  if(dtBase <= dtAnterior){
-    paDiasUteis(dtBase, dtAnterior).forEach(d=>{
-      const s = saidasPorDia[d]||0;
-      const e = (_paEntradas.find(x=>x.dt===d)?.val)||0;
-      backlogBase = Math.max(0, backlogBase - s + e);
-    });
-  }
+  // Acumular movimentos de dtBase até dtAnterior (inclusive)
+  // dtAnterior = dtInicio - 1 dia
+  const diasAcumular = (dtBase && dtAnterior && dtBase <= dtAnterior)
+    ? paDiasUteis(dtBase, dtAnterior)
+    : [];
+  diasAcumular.forEach(d=>{
+    const s = saidasPorDia[d]||0;
+    const e = (_paEntradas.find(x=>x.dt===d)?.val)||0;
+    backlogBase = Math.max(0, backlogBase - s + e);
+  });
+  console.log('[PA] backlogBase calculado:', backlogBase, '| dtBase:', dtBase, '| dtAnterior:', dtAnterior, '| dias acumulados:', diasAcumular);
 
   // Dias úteis do período do filtro (dtInicio até dtFim inclusive)
   const diasUteis = paDiasUteis(dtInicio, dtFim);
