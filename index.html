@@ -8669,12 +8669,19 @@ async function bkSalvarFirebase(){
   btn.disabled = true; btn.textContent = '⏳ Salvando...';
   try {
     const db = getDB(); if(!db){ alert('Firebase não conectado.'); btn.disabled=false; btn.textContent='💾 Salvar no Firebase'; return; }
+    // Converter array de arrays para array de objetos (Firebase não suporta nested arrays)
+    const headers = _bkDados.headers || [];
+    const rowsObj = _bkDados.rows.map(r => {
+      const obj = {};
+      headers.forEach((h, i) => { obj['c' + i] = r[i] !== undefined ? String(r[i]) : ''; });
+      return obj;
+    });
     const payload = {
-      headers: _bkDados.headers,
-      rows: _bkDados.rows,
+      headers: headers.map((h,i) => ({i, v: String(h||'')})),
+      rows: rowsObj,
       arquivo: _bkDados.arquivo,
       dt: _bkDados.dt,
-      total: _bkDados.rows.length
+      total: rowsObj.length
     };
     await db.collection('config').doc('backlog_planilha').set(payload);
     document.getElementById('bk-salvo-ok').style.display = 'inline';
@@ -8696,7 +8703,10 @@ async function bkCarregarFirebase(){
     const doc = await db.collection('config').doc('backlog_planilha').get();
     if(doc.exists){
       const d = doc.data();
-      _bkDados = { headers: d.headers, rows: d.rows, arquivo: d.arquivo, dt: d.dt };
+      // Reconverter objetos para array de arrays
+      const hdrs = (d.headers||[]).sort((a,b)=>a.i-b.i).map(h=>h.v);
+      const rowsArr = (d.rows||[]).map(obj => hdrs.map((_,i) => obj['c'+i]||''));
+      _bkDados = { headers: hdrs, rows: rowsArr, arquivo: d.arquivo, dt: d.dt };
       bkAtualizarInfoFirebase();
       aaVerificarDados();
     }
