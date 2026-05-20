@@ -8678,6 +8678,14 @@ async function bkSalvarFirebase(){
     });
     const CHUNK = 400;
     const totalChunks = Math.ceil(rowsObj.length / CHUNK);
+    // Apagar chunks antigos antes de salvar (evita lixo de versões anteriores)
+    const metaAnt = await db.collection('config').doc('backlog_planilha').get();
+    if(metaAnt.exists && metaAnt.data().chunks){
+      const chunksAnt = metaAnt.data().chunks;
+      for(let c = 0; c < chunksAnt; c++){
+        await db.collection('config').doc('backlog_planilha_' + c).delete();
+      }
+    }
     // Salvar metadados
     await db.collection('config').doc('backlog_planilha').set({
       headers: headers.map((h,i) => ({i, v: String(h||'')})),
@@ -8686,7 +8694,7 @@ async function bkSalvarFirebase(){
       total: rowsObj.length,
       chunks: totalChunks
     });
-    // Salvar chunks
+    // Salvar novos chunks
     for(let c = 0; c < totalChunks; c++){
       const slice = rowsObj.slice(c * CHUNK, (c+1) * CHUNK);
       await db.collection('config').doc('backlog_planilha_' + c).set({ rows: slice, chunk: c });
