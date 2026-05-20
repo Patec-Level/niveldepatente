@@ -2319,8 +2319,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- KPIs principais -->
       <div class="kgrid" id="peq-kpis"></div>
 
-      <!-- Cards especiais -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem">
+      <!-- Cards especiais — Linha 1: Melhor/Pior dia -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:10px">
         <div class="cd" style="text-align:center;padding:.875rem;border-top:3px solid var(--vd)">
           <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">🏆 Melhor dia</div>
           <div style="font-size:22px;font-weight:700;color:var(--vd)" id="peq-melhor-val">131</div>
@@ -2331,6 +2331,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div style="font-size:22px;font-weight:700;color:var(--vm)" id="peq-pior-val">26</div>
           <div style="font-size:10px;color:var(--tx2)" id="peq-pior-dt">14/mai</div>
         </div>
+      </div>
+      <!-- Linha 2: RCs Pedidos + Republicação + Devoluções + XGL -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem">
         <div class="cd" style="text-align:center;padding:.875rem;border-top:3px solid var(--azm)">
           <div style="font-size:10px;color:var(--tx2);margin-bottom:3px">📦 RCs Pedidos</div>
           <div style="font-size:22px;font-weight:700;color:var(--azm)" id="peq-pedidos">136</div>
