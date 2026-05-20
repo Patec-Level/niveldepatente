@@ -2198,6 +2198,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px" id="pa-cards-dia"></div>
       </div>
 
+      <!-- MARCOS DE BACKLOG -->
+      <div class="cd" style="margin-bottom:1rem">
+        <div class="cd-t">📌 Marcos de Backlog</div>
+        <div id="pa-marcos-lista" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:.875rem"></div>
+        <button class="btn btn-s" style="font-size:11px" onclick="paMarcosAdicionar()">+ Adicionar marco</button>
+        <span style="font-size:11px;color:var(--tx2);margin-left:10px">O gráfico usa o marco mais próximo antes do início do filtro como backlog inicial.</span>
+      </div>
+
       <!-- GRÁFICO CASCATA — ACOMPANHAMENTO E PLANO DE REDUÇÃO -->
       <div class="cd" style="margin-bottom:1rem">
 
@@ -7867,9 +7875,7 @@ function renderCascata(){
   const dtFim    = dtFimEl?.value || HOJE.toISOString().split('T')[0];
   if(dtInicio > dtFim) return;
 
-  const backlogConfig = Number(r.pa_backlog_val)||582;
-  const dtBase        = r.pa_backlog_dt||'2026-03-16';
-  const metaDia       = Number(r.pa_meta_dia)||30;
+  const metaDia = Number(r.pa_meta_dia)||30;
 
   // Saídas/entradas por dia
   const saidasPorDia = {};
@@ -7879,35 +7885,20 @@ function renderCascata(){
     if(v>0) saidasPorDia[reg.data]=(saidasPorDia[reg.data]||0)+v;
   });
 
-  // Backlog Inicial = estado ao final do dia ANTERIOR ao início do filtro
-  // Partindo do valor ADM (dtBase), acumular movimentos até dtInicio-1
+  // Backlog Inicial = marco mais próximo anterior ao filtro + saídas acumuladas
   const _dAnterior = new Date(dtInicio+'T12:00:00');
   _dAnterior.setDate(_dAnterior.getDate()-1);
   const dtAnterior = _dAnterior.toISOString().split('T')[0];
 
-  let backlogBase = backlogConfig;
-  if(dtBase && dtAnterior){
-    if(dtBase <= dtAnterior){
-      // Filtro começa APÓS dtBase: acumular saídas/entradas de dtBase até dtAnterior
-      paDiasUteis(dtBase, dtAnterior).forEach(d=>{
-        const s = saidasPorDia[d]||0;
-        const e = (_paEntradas.find(x=>x.dt===d)?.val)||0;
-        backlogBase = Math.max(0, backlogBase - s + e);
-      });
-    } else {
-      // Filtro começa ANTES de dtBase: subtrair de trás pra frente
-      // backlog em dtAnterior = backlogConfig - soma das saídas de dtAnterior+1 até dtBase
-      const diasRetro = paDiasUteis(dtInicio, dtBase);
-      let somaRetro = 0;
-      diasRetro.forEach(d=>{
-        const s = saidasPorDia[d]||0;
-        const e = (_paEntradas.find(x=>x.dt===d)?.val)||0;
-        somaRetro += s - e;
-      });
-      backlogBase = backlogConfig + somaRetro;
-    }
+  const marco = paGetMarcoBase(dtInicio);
+  let backlogBase = marco.val;
+  if(marco.dt <= dtAnterior){
+    paDiasUteis(marco.dt, dtAnterior).forEach(d=>{
+      const s = saidasPorDia[d]||0;
+      const e = (_paEntradas.find(x=>x.dt===d)?.val)||0;
+      backlogBase = Math.max(0, backlogBase - s + e);
+    });
   }
-
   // Dias úteis do período: de dtInicio até dtFim (dtAnterior já foi processado acima)
   // Usar comparação de string para evitar problema de timezone
   const diasUteis = paDiasUteis(dtInicio, dtFim).filter(d => d > dtAnterior);
@@ -8110,6 +8101,7 @@ function renderPlanoAcao(){
   const sel = document.getElementById('pa-dia-sel');
   if(sel && !sel.value) sel.value = HOJE.toISOString().split('T')[0];
   renderPlanoAcaoCardsDia();
+  paMarcosRender();
 
   const r      = radarGetRegras();
   const dtIni  = document.getElementById('pa-dt-inicio');
@@ -8125,6 +8117,67 @@ function renderPlanoAcao(){
 // PLANO DE AÇÃO — ENTRADAS MANUAIS
 // ════════════════════════════════════════════
 let _paEntradas = []; // [{dt:'2026-05-14', val:45}, ...]
+
+// Marcos de backlog: [{dt:'2026-03-16', val:766, label:'Início acompanhamento'}, ...]
+let _paMarcos = JSON.parse(localStorage.getItem('patec_pa_marcos')||'[]');
+if(!_paMarcos.length){
+  _paMarcos = [
+    {dt:'2026-03-16', val:766, label:'Início do acompanhamento'},
+    {dt:'2026-05-06', val:488, label:'Marco 06/05'},
+  ];
+  localStorage.setItem('patec_pa_marcos', JSON.stringify(_paMarcos));
+}
+
+function paMarcosRender(){
+  const el = document.getElementById('pa-marcos-lista');
+  if(!el) return;
+  if(!_paMarcos.length){ el.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum marco cadastrado.</div>'; return; }
+  el.innerHTML = _paMarcos.map((m,i)=>`
+    <div style="background:var(--azc);border:1.5px solid var(--azm);border-radius:10px;padding:.75rem 1rem;min-width:200px;position:relative">
+      <div style="font-size:10px;font-weight:700;color:var(--azm);margin-bottom:4px">📌 ${m.label||'Marco'}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="date" value="${m.dt}" onchange="_paMarcoUpd(${i},'dt',this.value)"
+          style="font-size:12px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;width:140px">
+        <input type="number" value="${m.val}" onchange="_paMarcoUpd(${i},'val',this.value)" min="0"
+          style="font-size:18px;font-weight:700;color:var(--azm);width:80px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;text-align:center">
+        <button onclick="_paMarcoRem(${i})" style="background:var(--vmc);color:var(--vm);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
+      </div>
+      <div>
+        <input type="text" value="${m.label||''}" placeholder="Descrição" onchange="_paMarcoUpd(${i},'label',this.value)"
+          style="margin-top:6px;width:100%;font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;color:var(--tx2)">
+      </div>
+    </div>`).join('');
+}
+
+function _paMarcoUpd(i, campo, val){
+  _paMarcos[i][campo] = campo==='val' ? Number(val) : val;
+  _paMarcosSalvar();
+}
+function _paMarcoRem(i){
+  _paMarcos.splice(i,1);
+  _paMarcosSalvar();
+  paMarcosRender();
+}
+function paMarcosAdicionar(){
+  _paMarcos.push({dt:HOJE.toISOString().split('T')[0], val:0, label:'Novo marco'});
+  _paMarcosSalvar();
+  paMarcosRender();
+}
+function _paMarcosSalvar(){
+  _paMarcos.sort((a,b)=>a.dt.localeCompare(b.dt));
+  localStorage.setItem('patec_pa_marcos', JSON.stringify(_paMarcos));
+}
+
+// Retorna o marco mais próximo ANTERIOR ou IGUAL a uma data
+function paGetMarcoBase(dtInicio){
+  // Pegar dtAnterior = dtInicio - 1 dia
+  const dAnt = new Date(dtInicio+'T12:00:00');
+  dAnt.setDate(dAnt.getDate()-1);
+  const dtAnt = dAnt.toISOString().split('T')[0];
+  // Marco mais recente que seja <= dtAnt
+  const candidatos = _paMarcos.filter(m=>m.dt<=dtAnt).sort((a,b)=>b.dt.localeCompare(a.dt));
+  return candidatos[0] || _paMarcos[0] || {dt:'2026-03-16', val:766};
+}
 
 async function paEntradaCarregarFirebase(){
   try {
