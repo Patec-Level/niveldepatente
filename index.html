@@ -2663,6 +2663,7 @@ async function fbCarregarTudo(){
   if(prods.length > 0){
     registros = prods.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
     console.log('✓ Produção carregada:', registros.length, 'registros');
+    pcpRecalcularTudo();
   }
 
   // Férias — sync Firebase ↔ localStorage
@@ -4675,7 +4676,11 @@ async function fbCarregarPCPDiario(){
   try{
     const db=getDB();if(!db)return;
     const snap=await db.collection('pcp_diario').orderBy('data').get();
-    if(snap.docs.length===0) return;
+    if(snap.docs.length===0){
+      // Mesmo sem Firebase, recalcular tudo da produção em memória
+      pcpRecalcularTudo();
+      return;
+    }
     snap.docs.forEach(d=>{
       const reg=d.data();
       const idx=pcpData.findIndex(r=>r.data===reg.data);
@@ -4687,8 +4692,27 @@ async function fbCarregarPCPDiario(){
     // Atualizar painel se aberto
     if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
       renderPainelEstrategico();
+      estPcpHoje();
     }
-  }catch(e){console.warn('Erro PCP diario:',e);}
+  }catch(e){
+    console.warn('Erro PCP diario:',e);
+    pcpRecalcularTudo();
+  }
+}
+
+function pcpRecalcularTudo(){
+  // Recalcular PCP para todos os dias com produção em memória
+  const diasComProd = [...new Set(registros.map(r=>r.data))];
+  diasComProd.forEach(dt=>{
+    const calc = pcpCalcDia(dt);
+    if(!calc) return;
+    const novo = {data:dt, f1:calc.f1, f2:calc.f2, f6:calc.f6, f3:calc.f3, f4:calc.f4, f5:calc.f5};
+    const idx = pcpData.findIndex(r=>r.data===dt);
+    if(idx>=0) pcpData[idx]=novo;
+    else pcpData.push(novo);
+  });
+  pcpData.sort((a,b)=>a.data.localeCompare(b.data));
+  console.log('✓ PCP recalculado da memória: '+diasComProd.length+' dias');
 }
 
 function renderAdmMapaHistorico(){
