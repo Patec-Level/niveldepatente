@@ -2225,9 +2225,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- CARD HISTÓRICO DE BACKLOG — só leitura -->
       <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
-        <div class="cd-t">📌 Histórico de Backlog</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px">
+          <div class="cd-t" style="margin:0">📌 Histórico de Backlog</div>
+          <div style="font-size:11px;color:var(--tx2)">🔒 Editar em <strong>ADM → Entradas Plano de Ação → Histórico de Backlog</strong></div>
+        </div>
         <div id="pa-historico-backlog" style="display:flex;flex-wrap:wrap;gap:12px"></div>
-        <div style="margin-top:.5rem;font-size:11px;color:var(--tx2)">🔒 Editável em <strong>ADM → Entradas Plano de Ação</strong></div>
       </div>
 
       <!-- GRÁFICO CASCATA — ACOMPANHAMENTO E PLANO DE REDUÇÃO -->
@@ -8155,20 +8157,20 @@ if(!_paHistorico.length){
 function paHistoricoRender(){
   const el = document.getElementById('pa-historico-backlog');
   if(!el) return;
-  _paHistorico.sort((a,b)=>a.dt.localeCompare(b.dt));
-  el.innerHTML = _paHistorico.map((h,i)=>{
-    const isBase = i===_paHistorico.length-1;
+  const lista = [..._paHistorico].sort((a,b)=>a.dt.localeCompare(b.dt));
+  el.innerHTML = lista.map((h,i)=>{
+    const isBase = i===lista.length-1;
     const cor = isBase?'var(--vd)':'var(--azm)';
     const bg  = isBase?'var(--vdc)':'var(--azc)';
     const brd = isBase?'rgba(14,158,106,.3)':'rgba(26,74,138,.2)';
     const dtFmt = h.dt?h.dt.split('-').reverse().join('/'):'—';
-    return `<div style="background:${bg};border:1.5px solid ${brd};border-radius:10px;padding:.875rem 1.1rem;min-width:180px">
-      <div style="font-size:10px;font-weight:700;color:${cor};margin-bottom:6px">${isBase?'📊 Base do gráfico':'📌 Marco histórico'}</div>
-      <div style="font-size:22px;font-weight:700;color:${cor};line-height:1">${h.val}</div>
-      <div style="font-size:12px;font-weight:600;color:var(--tx);margin-top:4px">${dtFmt}</div>
+    return `<div style="background:${bg};border:1.5px solid ${brd};border-radius:10px;padding:1rem 1.25rem;min-width:180px">
+      <div style="font-size:10px;font-weight:700;color:${cor};margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">${isBase?'📊 Base do gráfico':'📌 Marco histórico'}</div>
+      <div style="font-size:28px;font-weight:700;color:${cor};line-height:1">${h.val}</div>
+      <div style="font-size:13px;font-weight:600;color:var(--tx);margin-top:5px">${dtFmt}</div>
       <div style="font-size:11px;color:var(--tx2);margin-top:2px">${h.label||''}</div>
     </div>`;
-  }).join('')||'<div style="font-size:12px;color:var(--tx2)">—</div>';
+  }).join('')||'<div style="font-size:12px;color:var(--tx2)">Configure em ADM → Entradas Plano de Ação → Histórico de Backlog</div>';
 }
 
 function _paHistUpd(i,campo,val){
@@ -8261,10 +8263,18 @@ async function paEntradaSalvarFirebase(){
 }
 
 function paEntradaInitADM(){
-  // Preencher data de hoje se vazio
   const dtEl = document.getElementById('pa-ent-dt');
   if(dtEl && !dtEl.value) dtEl.value = HOJE.toISOString().split('T')[0];
   paEntradaRenderLista();
+  // Garantir que sub-aba entradas está visível por padrão
+  const tabEnt = document.getElementById('pa-adm-tab-entradas');
+  const tabHist = document.getElementById('pa-adm-tab-historico');
+  if(tabEnt) tabEnt.style.display='block';
+  if(tabHist) tabHist.style.display='none';
+  // Reset stabs
+  document.querySelectorAll('#adm-pa-entradas .stab').forEach((b,i)=>{
+    b.classList.toggle('active', i===0);
+  });
 }
 
 function paEntradaAdicionar(){
