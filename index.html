@@ -977,6 +977,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- ── PLANO DE AÇÃO — ENTRADAS MANUAIS ── -->
       <div id="adm-pa-entradas" class="adm-tab" style="display:none">
+
+        <!-- SUB-ABAS -->
+        <div class="stabs" style="margin-bottom:1.25rem">
+          <button class="stab active" onclick="setPaAdmTab('entradas',this)">📥 Entradas por Data</button>
+          <button class="stab" onclick="setPaAdmTab('historico',this)">📌 Histórico de Backlog</button>
+        </div>
+
+        <!-- SUB-ABA: Entradas -->
+        <div id="pa-adm-tab-entradas">
         <div class="cd-t">📥 Plano de Ação — Entradas por Data</div>
         <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem;line-height:1.6">
           Cadastre aqui os itens que <strong>entraram</strong> na fila PATEC por data.<br>
@@ -1001,6 +1010,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
         <button class="btn btn-g" onclick="paEntradaSalvarFirebase()">💾 Salvar entradas no Firebase</button>
         <span id="pa-ent-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Salvo!</span>
+        </div><!-- /pa-adm-tab-entradas -->
+
+        <!-- SUB-ABA: Histórico de Backlog -->
+        <div id="pa-adm-tab-historico" style="display:none">
+          <div class="cd-t">📌 Histórico de Backlog</div>
+          <div class="al al-b" style="margin-bottom:1rem">ℹ O último registro (data mais recente) é usado como <strong>base do gráfico de medição</strong>. Os demais são apenas informativos.</div>
+
+          <div id="pa-adm-historico-lista" style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:1rem"></div>
+
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-s" style="font-size:11px" onclick="paHistoricoAdicionar()">+ Adicionar</button>
+            <button class="btn btn-g" style="font-size:11px" onclick="paHistoricoSalvarFirebase()">💾 Salvar no Firebase</button>
+            <span id="pa-historico-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
+          </div>
+        </div><!-- /pa-adm-tab-historico -->
+
       </div>
 
       <!-- ── RESULTADO DE MEDIÇÃO ── -->
@@ -2198,15 +2223,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px" id="pa-cards-dia"></div>
       </div>
 
-      <!-- CARD HISTÓRICO DE BACKLOG -->
+      <!-- CARD HISTÓRICO DE BACKLOG — só leitura -->
       <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
         <div class="cd-t">📌 Histórico de Backlog</div>
         <div id="pa-historico-backlog" style="display:flex;flex-wrap:wrap;gap:12px"></div>
-        <div style="margin-top:.875rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-s" style="font-size:11px" onclick="paHistoricoAdicionar()">+ Adicionar registro</button>
-          <button class="btn btn-g" style="font-size:11px" onclick="paHistoricoSalvar()">💾 Salvar</button>
-          <span id="pa-historico-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
-        </div>
+        <div style="margin-top:.5rem;font-size:11px;color:var(--tx2)">🔒 Editável em <strong>ADM → Entradas Plano de Ação</strong></div>
       </div>
 
       <!-- GRÁFICO CASCATA — ACOMPANHAMENTO E PLANO DE REDUÇÃO -->
@@ -8136,25 +8157,18 @@ function paHistoricoRender(){
   if(!el) return;
   _paHistorico.sort((a,b)=>a.dt.localeCompare(b.dt));
   el.innerHTML = _paHistorico.map((h,i)=>{
-    const isBase = i===_paHistorico.length-1; // último = base do gráfico
+    const isBase = i===_paHistorico.length-1;
     const cor = isBase?'var(--vd)':'var(--azm)';
     const bg  = isBase?'var(--vdc)':'var(--azc)';
     const brd = isBase?'rgba(14,158,106,.3)':'rgba(26,74,138,.2)';
-    return `<div style="background:${bg};border:1.5px solid ${brd};border-radius:10px;padding:.875rem 1.1rem;min-width:200px">
-      <div style="font-size:10px;font-weight:700;color:${cor};margin-bottom:6px">
-        ${isBase?'📊 Base do gráfico':'📌 Marco histórico'}
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <input type="date" value="${h.dt}" onchange="_paHistUpd(${i},'dt',this.value)"
-          style="font-size:12px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px">
-        <input type="number" value="${h.val}" onchange="_paHistUpd(${i},'val',this.value)" min="0"
-          style="font-size:20px;font-weight:700;color:${cor};width:80px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;text-align:center">
-        <button onclick="_paHistRem(${i})" style="background:var(--vmc);color:var(--vm);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
-      </div>
-      <input type="text" value="${h.label||''}" placeholder="Descrição" onchange="_paHistUpd(${i},'label',this.value)"
-        style="width:100%;font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;color:var(--tx2)">
+    const dtFmt = h.dt?h.dt.split('-').reverse().join('/'):'—';
+    return `<div style="background:${bg};border:1.5px solid ${brd};border-radius:10px;padding:.875rem 1.1rem;min-width:180px">
+      <div style="font-size:10px;font-weight:700;color:${cor};margin-bottom:6px">${isBase?'📊 Base do gráfico':'📌 Marco histórico'}</div>
+      <div style="font-size:22px;font-weight:700;color:${cor};line-height:1">${h.val}</div>
+      <div style="font-size:12px;font-weight:600;color:var(--tx);margin-top:4px">${dtFmt}</div>
+      <div style="font-size:11px;color:var(--tx2);margin-top:2px">${h.label||''}</div>
     </div>`;
-  }).join('');
+  }).join('')||'<div style="font-size:12px;color:var(--tx2)">—</div>';
 }
 
 function _paHistUpd(i,campo,val){
@@ -8168,12 +8182,55 @@ function paHistoricoAdicionar(){
   _paHistorico.push({dt:HOJE.toISOString().split('T')[0], val:0, label:'Novo marco'});
   paHistoricoRender();
 }
-function paHistoricoSalvar(){
+function setPaAdmTab(id, btn){
+  ['entradas','historico'].forEach(t=>{
+    const el=document.getElementById('pa-adm-tab-'+t);
+    if(el) el.style.display=t===id?'block':'none';
+  });
+  document.querySelectorAll('#adm-pa-entradas .stab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(id==='historico') paHistoricoRenderADM();
+}
+
+function paHistoricoRenderADM(){
+  const el = document.getElementById('pa-adm-historico-lista');
+  if(!el) return;
+  _paHistorico.sort((a,b)=>a.dt.localeCompare(b.dt));
+  el.innerHTML = _paHistorico.map((h,i)=>{
+    const isBase = i===_paHistorico.length-1;
+    const cor = isBase?'var(--vd)':'var(--azm)';
+    const bg  = isBase?'var(--vdc)':'var(--azc)';
+    const brd = isBase?'rgba(14,158,106,.3)':'rgba(26,74,138,.2)';
+    return `<div style="background:${bg};border:1.5px solid ${brd};border-radius:10px;padding:.875rem 1.1rem;min-width:210px">
+      <div style="font-size:10px;font-weight:700;color:${cor};margin-bottom:6px">${isBase?'📊 Base do gráfico':'📌 Marco histórico'}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <input type="date" value="${h.dt}" onchange="_paHistUpd(${i},'dt',this.value)"
+          style="font-size:12px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px">
+        <input type="number" value="${h.val}" onchange="_paHistUpd(${i},'val',this.value)" min="0"
+          style="font-size:20px;font-weight:700;color:${cor};width:80px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;text-align:center">
+        <button onclick="_paHistRem(${i})" style="background:var(--vmc);color:var(--vm);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
+      </div>
+      <input type="text" value="${h.label||''}" placeholder="Descrição" onchange="_paHistUpd(${i},'label',this.value)"
+        style="width:100%;font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;color:var(--tx2)">
+    </div>`;
+  }).join('')||'<div class="al al-b">Nenhum registro. Clique em + Adicionar.</div>';
+}
+
+async function paHistoricoSalvarFirebase(){
   _paHistorico.sort((a,b)=>a.dt.localeCompare(b.dt));
   localStorage.setItem('patec_pa_historico', JSON.stringify(_paHistorico));
-  _flash('pa-historico-ok');
-  renderCascata(); // atualiza gráfico com nova base
+  try{
+    const db=getDB(); if(!db){alert('Firebase não conectado.');return;}
+    await db.collection('config').doc('pa_historico').set({lista:_paHistorico, ts:new Date().toISOString()});
+    console.log('✓ Histórico backlog salvo Firebase:', _paHistorico.length);
+    _flash('pa-historico-ok');
+    renderCascata();
+    paHistoricoRender(); // atualizar card readonly
+  }catch(e){ alert('Erro ao salvar: '+e.message); }
 }
+
+// Manter compatibilidade
+function paHistoricoSalvar(){ paHistoricoSalvarFirebase(); }
 // Base do gráfico = ÚLTIMO registro do histórico (data mais recente)
 function paGetMarcoBase(){
   if(!_paHistorico.length) return {dt:'2026-05-06', val:488};
