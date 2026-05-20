@@ -9109,10 +9109,10 @@ let _pcTabAtiva = 'vencido';
 const PC_STATUS_OK = ['analisar patec finalizado','patec finalizado'];
 
 function pcDadosBase(){
-  // Filtra obrigatoriamente STATUS MAPA = ANALISAR PATEC FINALIZADO
+  // Filtra obrigatoriamente STATUS MAPA = Analisar PATEC Finalizado
   return (_radarDados||[]).filter(r => {
-    const s = (r.analista_auto||'').toLowerCase().trim();
-    return s === 'analisar patec finalizado' || s === 'patec finalizado';
+    const s = (r.analista_auto||'').trim();
+    return s === 'Analisar PATEC Finalizado';
   });
 }
 
@@ -9132,7 +9132,7 @@ function pcInicializar(){
   // KPIs gerais
   const vencidos   = base.filter(r => (r.validade||'').toLowerCase().includes('vencid'));
   const reprovados = pcGetReprovados(base);
-  const criticos   = base.filter(r => (r.familia||'').toLowerCase().includes('crít') || (r.familia||'').toLowerCase().includes('critic'));
+  const criticos   = base.filter(r => (r.seguimento||'').trim() === 'Crítica' && !(r.validade||'').toLowerCase().includes('vencid'));
 
   document.getElementById('pc-kpis').innerHTML = `
     <div class="kc" style="cursor:pointer" onclick="pcSetTab('vencido', document.querySelector('#pc-tabs .stab'))">
@@ -9161,13 +9161,10 @@ function pcInicializar(){
 }
 
 function pcGetReprovados(base){
-  // Agrupa por RC+SEQ e verifica se TODOS os fornecedores (linhas) estão sem aprovação
-  // Como o radar tem uma linha por RC/item (não por fornecedor), usamos patec_obrig como proxy
-  // Regra: STATUS MAPA = finalizado + sem fornecedor aprovado → marcado como reprovado
-  // Na base do radar, cada row é uma RC/item único — verificamos pelo analista_auto
-  return base.filter(r => {
-    const s = (r.analista_auto||'').toLowerCase();
-    return s.includes('reprovado') || s.includes('sem fornecedor') || s.includes('100%');
+  // STATUS MAPA = PATEC Fin. sem fornecedores aprovados
+  return (_radarDados||[]).filter(r => {
+    const s = (r.analista_auto||'').trim();
+    return s === 'PATEC Fin. sem fornecedores aprovados';
   });
 }
 
@@ -9190,13 +9187,12 @@ function pcFiltrar(){
   const reprovados = filtrar(pcGetReprovados(base));
   pcRenderTabela('reprovado', reprovados, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
 
-  // ITENS CRÍTICOS: familia = crítica E NÃO está vencido
+  // ITENS CRÍTICOS: seguimento = 'Crítica' E NÃO está vencido
   const criticos = filtrar(base.filter(r => {
-    const fam = (r.familia||'').toLowerCase();
+    const seg = (r.seguimento||'').trim();
     const val = (r.validade||'').toLowerCase();
-    const ehCritico = fam.includes('crít') || fam.includes('critic');
     const ehVencido = val.includes('vencid');
-    return ehCritico && !ehVencido;
+    return seg === 'Crítica' && !ehVencido;
   }));
   pcRenderTabela('criticos', criticos, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
 }
@@ -9288,7 +9284,7 @@ function pcExportar(){
   XLSX.utils.book_append_sheet(wb, wsV, 'Vencido');
 
   // Aba reprovado
-  const reprovados = filtrar(pcGetReprovados(base));
+  const reprovados = filtrar(pcGetReprovados(_radarDados||[]));
   const wsR = XLSX.utils.aoa_to_sheet([
     ['Analista','Validade Proposta','SLA','Idas Mercado','RC','Item','Oportunidade','Item OP','PATEC Obrig.'],
     ...reprovados.map(r=>[r.analista,r.validade,r.sla,r.idas,r.rc,r.item_rc||r.seq,r.num_oport,r.seq,r.patec_obrig])
@@ -9296,10 +9292,10 @@ function pcExportar(){
   XLSX.utils.book_append_sheet(wb, wsR, '100% Reprovado');
 
   // Aba criticos
-  const criticos = filtrar(base.filter(r => {
-    const fam = (r.familia||'').toLowerCase();
+  const criticos = filtrar((_radarDados||[]).filter(r => {
+    const seg = (r.seguimento||'').trim();
     const val = (r.validade||'').toLowerCase();
-    return (fam.includes('crít')||fam.includes('critic')) && !val.includes('vencid');
+    return seg === 'Crítica' && !val.includes('vencid');
   }));
   const wsC = XLSX.utils.aoa_to_sheet([
     ['Analista','Validade Proposta','SLA','Idas Mercado','RC','Item','Oportunidade','Item OP','PATEC Obrig.'],
