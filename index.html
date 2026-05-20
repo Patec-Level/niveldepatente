@@ -7840,17 +7840,13 @@ function renderCascata(){
 
   const backlogBase = Number(r.pa_backlog_val)||582;
   const metaDia     = Number(r.pa_meta_dia)||30;
-  // Dias úteis: do dia SEGUINTE ao início até o dia ANTERIOR ao fim
-  // (início e fim são as barras de referência, os dias intermediários são os movimentos)
-  const dtInicioMais1 = new Date(dtInicio+'T12:00:00');
-  dtInicioMais1.setDate(dtInicioMais1.getDate()+1);
-  const dtInicioProximo = dtInicioMais1.toISOString().split('T')[0];
-  const dtFimMenos1 = new Date(dtFim+'T12:00:00');
-  dtFimMenos1.setDate(dtFimMenos1.getDate()-1);
-  const dtFimAnterior = dtFimMenos1.toISOString().split('T')[0];
-  // Se período de 1 dia (início+1 = fim), incluir o dia do fim como movimento
-  const dtUltimoDia = dtInicioProximo > dtFimAnterior ? dtFim : dtFimAnterior;
-  const diasUteis = dtInicioProximo > dtFim ? [] : paDiasUteis(dtInicioProximo, dtUltimoDia);
+  // Dias úteis: do dia SEGUINTE ao início até o dia do fim (inclusive)
+  // Backlog início = valor no final do dtInicio
+  // Backlog fim    = valor após processar todos os dias até dtFim
+  const _d1 = new Date(dtInicio+'T12:00:00');
+  _d1.setDate(_d1.getDate()+1);
+  const dtInicioProximo = _d1.toISOString().split('T')[0];
+  const diasUteis = dtInicioProximo > dtFim ? [] : paDiasUteis(dtInicioProximo, dtFim);
 
   // Saídas por dia — f[0] (1ª análise)
   const saidasPorDia = {};
@@ -7956,7 +7952,7 @@ function renderCascata(){
   });
 
   // Ponto final
-  labels.push('Backlog '+fmtDptBR(dtFim));
+  labels.push('Atual');
   floatData.push([0, backlogAtual]);
   floatCor.push('rgba(0,105,135,0.85)');
   linhaData.push(backlogAtual);
