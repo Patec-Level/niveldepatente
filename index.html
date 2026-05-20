@@ -1016,8 +1016,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <!-- Lista de entradas cadastradas -->
         <div id="pa-ent-lista" style="margin-bottom:1rem"></div>
 
-        <button class="btn btn-g" onclick="paEntradaSalvarFirebase()">💾 Salvar entradas no Firebase</button>
-        <span id="pa-ent-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Salvo!</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--tx2)">✦ Entradas salvas automaticamente ao adicionar ou remover.</span>
+          <button class="btn btn-g" style="font-size:11px" onclick="paEntradaSalvarFirebase()">💾 Forçar salvamento</button>
+          <span id="pa-ent-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
+        </div>
         </div><!-- /pa-adm-tab-entradas -->
 
         <!-- SUB-ABA: Histórico de Backlog -->
@@ -8314,11 +8317,13 @@ Deseja substituir pelo valor ${val}?`)) return;
   if(valEl) valEl.value = '';
 
   paEntradaRenderLista();
+  paEntradaSalvarFirebase(); // salva automaticamente ao adicionar
 }
 
 function paEntradaRemover(dt){
   _paEntradas = _paEntradas.filter(e=>e.dt!==dt);
   paEntradaRenderLista();
+  paEntradaSalvarFirebase(); // salva automaticamente ao remover
 }
 
 function paEntradaRenderLista(){
