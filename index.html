@@ -986,6 +986,27 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
         <!-- SUB-ABA: Entradas -->
         <div id="pa-adm-tab-entradas">
+
+        <!-- Card: Data + Backlog Atual -->
+        <div class="cd" style="border-top:3px solid var(--azm);margin-bottom:1rem">
+          <div class="cd-t">📊 Backlog Atual</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end">
+            <div class="field-wrap">
+              <span class="field-label">Data de referência</span>
+              <input type="date" id="pa-adm-backlog-dt" style="width:100%;font-size:14px;font-weight:600;color:var(--az)">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label">Backlog atual (qtd de itens)</span>
+              <input type="number" id="pa-adm-backlog-val" min="0" placeholder="Ex: 456"
+                style="width:100%;font-size:22px;font-weight:700;color:var(--azm);text-align:center">
+            </div>
+          </div>
+          <div style="margin-top:.875rem;display:flex;gap:8px;align-items:center">
+            <button class="btn btn-p" onclick="paAdmSalvarBacklogAtual()">💾 Salvar como base do gráfico</button>
+            <span id="pa-adm-backlog-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo e atualizado!</span>
+          </div>
+        </div>
+
         <div class="cd-t">📥 Plano de Ação — Entradas por Data</div>
         <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem;line-height:1.6">
           Cadastre aqui os itens que <strong>entraram</strong> na fila PATEC por data.<br>
@@ -2223,14 +2244,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px" id="pa-cards-dia"></div>
       </div>
 
-      <!-- CARD HISTÓRICO DE BACKLOG — só leitura -->
-      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;flex-wrap:wrap;gap:8px">
-          <div class="cd-t" style="margin:0">📌 Histórico de Backlog</div>
-          <div style="font-size:11px;color:var(--tx2)">🔒 Editar em <strong>ADM → Entradas Plano de Ação → Histórico de Backlog</strong></div>
-        </div>
-        <div id="pa-historico-backlog" style="display:flex;flex-wrap:wrap;gap:12px"></div>
-      </div>
+
 
       <!-- GRÁFICO CASCATA — ACOMPANHAMENTO E PLANO DE REDUÇÃO -->
       <div class="cd" style="margin-bottom:1rem">
@@ -8266,15 +8280,33 @@ function paEntradaInitADM(){
   const dtEl = document.getElementById('pa-ent-dt');
   if(dtEl && !dtEl.value) dtEl.value = HOJE.toISOString().split('T')[0];
   paEntradaRenderLista();
+  // Preencher campos do backlog atual com último marco
+  const base = paGetMarcoBase();
+  const dtAdm = document.getElementById('pa-adm-backlog-dt');
+  const valAdm = document.getElementById('pa-adm-backlog-val');
+  if(dtAdm && !dtAdm.value) dtAdm.value = base.dt||HOJE.toISOString().split('T')[0];
+  if(valAdm && !valAdm.value) valAdm.value = base.val||0;
   // Garantir que sub-aba entradas está visível por padrão
   const tabEnt = document.getElementById('pa-adm-tab-entradas');
   const tabHist = document.getElementById('pa-adm-tab-historico');
   if(tabEnt) tabEnt.style.display='block';
   if(tabHist) tabHist.style.display='none';
-  // Reset stabs
   document.querySelectorAll('#adm-pa-entradas .stab').forEach((b,i)=>{
     b.classList.toggle('active', i===0);
   });
+}
+
+async function paAdmSalvarBacklogAtual(){
+  const dt  = document.getElementById('pa-adm-backlog-dt')?.value;
+  const val = parseInt(document.getElementById('pa-adm-backlog-val')?.value||'0');
+  if(!dt||!val){ alert('Preencha a data e o valor do backlog.'); return; }
+  // Atualizar ou adicionar no histórico como base (último item)
+  const idx = _paHistorico.findIndex(h=>h.dt===dt);
+  if(idx>=0){ _paHistorico[idx].val=val; }
+  else { _paHistorico.push({dt, val, label:'Backlog '+dt.split('-').reverse().slice(0,2).join('/')}); }
+  await paHistoricoSalvarFirebase();
+  _flash('pa-adm-backlog-ok');
+  renderCascata();
 }
 
 function paEntradaAdicionar(){
