@@ -1923,7 +1923,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="cd-t">Meus últimos lançamentos</div>
           <div class="tw" style="max-height:220px">
             <table>
-              <thead><tr><th>Data</th><th>Presença</th><th>Analisados</th><th>Total</th><th>Meta</th></tr></thead>
+              <thead><tr><th>Data</th><th>Presença</th><th>1ª Análise</th><th>Em Tratativa</th><th>Status B</th><th>Outros</th><th>Forn.</th><th>Req.</th><th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Total</th><th>Meta</th></tr></thead>
               <tbody id="pr-hist-tb"></tbody>
             </table>
           </div>
@@ -3615,14 +3615,57 @@ function fazerLogout(){
 }
 
 // ── FLUXO SEQUENCIAL ──
+function colaboradorEstaEmFerias(colab, data){
+  // Verificar nas férias do _feriasState se a data cai em algum período
+  const periodos = _feriasState[colab] || [];
+  return periodos.some(p=>{
+    if(!p.saida) return false;
+    const retIso = p.retorno
+      ? (p.retorno.includes('/')? p.retorno.split('/').reverse().join('-') : p.retorno)
+      : '';
+    return data >= p.saida && (retIso ? data <= retIso : false);
+  });
+}
+
 function selecionarData(val){
   dataAtual = val;
   if(!val) return;
+
+  // Verificar se colaborador está de férias nesta data
+  if(colabLogado && colaboradorEstaEmFerias(colabLogado, val)){
+    // Auto-selecionar Férias e bloquear os outros botões
+    document.getElementById('pr-s2').style.display='block';
+    document.getElementById('pr-s3').style.display='none';
+    presAtual = 'Férias';
+
+    // Mostrar aviso de férias
+    const folgaEl = document.getElementById('pr-folga');
+    if(folgaEl){
+      folgaEl.style.display='block';
+      folgaEl.style.background='var(--azc)';
+      folgaEl.style.borderColor='var(--azm)';
+      folgaEl.querySelector('span').textContent='🌴';
+      folgaEl.querySelector('[style*="font-size:14px"]').innerHTML='<span style="color:var(--azm)">Férias registrada automaticamente</span>';
+      folgaEl.querySelector('[style*="font-size:12px"]').textContent=colabLogado+' está de férias nesta data conforme quadro cadastrado.';
+    }
+
+    // Desabilitar opções de presença
+    ['popt-P','popt-H','popt-F'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){el.className='pres-opt';el.style.opacity='.35';el.style.pointerEvents='none';}
+    });
+    return;
+  }
+
+  // Data normal — habilitar opções
+  ['popt-P','popt-H','popt-F'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.className='pres-opt';el.style.opacity='';el.style.pointerEvents='';}
+  });
   document.getElementById('pr-s2').style.display='block';
   document.getElementById('pr-s3').style.display='none';
   document.getElementById('pr-folga').style.display='none';
   presAtual=null;
-  ['popt-P','popt-H','popt-F'].forEach(id=>document.getElementById(id).className='pres-opt');
 }
 function selecionarPresenca(v,el){
   presAtual=v;
@@ -3640,7 +3683,8 @@ function selecionarPresenca(v,el){
 }
 function salvarFolga(){
   if(!colabLogado||!dataAtual){return;}
-  registros.push({colab:colabLogado,data:dataAtual,pres:'Folga',f:Array(10).fill(0)});
+  const presencaReal = presAtual==='Férias'?'Férias':'Folga';
+  registros.push({colab:colabLogado,data:dataAtual,pres:presencaReal,f:Array(10).fill(0)});
   document.getElementById('pr-folga-ok').style.display='inline';
   setTimeout(()=>document.getElementById('pr-folga-ok').style.display='none',3000);
   renderMiniHist();
@@ -3759,9 +3803,17 @@ function renderMiniHist(){
   card.style.display='block';
   const meta=getMeta();
   tb.innerHTML=regs.map(r=>{
-    const tot=r.f.reduce((a,b)=>a+b,0);
+    const f=[...(r.f||[])];while(f.length<12)f.push(0);
+    const tot=(f[0]||0)+(f[1]||0)+(f[2]||0);
     const ok=r.pres==='Folga'?'<span class="pl pl-g">Folga</span>':tot>=meta?'<span class="pl pl-ok">✓ Meta</span>':'<span class="pl pl-b">Abaixo</span>';
-    return`<tr><td>${fmtDt(r.data)}</td><td>${presPill(r.pres)}</td><td style="font-weight:600">${r.f[0]||'—'}</td><td style="font-weight:600">${r.pres==='Folga'?'—':tot}</td><td>${ok}</td></tr>`;
+    const fOrdem=[f[0],f[1],f[2],f[11],f[3],f[4],f[5],f[6],f[7],f[8],f[9],f[10]];
+    return`<tr>
+      <td>${fmtDt(r.data)}</td>
+      <td>${presPill(r.pres)}</td>
+      ${fOrdem.map(v=>`<td style="font-weight:600">${v||'—'}</td>`).join('')}
+      <td style="font-weight:700">${r.pres==='Folga'?'—':tot}</td>
+      <td>${ok}</td>
+    </tr>`;
   }).join('');
 }
 
