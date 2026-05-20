@@ -7917,7 +7917,7 @@ function renderCascata(){
   const labels=[], floatData=[], floatCor=[], linhaData=[], linhaLabels=[];
 
   // Ponto inicial
-  labels.push('Backlog '+fmtDptBR(dtInicio));
+  labels.push('📦 '+fmtDptBR(dtInicio));
   floatData.push([0, backlogBase]);
   floatCor.push('rgba(100,116,139,0.75)');
   linhaData.push(backlogBase);
@@ -7950,7 +7950,7 @@ function renderCascata(){
   });
 
   // Ponto final
-  labels.push('Backlog '+fmtDptBR(dtFim));
+  labels.push('📦 '+fmtDptBR(dtFim));
   floatData.push([0, backlogAtual]);
   floatCor.push('rgba(0,105,135,0.85)');
   linhaData.push(backlogAtual);
@@ -7991,7 +7991,7 @@ function renderCascata(){
       plugins:{
         legend:{display:false},
         tooltip:{callbacks:{
-          title:items=>(items[0]?.label||'').split(' ')[0]||'',
+          title:items=>(items[0]?.label||'').replace('📦 ','Backlog ')||'',
           label:(ctx)=>{
             if(!Array.isArray(ctx.raw)||ctx.raw===null) return null;
             const diff=ctx.raw[1]-ctx.raw[0];
@@ -8030,7 +8030,7 @@ function renderCascata(){
             font:{size:11}, maxRotation:0,
             callback:(val,i)=>{
               const lbl=labels[i]||'';
-              return lbl.split(' ')[0]; // só primeira parte
+              return lbl; // label completo
             }
           }
         },
