@@ -8248,11 +8248,18 @@ function paGetMarcoBase(){
 
 async function paEntradaCarregarFirebase(){
   try {
-    const db=getDB(); if(!db) return;
+    // Aguardar Firebase SDK estar pronto
+    if(typeof firebase === 'undefined' || !_fbLoaded){
+      const ok = await loadFirebaseSDK();
+      if(!ok){ console.warn('PA Entradas: Firebase SDK não disponível'); return; }
+      await new Promise(r => setTimeout(r, 300));
+    }
+    const db=getDB(); if(!db){ console.warn('PA Entradas: db null'); return; }
     const doc=await db.collection('config').doc('pa_entradas').get();
     if(doc.exists){
       _paEntradas = doc.data().lista || [];
       console.log('PA Entradas carregadas:', _paEntradas.length);
+      renderCascata(); // atualizar gráfico com entradas carregadas
     }
   } catch(e){ console.warn('PA Entradas load:', e); }
 }
@@ -8268,9 +8275,11 @@ async function paEntradaSalvarFirebase(){
   } catch(e){ alert('Erro ao salvar: '+e.message); console.error(e); }
 }
 
-function paEntradaInitADM(){
+async function paEntradaInitADM(){
   const dtEl = document.getElementById('pa-ent-dt');
   if(dtEl && !dtEl.value) dtEl.value = HOJE.toISOString().split('T')[0];
+  // Recarregar do Firebase para garantir dados atualizados
+  await paEntradaCarregarFirebase();
   paEntradaRenderLista();
   // Mostrar backlog atual — mesmo valor exibido no gráfico de cascata (somente leitura)
   const elBkAtual = document.getElementById("pa-adm-backlog-atual");
