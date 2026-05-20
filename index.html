@@ -8669,21 +8669,29 @@ async function bkSalvarFirebase(){
   btn.disabled = true; btn.textContent = '⏳ Salvando...';
   try {
     const db = getDB(); if(!db){ alert('Firebase não conectado.'); btn.disabled=false; btn.textContent='💾 Salvar no Firebase'; return; }
-    // Converter array de arrays para array de objetos (Firebase não suporta nested arrays)
+    // Converter para objetos e salvar em chunks de 400 linhas (limite Firebase 1MB/doc)
     const headers = _bkDados.headers || [];
     const rowsObj = _bkDados.rows.map(r => {
       const obj = {};
       headers.forEach((h, i) => { obj['c' + i] = r[i] !== undefined ? String(r[i]) : ''; });
       return obj;
     });
-    const payload = {
+    const CHUNK = 400;
+    const totalChunks = Math.ceil(rowsObj.length / CHUNK);
+    // Salvar metadados
+    await db.collection('config').doc('backlog_planilha').set({
       headers: headers.map((h,i) => ({i, v: String(h||'')})),
-      rows: rowsObj,
       arquivo: _bkDados.arquivo,
       dt: _bkDados.dt,
-      total: rowsObj.length
-    };
-    await db.collection('config').doc('backlog_planilha').set(payload);
+      total: rowsObj.length,
+      chunks: totalChunks
+    });
+    // Salvar chunks
+    for(let c = 0; c < totalChunks; c++){
+      const slice = rowsObj.slice(c * CHUNK, (c+1) * CHUNK);
+      await db.collection('config').doc('backlog_planilha_' + c).set({ rows: slice, chunk: c });
+      btn.textContent = '⏳ Salvando ' + (c+1) + '/' + totalChunks + '...';
+    }
     document.getElementById('bk-salvo-ok').style.display = 'inline';
     btn.textContent = '✓ Salvo!';
     bkAtualizarInfoFirebase();
@@ -8703,9 +8711,16 @@ async function bkCarregarFirebase(){
     const doc = await db.collection('config').doc('backlog_planilha').get();
     if(doc.exists){
       const d = doc.data();
-      // Reconverter objetos para array de arrays
       const hdrs = (d.headers||[]).sort((a,b)=>a.i-b.i).map(h=>h.v);
-      const rowsArr = (d.rows||[]).map(obj => hdrs.map((_,i) => obj['c'+i]||''));
+      const totalChunks = d.chunks || 1;
+      // Carregar todos os chunks
+      let allRows = [];
+      for(let c = 0; c < totalChunks; c++){
+        const chunkDoc = await db.collection('config').doc('backlog_planilha_' + c).get();
+        if(chunkDoc.exists) allRows = allRows.concat(chunkDoc.data().rows || []);
+      }
+      // Reconverter objetos para array de arrays
+      const rowsArr = allRows.map(obj => hdrs.map((_,i) => obj['c'+i]||''));
       _bkDados = { headers: hdrs, rows: rowsArr, arquivo: d.arquivo, dt: d.dt };
       bkAtualizarInfoFirebase();
       aaVerificarDados();
