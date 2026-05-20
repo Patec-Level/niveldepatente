@@ -7947,6 +7947,7 @@ function renderCascata(){
   const totalSaidas  = linhas.reduce((s,l)=>s+l.saidas,0);
   const totalEntrada = linhas.reduce((s,l)=>s+l.entrada,0);
   const reducao      = backlogBase - backlogAtual;
+  _backlogAtualGlobal = backlogAtual; // salva para uso no ADM
   const kpiEl = document.getElementById('pa-kpis');
   if(kpiEl) kpiEl.innerHTML=[
     {label:'Backlog Inicial', val:backlogBase,   cor:'var(--az)', bg:'var(--azc)'},
@@ -8144,6 +8145,7 @@ function renderPlanoAcao(){
 // PLANO DE AÇÃO — ENTRADAS MANUAIS
 // ════════════════════════════════════════════
 let _paEntradas = []; // [{dt:'2026-05-14', val:45}, ...]
+let _backlogAtualGlobal = null; // Backlog atual calculado pelo gráfico de cascata
 
 // Histórico de backlog (apenas informativo)
 let _paHistorico = JSON.parse(localStorage.getItem('patec_pa_historico')||'[]');
@@ -8267,26 +8269,17 @@ function paEntradaInitADM(){
   const dtEl = document.getElementById('pa-ent-dt');
   if(dtEl && !dtEl.value) dtEl.value = HOJE.toISOString().split('T')[0];
   paEntradaRenderLista();
-  // Mostrar backlog atual calculado (mesmo do gráfico)
-  const elBkAtual = document.getElementById('pa-adm-backlog-atual');
-  const elBkInfo  = document.getElementById('pa-adm-backlog-info');
+  // Mostrar backlog atual — mesmo valor exibido no gráfico de cascata (somente leitura)
+  const elBkAtual = document.getElementById("pa-adm-backlog-atual");
+  const elBkInfo  = document.getElementById("pa-adm-backlog-info");
   if(elBkAtual){
-    // Recalcular o backlog atual com base no gráfico
-    const marco = paGetMarcoBase();
-    const saidasPD = {};
-    registros.forEach(reg=>{
-      if(!reg.data||!reg.f||reg.pres==='Folga'||reg.pres==='Férias') return;
-      const v=reg.f[0]||0; if(v>0) saidasPD[reg.data]=(saidasPD[reg.data]||0)+v;
-    });
-    let bk = marco.val;
-    const hoje = HOJE.toISOString().split('T')[0];
-    paDiasUteis(marco.dt, hoje).forEach(d=>{
-      const s=saidasPD[d]||0;
-      const e=(_paEntradas.find(x=>x.dt===d)?.val)||0;
-      bk = Math.max(0, bk - s + e);
-    });
-    elBkAtual.textContent = bk;
-    if(elBkInfo) elBkInfo.textContent = 'Base: '+marco.val+' em '+marco.dt.split('-').reverse().join('/') + ' · hoje: '+hoje.split('-').reverse().join('/');
+    if(_backlogAtualGlobal !== null){
+      elBkAtual.textContent = _backlogAtualGlobal;
+      if(elBkInfo) elBkInfo.textContent = "Valor calculado pelo gráfico Plano de Ação · somente consulta";
+    } else {
+      elBkAtual.textContent = "—";
+      if(elBkInfo) elBkInfo.textContent = "Acesse a aba Plano de Ação para calcular";
+    }
   }
   // Garantir que sub-aba entradas está visível por padrão
   const tabEnt = document.getElementById('pa-adm-tab-entradas');
