@@ -5935,7 +5935,7 @@ async function radarSalvarFirebase(){
 
 // ── Regras de saúde ──
 function radarGetRegras(){
-  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60,"sla_card_dias":90,"pa_backlog_val":582,"pa_backlog_dt":"2026-05-18","pa_meta_dia":30,"limiar_estavel":10,"limiar_alerta":25}');
+  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60,"sla_card_dias":90,"pa_backlog_val":766,"pa_backlog_dt":"2026-03-16","pa_meta_dia":30,"limiar_estavel":10,"limiar_alerta":25}');
 }
 
 function radarInitADM(){
@@ -7425,6 +7425,19 @@ function gerarHTMLAtualizado(){
   });
 })();
 
+// Migrar backlog para novo valor se ainda for o antigo
+(function(){
+  try{
+    const reg = JSON.parse(localStorage.getItem('patec_radar_regras')||'{}');
+    if(reg.pa_backlog_val===582 || reg.pa_backlog_val===505 || !reg.pa_backlog_val){
+      reg.pa_backlog_val = 766;
+      reg.pa_backlog_dt  = '2026-03-16';
+      localStorage.setItem('patec_radar_regras', JSON.stringify(reg));
+      console.log('✓ Backlog migrado para 766 / 2026-03-16');
+    }
+  }catch(e){}
+})();
+
 // Carregar valores salvos na topbar ao iniciar
 initMetaGap();
 
@@ -7753,6 +7766,19 @@ const MAPA_ABR2026 = {
   });
 })();
 
+// Migrar backlog para novo valor se ainda for o antigo
+(function(){
+  try{
+    const reg = JSON.parse(localStorage.getItem('patec_radar_regras')||'{}');
+    if(reg.pa_backlog_val===582 || reg.pa_backlog_val===505 || !reg.pa_backlog_val){
+      reg.pa_backlog_val = 766;
+      reg.pa_backlog_dt  = '2026-03-16';
+      localStorage.setItem('patec_radar_regras', JSON.stringify(reg));
+      console.log('✓ Backlog migrado para 766 / 2026-03-16');
+    }
+  }catch(e){}
+})();
+
 // Carregar valores salvos na topbar ao iniciar
 initMetaGap();
 
@@ -7842,7 +7868,7 @@ function renderCascata(){
   if(dtInicio > dtFim) return;
 
   const backlogConfig = Number(r.pa_backlog_val)||582;
-  const dtBase        = r.pa_backlog_dt||'2026-05-18';
+  const dtBase        = r.pa_backlog_dt||'2026-03-16';
   const metaDia       = Number(r.pa_meta_dia)||30;
 
   // Saídas/entradas por dia
