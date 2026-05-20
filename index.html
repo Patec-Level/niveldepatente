@@ -358,6 +358,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it active" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
   <div class="sb-it" onclick="go('radar',this)">📡 Radar Estratégico</div>
   <div class="sb-it" onclick="go('plano-acao',this)">🎯 Plano de Ação</div>
+  <div class="sb-it" onclick="go('analista-auto',this)">🤖 Analista Automático</div>
   <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ EXECUÇÃO</div>
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('pr-estrategico',this)">🎯 Painel Estratégico</div>
@@ -735,6 +736,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('resultado-medicao',this)">📊 Resultado de Medição</button>
         <button class="stab" onclick="setAdmTab('radar-adm',this)">📡 Radar Estratégico</button>
         <button class="stab" onclick="setAdmTab('pa-entradas',this)">📥 Entradas Plano de Ação</button>
+        <button class="stab" onclick="setAdmTab('analista-upload',this)">📂 Upload Backlog</button>
+        <button class="stab" onclick="setAdmTab('analista-auto',this)">🤖 Analista Automático</button>
       </div>
 
       <!-- ── GESTÃO DE CICLOS ── -->
@@ -1783,6 +1786,76 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+
+      <!-- ── UPLOAD BACKLOG ── -->
+      <div id="adm-analista-upload" class="adm-tab" style="display:none">
+        <div class="cd">
+          <div class="cd-t">📂 Upload de Planilha — Backlog PATEC</div>
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem">Faça o upload da planilha de backlog (.xlsx). Os dados serão salvos no Firebase e ficarão disponíveis para todos os usuários e para o Analista Automático.</p>
+          <div id="bk-upload-zone" style="border:2px dashed var(--az);border-radius:10px;padding:2rem;text-align:center;cursor:pointer;background:var(--bg2);transition:.2s"
+               ondragover="event.preventDefault();this.style.background='var(--azc)'"
+               ondragleave="this.style.background='var(--bg2)'"
+               ondrop="bkOnDrop(event)">
+            <input type="file" id="bk-file-input" accept=".xlsx,.xls" style="display:none" onchange="bkOnFile(this)">
+            <div style="font-size:36px;margin-bottom:8px">📊</div>
+            <div style="font-size:14px;font-weight:600;color:var(--az)">Arraste a planilha aqui</div>
+            <div style="font-size:11px;color:var(--tx2);margin:4px 0 12px">ou clique para selecionar</div>
+            <button class="btn btn-p" onclick="document.getElementById('bk-file-input').click()" style="font-size:12px">📁 Selecionar arquivo</button>
+          </div>
+          <div id="bk-upload-status" style="margin-top:1rem;font-size:12px;display:none"></div>
+          <div id="bk-upload-info" style="margin-top:1rem;display:none">
+            <div class="kgrid" id="bk-upload-kpis"></div>
+            <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-g" onclick="bkSalvarFirebase()" id="bk-btn-salvar">💾 Salvar no Firebase</button>
+              <button class="btn btn-s" onclick="var _b=document.querySelector('[onclick*=analista-auto]');setAdmTab('analista-auto',_b||this)">🤖 Ir para Analista Automático</button>
+              <span id="bk-salvo-ok" style="font-size:11px;color:var(--vd);font-weight:700;display:none;align-self:center">✓ Salvo! Dados disponíveis para todos.</span>
+            </div>
+          </div>
+          <div id="bk-firebase-info" style="margin-top:1.5rem;padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:11px;color:var(--tx2);display:none">
+            <strong>📌 Planilha atual no Firebase:</strong> <span id="bk-firebase-dt">—</span> · <span id="bk-firebase-rows">—</span> linhas
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ANALISTA AUTOMÁTICO ── -->
+      <div id="adm-analista-auto" class="adm-tab" style="display:none">
+        <div class="cd">
+          <div class="cd-t">🤖 Analista Automático — Potencial Pedido Direto</div>
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem">Aplica as 7 regras de identificação de RCs aptas para pedido direto sobre a planilha de backlog carregada.</p>
+          <div id="aa-sem-dados" style="text-align:center;padding:2rem;color:var(--tx2);font-size:13px">
+            📂 Nenhuma planilha carregada. Acesse <strong>Upload Backlog</strong> para carregar os dados.
+          </div>
+          <div id="aa-painel" style="display:none">
+            <div class="kgrid" id="aa-kpis" style="margin-bottom:1rem"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem">
+              <button class="btn btn-p" onclick="aaProcessar()" id="aa-btn-processar">⚙️ Processar Regras</button>
+              <button class="btn btn-g" onclick="aaExportar()" id="aa-btn-exportar" style="display:none">📥 Baixar Planilha com Resultados</button>
+              <span id="aa-proc-status" style="font-size:11px;color:var(--tx2);align-self:center"></span>
+            </div>
+            <div id="aa-resultado" style="display:none">
+              <div style="margin-bottom:.5rem;font-size:12px;font-weight:600;color:var(--az)">RCs aptas para pedido direto:</div>
+              <div class="tw" style="max-height:420px">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>RC</th>
+                      <th>Item</th>
+                      <th>Analista</th>
+                      <th>Material</th>
+                      <th>Fornecedor</th>
+                      <th>Posição</th>
+                      <th>Mat. Idêntico</th>
+                      <th>Regra Identificada</th>
+                    </tr>
+                  </thead>
+                  <tbody id="aa-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /adm-painel -->
   </div><!-- /p-adm -->
 
@@ -2281,6 +2354,85 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
     </div>
 
+
+    <!-- ══════════════════════════════════════════
+         ANALISTA AUTOMÁTICO — PEDIDO DIRETO
+    ══════════════════════════════════════════ -->
+    <div id="p-analista-auto" class="page">
+      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:.5rem">
+          <div>
+            <div class="cd-t" style="margin:0">🤖 Analista Automático — Potencial Pedido Direto</div>
+            <div style="font-size:11px;color:var(--tx2);margin-top:4px">RCs do backlog identificadas como aptas para pedido direto com base nas 7 regras de análise.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-s" style="font-size:11px" onclick="aaPublicoAtualizar()">↺ Atualizar</button>
+            <button class="btn btn-g" style="font-size:11px" onclick="aaExportar()" id="aa-pub-btn-exportar">📥 Baixar Excel</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--tx2)" id="aa-pub-ultima-atualizacao"></div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kgrid" id="aa-pub-kpis" style="margin-bottom:1rem"></div>
+
+      <!-- Filtros -->
+      <div class="cd" style="margin-bottom:1rem">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field-wrap" style="min-width:160px">
+            <span class="field-label">Analista</span>
+            <select id="aa-pub-filtro-analista" onchange="aaPublicoFiltrar()" style="width:100%;font-size:12px;padding:5px 10px">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="field-wrap" style="min-width:200px">
+            <span class="field-label">Regra</span>
+            <select id="aa-pub-filtro-regra" onchange="aaPublicoFiltrar()" style="width:100%;font-size:12px;padding:5px 10px">
+              <option value="">Todas</option>
+              <option value="Regra 1">Regra 1 — Melhor Fornecedor Apto + Idêntico</option>
+              <option value="Regra 2">Regra 2 — Anterior NÃO ANALISAR + Idêntico</option>
+              <option value="Regra 3">Regra 3 — NM Filho ⚠️ Verificar SAP</option>
+              <option value="Regra 4">Regra 4 — Fabricante/PN sem informação</option>
+              <option value="Regra 5">Regra 5 — Fabricante e PN Idênticos</option>
+              <option value="Regra 6">Regra 6 — Sem Fabricante/PN + Idêntico</option>
+              <option value="Regra 7">Regra 7 — NM Zerado + Idêntico</option>
+            </select>
+          </div>
+          <div class="field-wrap" style="min-width:160px">
+            <span class="field-label">Buscar RC ou Material</span>
+            <input type="text" id="aa-pub-busca" oninput="aaPublicoFiltrar()" placeholder="Digite para filtrar..." style="width:100%;font-size:12px;padding:5px 10px">
+          </div>
+          <button class="btn btn-s" style="font-size:11px" onclick="aaPublicoLimparFiltros()">✕ Limpar filtros</button>
+        </div>
+      </div>
+
+      <!-- Tabela resultados -->
+      <div class="cd">
+        <div id="aa-pub-sem-dados" style="text-align:center;padding:3rem;color:var(--tx2);font-size:13px;display:none">
+          📂 Nenhum dado disponível. O ADM ainda não processou o Analista Automático.
+        </div>
+        <div id="aa-pub-tabela-wrap">
+          <div style="font-size:12px;font-weight:600;color:var(--az);margin-bottom:.5rem" id="aa-pub-count"></div>
+          <div class="tw" style="max-height:520px">
+            <table>
+              <thead>
+                <tr>
+                  <th>RC</th>
+                  <th>Item</th>
+                  <th>Analista</th>
+                  <th>Material</th>
+                  <th>Fornecedor</th>
+                  <th>Posição</th>
+                  <th>Mat. Idêntico</th>
+                  <th>Regra Identificada</th>
+                </tr>
+              </thead>
+              <tbody id="aa-pub-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ══════════════════════════════════════════
          OPERAÇÃO — VISÃO POR EQUIPE
@@ -2925,7 +3077,7 @@ function go(id, el) {
   const icons = {
     'vg-validade':'⏱',
     'pr-lancar':'✏️','pr-estrategico':'🎯','pr-equipe':'👥','pr-producao':'📋','pr-bancoferias':'🗓',
-    'radar':'📡','plano-acao':'🎯','adm':'🔐'
+    'radar':'📡','plano-acao':'🎯','analista-auto':'🤖','adm':'🔐'
   };
   const ico = icons[id] || '◈';
   const iconEl = document.querySelector('.topbar .topbar-l + div span');
@@ -2937,13 +3089,14 @@ function go(id, el) {
     'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
-    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','adm':'Administração',
+    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Automático','adm':'Administração',
     };
   document.getElementById('ttl').textContent = titles[id] || id;
   if(id==='pr-bancoferias'){renderFerias();renderBanco();renderBHECards();}
   document.getElementById('sb').classList.remove('mob-open');
   // Carregar Inteligência de Mercado quando aba é aberta
   if(id==='vg-mercado') mktCarregarTudo();
+  if(id==='analista-auto') setTimeout(aaPublicoCarregar, 100);
   // Auto-login em módulos sem senha
   if(id==='adm') setTimeout(()=>{
     const login=document.getElementById('adm-login');
@@ -4601,6 +4754,8 @@ function setAdmTab(id,btn){
   if(id==='resultado-medicao') setTimeout(renderResultadoMedicao,50);
   if(id==='radar-adm') setTimeout(radarInitADM,50);
   if(id==='pa-entradas') setTimeout(paEntradaInitADM,50);
+  if(id==='analista-upload') setTimeout(()=>{ bkAtualizarInfoFirebase(); },50);
+  if(id==='analista-auto') setTimeout(()=>{ aaVerificarDados(); if(window._aaAptas) aaCarregarResultadoFirebase(); },50);
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
   if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
@@ -8352,6 +8507,497 @@ function paEntradaRenderLista(){
   </table>`;
 }
 
+
+
+// ════════════════════════════════════════════
+// UPLOAD BACKLOG — PLANILHA PATEC
+// ════════════════════════════════════════════
+let _bkDados = null; // dados da planilha em memória
+
+function bkOnDrop(ev){
+  ev.preventDefault();
+  document.getElementById('bk-upload-zone').style.background = 'var(--bg2)';
+  const file = ev.dataTransfer.files[0];
+  if(file) bkProcessarArquivo(file);
+}
+function bkOnFile(input){
+  const file = input.files[0];
+  if(file) bkProcessarArquivo(file);
+}
+
+function bkProcessarArquivo(file){
+  const status = document.getElementById('bk-upload-status');
+  status.style.display = 'block';
+  status.innerHTML = '<span style="color:var(--az)">⏳ Lendo planilha...</span>';
+  document.getElementById('bk-upload-info').style.display = 'none';
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      if(rows.length < 2){ status.innerHTML = '<span style="color:var(--vm)">❌ Planilha vazia ou sem dados.</span>'; return; }
+
+      const headers = rows[0];
+      const data = rows.slice(1).filter(r => r.some(c => c !== ''));
+      _bkDados = { headers, rows: data, arquivo: file.name, dt: new Date().toISOString() };
+
+      // KPIs rápidos
+      const analistas = [...new Set(data.map(r => (r[1]||'').toString().trim()).filter(Boolean))];
+      const rcs = [...new Set(data.map(r => (r[5]||'').toString().trim()).filter(Boolean))];
+      document.getElementById('bk-upload-kpis').innerHTML = `
+        <div class="kc"><div class="kn">${data.length}</div><div class="kl">Linhas</div></div>
+        <div class="kc"><div class="kn">${rcs.length}</div><div class="kl">RCs únicas</div></div>
+        <div class="kc"><div class="kn">${analistas.length}</div><div class="kl">Analistas</div></div>
+        <div class="kc"><div class="kn">${headers.length}</div><div class="kl">Colunas</div></div>
+      `;
+      status.innerHTML = `<span style="color:var(--vd)">✓ Arquivo lido: <strong>${file.name}</strong> — ${data.length} linhas</span>`;
+      document.getElementById('bk-upload-info').style.display = 'block';
+      aaVerificarDados();
+    } catch(err){
+      status.innerHTML = `<span style="color:var(--vm)">❌ Erro ao ler planilha: ${err.message}</span>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function bkSalvarFirebase(){
+  const btn = document.getElementById('bk-btn-salvar');
+  btn.disabled = true; btn.textContent = '⏳ Salvando...';
+  try {
+    const db = getDB(); if(!db){ alert('Firebase não conectado.'); btn.disabled=false; btn.textContent='💾 Salvar no Firebase'; return; }
+    const payload = {
+      headers: _bkDados.headers,
+      rows: _bkDados.rows,
+      arquivo: _bkDados.arquivo,
+      dt: _bkDados.dt,
+      total: _bkDados.rows.length
+    };
+    await db.collection('config').doc('backlog_planilha').set(payload);
+    document.getElementById('bk-salvo-ok').style.display = 'inline';
+    btn.textContent = '✓ Salvo!';
+    bkAtualizarInfoFirebase();
+    aaVerificarDados();
+    setTimeout(()=>{ btn.disabled=false; btn.textContent='💾 Salvar no Firebase'; }, 3000);
+  } catch(e){ alert('Erro ao salvar: '+e.message); btn.disabled=false; btn.textContent='💾 Salvar no Firebase'; }
+}
+
+async function bkCarregarFirebase(){
+  try {
+    const db = getDB(); if(!db) return;
+    if(typeof firebase === 'undefined' || !_fbLoaded){
+      const ok = await loadFirebaseSDK();
+      if(!ok) return;
+      await new Promise(r=>setTimeout(r,300));
+    }
+    const doc = await db.collection('config').doc('backlog_planilha').get();
+    if(doc.exists){
+      const d = doc.data();
+      _bkDados = { headers: d.headers, rows: d.rows, arquivo: d.arquivo, dt: d.dt };
+      bkAtualizarInfoFirebase();
+      aaVerificarDados();
+    }
+  } catch(e){ console.warn('bkCarregarFirebase:', e); }
+}
+
+function bkAtualizarInfoFirebase(){
+  if(!_bkDados) return;
+  const el = document.getElementById('bk-firebase-info');
+  if(el){
+    el.style.display = 'block';
+    const dt = _bkDados.dt ? new Date(_bkDados.dt).toLocaleString('pt-BR') : '—';
+    document.getElementById('bk-firebase-dt').textContent = dt + ' · ' + (_bkDados.arquivo||'');
+    document.getElementById('bk-firebase-rows').textContent = (_bkDados.rows||[]).length;
+  }
+}
+
+// ════════════════════════════════════════════
+// ANALISTA AUTOMÁTICO — 7 REGRAS
+// ════════════════════════════════════════════
+
+// Mapa de colunas (0-based) baseado no cabeçalho da planilha
+// Col A(0)=ID longo, Col B(1)=Analista, Col C(2)=Fila, Col D(3)=PATEC,
+// Col E(4)=ANALISTA AUTOMATICO, Col F(5)=RC, Col G(6)=SEQ,
+// Col H(7)=OPORTUNIDADE, Col I(8)=ITEM OP, Col J(9)=CENTRO,
+// Col K(10)=STATUS_PATEC, Col L(11)=Familia, Col M(12)=TIPO_FAMILIA,
+// Col N(13)=FAT_MIN, Col O(14)=VALOR_PEDIDOFINAL, Col P(15)=VALOR_TOTAL_JULGAMENTO,
+// Col Q(16)=ID_SAP_FORNECEDOR, Col R(17)=POSICAO_FORNECEDOR,
+// Col S(18)=CNPJ, Col T(19)=NOME_FORNECEDOR,
+// Col U(20)=Aprovado/Reprovado, Col V(21)=Q18, Col W(22)=NM_MATERIAL,
+// Col X(23)=TEXTO_BREVE_1, Col Y(24)=MATERIAL_IDENTICO,
+// Col Z(25)=FABRICANTE_FORNECEDOR, Col AA(26)=FABRICANTE_PETROBRAS,
+// Col AB(27)=PARTNUMBER_FORNECEDOR, Col AC(28)=PARTNUMBER_PETROBRAS,
+// Col AD(29)=URGENCIA, Col AE(30)=vazio, Col AF(31)=Formula
+
+const AA_NAO_ANALISAR = [
+  'NÃO ANALISAR - FATURAMENTO MÍNIMO',
+  'NÃO ANALISAR - FORNECEDOR NA Q18',
+  'NÃO ANALISAR - REPROVADO EM PATEC',
+  'NÃO ANALISAR - VALOR ACIMA DO LIMITE DPV',
+  'NÃO ANALISAR-FATURAMENTO MÍNIMO',
+  'NÃO ANALISAR-FORNECEDOR NA Q18',
+  'NÃO ANALISAR-REPROVADO EM PATEC',
+  'NÃO ANALISAR-VALOR ACIMA DO LIMITE DPV',
+];
+
+function aaEhNaoAnalisar(colE){
+  if(!colE) return false;
+  const v = colE.toString().toUpperCase().trim();
+  return AA_NAO_ANALISAR.some(n => v.includes(n.replace('NÃO ANALISAR - ','').replace('NÃO ANALISAR-','')));
+}
+
+function aaEhIdentico(colY){
+  return (colY||'').toString().trim().toLowerCase() === 'sim';
+}
+
+function aaVerificarDados(){
+  const semDados = document.getElementById('aa-sem-dados');
+  const painel   = document.getElementById('aa-painel');
+  if(!semDados || !painel) return;
+  if(_bkDados && _bkDados.rows && _bkDados.rows.length){
+    semDados.style.display = 'none';
+    painel.style.display   = 'block';
+    const rcs = [...new Set(_bkDados.rows.map(r=>(r[5]||'').toString().trim()).filter(Boolean))];
+    document.getElementById('aa-kpis').innerHTML = `
+      <div class="kc"><div class="kn">${_bkDados.rows.length}</div><div class="kl">Linhas</div></div>
+      <div class="kc"><div class="kn">${rcs.length}</div><div class="kl">RCs no backlog</div></div>
+      <div class="kc"><div class="kn" id="aa-kpi-aptas">—</div><div class="kl">RCs aptas</div></div>
+    `;
+  } else {
+    semDados.style.display = 'block';
+    painel.style.display   = 'none';
+  }
+}
+
+function aaProcessar(){
+  if(!_bkDados || !_bkDados.rows.length){ alert('Carregue a planilha primeiro.'); return; }
+  document.getElementById('aa-proc-status').textContent = '⏳ Processando...';
+
+  const rows = _bkDados.rows;
+
+  // Agrupar linhas por RC (col 5)
+  const porRC = {};
+  rows.forEach((r, idx) => {
+    const rc = (r[5]||'').toString().trim();
+    if(!rc) return;
+    if(!porRC[rc]) porRC[rc] = [];
+    porRC[rc].push({r, idx});
+  });
+
+  const aptas = [];
+
+  Object.entries(porRC).forEach(([rc, itens]) => {
+    // Dentro de cada RC, verificar cada linha como candidata
+    itens.forEach(({r}) => {
+      const colE  = (r[4]||'').toString().trim();
+      const colY  = (r[24]||'').toString().trim();
+      const colZ  = (r[25]||'').toString().trim();
+      const colAA = (r[26]||'').toString().trim();
+      const colAB = (r[27]||'').toString().trim();
+      const colAC = (r[28]||'').toString().trim();
+      const colW  = (r[22]||'').toString().trim();
+      const colR  = parseInt(r[17])||0; // posição fornecedor
+      const colEup = colE.toUpperCase();
+
+      // Verificar se fornecedores anteriores são todos NÃO ANALISAR
+      const anteriores = itens.filter(x => (parseInt(x.r[17])||0) < colR);
+      const todosNaoAnalisar = anteriores.every(x => aaEhNaoAnalisar(x.r[4]));
+      const ehPrimeiro = colR <= 1 || anteriores.length === 0;
+      const precedenciaOK = ehPrimeiro || todosNaoAnalisar;
+
+      let regra = null;
+
+      // REGRA 1: Melhor fornecedor apto + material idêntico (col E = 1º MELHOR FORNECEDOR APTO + col Y = sim)
+      if(!regra && colEup.includes('MELHOR FORNECEDOR APTO') && aaEhIdentico(colY)){
+        regra = 'Regra 1 — 1º Melhor Fornecedor Apto + Material Idêntico';
+      }
+
+      // REGRA 2: Fornecedor anterior é NÃO ANALISAR, mas próximo tem material idêntico
+      if(!regra && aaEhIdentico(colY) && precedenciaOK && !aaEhNaoAnalisar(colE)){
+        // verificar se existe anterior com NÃO ANALISAR
+        if(!ehPrimeiro && todosNaoAnalisar){
+          regra = 'Regra 2 — Anterior NÃO ANALISAR + próximo com Material Idêntico';
+        }
+      }
+
+      // REGRA 3: NM Filho — desvio de código/fabricante/PN + material idêntico + anteriores NÃO ANALISAR
+      if(!regra && aaEhIdentico(colY) && precedenciaOK){
+        const temDesvio = colEup.includes('DESVIO DE CÓDIGO') || colEup.includes('DESVIO CÓDIGO') ||
+                          colEup.includes('DESVIO DE FABRICANTE') || colEup.includes('DESVIO FABRICANTE') ||
+                          colEup.includes('DESVIO PART') || colEup.includes('DESVIO DE PART');
+        if(temDesvio){
+          regra = 'Regra 3 — NM Filho (Desvio de Código/Fabricante/PN) + Material Idêntico ⚠️ Verificar SAP';
+        }
+      }
+
+      // REGRA 4: Ausência de informação — col Y = sim e (Z+AA vazios OU AB+AC vazios)
+      if(!regra && aaEhIdentico(colY) && precedenciaOK){
+        if((!colZ && !colAA) || (!colAB && !colAC)){
+          regra = 'Regra 4 — Material Idêntico + Fabricante/PN sem informação';
+        }
+      }
+
+      // REGRA 6: Fabricante (Z) e PN (AB) vazios + col Y = sim
+      if(!regra && aaEhIdentico(colY) && precedenciaOK && !colZ && !colAB){
+        regra = 'Regra 6 — Fornecedor sem Fabricante/PN informado + Material Idêntico';
+      }
+
+      // REGRA 7: NM zerado (col W vazio) + col Y = sim
+      if(!regra && aaEhIdentico(colY) && precedenciaOK && !colW){
+        regra = 'Regra 7 — NM Material zerado + Material Idêntico';
+      }
+
+      // REGRA 5: Validação de identidade técnica — fabricante e PN iguais entre fornecedor e Petrobras
+      if(!regra && precedenciaOK){
+        const fabIgual = colZ && colAA && colZ.toUpperCase() === colAA.toUpperCase();
+        const pnIgual  = colAB && colAC && colAB.toUpperCase() === colAC.toUpperCase();
+        if(fabIgual && pnIgual){
+          regra = 'Regra 5 — Fabricante e Part Number idênticos (Fornecedor = Petrobras)';
+        }
+      }
+
+      if(regra){
+        // Evitar duplicata de RC+Posição
+        const jaExiste = aptas.some(a => a.rc === rc && a.posicao === colR);
+        if(!jaExiste){
+          aptas.push({
+            rc,
+            item:      (r[8]||'').toString().trim(),
+            analista:  (r[1]||'').toString().trim(),
+            material:  (r[23]||'').toString().trim(),
+            fornecedor:(r[19]||'').toString().trim(),
+            posicao:   colR,
+            identico:  colY,
+            regra,
+            rowData:   r
+          });
+        }
+      }
+    });
+  });
+
+  // Ordenar por RC
+  aptas.sort((a,b) => a.rc.localeCompare(b.rc));
+
+  // Atualizar KPI
+  const rcAptasUnicas = [...new Set(aptas.map(a=>a.rc))];
+  document.getElementById('aa-kpi-aptas').textContent = rcAptasUnicas.length;
+  document.getElementById('aa-proc-status').textContent = `✓ ${aptas.length} registros aptos encontrados em ${rcAptasUnicas.length} RCs`;
+
+  // Renderizar tabela
+  const tbody = document.getElementById('aa-tbody');
+  if(!aptas.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--tx2);padding:1rem">Nenhuma RC apta encontrada com os critérios definidos.</td></tr>';
+  } else {
+    tbody.innerHTML = aptas.map(a=>`
+      <tr>
+        <td style="font-weight:700;color:var(--az)">${a.rc}</td>
+        <td>${a.item}</td>
+        <td>${a.analista}</td>
+        <td style="max-width:180px;font-size:11px">${a.material}</td>
+        <td style="max-width:180px;font-size:11px">${a.fornecedor}</td>
+        <td style="text-align:center">${a.posicao||'—'}</td>
+        <td style="text-align:center;color:var(--vd);font-weight:700">${a.identico}</td>
+        <td style="font-size:11px;color:var(--azm);font-weight:600">${a.regra}</td>
+      </tr>
+    `).join('');
+  }
+
+  document.getElementById('aa-resultado').style.display = 'block';
+  document.getElementById('aa-btn-exportar').style.display = aptas.length ? 'inline-flex' : 'none';
+
+  // Salvar resultado no Firebase
+  aaSalvarFirebase(aptas);
+
+  // Guardar para exportação
+  window._aaAptas = aptas;
+}
+
+async function aaSalvarFirebase(aptas){
+  try {
+    const db = getDB(); if(!db) return;
+    const payload = {
+      aptas: aptas.map(a=>({rc:a.rc,item:a.item,analista:a.analista,material:a.material,fornecedor:a.fornecedor,posicao:a.posicao,identico:a.identico,regra:a.regra})),
+      total: aptas.length,
+      rcsUnicas: [...new Set(aptas.map(a=>a.rc))].length,
+      dt: new Date().toISOString()
+    };
+    await db.collection('config').doc('aa_resultado').set(payload);
+    console.log('✓ Resultado Analista Automático salvo:', aptas.length, 'registros');
+  } catch(e){ console.warn('aaSalvarFirebase:', e); }
+}
+
+async function aaCarregarResultadoFirebase(){
+  try {
+    const db = getDB(); if(!db) return;
+    if(typeof firebase === 'undefined' || !_fbLoaded){
+      const ok = await loadFirebaseSDK();
+      if(!ok) return;
+      await new Promise(r=>setTimeout(r,300));
+    }
+    const doc = await db.collection('config').doc('aa_resultado').get();
+    if(doc.exists){
+      const d = doc.data();
+      if(d.aptas && d.aptas.length){
+        const tbody = document.getElementById('aa-tbody');
+        if(tbody){
+          tbody.innerHTML = d.aptas.map(a=>`
+            <tr>
+              <td style="font-weight:700;color:var(--az)">${a.rc}</td>
+              <td>${a.item}</td>
+              <td>${a.analista}</td>
+              <td style="max-width:180px;font-size:11px">${a.material}</td>
+              <td style="max-width:180px;font-size:11px">${a.fornecedor}</td>
+              <td style="text-align:center">${a.posicao||'—'}</td>
+              <td style="text-align:center;color:var(--vd);font-weight:700">${a.identico}</td>
+              <td style="font-size:11px;color:var(--azm);font-weight:600">${a.regra}</td>
+            </tr>
+          `).join('');
+          document.getElementById('aa-resultado').style.display = 'block';
+          document.getElementById('aa-btn-exportar').style.display = 'inline-flex';
+          document.getElementById('aa-kpi-aptas').textContent = d.rcsUnicas||d.aptas.length;
+          const dt = d.dt ? new Date(d.dt).toLocaleString('pt-BR') : '';
+          document.getElementById('aa-proc-status').textContent = `Último processamento: ${dt} · ${d.aptas.length} registros`;
+          window._aaAptas = d.aptas;
+        }
+      }
+    }
+  } catch(e){ console.warn('aaCarregarResultadoFirebase:', e); }
+}
+
+function aaExportar(){
+  const aptas = window._aaAptas || [];
+  if(!aptas.length){ alert('Nenhum resultado para exportar.'); return; }
+
+  const wsData = [
+    ['RC','Item OP','Analista','Material','Fornecedor','Posição Fornecedor','Material Idêntico','Regra Identificada'],
+    ...aptas.map(a=>[a.rc, a.item, a.analista, a.material, a.fornecedor, a.posicao, a.identico, a.regra])
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Largura das colunas
+  ws['!cols'] = [
+    {wch:20},{wch:8},{wch:12},{wch:35},{wch:40},{wch:10},{wch:14},{wch:55}
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'RCs Aptas - Pedido Direto');
+  const dt = new Date().toLocaleDateString('pt-BR').replace(/\/g,'-');
+  XLSX.writeFile(wb, `Analista_Automatico_${dt}.xlsx`);
+}
+
+// Carregar dados ao iniciar
+bkCarregarFirebase().then(()=>{ aaCarregarResultadoFirebase(); });
+
+
+// ════════════════════════════════════════════
+// ANALISTA AUTOMÁTICO — PÁGINA PÚBLICA
+// ════════════════════════════════════════════
+let _aaPub = []; // dados carregados do Firebase
+
+async function aaPublicoCarregar(){
+  try {
+    if(typeof firebase === 'undefined' || !_fbLoaded){
+      const ok = await loadFirebaseSDK();
+      if(!ok) return;
+      await new Promise(r=>setTimeout(r,300));
+    }
+    const db = getDB(); if(!db) return;
+    const doc = await db.collection('config').doc('aa_resultado').get();
+    if(doc.exists){
+      const d = doc.data();
+      _aaPub = d.aptas || [];
+      window._aaAptas = _aaPub; // compartilhar com exportador
+
+      // Data última atualização
+      const elDt = document.getElementById('aa-pub-ultima-atualizacao');
+      if(elDt && d.dt){
+        elDt.textContent = 'Último processamento: ' + new Date(d.dt).toLocaleString('pt-BR');
+      }
+
+      aaPublicoPopularFiltros();
+      aaPublicoFiltrar();
+      document.getElementById('aa-pub-btn-exportar').style.display = _aaPub.length ? 'inline-flex' : 'none';
+    } else {
+      document.getElementById('aa-pub-sem-dados').style.display = 'block';
+      document.getElementById('aa-pub-tabela-wrap').style.display = 'none';
+    }
+  } catch(e){ console.warn('aaPublicoCarregar:', e); }
+}
+
+function aaPublicoPopularFiltros(){
+  const analistas = [...new Set(_aaPub.map(a=>(a.analista||'').trim()).filter(Boolean))].sort();
+  const sel = document.getElementById('aa-pub-filtro-analista');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Todos</option>' + analistas.map(a=>`<option value="${a}">${a}</option>`).join('');
+}
+
+function aaPublicoFiltrar(){
+  const fAn   = (document.getElementById('aa-pub-filtro-analista')?.value||'').toLowerCase();
+  const fRe   = (document.getElementById('aa-pub-filtro-regra')?.value||'').toLowerCase();
+  const fBus  = (document.getElementById('aa-pub-busca')?.value||'').toLowerCase();
+
+  const filtrados = _aaPub.filter(a=>{
+    const matchAn  = !fAn  || (a.analista||'').toLowerCase().includes(fAn);
+    const matchRe  = !fRe  || (a.regra||'').toLowerCase().includes(fRe);
+    const matchBus = !fBus || (a.rc||'').toLowerCase().includes(fBus) || (a.material||'').toLowerCase().includes(fBus) || (a.fornecedor||'').toLowerCase().includes(fBus);
+    return matchAn && matchRe && matchBus;
+  });
+
+  // KPIs
+  const rcUnicas = [...new Set(filtrados.map(a=>a.rc))];
+  document.getElementById('aa-pub-kpis').innerHTML = `
+    <div class="kc"><div class="kn" style="color:var(--az)">${rcUnicas.length}</div><div class="kl">RCs Aptas</div></div>
+    <div class="kc"><div class="kn" style="color:var(--vd)">${filtrados.length}</div><div class="kl">Registros</div></div>
+    <div class="kc"><div class="kn" style="color:var(--am)">${[...new Set(filtrados.map(a=>a.analista).filter(Boolean))].length}</div><div class="kl">Analistas</div></div>
+    <div class="kc"><div class="kn" style="color:var(--azm)">${filtrados.filter(a=>(a.regra||'').includes('SAP')).length}</div><div class="kl">⚠️ Verificar SAP</div></div>
+  `;
+
+  // Contagem
+  const elCount = document.getElementById('aa-pub-count');
+  if(elCount) elCount.textContent = filtrados.length + ' registro(s) — ' + rcUnicas.length + ' RC(s) únicas';
+
+  // Tabela
+  const tbody = document.getElementById('aa-pub-tbody');
+  if(!tbody) return;
+  if(!filtrados.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum resultado para os filtros selecionados.</td></tr>';
+    return;
+  }
+
+  const regrasCor = { '1':'var(--vd)', '2':'var(--az)', '3':'var(--vm)', '4':'var(--am)', '5':'var(--azm)', '6':'var(--tx)', '7':'var(--tx2)' };
+  tbody.innerHTML = filtrados.map(a=>{
+    const num = ((a.regra||'').split('Regra ')[1]||'').charAt(0);
+    const cor = regrasCor[num]||'var(--tx)';
+    const sap = (a.regra||'').includes('SAP') ? ' <span style="background:var(--amc);color:var(--am);font-size:9px;padding:1px 5px;border-radius:4px;font-weight:700">⚠️ SAP</span>' : '';
+    return `<tr>
+      <td style="font-weight:700;color:var(--az)">${a.rc||''}</td>
+      <td>${a.item||''}</td>
+      <td>${a.analista||''}</td>
+      <td style="max-width:180px;font-size:11px">${a.material||''}</td>
+      <td style="max-width:180px;font-size:11px">${a.fornecedor||''}</td>
+      <td style="text-align:center">${a.posicao||'—'}</td>
+      <td style="text-align:center;color:var(--vd);font-weight:700">${a.identico||''}</td>
+      <td style="font-size:11px;font-weight:600;color:${cor}">${a.regra||''}${sap}</td>
+    </tr>`;
+  }).join('');
+}
+
+function aaPublicoLimparFiltros(){
+  const ids = ['aa-pub-filtro-analista','aa-pub-filtro-regra','aa-pub-busca'];
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  aaPublicoFiltrar();
+}
+
+function aaPublicoAtualizar(){
+  _aaPub = [];
+  aaPublicoCarregar();
+}
+
+// Carregar ao iniciar
+aaPublicoCarregar();
 
 </script>
 </body>
