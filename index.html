@@ -7840,7 +7840,11 @@ function renderCascata(){
 
   const backlogBase = Number(r.pa_backlog_val)||582;
   const metaDia     = Number(r.pa_meta_dia)||30;
-  const diasUteis   = paDiasUteis(dtInicio, dtFim);
+  // Dias úteis a partir do dia SEGUINTE ao início (o início é o backlog desse dia)
+  const dtInicioMais1 = new Date(dtInicio+'T12:00:00');
+  dtInicioMais1.setDate(dtInicioMais1.getDate()+1);
+  const dtInicioProximo = dtInicioMais1.toISOString().split('T')[0];
+  const diasUteis   = paDiasUteis(dtInicioProximo, dtFim);
 
   // Saídas por dia — f[0] (1ª análise)
   const saidasPorDia = {};
@@ -7913,7 +7917,7 @@ function renderCascata(){
   const labels=[], floatData=[], floatCor=[], linhaData=[], linhaLabels=[];
 
   // Ponto inicial
-  labels.push('Início '+backlogBase);
+  labels.push('Backlog '+fmtDptBR(dtInicio));
   floatData.push([0, backlogBase]);
   floatCor.push('rgba(100,116,139,0.75)');
   linhaData.push(backlogBase);
@@ -7946,7 +7950,7 @@ function renderCascata(){
   });
 
   // Ponto final
-  labels.push('Atual '+backlogAtual);
+  labels.push('Backlog '+fmtDptBR(dtFim));
   floatData.push([0, backlogAtual]);
   floatCor.push('rgba(0,105,135,0.85)');
   linhaData.push(backlogAtual);
