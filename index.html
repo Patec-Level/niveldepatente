@@ -9131,7 +9131,7 @@ function pcInicializar(){
   if(sel) sel.innerHTML = '<option value="">Todos</option>' + analistas.map(a=>`<option>${a}</option>`).join('');
 
   // KPIs gerais
-  const vencidos   = base.filter(r => (r.validade||'').toLowerCase().includes('vencimento') || (r.validade||'').toLowerCase().includes('vencid'));
+  const vencidos   = (_radarDados||[]).filter(r => (r.validade||'').toLowerCase().includes('vencida') || (r.validade||'').toLowerCase().includes('vencid'));
   const reprovados = pcGetReprovados();
   const criticos   = base.filter(r => (r.status_ctrl||'').toUpperCase() === 'CRÍTICO' || (r.status_ctrl||'').toUpperCase() === 'CRITICO');
 
@@ -9180,8 +9180,8 @@ function pcFiltrar(){
     return mAn && mBus;
   });
 
-  // VENCIDO: col J = 'Próximo do vencimento'
-  const vencidos = filtrar(base.filter(r => (r.validade||'').toLowerCase().includes('vencimento') || (r.validade||'').toLowerCase().includes('vencid')));
+  // VENCIDO: col J = 'Vencida' — busca em toda a base sem filtro de status D
+  const vencidos = filtrar((_radarDados||[]).filter(r => (r.validade||'').toLowerCase().includes('vencida') || (r.validade||'').toLowerCase().includes('vencid')));
   pcRenderTabela('vencido', vencidos, ['analista','validade','sla','rc','item_rc','num_oport','seq'], false);
 
   // 100% REPROVADO: col D = 'PATEC Finalizado sem fornecedores aprovados'
