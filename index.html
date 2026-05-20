@@ -7872,8 +7872,9 @@ function renderCascata(){
   });
   console.log('[PA] backlogBase calculado:', backlogBase, '| dtBase:', dtBase, '| dtAnterior:', dtAnterior, '| dias acumulados:', diasAcumular);
 
-  // Dias úteis do período do filtro (dtInicio até dtFim inclusive)
-  const diasUteis = paDiasUteis(dtInicio, dtFim);
+  // Dias úteis do período: de dtInicio até dtFim (dtAnterior já foi processado acima)
+  // Usar comparação de string para evitar problema de timezone
+  const diasUteis = paDiasUteis(dtInicio, dtFim).filter(d => d > dtAnterior);
 
   const linhas=[];
   let backlogAtual=backlogBase;
