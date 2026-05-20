@@ -2200,34 +2200,37 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- GRÁFICO CASCATA — ACOMPANHAMENTO E PLANO DE REDUÇÃO -->
       <div class="cd" style="margin-bottom:1rem">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">
+
+        <!-- Cabeçalho + Filtros -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem">
           <div class="cd-t" style="margin:0">📉 Acompanhamento e Plano de Redução</div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <div class="field-wrap" style="min-width:160px">
-            <span class="field-label">De</span>
-            <input type="date" id="pa-dt-inicio" style="width:100%;font-size:12px;padding:5px 10px" onchange="renderCascata()">
+            <div class="field-wrap" style="min-width:140px">
+              <span class="field-label">De</span>
+              <input type="date" id="pa-dt-inicio" style="width:100%;font-size:12px;padding:5px 10px" onchange="renderCascata()">
+            </div>
+            <div class="field-wrap" style="min-width:140px">
+              <span class="field-label">Até</span>
+              <input type="date" id="pa-dt-fim" style="width:100%;font-size:12px;padding:5px 10px" onchange="renderCascata()">
+            </div>
+            <button class="btn btn-s" style="font-size:11px;align-self:flex-end" onclick="paPeriodoHoje()">📅 Hoje</button>
+            <button class="btn btn-p" style="font-size:11px;align-self:flex-end" onclick="renderCascata()">🔍 Analisar</button>
           </div>
-          <div class="field-wrap" style="min-width:160px">
-            <span class="field-label">Até</span>
-            <input type="date" id="pa-dt-fim" style="width:100%;font-size:12px;padding:5px 10px" onchange="renderCascata()">
-          </div>
-          <button class="btn btn-s" style="font-size:11px;align-self:flex-end" onclick="paPeriodoHoje()">📅 Hoje</button>
-          <button class="btn btn-p" style="font-size:11px;align-self:flex-end" onclick="renderCascata()">🔍 Analisar</button>
         </div>
 
-        <!-- Projeção + Meta -->
+        <!-- Projeção -->
         <div id="pa-projecao" style="display:none;margin-bottom:1rem;padding:.75rem 1.1rem;background:var(--vdc);border-radius:8px;border:1px solid rgba(14,158,106,.2)"></div>
 
-        <!-- KPIs do período -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem" id="pa-kpis"></div>
+        <!-- KPI Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem" id="pa-kpis"></div>
 
-        <!-- Gráfico cascata -->
-        <div style="position:relative;height:360px">
+        <!-- Gráfico -->
+        <div style="position:relative;height:360px;margin-bottom:1.25rem">
           <canvas id="pa-chart-cascata"></canvas>
         </div>
 
-        <!-- Tabela de dias -->
-        <div class="tw" style="margin-top:1rem">
+        <!-- Tabela -->
+        <div class="tw">
           <table>
             <thead><tr>
               <th>Data</th><th>Backlog início</th><th>Saídas (1ª Análise)</th><th>Entradas</th><th>Backlog fim</th>
@@ -2235,6 +2238,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <tbody id="pa-tb-body"></tbody>
           </table>
         </div>
+
       </div>
 
     </div>
