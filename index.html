@@ -2198,12 +2198,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px" id="pa-cards-dia"></div>
       </div>
 
-      <!-- MARCOS DE BACKLOG -->
-      <div class="cd" style="margin-bottom:1rem">
-        <div class="cd-t">📌 Marcos de Backlog</div>
-        <div id="pa-marcos-lista" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:.875rem"></div>
-        <button class="btn btn-s" style="font-size:11px" onclick="paMarcosAdicionar()">+ Adicionar marco</button>
-        <span style="font-size:11px;color:var(--tx2);margin-left:10px">O gráfico usa o marco mais próximo antes do início do filtro como backlog inicial.</span>
+      <!-- CARD HISTÓRICO DE BACKLOG -->
+      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+        <div class="cd-t">📌 Histórico de Backlog</div>
+        <div id="pa-historico-backlog" style="display:flex;flex-wrap:wrap;gap:12px"></div>
+        <div style="margin-top:.875rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-s" style="font-size:11px" onclick="paHistoricoAdicionar()">+ Adicionar registro</button>
+          <button class="btn btn-g" style="font-size:11px" onclick="paHistoricoSalvar()">💾 Salvar</button>
+          <span id="pa-historico-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
+        </div>
       </div>
 
       <!-- GRÁFICO CASCATA — ACOMPANHAMENTO E PLANO DE REDUÇÃO -->
@@ -7890,7 +7893,7 @@ function renderCascata(){
   _dAnterior.setDate(_dAnterior.getDate()-1);
   const dtAnterior = _dAnterior.toISOString().split('T')[0];
 
-  const marco = paGetMarcoBase(dtInicio);
+  const marco = paGetMarcoBase(); // usa o último registro do histórico como base
   let backlogBase = marco.val;
   if(marco.dt <= dtAnterior){
     paDiasUteis(marco.dt, dtAnterior).forEach(d=>{
@@ -8101,7 +8104,7 @@ function renderPlanoAcao(){
   const sel = document.getElementById('pa-dia-sel');
   if(sel && !sel.value) sel.value = HOJE.toISOString().split('T')[0];
   renderPlanoAcaoCardsDia();
-  paMarcosRender();
+  paHistoricoRender();
 
   const r      = radarGetRegras();
   const dtIni  = document.getElementById('pa-dt-inicio');
@@ -8118,65 +8121,64 @@ function renderPlanoAcao(){
 // ════════════════════════════════════════════
 let _paEntradas = []; // [{dt:'2026-05-14', val:45}, ...]
 
-// Marcos de backlog: [{dt:'2026-03-16', val:766, label:'Início acompanhamento'}, ...]
-let _paMarcos = JSON.parse(localStorage.getItem('patec_pa_marcos')||'[]');
-if(!_paMarcos.length){
-  _paMarcos = [
+// Histórico de backlog (apenas informativo)
+let _paHistorico = JSON.parse(localStorage.getItem('patec_pa_historico')||'[]');
+if(!_paHistorico.length){
+  _paHistorico = [
     {dt:'2026-03-16', val:766, label:'Início do acompanhamento'},
-    {dt:'2026-05-06', val:488, label:'Marco 06/05'},
+    {dt:'2026-05-06', val:488, label:'Base do gráfico de medição'},
   ];
-  localStorage.setItem('patec_pa_marcos', JSON.stringify(_paMarcos));
+  localStorage.setItem('patec_pa_historico', JSON.stringify(_paHistorico));
 }
 
-function paMarcosRender(){
-  const el = document.getElementById('pa-marcos-lista');
+function paHistoricoRender(){
+  const el = document.getElementById('pa-historico-backlog');
   if(!el) return;
-  if(!_paMarcos.length){ el.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum marco cadastrado.</div>'; return; }
-  el.innerHTML = _paMarcos.map((m,i)=>`
-    <div style="background:var(--azc);border:1.5px solid var(--azm);border-radius:10px;padding:.75rem 1rem;min-width:200px;position:relative">
-      <div style="font-size:10px;font-weight:700;color:var(--azm);margin-bottom:4px">📌 ${m.label||'Marco'}</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <input type="date" value="${m.dt}" onchange="_paMarcoUpd(${i},'dt',this.value)"
-          style="font-size:12px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;width:140px">
-        <input type="number" value="${m.val}" onchange="_paMarcoUpd(${i},'val',this.value)" min="0"
-          style="font-size:18px;font-weight:700;color:var(--azm);width:80px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;text-align:center">
-        <button onclick="_paMarcoRem(${i})" style="background:var(--vmc);color:var(--vm);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
+  _paHistorico.sort((a,b)=>a.dt.localeCompare(b.dt));
+  el.innerHTML = _paHistorico.map((h,i)=>{
+    const isBase = i===_paHistorico.length-1; // último = base do gráfico
+    const cor = isBase?'var(--vd)':'var(--azm)';
+    const bg  = isBase?'var(--vdc)':'var(--azc)';
+    const brd = isBase?'rgba(14,158,106,.3)':'rgba(26,74,138,.2)';
+    return `<div style="background:${bg};border:1.5px solid ${brd};border-radius:10px;padding:.875rem 1.1rem;min-width:200px">
+      <div style="font-size:10px;font-weight:700;color:${cor};margin-bottom:6px">
+        ${isBase?'📊 Base do gráfico':'📌 Marco histórico'}
       </div>
-      <div>
-        <input type="text" value="${m.label||''}" placeholder="Descrição" onchange="_paMarcoUpd(${i},'label',this.value)"
-          style="margin-top:6px;width:100%;font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;color:var(--tx2)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <input type="date" value="${h.dt}" onchange="_paHistUpd(${i},'dt',this.value)"
+          style="font-size:12px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px">
+        <input type="number" value="${h.val}" onchange="_paHistUpd(${i},'val',this.value)" min="0"
+          style="font-size:20px;font-weight:700;color:${cor};width:80px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;text-align:center">
+        <button onclick="_paHistRem(${i})" style="background:var(--vmc);color:var(--vm);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px">✕</button>
       </div>
-    </div>`).join('');
+      <input type="text" value="${h.label||''}" placeholder="Descrição" onchange="_paHistUpd(${i},'label',this.value)"
+        style="width:100%;font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;color:var(--tx2)">
+    </div>`;
+  }).join('');
 }
 
-function _paMarcoUpd(i, campo, val){
-  _paMarcos[i][campo] = campo==='val' ? Number(val) : val;
-  _paMarcosSalvar();
+function _paHistUpd(i,campo,val){
+  _paHistorico[i][campo] = campo==='val'?Number(val):val;
 }
-function _paMarcoRem(i){
-  _paMarcos.splice(i,1);
-  _paMarcosSalvar();
-  paMarcosRender();
+function _paHistRem(i){
+  _paHistorico.splice(i,1);
+  paHistoricoRender();
 }
-function paMarcosAdicionar(){
-  _paMarcos.push({dt:HOJE.toISOString().split('T')[0], val:0, label:'Novo marco'});
-  _paMarcosSalvar();
-  paMarcosRender();
+function paHistoricoAdicionar(){
+  _paHistorico.push({dt:HOJE.toISOString().split('T')[0], val:0, label:'Novo marco'});
+  paHistoricoRender();
 }
-function _paMarcosSalvar(){
-  _paMarcos.sort((a,b)=>a.dt.localeCompare(b.dt));
-  localStorage.setItem('patec_pa_marcos', JSON.stringify(_paMarcos));
+function paHistoricoSalvar(){
+  _paHistorico.sort((a,b)=>a.dt.localeCompare(b.dt));
+  localStorage.setItem('patec_pa_historico', JSON.stringify(_paHistorico));
+  _flash('pa-historico-ok');
+  renderCascata(); // atualiza gráfico com nova base
 }
-
-// Retorna o marco mais próximo ANTERIOR ou IGUAL a uma data
-function paGetMarcoBase(dtInicio){
-  // Pegar dtAnterior = dtInicio - 1 dia
-  const dAnt = new Date(dtInicio+'T12:00:00');
-  dAnt.setDate(dAnt.getDate()-1);
-  const dtAnt = dAnt.toISOString().split('T')[0];
-  // Marco mais recente que seja <= dtAnt
-  const candidatos = _paMarcos.filter(m=>m.dt<=dtAnt).sort((a,b)=>b.dt.localeCompare(a.dt));
-  return candidatos[0] || _paMarcos[0] || {dt:'2026-03-16', val:766};
+// Base do gráfico = ÚLTIMO registro do histórico (data mais recente)
+function paGetMarcoBase(){
+  if(!_paHistorico.length) return {dt:'2026-05-06', val:488};
+  const sorted = [..._paHistorico].sort((a,b)=>b.dt.localeCompare(a.dt));
+  return sorted[0];
 }
 
 async function paEntradaCarregarFirebase(){
