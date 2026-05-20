@@ -7838,23 +7838,34 @@ function renderCascata(){
   const dtFim    = dtFimEl?.value || HOJE.toISOString().split('T')[0];
   if(dtInicio > dtFim) return;
 
-  const backlogBase = Number(r.pa_backlog_val)||582;
-  const metaDia     = Number(r.pa_meta_dia)||30;
-  // Dias úteis: do dia SEGUINTE ao início até o dia do fim (inclusive)
-  // Backlog início = valor no final do dtInicio
-  // Backlog fim    = valor após processar todos os dias até dtFim
-  const _d1 = new Date(dtInicio+'T12:00:00');
-  _d1.setDate(_d1.getDate()+1);
-  const dtInicioProximo = _d1.toISOString().split('T')[0];
-  const diasUteis = dtInicioProximo > dtFim ? [] : paDiasUteis(dtInicioProximo, dtFim);
+  const backlogConfig = Number(r.pa_backlog_val)||582;
+  const dtBase        = r.pa_backlog_dt||'2026-05-18';
+  const metaDia       = Number(r.pa_meta_dia)||30;
 
-  // Saídas por dia — f[0] (1ª análise)
+  // Saídas/entradas por dia (necessário para calcular backlog real no dtInicio)
   const saidasPorDia = {};
   registros.forEach(reg=>{
     if(!reg.data||!reg.f||reg.pres==='Folga'||reg.pres==='Férias') return;
     const v=reg.f[0]||0;
     if(v>0) saidasPorDia[reg.data]=(saidasPorDia[reg.data]||0)+v;
   });
+
+  // Calcular backlog real ao final do dtInicio:
+  // partindo do valor do ADM (dtBase), aplicar movimentos até dtInicio inclusive
+  let backlogBase = backlogConfig;
+  if(dtBase <= dtInicio){
+    paDiasUteis(dtBase, dtInicio).forEach(d=>{
+      const s = saidasPorDia[d]||0;
+      const e = (_paEntradas.find(x=>x.dt===d)?.val)||0;
+      backlogBase = Math.max(0, backlogBase - s + e);
+    });
+  }
+
+  // Dias úteis a partir do dia SEGUINTE ao início até o fim
+  const _d1 = new Date(dtInicio+'T12:00:00');
+  _d1.setDate(_d1.getDate()+1);
+  const dtInicioProximo = _d1.toISOString().split('T')[0];
+  const diasUteis = dtInicioProximo > dtFim ? [] : paDiasUteis(dtInicioProximo, dtFim);
 
   const linhas=[];
   let backlogAtual=backlogBase;
