@@ -2464,22 +2464,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="pcSetTab('criticos',this)">🔴 Itens Críticos</button>
       </div>
 
-      <!-- Filtro analista (compartilhado) -->
-      <div class="cd" style="margin-bottom:1rem;padding:.75rem 1rem">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-          <div class="field-wrap" style="min-width:160px">
-            <span class="field-label">Analista</span>
-            <select id="pc-filtro-analista" onchange="pcFiltrar()" style="width:100%;font-size:12px;padding:5px 10px">
-              <option value="">Todos</option>
-            </select>
-          </div>
-          <div class="field-wrap" style="min-width:180px">
-            <span class="field-label">Buscar RC ou Oportunidade</span>
-            <input type="text" id="pc-busca" oninput="pcFiltrar()" placeholder="Digite para filtrar..." style="width:100%;font-size:12px;padding:5px 10px">
-          </div>
-          <button class="btn btn-s" style="font-size:11px" onclick="pcLimparFiltros()">✕ Limpar</button>
-        </div>
-      </div>
+
 
       <!-- Conteúdo das abas -->
       <div class="cd">
@@ -2493,7 +2478,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="tw" style="max-height:500px">
             <table>
               <thead><tr>
-                <th>Analista</th><th>Validade Proposta</th><th>SLA</th>
+                <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th>
                 <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
               </tr></thead>
               <tbody id="pc-tbody-vencido"></tbody>
@@ -2507,7 +2492,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="tw" style="max-height:500px">
             <table>
               <thead><tr>
-                <th>Analista</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
+                <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
                 <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th>
               </tr></thead>
               <tbody id="pc-tbody-reprovado"></tbody>
@@ -2521,7 +2506,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="tw" style="max-height:500px">
             <table>
               <thead><tr>
-                <th>Analista</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
+                <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
                 <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th>
               </tr></thead>
               <tbody id="pc-tbody-criticos"></tbody>
@@ -9150,10 +9135,7 @@ function pcInicializar(){
       <div class="kn" style="color:var(--vm)">${criticos.length}</div>
       <div class="kl">🔴 Itens Críticos</div>
     </div>
-    <div class="kc">
-      <div class="kn" style="color:var(--az)">${base.length}</div>
-      <div class="kl">Total Base</div>
-    </div>
+
   `;
 
   // Atualização
@@ -9228,6 +9210,7 @@ function pcRenderTabela(aba, rows, campos, comExtra){
   el.innerHTML = rows.map(r => {
     const cells = [
       `<td>${r.analista||'—'}</td>`,
+      `<td style="font-size:11px">${r.fila||'—'}</td>`,
       `<td style="${corValidade(r.validade)}">${r.validade||'—'}</td>`,
       `<td style="${corSla(r.sla)}">${r.sla||'—'}</td>`,
     ];
