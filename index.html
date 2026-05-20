@@ -2203,17 +2203,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">
           <div class="cd-t" style="margin:0">📉 Acompanhamento e Plano de Redução</div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <div>
-              <label style="font-size:10px;color:var(--tx2);font-weight:600;display:block;margin-bottom:2px">📅 Início (Backlog Inicial)</label>
-              <input type="date" id="pa-dt-inicio" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--brd);border-radius:7px;color:var(--az);font-weight:600" onchange="renderCascata()">
-            </div>
-            <div>
-              <label style="font-size:10px;color:var(--tx2);font-weight:600;display:block;margin-bottom:2px">📅 Fim (Backlog Atual)</label>
-              <input type="date" id="pa-dt-fim" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--brd);border-radius:7px;color:var(--az);font-weight:600" onchange="renderCascata()">
-            </div>
-            <button class="btn btn-s" style="font-size:11px;align-self:flex-end" onclick="paPeriodoHoje()">📅 Hoje</button>
-            <button class="btn btn-p" style="font-size:11px;align-self:flex-end" onclick="renderCascata()">🔍 Analisar</button>
+          <div class="field-wrap" style="min-width:160px">
+            <span class="field-label">De</span>
+            <input type="date" id="pa-dt-inicio" style="width:100%;font-size:12px;padding:5px 10px" onchange="renderCascata()">
           </div>
+          <div class="field-wrap" style="min-width:160px">
+            <span class="field-label">Até</span>
+            <input type="date" id="pa-dt-fim" style="width:100%;font-size:12px;padding:5px 10px" onchange="renderCascata()">
+          </div>
+          <button class="btn btn-s" style="font-size:11px;align-self:flex-end" onclick="paPeriodoHoje()">📅 Hoje</button>
+          <button class="btn btn-p" style="font-size:11px;align-self:flex-end" onclick="renderCascata()">🔍 Analisar</button>
         </div>
 
         <!-- Projeção + Meta -->
@@ -7842,7 +7841,7 @@ function renderCascata(){
   const dtBase        = r.pa_backlog_dt||'2026-05-18';
   const metaDia       = Number(r.pa_meta_dia)||30;
 
-  // Saídas/entradas por dia (necessário para calcular backlog real no dtInicio)
+  // Saídas/entradas por dia
   const saidasPorDia = {};
   registros.forEach(reg=>{
     if(!reg.data||!reg.f||reg.pres==='Folga'||reg.pres==='Férias') return;
@@ -7850,22 +7849,23 @@ function renderCascata(){
     if(v>0) saidasPorDia[reg.data]=(saidasPorDia[reg.data]||0)+v;
   });
 
-  // Calcular backlog real ao final do dtInicio:
-  // partindo do valor do ADM (dtBase), aplicar movimentos até dtInicio inclusive
+  // Backlog Inicial = estado ao final do dia ANTERIOR ao início do filtro
+  // Partindo do valor ADM (dtBase), acumular movimentos até dtInicio-1
+  const _dAnterior = new Date(dtInicio+'T12:00:00');
+  _dAnterior.setDate(_dAnterior.getDate()-1);
+  const dtAnterior = _dAnterior.toISOString().split('T')[0];
+
   let backlogBase = backlogConfig;
-  if(dtBase <= dtInicio){
-    paDiasUteis(dtBase, dtInicio).forEach(d=>{
+  if(dtBase <= dtAnterior){
+    paDiasUteis(dtBase, dtAnterior).forEach(d=>{
       const s = saidasPorDia[d]||0;
       const e = (_paEntradas.find(x=>x.dt===d)?.val)||0;
       backlogBase = Math.max(0, backlogBase - s + e);
     });
   }
 
-  // Dias úteis a partir do dia SEGUINTE ao início até o fim
-  const _d1 = new Date(dtInicio+'T12:00:00');
-  _d1.setDate(_d1.getDate()+1);
-  const dtInicioProximo = _d1.toISOString().split('T')[0];
-  const diasUteis = dtInicioProximo > dtFim ? [] : paDiasUteis(dtInicioProximo, dtFim);
+  // Dias úteis do período do filtro (dtInicio até dtFim inclusive)
+  const diasUteis = paDiasUteis(dtInicio, dtFim);
 
   const linhas=[];
   let backlogAtual=backlogBase;
@@ -7930,7 +7930,11 @@ function renderCascata(){
   const labels=[], floatData=[], floatCor=[], linhaData=[], linhaLabels=[];
 
   // Ponto inicial
-  labels.push('Backlog '+fmtDptBR(dtInicio));
+  // Label do backlog inicial = dia anterior ao filtro
+  const _lbAnt = new Date(dtInicio+'T12:00:00');
+  _lbAnt.setDate(_lbAnt.getDate()-1);
+  const dtAnteriorLabel = _lbAnt.toISOString().split('T')[0];
+  labels.push('Backlog '+fmtDptBR(dtAnteriorLabel));
   floatData.push([0, backlogBase]);
   floatCor.push('rgba(100,116,139,0.75)');
   linhaData.push(backlogBase);
