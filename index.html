@@ -6158,7 +6158,7 @@ async function radarOnFile(file){
       prazo:         r['PRAZO DE RETORNO']||0,
       prazo_c:       Number(r['PRAZO ']||r['PRAZO']||0),
       status:        String(r['Status (GOV)']||r['STATUS']||'').trim(),
-      validade:      String(r['Validade da \nProposta ']||'').trim(),
+      validade:      String(r['Validade da \nProposta ']||r['Validade da Proposta ']||r['Validade da Proposta']||Object.entries(r).find(([k])=>k.toLowerCase().includes('validade'))?.[1]||'').trim(),
       finalizou:     r['FINALIZOU']||0,
       idas:          Number(r['Idas ao mercado']||r['IDAS AO MERCADO']||r['Idas']||0),
       item_rc:       String(r['Item da RC']||r['ITEM']||r['Item']||'').trim(),
