@@ -3415,8 +3415,8 @@ function renderPainelEstrategico(){
       ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">${c.sub}</div>`:''}
     </div>`;
     analEl.innerHTML=
-      `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:10px">${l1.map(cardItem).join('')}</div>`+
-      `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">${l2.map(cardItem).join('')}</div>`;
+      `<div style="display:grid;grid-template-columns:repeat(${l1.length},1fr);gap:10px;margin-bottom:10px">${l1.map(cardItem).join('')}</div>`+
+      `<div style="display:grid;grid-template-columns:repeat(${l2.length},1fr);gap:10px">${l2.map(cardItem).join('')}</div>`;
   }
     // Alerta no estilo ciclo-box — padrão: Ritmo X/dia · projeção X itens · necessário X/dia · ritmo piorou/melhorou
     const cicloInicioD = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
