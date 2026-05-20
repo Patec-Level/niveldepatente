@@ -2715,6 +2715,7 @@ async function fbCarregarTudo(){
   renderBHECards();
   console.log('✓ Firebase: todos os dados carregados e renderizados');
     fbCarregarMapaDiario();
+  fbCarregarPCPDiario();
   fbCarregarRadar();
   // Atualizar Painel Estratégico se estiver aberto
   if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
@@ -4670,6 +4671,26 @@ async function fbCarregarMapaDiario(){
   }catch(e){console.warn('Erro mapa diario:',e);}
 }
 
+async function fbCarregarPCPDiario(){
+  try{
+    const db=getDB();if(!db)return;
+    const snap=await db.collection('pcp_diario').orderBy('data').get();
+    if(snap.docs.length===0) return;
+    snap.docs.forEach(d=>{
+      const reg=d.data();
+      const idx=pcpData.findIndex(r=>r.data===reg.data);
+      if(idx>=0) pcpData[idx]=reg;
+      else pcpData.push(reg);
+    });
+    pcpData.sort((a,b)=>a.data.localeCompare(b.data));
+    console.log('✓ PCP diario Firebase: '+snap.docs.length+' registros');
+    // Atualizar painel se aberto
+    if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
+      renderPainelEstrategico();
+    }
+  }catch(e){console.warn('Erro PCP diario:',e);}
+}
+
 function renderAdmMapaHistorico(){
   const tb=document.getElementById('adm-mapa-tb');
   if(!tb) return;
@@ -5344,6 +5365,10 @@ function pcpAtualizarRegistroDia(dt){
   const idx=pcpData.findIndex(r=>r.data===dt);
   if(idx>=0) pcpData[idx]=novo;
   else pcpData.push(novo);
+  // Salvar no Firebase automaticamente
+  fbSet('pcp_diario', dt.replace(/-/g,''), novo).then(()=>{
+    console.log('✓ PCP salvo Firebase:', dt, 'f1='+novo.f1);
+  });
   // Re-renderizar tabela se estiver visível
   if(document.getElementById('adm-pcp-adm')?.style.display!=='none') renderAdmPCP();
 }
