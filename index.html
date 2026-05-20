@@ -3376,7 +3376,7 @@ function renderPainelEstrategico(){
   const gapCor = gap>=0?'var(--vd)':'var(--vm)';
   const ritmo = nDias>0?Math.round(totalAnalis/nDias):0;
   const cicloInicio = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
-  const cicloMetaTotal = (_cicloAtivo?.meta||CICLO_ATUAL.meta_ciclo);
+  const cicloMetaTotal = (_cicloAtivo?.meta) || parseInt(localStorage.getItem('patec_meta')||'0') || CICLO_ATUAL.meta_ciclo;
   // Usar data de encerramento salva pelo usuário ou fallback para CICLO_ATUAL.fim
   const _fimSalvo = localStorage.getItem('patec_fim_ciclo')||CICLO_ATUAL.fim;
   const _fimDate = new Date(_fimSalvo+'T12:00:00');
@@ -3394,18 +3394,22 @@ function renderPainelEstrategico(){
       {label:'Média diária equipe',sub:'meta '+metaDia+'/colab',   val:mediaEquipe,                         cor:'var(--azm)',bg:'var(--cin)'},
       {label:'🏆 Melhor dia',      sub:fmtDt(melhor.dt),          val:melhor.tot,                          cor:'var(--vd)', bg:'var(--cin)'},
       {label:'📉 Pior dia',        sub:fmtDt(pior.dt),            val:pior.tot,                            cor:'var(--vm)', bg:'var(--cin)'},
-      {label:'RCs Pedidos',        sub:'acumulado',                val:totalPed,                            cor:'var(--vd)', bg:'var(--cin)'},
-      {label:'Republicação',       sub:'acumulado',                val:totalRep,                            cor:'var(--am)', bg:'var(--cin)'},
-      {label:'Devoluções',         sub:'acumulado',                val:totalDev,                            cor:'var(--vm)', bg:'var(--cin)'},
-      {label:'XGL',                sub:'acumulado',                val:totalXgl,                            cor:'var(--az)', bg:'var(--cin)'},
-      {label:'MDG',                sub:'acumulado',                val:totalMDG,                            cor:'var(--az)', bg:'var(--cin)'},
+      {label:'RCs Pedidos',        sub:'acumulado',                val:totalPed,                            cor:'var(--vd)', bg:'var(--cin)', linha:2},
+      {label:'Republicação',       sub:'acumulado',                val:totalRep,                            cor:'var(--am)', bg:'var(--cin)', linha:2},
+      {label:'Devoluções',         sub:'acumulado',                val:totalDev,                            cor:'var(--vm)', bg:'var(--cin)', linha:2},
+      {label:'XGL',                sub:'acumulado',                val:totalXgl,                            cor:'var(--az)', bg:'var(--cin)', linha:2},
+      {label:'MDG',                sub:'acumulado',                val:totalMDG,                            cor:'var(--az)', bg:'var(--cin)', linha:2},
     ];
-    analEl.innerHTML=cards2.map(c=>`
-      <div class="cd" style="padding:.75rem;text-align:center;background:${c.bg||'var(--cin)'}">
-        <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
-        <div style="font-size:24px;font-weight:700;color:${c.cor}">${c.val}</div>
-        ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">${c.sub}</div>`:''}
-      </div>`).join('');
+    const l1 = cards2.filter(c=>!c.linha||c.linha===1);
+    const l2 = cards2.filter(c=>c.linha===2);
+    const cardItem = c=>`<div class="cd" style="padding:.75rem;text-align:center;background:${c.bg||'var(--cin)'}">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px">${c.label}</div>
+      <div style="font-size:24px;font-weight:700;color:${c.cor}">${c.val}</div>
+      ${c.sub?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">${c.sub}</div>`:''}
+    </div>`;
+    analEl.innerHTML=
+      `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:10px">${l1.map(cardItem).join('')}</div>`+
+      `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">${l2.map(cardItem).join('')}</div>`;
   }
     // Alerta no estilo ciclo-box — padrão: Ritmo X/dia · projeção X itens · necessário X/dia · ritmo piorou/melhorou
     const cicloInicioD = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
