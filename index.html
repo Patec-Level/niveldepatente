@@ -2171,25 +2171,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- ── ANÁLISE DE SEGMENTO E PATEC ── -->
-      <div class="cd" style="margin-top:1rem">
-        <div class="cd-t">🔍 Análise por Segmento e PATEC</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
 
-          <!-- Segmento -->
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.625rem;text-transform:uppercase;letter-spacing:.6px">Por Segmento</div>
-            <div id="radar-analise-segmento"></div>
-          </div>
-
-          <!-- PATEC -->
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:.625rem;text-transform:uppercase;letter-spacing:.6px">PATEC Obrigatório</div>
-            <div id="radar-analise-patec"></div>
-          </div>
-
-        </div>
-      </div>
 
 
 
@@ -6376,7 +6358,7 @@ function renderRadarCardsCustom(rows){
       <div style="flex:1;min-width:0">
         <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:2px">SLA acima de ${dias} dias</div>
         <div style="font-size:30px;font-weight:700;color:${corSla};line-height:1">${nSlaX}</div>
-        <div style="font-size:10px;color:var(--tx2);margin-top:3px">${pctSlaX}% do total · ${total} itens na base</div>
+        <div style="font-size:10px;color:var(--tx2);margin-top:3px">${pctSlaX}% do total</div>
       </div>
     </div>
     <div style="background:${bgPrx};border-radius:12px;padding:1.1rem 1.25rem;border:1px solid rgba(0,0,0,.07);display:flex;align-items:center;gap:1rem">
@@ -6384,7 +6366,7 @@ function renderRadarCardsCustom(rows){
       <div style="flex:1;min-width:0">
         <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:2px">Próximo do vencimento (60–90 dias)</div>
         <div style="font-size:30px;font-weight:700;color:${corPrx};line-height:1">${nProx}</div>
-        <div style="font-size:10px;color:var(--tx2);margin-top:3px">${pctPrx}% do total · prazo Col C</div>
+        <div style="font-size:10px;color:var(--tx2);margin-top:3px">${pctPrx}% do total </div>
       </div>
     </div>`;
 }
