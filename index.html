@@ -363,8 +363,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('pr-estrategico',this)">🎯 Painel Estratégico</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
+  <div class="sb-it" onclick="go('planilha-critica',this)">🔴 Planilha Crítica</div>
   <div class="sb-sec">Em breve</div>
-  <div class="sb-it" style="opacity:.45;cursor:default">⚠ Itens Críticos <span class="sb-badge">breve</span></div>
   <div class="sb-it" style="opacity:.45;cursor:default">📊 Status B <span class="sb-badge">breve</span></div>
   <div class="sb-sec">ADM</div>
   <div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>
@@ -2434,6 +2434,104 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       </div>
     </div>
 
+
+    <!-- ══════════════════════════════════════════
+         PLANILHA CRÍTICA
+    ══════════════════════════════════════════ -->
+    <div id="p-planilha-critica" class="page">
+
+      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vm)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="cd-t" style="margin:0">🔴 Planilha Crítica</div>
+            <div style="font-size:11px;color:var(--tx2);margin-top:3px">Base: Radar Estratégico · Filtro obrigatório: Status Mapa = <strong>ANALISAR PATEC FINALIZADO</strong></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <span id="pc-ultima-att" style="font-size:11px;color:var(--tx2)"></span>
+            <button class="btn btn-s" style="font-size:11px" onclick="pcAtualizar()">↺ Atualizar</button>
+            <button class="btn btn-g" style="font-size:11px" onclick="pcExportar()" id="pc-btn-exportar">📥 Exportar aba</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs gerais -->
+      <div class="kgrid" id="pc-kpis" style="margin-bottom:1rem"></div>
+
+      <!-- Abas -->
+      <div class="stabs" id="pc-tabs" style="margin-bottom:1rem">
+        <button class="stab active" onclick="pcSetTab('vencido',this)">⏰ Vencido</button>
+        <button class="stab" onclick="pcSetTab('reprovado',this)">❌ 100% Reprovado</button>
+        <button class="stab" onclick="pcSetTab('criticos',this)">🔴 Itens Críticos</button>
+      </div>
+
+      <!-- Filtro analista (compartilhado) -->
+      <div class="cd" style="margin-bottom:1rem;padding:.75rem 1rem">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field-wrap" style="min-width:160px">
+            <span class="field-label">Analista</span>
+            <select id="pc-filtro-analista" onchange="pcFiltrar()" style="width:100%;font-size:12px;padding:5px 10px">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="field-wrap" style="min-width:180px">
+            <span class="field-label">Buscar RC ou Oportunidade</span>
+            <input type="text" id="pc-busca" oninput="pcFiltrar()" placeholder="Digite para filtrar..." style="width:100%;font-size:12px;padding:5px 10px">
+          </div>
+          <button class="btn btn-s" style="font-size:11px" onclick="pcLimparFiltros()">✕ Limpar</button>
+        </div>
+      </div>
+
+      <!-- Conteúdo das abas -->
+      <div class="cd">
+        <div id="pc-sem-dados" style="text-align:center;padding:3rem;color:var(--tx2);font-size:13px;display:none">
+          📡 Nenhum dado disponível. Faça o upload da base no <strong>Radar Estratégico (ADM)</strong>.
+        </div>
+
+        <!-- ABA VENCIDO -->
+        <div id="pc-tab-vencido">
+          <div style="font-size:12px;font-weight:600;color:var(--vm);margin-bottom:.5rem" id="pc-count-vencido"></div>
+          <div class="tw" style="max-height:500px">
+            <table>
+              <thead><tr>
+                <th>Analista</th><th>Validade Proposta</th><th>SLA</th>
+                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
+              </tr></thead>
+              <tbody id="pc-tbody-vencido"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABA 100% REPROVADO -->
+        <div id="pc-tab-reprovado" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--vm);margin-bottom:.5rem" id="pc-count-reprovado"></div>
+          <div class="tw" style="max-height:500px">
+            <table>
+              <thead><tr>
+                <th>Analista</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
+                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th>
+              </tr></thead>
+              <tbody id="pc-tbody-reprovado"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABA ITENS CRÍTICOS -->
+        <div id="pc-tab-criticos" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--vm);margin-bottom:.5rem" id="pc-count-criticos"></div>
+          <div class="tw" style="max-height:500px">
+            <table>
+              <thead><tr>
+                <th>Analista</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
+                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th>
+              </tr></thead>
+              <tbody id="pc-tbody-criticos"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- ══════════════════════════════════════════
          OPERAÇÃO — VISÃO POR EQUIPE
     ══════════════════════════════════════════ -->
@@ -3089,7 +3187,7 @@ function go(id, el) {
     'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
-    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Automático','adm':'Administração',
+    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Automático','planilha-critica':'Planilha Crítica','adm':'Administração',
     };
   document.getElementById('ttl').textContent = titles[id] || id;
   if(id==='pr-bancoferias'){renderFerias();renderBanco();renderBHECards();}
@@ -3097,6 +3195,7 @@ function go(id, el) {
   // Carregar Inteligência de Mercado quando aba é aberta
   if(id==='vg-mercado') mktCarregarTudo();
   if(id==='analista-auto') setTimeout(aaPublicoCarregar, 100);
+  if(id==='planilha-critica') setTimeout(pcInicializar, 100);
   // Auto-login em módulos sem senha
   if(id==='adm') setTimeout(()=>{
     const login=document.getElementById('adm-login');
@@ -6061,6 +6160,8 @@ async function radarOnFile(file){
       status:        String(r['Status (GOV)']||r['STATUS']||'').trim(),
       validade:      String(r['Validade da \nProposta ']||'').trim(),
       finalizou:     r['FINALIZOU']||0,
+      idas:          Number(r['Idas ao mercado']||r['IDAS AO MERCADO']||r['Idas']||0),
+      item_rc:       String(r['Item da RC']||r['ITEM']||r['Item']||'').trim(),
       familia:       (()=>{ const v=String(r['Familia']||r['FAMILIA']||'').trim(); return v.endsWith('.0')?v.slice(0,-2):v; })(),
       seguimento:    (()=>{
         const k=Object.keys(r).find(k=>k==='Seguimento');
@@ -8998,6 +9099,217 @@ function aaPublicoAtualizar(){
 
 // Carregar ao iniciar
 aaPublicoCarregar();
+
+
+// ════════════════════════════════════════════
+// PLANILHA CRÍTICA
+// ════════════════════════════════════════════
+let _pcTabAtiva = 'vencido';
+
+const PC_STATUS_OK = ['analisar patec finalizado','patec finalizado'];
+
+function pcDadosBase(){
+  // Filtra obrigatoriamente STATUS MAPA = ANALISAR PATEC FINALIZADO
+  return (_radarDados||[]).filter(r => {
+    const s = (r.analista_auto||'').toLowerCase().trim();
+    return s === 'analisar patec finalizado' || s === 'patec finalizado';
+  });
+}
+
+function pcInicializar(){
+  const base = pcDadosBase();
+  if(!base.length){
+    document.getElementById('pc-sem-dados').style.display = 'block';
+    return;
+  }
+  document.getElementById('pc-sem-dados').style.display = 'none';
+
+  // Popular filtro analista
+  const analistas = [...new Set(base.map(r=>(r.analista||'').trim()).filter(Boolean))].sort();
+  const sel = document.getElementById('pc-filtro-analista');
+  if(sel) sel.innerHTML = '<option value="">Todos</option>' + analistas.map(a=>`<option>${a}</option>`).join('');
+
+  // KPIs gerais
+  const vencidos   = base.filter(r => (r.validade||'').toLowerCase().includes('vencid'));
+  const reprovados = pcGetReprovados(base);
+  const criticos   = base.filter(r => (r.familia||'').toLowerCase().includes('crít') || (r.familia||'').toLowerCase().includes('critic'));
+
+  document.getElementById('pc-kpis').innerHTML = `
+    <div class="kc" style="cursor:pointer" onclick="pcSetTab('vencido', document.querySelector('#pc-tabs .stab'))">
+      <div class="kn" style="color:var(--vm)">${vencidos.length}</div>
+      <div class="kl">⏰ Vencidos</div>
+    </div>
+    <div class="kc" style="cursor:pointer" onclick="pcSetTab('reprovado', document.querySelectorAll('#pc-tabs .stab')[1])">
+      <div class="kn" style="color:var(--vm)">${reprovados.length}</div>
+      <div class="kl">❌ 100% Reprovados</div>
+    </div>
+    <div class="kc" style="cursor:pointer" onclick="pcSetTab('criticos', document.querySelectorAll('#pc-tabs .stab')[2])">
+      <div class="kn" style="color:var(--vm)">${criticos.length}</div>
+      <div class="kl">🔴 Itens Críticos</div>
+    </div>
+    <div class="kc">
+      <div class="kn" style="color:var(--az)">${base.length}</div>
+      <div class="kl">Total Base</div>
+    </div>
+  `;
+
+  // Atualização
+  const elDt = document.getElementById('pc-ultima-att');
+  if(elDt && _radarTs) elDt.textContent = 'Base: ' + new Date(_radarTs).toLocaleString('pt-BR');
+
+  pcFiltrar();
+}
+
+function pcGetReprovados(base){
+  // Agrupa por RC+SEQ e verifica se TODOS os fornecedores (linhas) estão sem aprovação
+  // Como o radar tem uma linha por RC/item (não por fornecedor), usamos patec_obrig como proxy
+  // Regra: STATUS MAPA = finalizado + sem fornecedor aprovado → marcado como reprovado
+  // Na base do radar, cada row é uma RC/item único — verificamos pelo analista_auto
+  return base.filter(r => {
+    const s = (r.analista_auto||'').toLowerCase();
+    return s.includes('reprovado') || s.includes('sem fornecedor') || s.includes('100%');
+  });
+}
+
+function pcFiltrar(){
+  const fAn  = (document.getElementById('pc-filtro-analista')?.value||'').toLowerCase();
+  const fBus = (document.getElementById('pc-busca')?.value||'').toLowerCase();
+  const base = pcDadosBase();
+
+  const filtrar = (rows) => rows.filter(r => {
+    const mAn  = !fAn  || (r.analista||'').toLowerCase().includes(fAn);
+    const mBus = !fBus || (r.rc||'').toLowerCase().includes(fBus) || (r.num_oport||'').toLowerCase().includes(fBus);
+    return mAn && mBus;
+  });
+
+  // VENCIDO: validade contém "vencid"
+  const vencidos = filtrar(base.filter(r => (r.validade||'').toLowerCase().includes('vencid')));
+  pcRenderTabela('vencido', vencidos, ['analista','validade','sla','rc','item_rc','num_oport','seq'], false);
+
+  // 100% REPROVADO: analista_auto indica reprovado
+  const reprovados = filtrar(pcGetReprovados(base));
+  pcRenderTabela('reprovado', reprovados, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
+
+  // ITENS CRÍTICOS: familia = crítica E NÃO está vencido
+  const criticos = filtrar(base.filter(r => {
+    const fam = (r.familia||'').toLowerCase();
+    const val = (r.validade||'').toLowerCase();
+    const ehCritico = fam.includes('crít') || fam.includes('critic');
+    const ehVencido = val.includes('vencid');
+    return ehCritico && !ehVencido;
+  }));
+  pcRenderTabela('criticos', criticos, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
+}
+
+function pcRenderTabela(aba, rows, campos, comExtra){
+  const el = document.getElementById('pc-tbody-' + aba);
+  const ct = document.getElementById('pc-count-' + aba);
+  if(!el) return;
+  if(ct) ct.textContent = rows.length + ' registro(s)';
+
+  if(!rows.length){
+    el.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum registro encontrado.</td></tr>';
+    return;
+  }
+
+  const corValidade = v => {
+    const vl = (v||'').toLowerCase();
+    if(vl.includes('vencid'))  return 'color:var(--vm);font-weight:700';
+    if(vl.includes('prox'))    return 'color:var(--am);font-weight:700';
+    return 'color:var(--vd)';
+  };
+
+  const corSla = s => {
+    const n = Number(s)||0;
+    if(n >= 90) return 'color:var(--vm);font-weight:700';
+    if(n >= 60) return 'color:var(--am);font-weight:700';
+    return '';
+  };
+
+  el.innerHTML = rows.map(r => {
+    const cells = [
+      `<td>${r.analista||'—'}</td>`,
+      `<td style="${corValidade(r.validade)}">${r.validade||'—'}</td>`,
+      `<td style="${corSla(r.sla)}">${r.sla||'—'}</td>`,
+    ];
+    if(comExtra) cells.push(`<td style="text-align:center">${r.idas||'—'}</td>`);
+    cells.push(
+      `<td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>`,
+      `<td>${r.item_rc||r.seq||'—'}</td>`,
+      `<td>${r.num_oport||'—'}</td>`,
+      `<td>${r.seq||'—'}</td>`,
+    );
+    if(comExtra) cells.push(`<td style="text-align:center;font-weight:600;color:${(r.patec_obrig||'').toLowerCase()==='sim'?'var(--vm)':'var(--tx2)'}">${r.patec_obrig||'—'}</td>`);
+    return `<tr>${cells.join('')}</tr>`;
+  }).join('');
+}
+
+function pcSetTab(aba, btn){
+  _pcTabAtiva = aba;
+  document.querySelectorAll('#pc-tabs .stab').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  ['vencido','reprovado','criticos'].forEach(t => {
+    const el = document.getElementById('pc-tab-' + t);
+    if(el) el.style.display = t === aba ? 'block' : 'none';
+  });
+}
+
+function pcAtualizar(){
+  pcInicializar();
+}
+
+function pcLimparFiltros(){
+  const el1 = document.getElementById('pc-filtro-analista');
+  const el2 = document.getElementById('pc-busca');
+  if(el1) el1.value = '';
+  if(el2) el2.value = '';
+  pcFiltrar();
+}
+
+function pcExportar(){
+  const base = pcDadosBase();
+  const fAn  = (document.getElementById('pc-filtro-analista')?.value||'').toLowerCase();
+  const fBus = (document.getElementById('pc-busca')?.value||'').toLowerCase();
+
+  const filtrar = rows => rows.filter(r => {
+    const mAn  = !fAn  || (r.analista||'').toLowerCase().includes(fAn);
+    const mBus = !fBus || (r.rc||'').toLowerCase().includes(fBus) || (r.num_oport||'').toLowerCase().includes(fBus);
+    return mAn && mBus;
+  });
+
+  const wb = XLSX.utils.book_new();
+
+  // Aba vencido
+  const vencidos = filtrar(base.filter(r => (r.validade||'').toLowerCase().includes('vencid')));
+  const wsV = XLSX.utils.aoa_to_sheet([
+    ['Analista','Validade Proposta','SLA','RC','Item','Oportunidade','Item OP'],
+    ...vencidos.map(r=>[r.analista,r.validade,r.sla,r.rc,r.item_rc||r.seq,r.num_oport,r.seq])
+  ]);
+  XLSX.utils.book_append_sheet(wb, wsV, 'Vencido');
+
+  // Aba reprovado
+  const reprovados = filtrar(pcGetReprovados(base));
+  const wsR = XLSX.utils.aoa_to_sheet([
+    ['Analista','Validade Proposta','SLA','Idas Mercado','RC','Item','Oportunidade','Item OP','PATEC Obrig.'],
+    ...reprovados.map(r=>[r.analista,r.validade,r.sla,r.idas,r.rc,r.item_rc||r.seq,r.num_oport,r.seq,r.patec_obrig])
+  ]);
+  XLSX.utils.book_append_sheet(wb, wsR, '100% Reprovado');
+
+  // Aba criticos
+  const criticos = filtrar(base.filter(r => {
+    const fam = (r.familia||'').toLowerCase();
+    const val = (r.validade||'').toLowerCase();
+    return (fam.includes('crít')||fam.includes('critic')) && !val.includes('vencid');
+  }));
+  const wsC = XLSX.utils.aoa_to_sheet([
+    ['Analista','Validade Proposta','SLA','Idas Mercado','RC','Item','Oportunidade','Item OP','PATEC Obrig.'],
+    ...criticos.map(r=>[r.analista,r.validade,r.sla,r.idas,r.rc,r.item_rc||r.seq,r.num_oport,r.seq,r.patec_obrig])
+  ]);
+  XLSX.utils.book_append_sheet(wb, wsC, 'Itens Criticos');
+
+  const dt = new Date().toLocaleDateString('pt-BR').split('/').join('-');
+  XLSX.writeFile(wb, 'Planilha_Critica_' + dt + '.xlsx');
+}
 
 </script>
 </body>
