@@ -3380,7 +3380,16 @@ function renderPainelEstrategico(){
   // Usar data de encerramento salva pelo usuário ou fallback para CICLO_ATUAL.fim
   const _fimSalvo = localStorage.getItem('patec_fim_ciclo')||CICLO_ATUAL.fim;
   const _fimDate = new Date(_fimSalvo+'T12:00:00');
-  const diasRestantes = Math.max(1, Math.round((_fimDate - HOJE)/86400000));
+  // Contar apenas dias úteis (seg-sex) restantes até o fim do ciclo
+  function contarDiasUteisAte(fimDt){
+    let count=0;
+    const d=new Date(HOJE); d.setDate(d.getDate()+1); // começa amanhã
+    d.setHours(12,0,0,0);
+    const fim=new Date(fimDt); fim.setHours(12,0,0,0);
+    while(d<=fim){ if(d.getDay()>=1&&d.getDay()<=5)count++; d.setDate(d.getDate()+1); }
+    return Math.max(1,count);
+  }
+  const diasRestantes = contarDiasUteisAte(_fimDate);
   const faltam = Math.max(0, cicloMetaTotal - totalAnalis);
   const metaNec = Math.ceil(faltam/diasRestantes);
 
@@ -3390,7 +3399,6 @@ function renderPainelEstrategico(){
       {label:'Itens analisados',   sub:nDias+' dia(s)',            val:totalAnalis.toLocaleString('pt-BR'), cor:'var(--vd)',  bg:'var(--vdc)'},
       {label:'Gap',                sub:'Analisado − Planejado',    val:gapStr,                              cor:gapCor,      bg:gap>=0?'var(--vdc)':'var(--vmc)'},
 
-      {label:'Meta necessária/dia',sub:'para completar o ciclo',   val:metaNec,                             cor:metaNec>META_EQUIPE?'var(--vm)':'var(--vd)',bg:'var(--cin)'},
       {label:'Média diária equipe',sub:'meta '+metaDia+'/colab',   val:mediaEquipe,                         cor:'var(--azm)',bg:'var(--cin)'},
       {label:'🏆 Melhor dia',      sub:fmtDt(melhor.dt),          val:melhor.tot,                          cor:'var(--vd)', bg:'var(--cin)'},
       {label:'📉 Pior dia',        sub:fmtDt(pior.dt),            val:pior.tot,                            cor:'var(--vm)', bg:'var(--cin)'},
@@ -3415,7 +3423,8 @@ function renderPainelEstrategico(){
     const cicloInicioD = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
     const diasDecorridos = Math.max(1, Math.round((HOJE - new Date(cicloInicioD+'T12:00:00'))/86400000));
     // Projeção = já realizado + (ritmo atual × dias restantes)
-    const projecao = totalAnalis + Math.round(ritmo * diasRestantes);
+    // Projeção = já realizado + (ritmo atual × dias úteis restantes)
+  const projecao = totalAnalis + Math.round(ritmo * diasRestantes);
     const abaixo = gap < 0;
     // Variação vs ontem: pegar último e penúltimo dia do PCP
     const pcpSort2 = pcpPer.slice().sort((a,b)=>a.data.localeCompare(b.data));
@@ -3444,7 +3453,7 @@ function renderPainelEstrategico(){
         if(icoEl)icoEl.textContent='✅';
         titEl.textContent='Ciclo dentro do planejado';
       }
-      msgEl.innerHTML='Ritmo <strong>'+ritmo+'/dia</strong> · projeção <strong>'+projecao.toLocaleString('pt-BR')+' itens</strong> (meta: '+cicloMetaTotal.toLocaleString('pt-BR')+') · necessário <strong>'+metaNec+'/dia</strong> nos '+diasRestantes+' dias restantes · <span style="color:'+vsColor+';font-weight:600">'+vsStr+'</span>';
+      msgEl.innerHTML='Ritmo <strong>'+ritmo+'/dia</strong> · projeção <strong>'+projecao.toLocaleString('pt-BR')+' itens</strong> (meta: '+cicloMetaTotal.toLocaleString('pt-BR')+') · <strong>'+diasRestantes+' dias úteis</strong> restantes até '+_fimSalvo.split('-').reverse().join('/') + ' · <span style="color:'+vsColor+';font-weight:600">'+vsStr+'</span>';
     }
 
   // ── Dados para os gráficos usando pcpData (fonte validada) ──
