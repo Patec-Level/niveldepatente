@@ -7840,11 +7840,17 @@ function renderCascata(){
 
   const backlogBase = Number(r.pa_backlog_val)||582;
   const metaDia     = Number(r.pa_meta_dia)||30;
-  // Dias úteis a partir do dia SEGUINTE ao início (o início é o backlog desse dia)
+  // Dias úteis: do dia SEGUINTE ao início até o dia ANTERIOR ao fim
+  // (início e fim são as barras de referência, os dias intermediários são os movimentos)
   const dtInicioMais1 = new Date(dtInicio+'T12:00:00');
   dtInicioMais1.setDate(dtInicioMais1.getDate()+1);
   const dtInicioProximo = dtInicioMais1.toISOString().split('T')[0];
-  const diasUteis   = paDiasUteis(dtInicioProximo, dtFim);
+  const dtFimMenos1 = new Date(dtFim+'T12:00:00');
+  dtFimMenos1.setDate(dtFimMenos1.getDate()-1);
+  const dtFimAnterior = dtFimMenos1.toISOString().split('T')[0];
+  // Se período de 1 dia (início+1 = fim), incluir o dia do fim como movimento
+  const dtUltimoDia = dtInicioProximo > dtFimAnterior ? dtFim : dtFimAnterior;
+  const diasUteis = dtInicioProximo > dtFim ? [] : paDiasUteis(dtInicioProximo, dtUltimoDia);
 
   // Saídas por dia — f[0] (1ª análise)
   const saidasPorDia = {};
