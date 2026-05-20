@@ -2200,43 +2200,39 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- GRÁFICO CASCATA — ACOMPANHAMENTO E PLANO DE REDUÇÃO -->
       <div class="cd" style="margin-bottom:1rem">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
-          <div>
-            <div class="cd-t" style="margin:0">📉 Acompanhamento e Plano de Redução</div>
-            <div style="font-size:11px;color:var(--tx2);margin-top:3px">Período: quarta → quarta · apenas dias úteis</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">
+          <div class="cd-t" style="margin:0">📉 Acompanhamento e Plano de Redução</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <div>
-              <label style="font-size:10px;color:var(--tx2);font-weight:600;display:block;margin-bottom:2px">Quarta inicial</label>
-              <input type="date" id="pa-dt-inicio" style="font-size:11px;padding:5px 8px;border:1.5px solid var(--brd);border-radius:6px;color:var(--az);font-weight:600" onchange="renderCascata()">
+              <label style="font-size:10px;color:var(--tx2);font-weight:600;display:block;margin-bottom:2px">📅 Início (Backlog Inicial)</label>
+              <input type="date" id="pa-dt-inicio" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--brd);border-radius:7px;color:var(--az);font-weight:600" onchange="renderCascata()">
             </div>
-            <button class="btn btn-s" style="font-size:11px;margin-top:14px" onclick="paSemanaAtual()">Semana atual</button>
+            <div>
+              <label style="font-size:10px;color:var(--tx2);font-weight:600;display:block;margin-bottom:2px">📅 Fim (Backlog Atual)</label>
+              <input type="date" id="pa-dt-fim" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--brd);border-radius:7px;color:var(--az);font-weight:600" onchange="renderCascata()">
+            </div>
+            <button class="btn btn-s" style="font-size:11px;align-self:flex-end" onclick="paPeriodoHoje()">📅 Hoje</button>
+            <button class="btn btn-p" style="font-size:11px;align-self:flex-end" onclick="renderCascata()">🔍 Analisar</button>
           </div>
         </div>
 
-        <!-- KPIs do período -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem" id="pa-kpis"></div>
+        <!-- Projeção + Meta -->
+        <div id="pa-projecao" style="display:none;margin-bottom:1rem;padding:.75rem 1.1rem;background:var(--vdc);border-radius:8px;border:1px solid rgba(14,158,106,.2)"></div>
 
-        <!-- Projeção -->
-        <div id="pa-projecao" style="display:none;margin-bottom:1rem;padding:.75rem 1rem;background:var(--vdc);border-radius:8px;border:1px solid rgba(14,158,106,.2);font-size:12px;color:var(--tx)"></div>
+        <!-- KPIs do período -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem" id="pa-kpis"></div>
 
         <!-- Gráfico cascata -->
-        <div style="position:relative;height:340px">
+        <div style="position:relative;height:360px">
           <canvas id="pa-chart-cascata"></canvas>
         </div>
 
         <!-- Tabela de dias -->
-        <div class="tw" style="margin-top:1rem;overflow-x:auto">
-          <table id="pa-tabela-cascata">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Backlog início do dia</th>
-                <th>Saídas (1ª Análise)</th>
-                <th>Entradas</th>
-                <th>Backlog fim do dia</th>
-              </tr>
-            </thead>
+        <div class="tw" style="margin-top:1rem">
+          <table>
+            <thead><tr>
+              <th>Data</th><th>Backlog início</th><th>Saídas (1ª Análise)</th><th>Entradas</th><th>Backlog fim</th>
+            </tr></thead>
             <tbody id="pa-tb-body"></tbody>
           </table>
         </div>
@@ -5936,7 +5932,7 @@ async function radarSalvarFirebase(){
 
 // ── Regras de saúde ──
 function radarGetRegras(){
-  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60,"sla_card_dias":90,"pa_backlog_val":505,"pa_backlog_dt":"2026-05-14","pa_meta_dia":30,"limiar_estavel":10,"limiar_alerta":25}');
+  return JSON.parse(localStorage.getItem('patec_radar_regras')||'{"sla_alerta":60,"sla_critico":90,"prazo_alerta":30,"prazo_critico":60,"sla_card_dias":90,"pa_backlog_val":582,"pa_backlog_dt":"2026-05-14","pa_meta_dia":30,"limiar_estavel":10,"limiar_alerta":25}');
 }
 
 function radarInitADM(){
@@ -7822,38 +7818,54 @@ function renderPlanoAcaoCardsDia(){
 }
 
 // ── Gráfico Cascata ──
+function paPeriodoHoje(){
+  const hoje = HOJE.toISOString().split('T')[0];
+  const r    = radarGetRegras();
+  const dtIni = document.getElementById('pa-dt-inicio');
+  const dtFim = document.getElementById('pa-dt-fim');
+  if(dtIni && !dtIni.value) dtIni.value = r.pa_backlog_dt||'2026-05-13';
+  if(dtFim) dtFim.value = hoje;
+  renderCascata();
+}
+
 function renderCascata(){
   const dtInicioEl = document.getElementById('pa-dt-inicio');
+  const dtFimEl    = document.getElementById('pa-dt-fim');
   if(!dtInicioEl?.value) return;
 
-  const r         = radarGetRegras();
-  const dtQuarta  = dtInicioEl.value; // Quarta inicial — incluída no gráfico
-  // Período: da quarta inicial até 7 dias úteis depois
-  const dtFimDate = new Date(dtQuarta); dtFimDate.setDate(dtFimDate.getDate()+8);
-  const diasUteis = paDiasUteis(dtQuarta, dtFimDate.toISOString().split('T')[0]);
+  const r          = radarGetRegras();
+  const dtInicio   = dtInicioEl.value;
+  const dtFim      = dtFimEl?.value || HOJE.toISOString().split('T')[0];
+  if(dtInicio > dtFim){ return; }
 
-  // Backlog inicial (configurado no ADM)
-  const backlogBase = Number(r.pa_backlog_val)||505;
+  // Backlog inicial = configurado no ADM, mas se a data início mudou usa o valor do ADM
+  const backlogBase = Number(r.pa_backlog_val)||582;
+  const metaDia     = Number(r.pa_meta_dia)||30;
 
-  // Saídas por dia — f[0] do histórico de produção
+  // Dias úteis no período selecionado
+  const diasUteis = paDiasUteis(dtInicio, dtFim);
+
+  // Saídas por dia — apenas f[0] (1ª análise) por dia
   const saidasPorDia = {};
   registros.forEach(reg=>{
-    if(!reg.data||!reg.f) return;
+    if(!reg.data || !reg.f || reg.pres==='Folga' || reg.pres==='Férias') return;
     const v = reg.f[0]||0;
     if(v>0) saidasPorDia[reg.data] = (saidasPorDia[reg.data]||0)+v;
   });
 
-  // Montar série
+  // Montar série de dias
   const linhas = [];
   let backlogAtual = backlogBase;
   diasUteis.forEach(d=>{
     const saidas  = saidasPorDia[d]||0;
-    const entrada = _paEntradas.find(e=>e.dt===d)?.val||0;
-    const saldo   = entrada - saidas; // positivo = cresceu, negativo = reduziu
-    const backlogFimCalc = Math.max(0, backlogAtual + saldo);
-    linhas.push({ data:d, backlogInicio:backlogAtual, saidas, entrada, saldo, backlogFim:backlogFimCalc });
-    backlogAtual = backlogFimCalc;
+    const entrada = (_paEntradas.find(e=>e.dt===d)?.val)||0;
+    const saldo   = entrada - saidas;
+    const backlogFim = Math.max(0, backlogAtual + saldo);
+    linhas.push({ data:d, backlogInicio:backlogAtual, saidas, entrada, saldo, backlogFim });
+    backlogAtual = backlogFim;
   });
+
+  const fmtDptBR = iso => { const p=iso.split('-'); return p[2]+'/'+p[1]; };
 
   // ── KPIs ──
   const totalSaidas  = linhas.reduce((s,l)=>s+l.saidas,0);
@@ -7861,32 +7873,38 @@ function renderCascata(){
   const reducao      = backlogBase - backlogAtual;
   const kpiEl = document.getElementById('pa-kpis');
   if(kpiEl) kpiEl.innerHTML=[
-    {label:'Backlog Inicial', val:backlogBase,  cor:'var(--az)',  bg:'var(--azc)'},
-    {label:'Backlog Atual',   val:backlogAtual, cor:backlogAtual<backlogBase?'var(--vd)':'var(--vm)', bg:backlogAtual<backlogBase?'var(--vdc)':'var(--vmc)'},
-    {label:'Total Saídas',    val:totalSaidas,  cor:'var(--vd)',  bg:'var(--vdc)'},
-    {label:'Total Entradas',  val:totalEntrada, cor:'var(--am)',  bg:'var(--amc)'},
-    {label:'Redução',         val:(reducao>=0?'−':'+')+ Math.abs(reducao), cor:reducao>0?'var(--vd)':'var(--vm)', bg:reducao>0?'var(--vdc)':'var(--vmc)'},
+    {label:'Backlog Inicial', val:backlogBase,      cor:'var(--az)',  bg:'var(--azc)'},
+    {label:'Backlog Atual',   val:backlogAtual,     cor:backlogAtual<backlogBase?'var(--vd)':'var(--vm)', bg:backlogAtual<backlogBase?'var(--vdc)':'var(--vmc)'},
+    {label:'Total Saídas',    val:totalSaidas,      cor:'var(--vd)',  bg:'var(--vdc)'},
+    {label:'Total Entradas',  val:totalEntrada||'—',cor:'var(--am)',  bg:'var(--amc)'},
+    {label:'Redução',         val:(reducao>=0?'−':'+')+(Math.abs(reducao)), cor:reducao>0?'var(--vd)':'var(--vm)', bg:reducao>0?'var(--vdc)':'var(--vmc)'},
+    {label:'Dias analisados', val:linhas.length,    cor:'var(--az)',  bg:'var(--cin)'},
   ].map(c=>`<div style="background:${c.bg};border-radius:10px;padding:.875rem;text-align:center;border:1px solid rgba(0,0,0,.06)">
     <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px">${c.label}</div>
     <div style="font-size:22px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
   </div>`).join('');
 
-  // ── Projeção de dias para zerar ──
-  const mediaDia = Number(r.pa_meta_dia)||0;
+  // ── Projeção: meta diária e dias para zerar ──
+  const diasRestantes = metaDia>0 ? Math.ceil(backlogAtual/metaDia) : '—';
   const projecaoEl = document.getElementById('pa-projecao');
-  if(projecaoEl && mediaDia>0){
-    const diasRestantes = Math.ceil(backlogAtual / mediaDia);
+  if(projecaoEl){
     projecaoEl.style.display='block';
-    projecaoEl.innerHTML=`<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-      <div>📊 <strong>Meta diária:</strong> ${mediaDia} itens/dia</div>
-      <div>📅 <strong>Projeção para zerar:</strong> <span style="font-size:16px;font-weight:700;color:var(--vd)">${diasRestantes} dias úteis</span></div>
-      <div style="color:var(--tx2);font-size:11px">(backlog atual ${backlogAtual} ÷ ${mediaDia}/dia)</div>
+    projecaoEl.innerHTML=`<div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:16px">📊</span>
+        <span style="font-size:12px;color:var(--tx)"><strong>Meta diária:</strong> ${metaDia} itens/dia</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:16px">📅</span>
+        <span style="font-size:12px;color:var(--tx)"><strong>Projeção para zerar:</strong>
+          <span style="font-size:16px;font-weight:700;color:var(--vd);margin-left:4px">${diasRestantes} dias úteis</span>
+        </span>
+      </div>
+      <span style="font-size:11px;color:var(--tx2)">(backlog atual ${backlogAtual} ÷ ${metaDia}/dia)</span>
     </div>`;
-  } else if(projecaoEl){ projecaoEl.style.display='none'; }
+  }
 
   // ── Tabela ──
-  const fmtD = iso => iso.slice(5).replace('-','/'); // dd/mm em pt-BR (05/15 → 15/05)
-  const fmtDptBR = iso => { const p=iso.split('-'); return p[2]+'/'+p[1]; };
   const tb = document.getElementById('pa-tb-body');
   if(tb) tb.innerHTML=linhas.map(l=>`<tr>
     <td style="font-weight:600">${fmtDptBR(l.data)}</td>
@@ -7896,156 +7914,89 @@ function renderCascata(){
     <td style="font-weight:700;color:${l.saldo<0?'var(--vd)':l.saldo>0?'var(--vm)':'var(--tx)'}">${l.backlogFim}</td>
   </tr>`).join('');
 
-  // ── Chart Cascata com floating bars [min,max] ──
+  // ── Gráfico Cascata ──
   const canvas = document.getElementById('pa-chart-cascata');
   if(!canvas) return;
   if(_paChartCascata){ _paChartCascata.destroy(); _paChartCascata=null; }
 
   const labels = ['Backlog Inicial', ...linhas.map(l=>fmtDptBR(l.data)), 'Backlog Atual'];
 
-  // Barras fixas: backlog inicial (cinza) e backlog atual (azul) — formato [0, valor]
+  // Dataset 1: barras fixas (Backlog Inicial e Atual) — formato [0, valor]
   const barFixaData = [
     [0, backlogBase],
     ...linhas.map(()=>null),
     [0, backlogAtual]
   ];
-  const barFixaCor = [
-    'rgba(176,190,197,0.85)',
-    ...linhas.map(()=>null),
-    'rgba(0,105,135,0.85)'
-  ];
+  const barFixaCor = ['rgba(176,190,197,0.9)',...linhas.map(()=>null),'rgba(0,105,135,0.9)'];
 
-  // Barras flutuantes diárias — formato [backlogFim, backlogInicio] (floating bar Chart.js)
-  // Verde se reduziu (backlogFim < backlogInicio), vermelho se aumentou
-  const barDiariaData = [
-    null,
-    ...linhas.map(l=>[l.backlogFim, l.backlogInicio]),
-    null
-  ];
-  const barDiariaCor = [
-    null,
-    ...linhas.map(l=>l.saldo<0?'rgba(46,125,50,0.85)':l.saldo>0?'rgba(211,47,47,0.85)':'rgba(150,150,150,0.5)'),
-    null
-  ];
+  // Dataset 2: barras flutuantes por dia — [backlogFim, backlogInicio]
+  const barDiariaData = [null,...linhas.map(l=>[l.backlogFim,l.backlogInicio]),null];
+  const barDiariaCor  = [null,...linhas.map(l=>
+    l.saldo<0?'rgba(46,125,50,0.85)':
+    l.saldo>0?'rgba(211,47,47,0.85)':'rgba(150,150,150,0.5)'
+  ),null];
 
   _paChartCascata = new Chart(canvas, {
     type:'bar',
-    data:{
-      labels,
-      datasets:[
-        {
-          label:'Backlog',
-          data: barFixaData,
-          backgroundColor: barFixaCor,
-          borderRadius:4,
-          categoryPercentage:0.55,
-          barPercentage:0.85,
-        },
-        {
-          label:'Variação',
-          data: barDiariaData,
-          backgroundColor: barDiariaCor,
-          borderRadius:4,
-          categoryPercentage:0.55,
-          barPercentage:0.85,
-        },
-      ]
-    },
+    data:{labels, datasets:[
+      { label:'Backlog', data:barFixaData,   backgroundColor:barFixaCor,  borderRadius:5, categoryPercentage:.55, barPercentage:.85 },
+      { label:'Dia',     data:barDiariaData, backgroundColor:barDiariaCor,borderRadius:5, categoryPercentage:.55, barPercentage:.85 },
+    ]},
     plugins:[ChartDataLabels],
     options:{
-      responsive:true,
-      maintainAspectRatio:false,
+      responsive:true, maintainAspectRatio:false,
       plugins:{
         legend:{display:false},
-        tooltip:{
-          callbacks:{
-            title:(items)=> items[0]?.label||'',
-            label:(ctx)=>{
-              const i=ctx.dataIndex;
-              if(i===0||i===labels.length-1){
-                const v=Array.isArray(ctx.raw)?ctx.raw[1]:ctx.raw;
-                return ` Backlog: ${v}`;
-              }
-              const l=linhas[i-1];
-              if(!l) return '';
-              return [
-                ` Saídas: −${l.saidas}`,
-                ` Entradas: ${l.entrada>0?'+'+l.entrada:'—'}`,
-                ` Saldo: ${l.saldo>=0?'+':''}${l.saldo}`,
-                ` Backlog fim: ${l.backlogFim}`
-              ];
-            }
+        tooltip:{callbacks:{
+          title:items=>items[0]?.label?.replace('\n',' ')||'',
+          label:(ctx)=>{
+            const i=ctx.dataIndex;
+            if(i===0||i===labels.length-1){return ` Backlog: ${Array.isArray(ctx.raw)?ctx.raw[1]:ctx.raw}`;}
+            const l=linhas[i-1]; if(!l)return'';
+            return[` 1ª Análise: −${l.saidas}`,l.entrada>0?` Entradas: +${l.entrada}`:'',` Saldo: ${l.saldo>=0?'+':''}${l.saldo}`,` Backlog fim: ${l.backlogFim}`].filter(Boolean);
           }
-        },
+        }},
         datalabels:{
           display:(ctx)=>{
             const i=ctx.dataIndex;
-            // Mostrar em todas as barras
-            if(ctx.datasetIndex===0){
-              // Barras fixas: mostrar valor do backlog no topo
-              return i===0 || i===labels.length-1;
-            }
-            // Barras diárias: mostrar saldo
-            return ctx.datasetIndex===1 && i>0 && i<labels.length-1;
+            if(ctx.datasetIndex===0) return i===0||i===labels.length-1;
+            return ctx.datasetIndex===1&&i>0&&i<labels.length-1;
           },
           formatter:(val,ctx)=>{
             const i=ctx.dataIndex;
-            if(ctx.datasetIndex===0){
-              // Backlog inicial ou atual
-              return Array.isArray(val)?val[1]:val;
-            }
-            // Saldo do dia
-            const l=linhas[i-1];
-            if(!l) return '';
+            if(ctx.datasetIndex===0) return Array.isArray(val)?val[1]:val;
+            const l=linhas[i-1]; if(!l)return'';
             return l.saldo===0?'0':(l.saldo<0?l.saldo:'+'+l.saldo);
           },
           color:(ctx)=>{
-            if(ctx.datasetIndex===0) return '#555';
-            const i=ctx.dataIndex;
-            const l=linhas[i-1];
-            return l?.saldo<0?'rgba(30,100,30,1)':l?.saldo>0?'rgba(180,20,20,1)':'#888';
+            if(ctx.datasetIndex===0)return'#555';
+            const l=linhas[ctx.dataIndex-1];
+            return l?.saldo<0?'#2e7d32':l?.saldo>0?'#c62828':'#888';
           },
-          anchor:(ctx)=>{
-            if(ctx.datasetIndex===0) return 'end';
-            const i=ctx.dataIndex;
-            const l=linhas[i-1];
-            // Saldo negativo (reduziu): label acima do topo da barra (backlogInicio)
-            // Saldo positivo (aumentou): label acima do topo (backlogFim)
-            return 'end';
-          },
-          align:'end',
-          offset:4,
-          font:{size:11, weight:'700'},
-          clamp:false,
+          anchor:'end', align:'end', offset:4,
+          font:{size:11,weight:'700'}, clamp:false,
         }
       },
       scales:{
-        x:{
-          grid:{display:false},
-          ticks:{font:{size:11}, maxRotation:0}
-        },
-        y:{
-          grid:{color:'rgba(0,0,0,.06)'},
-          ticks:{font:{size:11}},
-          title:{display:true, text:'Backlog (itens PATEC)', font:{size:11}, color:'#888'},
-          min:0
-        }
+        x:{grid:{display:false},ticks:{font:{size:11},maxRotation:0}},
+        y:{grid:{color:'rgba(0,0,0,.06)'},ticks:{font:{size:11}},
+           title:{display:true,text:'Backlog (itens PATEC)',font:{size:11},color:'#888'},min:0}
       }
     }
   });
 }
+
 function renderPlanoAcao(){
-  // Inicializar data de hoje nos cards
   const sel = document.getElementById('pa-dia-sel');
   if(sel && !sel.value) sel.value = HOJE.toISOString().split('T')[0];
   renderPlanoAcaoCardsDia();
 
-  // Inicializar gráfico cascata — usar data do backlog configurado no ADM como início
-  const dtSel = document.getElementById('pa-dt-inicio');
-  if(dtSel && !dtSel.value){
-    const r = radarGetRegras();
-    dtSel.value = r.pa_backlog_dt || paQuartaAtual();
-  }
+  const r      = radarGetRegras();
+  const dtIni  = document.getElementById('pa-dt-inicio');
+  const dtFim  = document.getElementById('pa-dt-fim');
+  const hoje   = HOJE.toISOString().split('T')[0];
+  if(dtIni && !dtIni.value) dtIni.value = r.pa_backlog_dt||'2026-05-13';
+  if(dtFim && !dtFim.value) dtFim.value = hoje;
   renderCascata();
 }
 
