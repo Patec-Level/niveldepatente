@@ -355,10 +355,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   </div>
 
   <div class="sb-mod">◈ ESTRATÉGICO</div>
-  <div class="sb-it active" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
+  <div class="sb-it" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
   <div class="sb-it" onclick="go('radar',this)">📡 Radar Estratégico</div>
   <div class="sb-it" onclick="go('plano-acao',this)">🎯 Plano de Ação</div>
-  <div class="sb-it" onclick="go('analista-auto',this)">🤖 Analista Automático</div>
+  <div class="sb-it active" onclick="go('analista-auto',this)">🤖 Analista Automático</div>
   <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ EXECUÇÃO</div>
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('pr-estrategico',this)">🎯 Painel Estratégico</div>
@@ -384,7 +384,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1">
     <div style="display:flex;align-items:center;gap:10px">
       <span id="ttl-ico" style="font-size:18px">📊</span>
-      <h2 id="ttl" style="font-size:17px;font-weight:600;color:#fff;white-space:nowrap;letter-spacing:.2px">Visão Executiva</h2>
+      <h2 id="ttl" style="font-size:17px;font-weight:600;color:#fff;white-space:nowrap;letter-spacing:.2px">Analista Automático</h2>
     </div>
   </div>
 
@@ -1869,7 +1869,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     <!-- ══════════════════════════════════════════
          OPERAÇÃO — LANÇAR PRODUÇÃO
     ══════════════════════════════════════════ -->
-    <div id="p-pr-lancar" class="page active">
+    <div id="p-pr-lancar" class="page">
 
       <!-- TELA DE LOGIN -->
       <div id="pr-login" class="cd" style="max-width:420px;margin:2rem auto;text-align:center">
@@ -2358,7 +2358,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     <!-- ══════════════════════════════════════════
          ANALISTA AUTOMÁTICO — PEDIDO DIRETO
     ══════════════════════════════════════════ -->
-    <div id="p-analista-auto" class="page">
+    <div id="p-analista-auto" class="page active">
       <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:.5rem">
           <div>
