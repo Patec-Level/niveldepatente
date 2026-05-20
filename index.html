@@ -9110,11 +9110,13 @@ let _pcTabAtiva = 'vencido';
 const PC_STATUS_OK = ['analisar patec finalizado','patec finalizado'];
 
 function pcDadosBase(){
-  // Filtra obrigatoriamente STATUS MAPA (col D) = 'Analisar PATEC Finalizado'
-  return (_radarDados||[]).filter(r => {
-    const s = (r.analista_auto||'').trim();
-    return s === 'Analisar PATEC Finalizado';
-  });
+  // Vencido e Críticos: col D = 'Analisar PATEC Finalizado'
+  return (_radarDados||[]).filter(r => (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado');
+}
+
+function pcDadosReprovado(){
+  // 100% Reprovado: col D = 'PATEC Finalizado sem fornecedores aprovados'
+  return (_radarDados||[]).filter(r => (r.analista_auto||'').trim() === 'PATEC Finalizado sem fornecedores aprovados');
 }
 
 function pcInicializar(){
@@ -9131,8 +9133,8 @@ function pcInicializar(){
   if(sel) sel.innerHTML = '<option value="">Todos</option>' + analistas.map(a=>`<option>${a}</option>`).join('');
 
   // KPIs gerais
-  const vencidos   = (_radarDados||[]).filter(r => (r.validade||'').toLowerCase().includes('vencida') || (r.validade||'').toLowerCase().includes('vencid'));
-  const reprovados = pcGetReprovados();
+  const vencidos   = base.filter(r => (r.validade||'').toLowerCase().includes('vencida') || (r.validade||'').toLowerCase().includes('vencid'));
+  const reprovados = pcDadosReprovado();
   const criticos   = base.filter(r => (r.status_ctrl||'').toUpperCase() === 'CRÍTICO' || (r.status_ctrl||'').toUpperCase() === 'CRITICO');
 
   document.getElementById('pc-kpis').innerHTML = `
@@ -9180,12 +9182,12 @@ function pcFiltrar(){
     return mAn && mBus;
   });
 
-  // VENCIDO: col J = 'Vencida' — busca em toda a base sem filtro de status D
-  const vencidos = filtrar((_radarDados||[]).filter(r => (r.validade||'').toLowerCase().includes('vencida') || (r.validade||'').toLowerCase().includes('vencid')));
+  // VENCIDO: col J = 'Vencida' + col D = 'Analisar PATEC Finalizado'
+  const vencidos = filtrar(base.filter(r => (r.validade||'').toLowerCase().includes('vencida') || (r.validade||'').toLowerCase().includes('vencid')));
   pcRenderTabela('vencido', vencidos, ['analista','validade','sla','rc','item_rc','num_oport','seq'], false);
 
   // 100% REPROVADO: col D = 'PATEC Finalizado sem fornecedores aprovados'
-  const reprovados = filtrar(pcGetReprovados());
+  const reprovados = filtrar(pcDadosReprovado());
   pcRenderTabela('reprovado', reprovados, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
 
   // ITENS CRÍTICOS: familia (col L) = 'Crítica' E NÃO está vencido (col J)
