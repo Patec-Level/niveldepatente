@@ -8884,7 +8884,7 @@ function aaExportar(){
   ];
 
   XLSX.utils.book_append_sheet(wb, ws, 'RCs Aptas - Pedido Direto');
-  const dt = new Date().toLocaleDateString('pt-BR').replace(/\/g,'-');
+  const dt = new Date().toLocaleDateString('pt-BR').split('/').join('-');
   XLSX.writeFile(wb, `Analista_Automatico_${dt}.xlsx`);
 }
 
