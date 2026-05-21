@@ -317,9 +317,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 }
 
 /* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(13,35,71,.15);border-radius:4px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:rgba(13,35,71,.06);border-radius:4px}
+::-webkit-scrollbar-thumb{background:rgba(13,35,71,.35);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(13,35,71,.55)}
 
 /* ── INTELIGÊNCIA DE MERCADO ── */
 @keyframes mkt-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -2556,6 +2557,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- KPIs -->
       <div class="kgrid" id="gov-kpis" style="margin-bottom:1rem"></div>
 
+      <!-- Filtro de RC global -->
+      <div class="cd" style="margin-bottom:1rem;padding:.75rem 1rem">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:600;color:var(--az)">🔍 Buscar RC</span>
+          <input type="text" id="gov-busca-rc" placeholder="Digite o número da RC..." oninput="govBuscarRC(this.value)"
+            style="font-size:12px;padding:5px 10px;flex:1;min-width:200px;max-width:320px">
+          <button class="btn btn-s" style="font-size:11px" onclick="govLimparBusca()">✕ Limpar</button>
+        </div>
+        <div id="gov-busca-resultado" style="margin-top:.75rem;display:none"></div>
+      </div>
+
       <!-- Abas -->
       <div class="stabs" style="margin-bottom:1rem">
         <button class="stab active" onclick="govSetTab('mapa',this)">🗺 MAPA</button>
@@ -2568,14 +2580,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div id="gov-sem-dados" style="text-align:center;padding:3rem;color:var(--tx2);font-size:13px;display:none">
           📡 Nenhum dado disponível. Faça upload no Radar Estratégico (ADM).
         </div>
+        <!-- Importação em lote -->
+        <div id="gov-import-bar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:.75rem">
+          <input type="file" id="gov-import-input" accept=".xlsx,.xls" style="font-size:11px" onchange="govImportarPlanilha(this)">
+          <span id="gov-import-status" style="font-size:11px;color:var(--vd)"></span>
+        </div>
         <div class="tw" style="max-height:560px" id="gov-mapa-wrap">
           <table id="gov-mapa-table">
             <thead>
               <tr>
                 <th>Analista</th>
                 <th>Fila Level Board</th>
-                <th>Validade Proposta</th>
-                <th>Idas Mercado</th>
                 <th>SLA</th>
                 <th>RC</th>
                 <th>Item RC</th>
@@ -2585,8 +2600,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <th>Envio</th>
                 <th>Prazo Retorno</th>
                 <th>Status</th>
+                <th>Validade Proposta</th>
+                <th>Idas Mercado</th>
                 <th>Finalizado</th>
-                <th>Ação</th>
               </tr>
             </thead>
             <tbody id="gov-mapa-tbody"></tbody>
@@ -2619,7 +2635,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <th>Prazo Retorno</th>
                 <th>Status</th>
                 <th>Finalizado</th>
-                <th>Ação</th>
               </tr>
             </thead>
             <tbody id="xgl-tbody"></tbody>
@@ -9648,8 +9663,6 @@ function govRenderMapa(dados){
     return `<tr id="gov-row-${idx}">
       <td style="font-size:11px">${r.analista||'—'}</td>
       <td style="font-size:11px">${r.fila||'—'}</td>
-      <td style="font-size:11px;${corVal(r.validade)}">${r.validade||'—'}</td>
-      <td style="text-align:center">${r.idas||'—'}</td>
       <td style="text-align:center">${r.sla||'—'}</td>
       <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
       <td>${r.item_rc||'—'}</td>
@@ -9668,12 +9681,11 @@ function govRenderMapa(dados){
       </td>
       <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo||'—'}</td>
       <td style="text-align:center;font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
+      <td style="font-size:11px;${corVal(r.validade)}">${r.validade||'—'}</td>
+      <td style="text-align:center">${r.idas||'—'}</td>
       <td>
         <input type="date" value="${finalizado}" style="font-size:11px;padding:2px 4px;width:110px"
           onchange="govSalvarCampo('${chave}','finalizado',this.value,${idx})">
-      </td>
-      <td>
-        <button class="btn btn-g" style="font-size:10px;padding:3px 8px" onclick="govSalvarLinha('${chave}',${idx})">💾</button>
       </td>
     </tr>`;
   }).join('');
@@ -9693,11 +9705,18 @@ async function govSalvarCampo(chave, campo, valor, idx){
   const row = document.getElementById('gov-row-' + idx);
   if(row){
     const cells = row.querySelectorAll('td');
-    cells[11].textContent = prazo||'—';
-    cells[11].style.cssText = prazo ? 'text-align:center;font-size:11px;font-weight:600' : 'text-align:center;font-size:11px;color:var(--tx2)';
-    cells[12].textContent = statusCalc||'—';
-    cells[12].style.cssText = 'text-align:center;font-size:11px;' + govCorStatus(statusCalc);
+    cells[9].textContent = prazo||'—';
+    cells[9].style.cssText = prazo ? 'text-align:center;font-size:11px;font-weight:600' : 'text-align:center;font-size:11px;color:var(--tx2)';
+    cells[10].textContent = statusCalc||'—';
+    cells[10].style.cssText = 'text-align:center;font-size:11px;' + govCorStatus(statusCalc);
   }
+  // Auto-save no Firebase
+  try{
+    const db = getDB(); if(!db) return;
+    await db.collection('gov_mapa').doc(chave.replace(/[|]/g,'_')).set({
+      ..._govDados[chave], chave, ts: new Date().toISOString()
+    });
+  } catch(e){ console.warn('govAutoSave:', e); }
 }
 
 async function govSalvarLinha(chave, idx){
@@ -9885,9 +9904,6 @@ function xglRender(){
         <input type="date" value="${finalizado}" style="font-size:11px;padding:2px 4px;width:110px"
           onchange="xglSalvarCampo('${chave}','finalizado',this.value,${idx})">
       </td>
-      <td>
-        <button class="btn btn-g" style="font-size:10px;padding:3px 8px" onclick="xglSalvarLinha('${chave}',${idx})">💾</button>
-      </td>
     </tr>`;
   }).join('');
 }
@@ -9907,6 +9923,13 @@ async function xglSalvarCampo(chave, campo, valor, idx){
     cells[7].textContent = statusCalc||'—';
     cells[7].style.cssText = 'text-align:center;font-size:11px;' + govCorStatus(statusCalc);
   }
+  // Auto-save no Firebase
+  try{
+    const db = getDB(); if(!db) return;
+    await db.collection('gov_xgl').doc(chave.replace(/[|]/g,'_')).set({
+      ..._xglDados[chave], chave, ts: new Date().toISOString()
+    });
+  } catch(e){ console.warn('xglAutoSave:', e); }
 }
 
 async function xglSalvarLinha(chave, idx){
@@ -9923,6 +9946,153 @@ async function xglSalvarLinha(chave, idx){
 
 // Carregar ao iniciar
 xglCarregarFirebase();
+
+
+// ════════════════════════════════════════════
+// GOVERNANÇA — IMPORTAÇÃO EM LOTE (MAPA)
+// ════════════════════════════════════════════
+async function govImportarPlanilha(input){
+  const file = input.files[0];
+  if(!file) return;
+  const elStatus = document.getElementById('gov-import-status');
+  elStatus.textContent = '⏳ Lendo planilha...';
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+
+      // Col B(1)=RC, C(2)=SEQ, D(3)=OP, E(4)=Item, F(5)=Status, G(6)=Envio, J(9)=Finalizado
+      const registros = rows.slice(1).filter(r => r[1] && String(r[1]).trim());
+
+      elStatus.textContent = '⏳ Importando ' + registros.length + ' registros...';
+
+      const db = getDB();
+      if(!db){ elStatus.textContent = '❌ Firebase não conectado.'; return; }
+
+      let salvos = 0;
+      for(const r of registros){
+        const rc    = String(r[1]||'').trim();
+        const seq   = String(r[2]||'').trim();
+        const op    = String(r[3]||'').replace(/\.0$/,'').trim();
+        const item  = String(r[4]||'').trim();
+        if(!rc) continue;
+
+        const chave = rc + '|' + seq + '|' + op + '|' + item;
+
+        // Formatar datas
+        const fmtDate = v => {
+          if(!v) return '';
+          // Formato dd/mm/aaaa ou aaaa-mm-dd
+          if(String(v).includes('/')){
+            const [d,m,y] = String(v).split('/');
+            return y + '-' + m.padStart(2,'0') + '-' + d.padStart(2,'0');
+          }
+          return String(v).split(' ')[0];
+        };
+
+        const status    = String(r[5]||'').trim();
+        const envio     = fmtDate(r[6]);
+        const finalizado = fmtDate(r[9]);
+
+        if(!status && !envio && !finalizado) continue;
+
+        // Atualizar memória local
+        _govDados[chave] = { status, envio, finalizado };
+
+        // Salvar no Firebase
+        await db.collection('gov_mapa').doc(chave.replace(/[|]/g,'_')).set({
+          status, envio, finalizado, chave, ts: new Date().toISOString()
+        });
+        salvos++;
+        if(salvos % 50 === 0) elStatus.textContent = '⏳ Salvando... ' + salvos + '/' + registros.length;
+      }
+
+      elStatus.textContent = '✓ ' + salvos + ' registros importados com sucesso!';
+      // Re-renderizar tabela com dados novos
+      govRenderMapa((_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado'));
+
+    } catch(err){
+      document.getElementById('gov-import-status').textContent = '❌ Erro: ' + err.message;
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+
+// ── BUSCA DE RC (todas as abas Governança) ──
+function govBuscarRC(rc){
+  const el = document.getElementById('gov-busca-resultado');
+  if(!el) return;
+  const rcBusca = rc.trim();
+  if(!rcBusca){ el.style.display='none'; el.innerHTML=''; return; }
+
+  const resultados = [];
+
+  // MAPA
+  const dadosMapa = (_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
+  dadosMapa.filter(r=>(r.rc||'').includes(rcBusca)).forEach(r=>{
+    const chave = govChave(r);
+    const m = _govDados[chave]||{};
+    const prazo = govCalcPrazo(m.status||'', m.envio||'');
+    const status = govCalcStatus(prazo, m.finalizado||'');
+    resultados.push({aba:'MAPA', rc:r.rc, seq:r.seq, op:r.num_oport, item:r.item_rc,
+      status: m.status||'—', envio:m.envio||'—', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'—'});
+  });
+
+  // XGL
+  (_xglItens||[]).filter(r=>(r.rc||'').includes(rcBusca)).forEach(r=>{
+    const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
+    const m = _xglDados[chave]||{};
+    const prazo = govCalcPrazo(m.status||'', m.envio||'');
+    const status = govCalcStatus(prazo, m.finalizado||'');
+    resultados.push({aba:'XGL', rc:r.rc, seq:r.item, op:r.oport, item:r.itemop,
+      status: m.status||'—', envio:m.envio||'—', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'—'});
+  });
+
+  if(!resultados.length){
+    el.style.display='block';
+    el.innerHTML='<span style="font-size:12px;color:var(--tx2)">Nenhum resultado encontrado para RC <strong>'+rcBusca+'</strong></span>';
+    return;
+  }
+
+  el.style.display='block';
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:600;color:var(--az);margin-bottom:6px">${resultados.length} resultado(s) para RC <strong>${rcBusca}</strong>:</div>
+    <div class="tw" style="max-height:220px">
+    <table>
+      <thead><tr>
+        <th>Aba</th><th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
+        <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th>
+      </tr></thead>
+      <tbody>
+        ${resultados.map(r=>`<tr>
+          <td style="font-weight:700;color:var(--azm)">${r.aba}</td>
+          <td style="font-weight:700;color:var(--az)">${r.rc}</td>
+          <td>${r.seq||'—'}</td>
+          <td>${r.op||'—'}</td>
+          <td>${r.item||'—'}</td>
+          <td>${r.status}</td>
+          <td>${r.envio}</td>
+          <td>${r.prazo}</td>
+          <td style="${govCorStatus(r.statusCalc)}">${r.statusCalc||'—'}</td>
+          <td>${r.finalizado}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+  `;
+}
+
+function govLimparBusca(){
+  const el = document.getElementById('gov-busca-rc');
+  if(el) el.value='';
+  const res = document.getElementById('gov-busca-resultado');
+  if(res){ res.style.display='none'; res.innerHTML=''; }
+}
 
 </script>
 </body>
