@@ -9576,11 +9576,16 @@ const GOV_PRAZOS = {
   'FORNECEDOR': 2,
   'REQUISITANTE': 5,
   'VALIDAÇÃO DO THIAGO': 3,
-  'AG. TRATAMENTO': null // sem prazo
+  'AG. TRATAMENTO': null, // sem prazo
+  'XGL BAIXO': 20,
+  'XGL ALTO': 15
 };
 
 const GOV_STATUS_OPCOES = [
   'AG. TRATAMENTO','FORNECEDOR','MDG','REQUISITANTE','VALIDAÇÃO DO THIAGO'
+];
+const XGL_STATUS_OPCOES = [
+  'AG. TRATAMENTO','FORNECEDOR','MDG','REQUISITANTE','VALIDAÇÃO DO THIAGO','XGL BAIXO','XGL ALTO'
 ];
 
 const GOV_FILAS_AG = ['PATEC','ANALISE DE OPORTUNIDADE','ANÁLISE DE OPORTUNIDADE'];
@@ -9830,7 +9835,8 @@ let _xglItens  = []; // [{rc, item, oport, itemop}] — vem do upload
 let _xglDados  = {}; // { 'RC|Item|OP|IOP': {status, envio, finalizado} } — dados manuais Firebase
 
 function xglChave(rc, item, oport, itemop){
-  return [rc, item, oport, itemop].map(v=>String(v||'').trim()).join('|');
+  // Chave simplificada: RC|SEQ (oport e itemop opcionais para compatibilidade)
+  return [rc, item].map(v=>String(v||'').trim()).join('|');
 }
 
 function xglOnFile(input){
@@ -9900,6 +9906,7 @@ async function xglCarregarFirebase(){
       if(d.chave) _xglDados[d.chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'' };
     });
     console.log('XGL carregado:', _xglItens.length, 'itens,', Object.keys(_xglDados).length, 'registros manuais');
+    await xglCarregarBase();
   } catch(e){ console.warn('xglCarregarFirebase:', e); }
 }
 
@@ -9922,7 +9929,7 @@ function xglRender(){
     const prazo      = govCalcPrazo(statusAtual, envio);
     const statusCalc = govCalcStatus(prazo, finalizado);
 
-    const optsStatus = GOV_STATUS_OPCOES.map(o =>
+    const optsStatus = XGL_STATUS_OPCOES.map(o =>
       `<option value="${o}" ${statusAtual===o?'selected':''}>${o}</option>`
     ).join('');
 
@@ -10306,6 +10313,25 @@ function govSincronizarMapa(rows){
   if(pgGov && pgGov.classList.contains('active')){
     setTimeout(govInicializar, 300);
   }
+}
+
+
+// ── DADOS PRÉ-CARREGADOS DA PLANILHA XGL ──
+const _XGL_BASE_ITENS = [{"rc": "36117806", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36129108", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "36168829", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "36203999", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36224117", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "36012037", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36283936", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36257855", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36149020", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "35857611", "item": "20", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36227641", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36227667", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36227668", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36269456", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36160831", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "35290342", "item": "30", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36372908", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "36290696", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36290697", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36268484", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36274405", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "36282887", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "35387091", "item": "20", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36266010", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36264445", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "36164726", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36266020", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36269083", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36075294", "item": "20", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36226453", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36356965", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36153029", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36302802", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36302737", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36357126", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36194132", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36079598", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36075307", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36316367", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36261494", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36093161", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36130629", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36128905", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36302794", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36334292", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36357119", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36357045", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36357016", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36356981", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36357140", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36357011", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36169964", "item": "10", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36241197", "item": "10", "oport": "", "itemop": "", "analista": "Aline"}, {"rc": "36322572", "item": "10", "oport": "", "itemop": "", "analista": "LUDY"}, {"rc": "35842755", "item": "10", "oport": "", "itemop": "", "analista": "LUDY"}, {"rc": "36351257", "item": "10", "oport": "", "itemop": "", "analista": "LUDY"}, {"rc": "36328267", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "36331440", "item": "10", "oport": "", "itemop": "", "analista": ""}, {"rc": "35763685", "item": "20", "oport": "", "itemop": "", "analista": "Ludy"}, {"rc": "36230457", "item": "10", "oport": "", "itemop": "", "analista": ""}, {"rc": "36268698", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "36269074", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}, {"rc": "36269078", "item": "10", "oport": "", "itemop": "", "analista": "Wanessa"}];
+const _XGL_BASE_DADOS = {"36117806|10": {"status": "XGL BAIXO", "envio": "2026-02-20", "finalizado": ""}, "36129108|10": {"status": "XGL BAIXO", "envio": "2026-05-19", "finalizado": ""}, "36168829|10": {"status": "REQUISITANTE", "envio": "2026-05-19", "finalizado": ""}, "36203999|10": {"status": "XGL BAIXO", "envio": "2026-03-05", "finalizado": ""}, "36224117|10": {"status": "XGL BAIXO", "envio": "2026-04-08", "finalizado": ""}, "36012037|10": {"status": "XGL BAIXO", "envio": "2026-03-17", "finalizado": ""}, "36283936|10": {"status": "XGL BAIXO", "envio": "2026-03-31", "finalizado": ""}, "36257855|10": {"status": "XGL BAIXO", "envio": "2026-03-17", "finalizado": ""}, "36149020|10": {"status": "XGL BAIXO", "envio": "2026-03-20", "finalizado": ""}, "35857611|20": {"status": "XGL BAIXO", "envio": "2026-03-24", "finalizado": ""}, "36227641|10": {"status": "XGL BAIXO", "envio": "2026-03-27", "finalizado": ""}, "36227667|10": {"status": "XGL BAIXO", "envio": "2026-03-27", "finalizado": ""}, "36227668|10": {"status": "XGL BAIXO", "envio": "2026-03-27", "finalizado": ""}, "36269456|10": {"status": "XGL BAIXO", "envio": "2026-04-24", "finalizado": ""}, "36160831|10": {"status": "XGL BAIXO", "envio": "2026-04-06", "finalizado": ""}, "35290342|30": {"status": "XGL BAIXO", "envio": "2026-04-08", "finalizado": ""}, "36372908|10": {"status": "REQUISITANTE", "envio": "2026-05-19", "finalizado": ""}, "36290696|10": {"status": "XGL BAIXO", "envio": "2026-04-10", "finalizado": ""}, "36290697|10": {"status": "XGL BAIXO", "envio": "2026-04-10", "finalizado": ""}, "36268484|10": {"status": "XGL BAIXO", "envio": "2026-04-15", "finalizado": ""}, "36274405|10": {"status": "REQUISITANTE", "envio": "2026-05-21", "finalizado": ""}, "36282887|10": {"status": "XGL BAIXO", "envio": "2026-04-27", "finalizado": ""}, "35387091|20": {"status": "REQUISITANTE", "envio": "2026-04-29", "finalizado": ""}, "36266010|10": {"status": "REQUISITANTE", "envio": "2026-04-27", "finalizado": ""}, "36264445|10": {"status": "REQUISITANTE", "envio": "2026-04-23", "finalizado": ""}, "36164726|10": {"status": "REQUISITANTE", "envio": "2026-03-30", "finalizado": ""}, "36266020|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36269083|10": {"status": "REQUISITANTE", "envio": "2026-04-01", "finalizado": ""}, "36075294|20": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36226453|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36356965|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36153029|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36302802|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36302737|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36357126|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36194132|10": {"status": "REQUISITANTE", "envio": "2026-04-09", "finalizado": ""}, "36079598|10": {"status": "REQUISITANTE", "envio": "2026-04-07", "finalizado": ""}, "36075307|10": {"status": "REQUISITANTE", "envio": "2026-04-08", "finalizado": ""}, "36316367|10": {"status": "REQUISITANTE", "envio": "2026-04-08", "finalizado": ""}, "36261494|10": {"status": "REQUISITANTE", "envio": "2026-04-09", "finalizado": ""}, "36093161|10": {"status": "REQUISITANTE", "envio": "2026-04-09", "finalizado": ""}, "36130629|10": {"status": "REQUISITANTE", "envio": "2026-04-09", "finalizado": ""}, "36128905|10": {"status": "REQUISITANTE", "envio": "2026-04-15", "finalizado": ""}, "36302794|10": {"status": "REQUISITANTE", "envio": "2026-04-13", "finalizado": ""}, "36334292|10": {"status": "REQUISITANTE", "envio": "2026-04-20", "finalizado": ""}, "36357119|10": {"status": "REQUISITANTE", "envio": "2026-04-17", "finalizado": ""}, "36357045|10": {"status": "REQUISITANTE", "envio": "2026-04-22", "finalizado": ""}, "36357016|10": {"status": "REQUISITANTE", "envio": "2026-04-22", "finalizado": ""}, "36356981|10": {"status": "REQUISITANTE", "envio": "2026-04-22", "finalizado": ""}, "36357140|10": {"status": "REQUISITANTE", "envio": "2026-04-22", "finalizado": ""}, "36357011|10": {"status": "REQUISITANTE", "envio": "2026-04-17", "finalizado": ""}, "36169964|10": {"status": "REQUISITANTE", "envio": "2026-04-28", "finalizado": ""}, "36241197|10": {"status": "XGL ALTO", "envio": "2026-04-29", "finalizado": ""}, "36322572|10": {"status": "REQUISITANTE", "envio": "2026-05-05", "finalizado": ""}, "35842755|10": {"status": "REQUISITANTE", "envio": "2026-05-04", "finalizado": ""}, "36351257|10": {"status": "REQUISITANTE", "envio": "2026-05-08", "finalizado": ""}, "36328267|10": {"status": "REQUISITANTE", "envio": "2026-05-21", "finalizado": ""}, "36331440|10": {"status": "REQUISITANTE", "envio": "2026-05-07", "finalizado": ""}, "35763685|20": {"status": "REQUISITANTE", "envio": "2026-05-12", "finalizado": ""}, "36230457|10": {"status": "REQUISITANTE", "envio": "2026-05-21", "finalizado": ""}, "36268698|10": {"status": "XGL BAIXO", "envio": "2026-05-21", "finalizado": ""}, "36269074|10": {"status": "XGL BAIXO", "envio": "2026-05-21", "finalizado": ""}, "36269078|10": {"status": "XGL BAIXO", "envio": "2026-05-21", "finalizado": ""}};
+
+async function xglCarregarBase(){
+  // Carregar itens se ainda não houver
+  if(!_xglItens || !_xglItens.length){
+    _xglItens = [..._XGL_BASE_ITENS];
+  }
+  // Mesclar dados (sem sobrescrever Firebase)
+  Object.entries(_XGL_BASE_DADOS).forEach(([chave, d]) => {
+    if(!_xglDados[chave]){
+      _xglDados[chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'' };
+    }
+  });
+  console.log('XGL base carregada:', _XGL_BASE_ITENS.length, 'itens');
 }
 
 </script>
