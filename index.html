@@ -364,6 +364,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('pr-estrategico',this)">🎯 Painel Estratégico</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
   <div class="sb-it" onclick="go('planilha-critica',this)">🔴 Planilha Crítica</div>
+  <div class="sb-it" onclick="go('governanca',this)">⚖️ Governança</div>
   <div class="sb-sec">Em breve</div>
   <div class="sb-it" style="opacity:.45;cursor:default">📊 Status B <span class="sb-badge">breve</span></div>
   <div class="sb-sec">ADM</div>
@@ -2532,6 +2533,109 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       </div>
     </div>
 
+
+    <!-- ══════════════════════════════════════════
+         GOVERNANÇA
+    ══════════════════════════════════════════ -->
+    <div id="p-governanca" class="page">
+
+      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="cd-t" style="margin:0">⚖️ Governança</div>
+            <div style="font-size:11px;color:var(--tx2);margin-top:3px">Base: Radar Estratégico · Dados manuais salvos por colaborador</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span id="gov-ultima-att" style="font-size:11px;color:var(--tx2)"></span>
+            <button class="btn btn-s" style="font-size:11px" onclick="govAtualizar()">↺ Atualizar</button>
+            <button class="btn btn-g" style="font-size:11px" onclick="govExportar()" id="gov-btn-exportar">📥 Exportar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kgrid" id="gov-kpis" style="margin-bottom:1rem"></div>
+
+      <!-- Abas -->
+      <div class="stabs" style="margin-bottom:1rem">
+        <button class="stab active" onclick="govSetTab('mapa',this)">🗺 MAPA</button>
+        <button class="stab" onclick="govSetTab('xgl',this)">📋 XGL</button>
+        <button class="stab" onclick="govSetTab('statusb',this)">📊 Status B</button>
+      </div>
+
+      <!-- ABA MAPA -->
+      <div id="gov-tab-mapa">
+        <div id="gov-sem-dados" style="text-align:center;padding:3rem;color:var(--tx2);font-size:13px;display:none">
+          📡 Nenhum dado disponível. Faça upload no Radar Estratégico (ADM).
+        </div>
+        <div class="tw" style="max-height:560px" id="gov-mapa-wrap">
+          <table id="gov-mapa-table">
+            <thead>
+              <tr>
+                <th>Analista</th>
+                <th>Fila Level Board</th>
+                <th>Validade Proposta</th>
+                <th>Idas Mercado</th>
+                <th>SLA</th>
+                <th>RC</th>
+                <th>Item RC</th>
+                <th>Oportunidade</th>
+                <th>Item OP</th>
+                <th>Status Tratamento</th>
+                <th>Envio</th>
+                <th>Prazo Retorno</th>
+                <th>Status</th>
+                <th>Finalizado</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="gov-mapa-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ABA XGL -->
+      <div id="gov-tab-xgl" style="display:none">
+
+        <!-- Upload XGL -->
+        <div class="cd" style="margin-bottom:1rem;padding:.75rem 1rem">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="font-size:12px;font-weight:600;color:var(--az)">📂 Upload planilha XGL</div>
+            <input type="file" id="xgl-file-input" accept=".xlsx,.xls" style="font-size:11px" onchange="xglOnFile(this)">
+            <span id="xgl-upload-info" style="font-size:11px;color:var(--vd)"></span>
+          </div>
+        </div>
+
+        <div class="tw" style="max-height:540px">
+          <table>
+            <thead>
+              <tr>
+                <th>RC</th>
+                <th>Item</th>
+                <th>Oportunidade</th>
+                <th>Item OP</th>
+                <th>Status Tratamento</th>
+                <th>Envio</th>
+                <th>Prazo Retorno</th>
+                <th>Status</th>
+                <th>Finalizado</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="xgl-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ABA STATUS B -->
+      <div id="gov-tab-statusb" style="display:none">
+        <div style="text-align:center;padding:3rem;color:var(--tx2);font-size:13px">
+          📊 Em construção — disponível em breve.
+        </div>
+      </div>
+
+    </div>
+
     <!-- ══════════════════════════════════════════
          OPERAÇÃO — VISÃO POR EQUIPE
     ══════════════════════════════════════════ -->
@@ -3187,7 +3291,7 @@ function go(id, el) {
     'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
-    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Automático','planilha-critica':'Planilha Crítica','adm':'Administração',
+    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Automático','planilha-critica':'Planilha Crítica','governanca':'Governança','adm':'Administração',
     };
   document.getElementById('ttl').textContent = titles[id] || id;
   if(id==='pr-bancoferias'){renderFerias();renderBanco();renderBHECards();}
@@ -3196,6 +3300,7 @@ function go(id, el) {
   if(id==='vg-mercado') mktCarregarTudo();
   if(id==='analista-auto') setTimeout(aaPublicoCarregar, 100);
   if(id==='planilha-critica') setTimeout(pcInicializar, 100);
+  if(id==='governanca') setTimeout(()=>{ govCarregarFirebase().then(()=>govInicializar()); }, 100);
   // Auto-login em módulos sem senha
   if(id==='adm') setTimeout(()=>{
     const login=document.getElementById('adm-login');
@@ -9390,6 +9495,433 @@ function pcRenderFluxo(){
     <td>${String(r[8]||'').trim()||'—'}</td>
   </tr>`).join('');
 }
+
+
+// ════════════════════════════════════════════
+// GOVERNANÇA
+// ════════════════════════════════════════════
+let _govTabAtiva = 'mapa';
+let _govDados = {}; // { 'RC|SEQ|OP|IOP': { status, envio, finalizado } }
+
+// Feriados nacionais BR (fixos + móveis aproximados)
+const GOV_FERIADOS = [
+  '2026-01-01','2026-04-03','2026-04-21','2026-05-01','2026-06-11',
+  '2026-09-07','2026-10-12','2026-11-02','2026-11-15','2026-11-20','2026-12-25',
+  '2027-01-01','2027-04-02','2027-04-21','2027-05-01','2027-09-07',
+  '2027-10-12','2027-11-02','2027-11-15','2027-11-20','2027-12-25'
+];
+
+const GOV_PRAZOS = {
+  'MDG': 5,
+  'FORNECEDOR': 2,
+  'REQUISITANTE': 5,
+  'VALIDAÇÃO DO THIAGO': 3,
+  'AG. TRATAMENTO': null // sem prazo
+};
+
+const GOV_STATUS_OPCOES = [
+  'AG. TRATAMENTO','FORNECEDOR','MDG','REQUISITANTE','VALIDAÇÃO DO THIAGO'
+];
+
+const GOV_FILAS_AG = ['PATEC','ANALISE DE OPORTUNIDADE','ANÁLISE DE OPORTUNIDADE'];
+
+function govChave(r){
+  return [r.rc, r.seq, r.num_oport, r.item_rc].map(v=>String(v||'').trim()).join('|');
+}
+
+function govAddDiasUteis(dataStr, dias){
+  if(!dataStr || !dias) return null;
+  let d = new Date(dataStr + 'T12:00:00');
+  let adicionados = 0;
+  while(adicionados < dias){
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    const iso = d.toISOString().split('T')[0];
+    if(dow !== 0 && dow !== 6 && !GOV_FERIADOS.includes(iso)) adicionados++;
+  }
+  return d.toISOString().split('T')[0];
+}
+
+function govCalcPrazo(status, envio){
+  if(!status || !envio) return null;
+  const su = status.toUpperCase();
+  const dias = Object.entries(GOV_PRAZOS).find(([k]) => su.includes(k))?.[1];
+  if(!dias) return null;
+  return govAddDiasUteis(envio, dias);
+}
+
+function govCalcStatus(prazo, finalizado){
+  if(finalizado) return 'CONCLUÍDO';
+  if(!prazo) return '';
+  const hoje = new Date().toISOString().split('T')[0];
+  return prazo < hoje ? 'ATRASADO' : 'DENTRO DO PRAZO';
+}
+
+function govCorStatus(status){
+  if(status === 'ATRASADO') return 'color:var(--vm);font-weight:700';
+  if(status === 'DENTRO DO PRAZO') return 'color:var(--vd);font-weight:700';
+  if(status === 'CONCLUÍDO') return 'color:var(--az);font-weight:700';
+  return 'color:var(--tx2)';
+}
+
+function govSetTab(aba, btn){
+  _govTabAtiva = aba;
+  document.querySelectorAll('.stabs .stab').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('gov-tab-mapa').style.display    = aba === 'mapa'    ? 'block' : 'none';
+  document.getElementById('gov-tab-xgl').style.display     = aba === 'xgl'     ? 'block' : 'none';
+  document.getElementById('gov-tab-statusb').style.display = aba === 'statusb' ? 'block' : 'none';
+  if(aba === 'xgl') xglRender();
+}
+
+function govInicializar(){
+  const dados = _radarDados || [];
+  if(!dados.length){
+    document.getElementById('gov-sem-dados').style.display = 'block';
+    document.getElementById('gov-mapa-wrap').style.display = 'none';
+    return;
+  }
+  document.getElementById('gov-sem-dados').style.display = 'none';
+  document.getElementById('gov-mapa-wrap').style.display = 'block';
+
+  // KPIs
+  const total    = dados.length;
+  const atrasado = dados.filter(r => {
+    const k = govChave(r);
+    const m = _govDados[k] || {};
+    return govCalcStatus(govCalcPrazo(m.status, m.envio), m.finalizado) === 'ATRASADO';
+  }).length;
+  const concluido = dados.filter(r => {
+    const k = govChave(r);
+    const m = _govDados[k] || {};
+    return !!m.finalizado;
+  }).length;
+  const semStatus = dados.filter(r => {
+    const k = govChave(r);
+    return !(_govDados[k]?.status);
+  }).length;
+
+  document.getElementById('gov-kpis').innerHTML = `
+    <div class="kc"><div class="kn" style="color:var(--az)">${total}</div><div class="kl">Total</div></div>
+    <div class="kc"><div class="kn" style="color:var(--vm)">${atrasado}</div><div class="kl">Atrasados</div></div>
+    <div class="kc"><div class="kn" style="color:var(--vd)">${concluido}</div><div class="kl">Concluídos</div></div>
+    <div class="kc"><div class="kn" style="color:var(--am)">${semStatus}</div><div class="kl">Sem Status</div></div>
+  `;
+
+  // Atualização
+  if(_radarTs) document.getElementById('gov-ultima-att').textContent = 'Base: ' + new Date(_radarTs).toLocaleString('pt-BR');
+
+  govRenderMapa(dados);
+}
+
+function govRenderMapa(dados){
+  const tbody = document.getElementById('gov-mapa-tbody');
+  if(!tbody) return;
+
+  tbody.innerHTML = dados.map((r, idx) => {
+    const chave = govChave(r);
+    const m = _govDados[chave] || {};
+
+    // Auto-preencher AG. TRATAMENTO se fila = PATEC ou ANALISE DE OPORTUNIDADE e sem status
+    let statusAtual = m.status || '';
+    if(!statusAtual && GOV_FILAS_AG.some(f => (r.fila||'').toUpperCase().includes(f.toUpperCase()))){
+      statusAtual = 'AG. TRATAMENTO';
+    }
+
+    const envio     = m.envio || '';
+    const prazo     = govCalcPrazo(statusAtual, envio);
+    const finalizado = m.finalizado || '';
+    const statusCalc = govCalcStatus(prazo, finalizado);
+
+    const optsStatus = GOV_STATUS_OPCOES.map(o =>
+      `<option value="${o}" ${statusAtual===o?'selected':''}>${o}</option>`
+    ).join('');
+
+    const corVal = v => {
+      const vl = (v||'').toLowerCase();
+      if(vl.includes('vencid')) return 'color:var(--vm);font-weight:700';
+      if(vl.includes('prox')) return 'color:var(--am);font-weight:700';
+      return '';
+    };
+
+    return `<tr id="gov-row-${idx}">
+      <td style="font-size:11px">${r.analista||'—'}</td>
+      <td style="font-size:11px">${r.fila||'—'}</td>
+      <td style="font-size:11px;${corVal(r.validade)}">${r.validade||'—'}</td>
+      <td style="text-align:center">${r.idas||'—'}</td>
+      <td style="text-align:center">${r.sla||'—'}</td>
+      <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
+      <td>${r.item_rc||'—'}</td>
+      <td>${r.num_oport||'—'}</td>
+      <td>${r.seq||'—'}</td>
+      <td>
+        <select style="font-size:11px;padding:3px 6px;width:100%;min-width:160px"
+          onchange="govSalvarCampo('${chave}','status',this.value,${idx})">
+          <option value="">— selecione —</option>
+          ${optsStatus}
+        </select>
+      </td>
+      <td>
+        <input type="date" value="${envio}" style="font-size:11px;padding:2px 4px;width:110px"
+          onchange="govSalvarCampo('${chave}','envio',this.value,${idx})">
+      </td>
+      <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo||'—'}</td>
+      <td style="text-align:center;font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
+      <td>
+        <input type="date" value="${finalizado}" style="font-size:11px;padding:2px 4px;width:110px"
+          onchange="govSalvarCampo('${chave}','finalizado',this.value,${idx})">
+      </td>
+      <td>
+        <button class="btn btn-g" style="font-size:10px;padding:3px 8px" onclick="govSalvarLinha('${chave}',${idx})">💾</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function govSalvarCampo(chave, campo, valor, idx){
+  if(!_govDados[chave]) _govDados[chave] = {};
+  _govDados[chave][campo] = valor;
+  // Re-renderizar só a linha para atualizar prazo e status
+  const r = _radarDados[idx];
+  if(!r) return;
+  const m = _govDados[chave];
+  const statusAtual = m.status || (GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase())) ? 'AG. TRATAMENTO' : '');
+  const prazo = govCalcPrazo(statusAtual, m.envio||'');
+  const statusCalc = govCalcStatus(prazo, m.finalizado||'');
+  // Atualizar prazo e status na linha
+  const row = document.getElementById('gov-row-' + idx);
+  if(row){
+    const cells = row.querySelectorAll('td');
+    cells[11].textContent = prazo||'—';
+    cells[11].style.cssText = prazo ? 'text-align:center;font-size:11px;font-weight:600' : 'text-align:center;font-size:11px;color:var(--tx2)';
+    cells[12].textContent = statusCalc||'—';
+    cells[12].style.cssText = 'text-align:center;font-size:11px;' + govCorStatus(statusCalc);
+  }
+}
+
+async function govSalvarLinha(chave, idx){
+  try{
+    const db = getDB(); if(!db){ alert('Firebase não conectado.'); return; }
+    const dados = _govDados[chave] || {};
+    await db.collection('gov_mapa').doc(chave.replace(/[|]/g,'_')).set({
+      ...dados, chave, ts: new Date().toISOString()
+    });
+    // Flash na linha
+    const row = document.getElementById('gov-row-' + idx);
+    if(row){ row.style.background='var(--vdc)'; setTimeout(()=>row.style.background='',1200); }
+  } catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+
+async function govCarregarFirebase(){
+  try{
+    if(typeof firebase === 'undefined' || !_fbLoaded){
+      const ok = await loadFirebaseSDK();
+      if(!ok) return;
+      await new Promise(r=>setTimeout(r,300));
+    }
+    const db = getDB(); if(!db) return;
+    const snap = await db.collection('gov_mapa').get();
+    _govDados = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      if(d.chave) _govDados[d.chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'' };
+    });
+    console.log('Gov MAPA carregado:', Object.keys(_govDados).length, 'registros');
+  } catch(e){ console.warn('govCarregarFirebase:', e); }
+}
+
+function govAtualizar(){
+  govCarregarFirebase().then(()=>govInicializar());
+}
+
+function govExportar(){
+  const dados = _radarDados || [];
+  if(!dados.length){ alert('Nenhum dado para exportar.'); return; }
+  const wsData = [
+    ['Analista','Fila Level Board','Validade Proposta','Idas Mercado','SLA','RC','Item RC','Oportunidade','Item OP','Status Tratamento','Envio','Prazo Retorno','Status','Finalizado']
+  ];
+  dados.forEach(r => {
+    const chave = govChave(r);
+    const m = _govDados[chave] || {};
+    const statusAtual = m.status || (GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase())) ? 'AG. TRATAMENTO' : '');
+    const prazo = govCalcPrazo(statusAtual, m.envio||'');
+    const statusCalc = govCalcStatus(prazo, m.finalizado||'');
+    wsData.push([r.analista,r.fila,r.validade,r.idas,r.sla,r.rc,r.item_rc,r.num_oport,r.seq,statusAtual,m.envio||'',prazo||'',statusCalc,m.finalizado||'']);
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:14},{wch:12},{wch:14},{wch:8},{wch:6},{wch:12},{wch:8},{wch:14},{wch:8},{wch:20},{wch:12},{wch:12},{wch:16},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Governança MAPA');
+  XLSX.writeFile(wb, 'Governanca_MAPA_' + new Date().toLocaleDateString('pt-BR').split('/').join('-') + '.xlsx');
+}
+
+// Carregar ao iniciar
+govCarregarFirebase();
+
+
+// ════════════════════════════════════════════
+// GOVERNANÇA — XGL
+// ════════════════════════════════════════════
+let _xglItens  = []; // [{rc, item, oport, itemop}] — vem do upload
+let _xglDados  = {}; // { 'RC|Item|OP|IOP': {status, envio, finalizado} } — dados manuais Firebase
+
+function xglChave(rc, item, oport, itemop){
+  return [rc, item, oport, itemop].map(v=>String(v||'').trim()).join('|');
+}
+
+function xglOnFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      // Col B=1, C=2, D=3, E=4
+      _xglItens = rows.slice(1)
+        .filter(r => r[1] && String(r[1]).trim())
+        .map(r => ({
+          rc:     String(r[1]||'').trim(),
+          item:   String(r[2]||'').trim(),
+          oport:  String(r[3]||'').trim(),
+          itemop: String(r[4]||'').trim(),
+        }));
+      // Deduplicar pela chave
+      const vistos = new Set();
+      _xglItens = _xglItens.filter(r => {
+        const k = xglChave(r.rc, r.item, r.oport, r.itemop);
+        if(vistos.has(k)) return false;
+        vistos.add(k);
+        return true;
+      });
+      document.getElementById('xgl-upload-info').textContent =
+        '✓ ' + file.name + ' — ' + _xglItens.length + ' itens carregados';
+      xglSalvarItensFirebase();
+      xglRender();
+    } catch(err){
+      document.getElementById('xgl-upload-info').textContent = '❌ Erro: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function xglSalvarItensFirebase(){
+  try{
+    const db = getDB(); if(!db) return;
+    await db.collection('config').doc('xgl_itens').set({
+      itens: _xglItens,
+      dt: new Date().toISOString()
+    });
+    console.log('XGL itens salvos:', _xglItens.length);
+  } catch(e){ console.warn('xglSalvarItensFirebase:', e); }
+}
+
+async function xglCarregarFirebase(){
+  try{
+    if(typeof firebase === 'undefined' || !_fbLoaded){
+      const ok = await loadFirebaseSDK();
+      if(!ok) return;
+      await new Promise(r=>setTimeout(r,300));
+    }
+    const db = getDB(); if(!db) return;
+    // Carregar itens
+    const docItens = await db.collection('config').doc('xgl_itens').get();
+    if(docItens.exists) _xglItens = docItens.data().itens || [];
+    // Carregar dados manuais
+    const snap = await db.collection('gov_xgl').get();
+    _xglDados = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      if(d.chave) _xglDados[d.chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'' };
+    });
+    console.log('XGL carregado:', _xglItens.length, 'itens,', Object.keys(_xglDados).length, 'registros manuais');
+  } catch(e){ console.warn('xglCarregarFirebase:', e); }
+}
+
+function xglRender(){
+  const tbody = document.getElementById('xgl-tbody');
+  if(!tbody) return;
+  if(!_xglItens.length){
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--tx2);padding:1.5rem">📂 Faça o upload da planilha XGL acima.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = _xglItens.map((r, idx) => {
+    const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
+    const m = _xglDados[chave] || {};
+
+    // Status padrão AG. TRATAMENTO se vazio
+    let statusAtual = m.status || 'AG. TRATAMENTO';
+    const envio      = m.envio || '';
+    const finalizado = m.finalizado || '';
+    const prazo      = govCalcPrazo(statusAtual, envio);
+    const statusCalc = govCalcStatus(prazo, finalizado);
+
+    const optsStatus = GOV_STATUS_OPCOES.map(o =>
+      `<option value="${o}" ${statusAtual===o?'selected':''}>${o}</option>`
+    ).join('');
+
+    return `<tr id="xgl-row-${idx}">
+      <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
+      <td>${r.item||'—'}</td>
+      <td>${r.oport||'—'}</td>
+      <td>${r.itemop||'—'}</td>
+      <td>
+        <select style="font-size:11px;padding:3px 6px;width:100%;min-width:160px"
+          onchange="xglSalvarCampo('${chave}','status',this.value,${idx})">
+          <option value="">— selecione —</option>
+          ${optsStatus}
+        </select>
+      </td>
+      <td>
+        <input type="date" value="${envio}" style="font-size:11px;padding:2px 4px;width:110px"
+          onchange="xglSalvarCampo('${chave}','envio',this.value,${idx})">
+      </td>
+      <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo||'—'}</td>
+      <td style="text-align:center;font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
+      <td>
+        <input type="date" value="${finalizado}" style="font-size:11px;padding:2px 4px;width:110px"
+          onchange="xglSalvarCampo('${chave}','finalizado',this.value,${idx})">
+      </td>
+      <td>
+        <button class="btn btn-g" style="font-size:10px;padding:3px 8px" onclick="xglSalvarLinha('${chave}',${idx})">💾</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function xglSalvarCampo(chave, campo, valor, idx){
+  if(!_xglDados[chave]) _xglDados[chave] = {};
+  _xglDados[chave][campo] = valor;
+  const m = _xglDados[chave];
+  const statusAtual = m.status || 'AG. TRATAMENTO';
+  const prazo = govCalcPrazo(statusAtual, m.envio||'');
+  const statusCalc = govCalcStatus(prazo, m.finalizado||'');
+  const row = document.getElementById('xgl-row-' + idx);
+  if(row){
+    const cells = row.querySelectorAll('td');
+    cells[6].textContent = prazo||'—';
+    cells[6].style.cssText = prazo ? 'text-align:center;font-size:11px;font-weight:600' : 'text-align:center;font-size:11px;color:var(--tx2)';
+    cells[7].textContent = statusCalc||'—';
+    cells[7].style.cssText = 'text-align:center;font-size:11px;' + govCorStatus(statusCalc);
+  }
+}
+
+async function xglSalvarLinha(chave, idx){
+  try{
+    const db = getDB(); if(!db){ alert('Firebase não conectado.'); return; }
+    const dados = _xglDados[chave] || {};
+    await db.collection('gov_xgl').doc(chave.replace(/[|]/g,'_')).set({
+      ...dados, chave, ts: new Date().toISOString()
+    });
+    const row = document.getElementById('xgl-row-' + idx);
+    if(row){ row.style.background='var(--vdc)'; setTimeout(()=>row.style.background='',1200); }
+  } catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+
+// Carregar ao iniciar
+xglCarregarFirebase();
 
 </script>
 </body>
