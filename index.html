@@ -9575,7 +9575,8 @@ function govSetTab(aba, btn){
 }
 
 function govInicializar(){
-  const dados = _radarDados || [];
+  // Filtro obrigatório: STATUS MAPA = 'Analisar PATEC Finalizado'
+  const dados = (_radarDados || []).filter(r => (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado');
   if(!dados.length){
     document.getElementById('gov-sem-dados').style.display = 'block';
     document.getElementById('gov-mapa-wrap').style.display = 'none';
@@ -9735,7 +9736,7 @@ function govAtualizar(){
 }
 
 function govExportar(){
-  const dados = _radarDados || [];
+  const dados = (_radarDados || []).filter(r => (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado');
   if(!dados.length){ alert('Nenhum dado para exportar.'); return; }
   const wsData = [
     ['Analista','Fila Level Board','Validade Proposta','Idas Mercado','SLA','RC','Item RC','Oportunidade','Item OP','Status Tratamento','Envio','Prazo Retorno','Status','Finalizado']
