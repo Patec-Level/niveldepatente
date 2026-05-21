@@ -2693,8 +2693,75 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- ABA STATUS B -->
       <div id="gov-tab-statusb" style="display:none">
-        <div style="text-align:center;padding:3rem;color:var(--tx2);font-size:13px">
-          📊 Em construção — disponível em breve.
+
+        <!-- Botão adicionar -->
+        <div style="margin-bottom:.75rem;display:flex;gap:8px;align-items:center">
+          <button class="btn btn-p" style="font-size:11px" onclick="sbAbrirModal()">＋ Adicionar item</button>
+        </div>
+
+        <!-- Modal -->
+        <div id="sb-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center">
+          <div class="cd" style="width:400px;max-width:95vw;padding:1.5rem;position:relative">
+            <div style="font-weight:700;font-size:14px;margin-bottom:1rem">➕ Novo item Status B</div>
+            <div style="display:flex;flex-direction:column;gap:.75rem">
+              <div class="field-wrap">
+                <span class="field-label">RC</span>
+                <input type="text" id="sb-new-rc" placeholder="Número da RC" style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Item (SEQ)</span>
+                <input type="text" id="sb-new-seq" placeholder="Ex: 10" value="10" style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Oportunidade</span>
+                <input type="text" id="sb-new-op" placeholder="Número da oportunidade" style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Item OP</span>
+                <input type="text" id="sb-new-item" placeholder="Ex: 1" value="1" style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Status Tratamento</span>
+                <select id="sb-new-status" style="width:100%;font-size:12px;padding:5px 10px">
+                  <option value="">— selecione —</option>
+                  <option>AG. TRATAMENTO</option>
+                  <option>FORNECEDOR</option>
+                  <option>MDG</option>
+                  <option>REQUISITANTE</option>
+                  <option>VALIDAÇÃO DO THIAGO</option>
+                  <option>SAIU DO DPV</option>
+                  <option>EMITIR PEDIDO PATEC</option>
+                  <option>PATEC FINALIZADO</option>
+                  <option>DEVOLUÇÃO</option>
+                  <option>REPUBLICAÇÃO</option>
+                </select>
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Envio</span>
+                <input type="date" id="sb-new-envio" style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Comentário</span>
+                <input type="text" id="sb-new-comentario" placeholder="Observação..." style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">
+              <button class="btn btn-s" onclick="sbFecharModal()">Cancelar</button>
+              <button class="btn btn-p" onclick="sbAdicionarItem()">💾 Salvar</button>
+            </div>
+            <span id="sb-modal-erro" style="font-size:11px;color:var(--vm);display:none;margin-top:.5rem"></span>
+          </div>
+        </div>
+
+        <div class="tw" style="max-height:540px">
+          <table>
+            <thead><tr>
+              <th>Analista</th><th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
+              <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th>
+              <th>Finalizado</th><th>Comentário</th>
+            </tr></thead>
+            <tbody id="sb-tbody"></tbody>
+          </table>
         </div>
       </div>
 
@@ -9683,6 +9750,7 @@ function govSetTab(aba, btn){
   document.getElementById('gov-tab-xgl').style.display        = aba === 'xgl'        ? 'block' : 'none';
   document.getElementById('gov-tab-concluidos').style.display = aba === 'concluidos' ? 'block' : 'none';
   document.getElementById('gov-tab-statusb').style.display    = aba === 'statusb'    ? 'block' : 'none';
+  if(aba === 'statusb') setTimeout(()=>{ if(!_sbItens.length) sbCarregarFirebase().then(sbRender); else sbRender(); }, 100);
   if(aba === 'xgl') xglRender();
   if(aba === 'concluidos') govRenderConcluidos();
 }
@@ -10428,7 +10496,135 @@ async function xglAdicionarItem(){
   xglRender();
 }
 
+
+// ════════════════════════════════════════════
+// GOVERNANÇA — STATUS B
+// ════════════════════════════════════════════
+let _sbItens = [];
+let _sbDados = {};
+
+const _SB_BASE_ITENS = [{"rc": "36415142", "seq": "10", "op": "7004581075", "item": "1", "analista": "Lory"}, {"rc": "36415143", "seq": "10", "op": "7004581075", "item": "2", "analista": "Lory"}, {"rc": "36381134", "seq": "10", "op": "7004572873", "item": "1", "analista": "Lory"}, {"rc": "36000309", "seq": "30", "op": "7004569687", "item": "1", "analista": "Lory"}, {"rc": "36079439", "seq": "20", "op": "7004565396", "item": "1", "analista": "Lory"}, {"rc": "36349179", "seq": "20", "op": "7004570080", "item": "2", "analista": "Lory"}, {"rc": "35695631", "seq": "20", "op": "7004565752", "item": "1", "analista": "Lory"}, {"rc": "35729584", "seq": "20", "op": "7004565752", "item": "2", "analista": "Lory"}, {"rc": "35729762", "seq": "20", "op": "7004565752", "item": "3", "analista": "Lory"}, {"rc": "36116758", "seq": "20", "op": "7004561049", "item": "", "analista": "Lory"}, {"rc": "36272787", "seq": "10", "op": "7004557262", "item": "", "analista": "Lory"}, {"rc": "36267250", "seq": "10", "op": "7004557414", "item": "8", "analista": "Lory"}, {"rc": "36262937", "seq": "10", "op": "7004561155", "item": "1", "analista": "Lory"}, {"rc": "36205066", "seq": "10", "op": "7004571984", "item": "3", "analista": "Lory"}, {"rc": "36187508", "seq": "10", "op": "7004561946", "item": "1", "analista": "Lory"}, {"rc": "36183034", "seq": "10", "op": "7004548111", "item": "5", "analista": "Lory"}, {"rc": "36293337", "seq": "10", "op": "7004559928", "item": "5", "analista": "Lory"}, {"rc": "36423753", "seq": "10", "op": "7004583328", "item": "1", "analista": "Lory"}, {"rc": "35331316", "seq": "30", "op": "7004582980", "item": "2", "analista": "Lory"}, {"rc": "36273084", "seq": "10", "op": "7004553812", "item": "5", "analista": "Lory"}, {"rc": "36362655", "seq": "10", "op": "7004571566", "item": "2", "analista": "Lory"}, {"rc": "36396569", "seq": "10", "op": "7004589356", "item": "5", "analista": "Lory"}, {"rc": "36169923", "seq": "10", "op": "7004542251", "item": "5", "analista": "Lory"}, {"rc": "35842122", "seq": "10", "op": "7004561176", "item": "1", "analista": "Lory"}, {"rc": "36473393", "seq": "10", "op": "7004591038", "item": "27", "analista": "Lory"}, {"rc": "36507054", "seq": "10", "op": "7004593279", "item": "2", "analista": "Lory"}, {"rc": "36374733", "seq": "10", "op": "7004594688", "item": "1", "analista": "Lory"}, {"rc": "OBS: Ao inserir itens novos, peço o favor de identificá-los na coluna STATUS como \"tratar\" e na de OBS com data XX/YY - Item novo + demais observações", "seq": "", "op": "", "item": "", "analista": "Lory"}];
+const _SB_BASE_DADOS = {"36415142|10|7004581075|1": {"status": "SAIU DO DPV", "envio": "", "finalizado": "sim", "comentario": "18/05 - RC transferida para o grupo comprador XXR"}, "36415143|10|7004581075|2": {"status": "SAIU DO DPV", "envio": "", "finalizado": "sim", "comentario": "18/05 - RC transferida para o grupo comprador XXR"}, "36381134|10|7004572873|1": {"status": "EMITIR PEDIDO PATEC", "envio": "", "finalizado": "sim", "comentario": "13/04 - Enviado para emissão do PC"}, "36000309|30|7004569687|1": {"status": "EMITIR PEDIDO PATEC", "envio": "", "finalizado": "sim", "comentario": "18/05 - Reemitir o pedido. Confirmação de fornecimento de material idêntico na sala de colaboração"}, "36079439|20|7004565396|1": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "18/05 - Republicação. Forn não enviou docs solicitados. Além disso, o item recebeu apenas esta cotação."}, "36349179|20|7004570080|2": {"status": "EMITIR PEDIDO PATEC", "envio": "", "finalizado": "sim", "comentario": "13/04 - Reativar pedido. Forn aprovado em PATEC idêntico sim (Palloma)"}, "35695631|20|7004565752|1": {"status": "EMITIR PEDIDO PATEC", "envio": "", "finalizado": "sim", "comentario": "13/04 - Enviado para emissão do PC (item de classe descritiva)"}, "35729584|20|7004565752|2": {"status": "EMITIR PEDIDO PATEC", "envio": "", "finalizado": "sim", "comentario": "13/04 - Enviado para emissão do PC (item de classe descritiva)"}, "35729762|20|7004565752|3": {"status": "EMITIR PEDIDO PATEC", "envio": "", "finalizado": "sim", "comentario": "13/04 - Enviado para emissão do PC (item de classe descritiva)"}, "36116758|20|7004561049|": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "13/04 - O item recebeu apenas uma cotação,aprovada em PATEC sem documentação técnica enviada. Solicitado docs ao fornecedor, mas não houve retorno."}, "36272787|10|7004557262|": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "30/03 - Solicitado doc técnico ao fornecedor  JM4 para enviar a RC para XGL, pois a RC solicitou  a linha Performa e ele ofertou a linha Active, mas só enviou uma foto do produto.Fornecedor não respondeu."}, "36267250|10|7004557414|8": {"status": "EMITIR PEDIDO PATEC", "envio": "", "finalizado": "sim", "comentario": "06/04 - Forn cotou ident não devido erro no cadastro do NP. O mesmo foi corrigido através do MDG.Emitir pedido"}, "36262937|10|7004561155|1": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "18/05 - Proposta vencida, republicar"}, "36205066|10|7004571984|3": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "18/05 - Todos os forn foram reprovados em PATEC"}, "36187508|10|7004561946|1": {"status": "EMITIR PEDIDO PATEC", "envio": "", "finalizado": "sim", "comentario": "11/03- Reativar pedido para fornecedor GREEN PROCESS, aprovado em PATEC. Aplicar NM FILHO 30097041 (Breno)"}, "36183034|10|7004548111|5": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "14/04 - Propostas vencidas. RC encaminhada à 2ª ida ao mercado."}, "36293337|10|7004559928|5": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "07/05 - Republicação/OP vencida"}, "36423753|10|7004583328|1": {"status": "DEVOLUÇÃO", "envio": "", "finalizado": "sim", "comentario": "24/04 - Enviado para devolução"}, "35331316|30|7004582980|2": {"status": "EMITIR PEDIDO PATEC", "envio": "", "finalizado": "sim", "comentario": "18/05 - Reemitir o pedido. Material aprovado em PATEC. O material é o mesmo que está sendo solicitado. O forn indicou no relatório consolidado a empresa EURO como fabricante, mas esta é a comercioalizadora/distribuidora aqui no Brasil. O fabricante original  é a NINGBO, conforme consta no cadastro do material. Anexar o Certificado de fabricação no  pedido, no qual o fornecedor enviou (anexos patec no petronect)."}, "36273084|10|7004553812|5": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "18/05 - Forn não retornou doc solicitados. Além disso, a proposta está vencida. ELIMINAR PEDIDO PARA REPUBLICAR"}, "36362655|10|7004571566|2": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "18/05- Este item foi liberado da OP sem  nenhuma justificativa em nota no SAP. Não consegui analisar, pois no relatório consolidado consta como item cancelado (anexei no sap). Enviei parar republicação."}, "36396569|10|7004589356|5": {"status": "SAIU DO DPV", "envio": "", "finalizado": "sim", "comentario": "18/05 - RC transferida para o grupo comprador XRP"}, "36169923|10|7004542251|5": {"status": "REPUBLICAÇÃO", "envio": "", "finalizado": "sim", "comentario": "18/05 - ELIMINAR PEDIDO e Enviar para republicação.Forncedor não enviou a documentação neessária além da Proposta estar vencida."}, "35842122|10|7004561176|1": {"status": "MDG", "envio": "", "finalizado": "", "comentario": "18/05 - Aberto chamado para correção de NP 1137628"}, "36473393|10|7004591038|27": {"status": "PATEC FINALIZADO", "envio": "", "finalizado": "", "comentario": ""}, "36507054|10|7004593279|2": {"status": "", "envio": "", "finalizado": "", "comentario": ""}, "36374733|10|7004594688|1": {"status": "PATEC FINALIZADO", "envio": "", "finalizado": "", "comentario": "Caso não ter sucesso, seguir para devolução, pois o tipo de avaliação esta incorreto."}, "OBS: Ao inserir itens novos, peço o favor de identificá-los na coluna STATUS como \"tratar\" e na de OBS com data XX/YY - Item novo + demais observações|||": {"status": "", "envio": "", "finalizado": "", "comentario": ""}};
+
+const SB_STATUS_OPCOES = [
+  'AG. TRATAMENTO','FORNECEDOR','MDG','REQUISITANTE','VALIDAÇÃO DO THIAGO',
+  'SAIU DO DPV','EMITIR PEDIDO PATEC','PATEC FINALIZADO','DEVOLUÇÃO','REPUBLICAÇÃO'
+];
+
+function sbChave(rc, seq, op, item){
+  return [rc, seq, op, item].map(v=>String(v||'').trim()).join('|');
+}
+
+async function sbCarregarFirebase(){
+  try{
+    if(typeof firebase === 'undefined' || !_fbLoaded){
+      const ok = await loadFirebaseSDK();
+      if(!ok) return;
+      await new Promise(r=>setTimeout(r,300));
+    }
+    const db = getDB(); if(!db) return;
+    // Carregar itens
+    const docItens = await db.collection('config').doc('sb_itens').get();
+    if(docItens.exists) _sbItens = docItens.data().itens || [];
+    // Carregar dados manuais
+    const snap = await db.collection('gov_sb').get();
+    _sbDados = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      if(d.chave) _sbDados[d.chave] = { status:d.status||'', envio:d.envio||'', finalizado:d.finalizado||'', comentario:d.comentario||'' };
+    });
+    // Mesclar base embutida
+    if(!_sbItens.length) _sbItens = [..._SB_BASE_ITENS];
+    Object.entries(_SB_BASE_DADOS).forEach(([chave, d]) => {
+      if(!_sbDados[chave]) _sbDados[chave] = { status:d.status||'', envio:d.envio||'', finalizado:d.finalizado||'', comentario:d.comentario||'' };
+    });
+    console.log('Status B carregado:', _sbItens.length, 'itens');
+  } catch(e){ console.warn('sbCarregarFirebase:', e); }
+}
+
+function sbRender(){
+  const tbody = document.getElementById('sb-tbody');
+  if(!tbody) return;
+  if(!_sbItens.length){
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum item cadastrado.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = _sbItens.map((r, idx) => {
+    const chave = sbChave(r.rc, r.seq, r.op, r.item);
+    const m = _sbDados[chave] || {};
+    const statusAtual = m.status || '';
+    const envio = m.envio || '';
+    const finalizado = m.finalizado || '';
+    const comentario = m.comentario || '';
+    const prazo = govCalcPrazo(statusAtual, envio);
+    const statusCalc = govCalcStatus(prazo, finalizado);
+    return `<tr>
+      <td style="font-size:11px">${r.analista||'Lory'}</td>
+      <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
+      <td>${r.seq||'—'}</td>
+      <td>${r.op||'—'}</td>
+      <td>${r.item||'—'}</td>
+      <td style="font-size:11px">${statusAtual||'—'}</td>
+      <td style="font-size:11px">${envio?fmtBR(envio):'—'}</td>
+      <td style="font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo?fmtBR(prazo):'—'}</td>
+      <td style="font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
+      <td style="font-size:11px">${finalizado?'✅ Sim':'—'}</td>
+      <td style="font-size:11px;max-width:200px">${comentario||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function sbAbrirModal(){
+  document.getElementById('sb-modal').style.display='flex';
+  const elEnvio = document.getElementById('sb-new-envio');
+  if(elEnvio && !elEnvio.value) elEnvio.value = new Date().toISOString().split('T')[0];
+  document.getElementById('sb-modal-erro').style.display='none';
+}
+
+function sbFecharModal(){
+  document.getElementById('sb-modal').style.display='none';
+  ['sb-new-rc','sb-new-seq','sb-new-op','sb-new-item','sb-new-envio','sb-new-comentario'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value = id.includes('seq')?'10':id.includes('item')?'1':'';
+  });
+  document.getElementById('sb-new-status').value='';
+}
+
+async function sbAdicionarItem(){
+  const rc   = (document.getElementById('sb-new-rc')?.value||'').trim();
+  const seq  = (document.getElementById('sb-new-seq')?.value||'10').trim();
+  const op   = (document.getElementById('sb-new-op')?.value||'').trim();
+  const item = (document.getElementById('sb-new-item')?.value||'1').trim();
+  const status = (document.getElementById('sb-new-status')?.value||'').trim();
+  const envio  = (document.getElementById('sb-new-envio')?.value||'').trim();
+  const comentario = (document.getElementById('sb-new-comentario')?.value||'').trim();
+  const erroEl = document.getElementById('sb-modal-erro');
+
+  if(!rc){ erroEl.textContent='RC obrigatória.'; erroEl.style.display='block'; return; }
+  const chave = sbChave(rc, seq, op, item);
+  if(_sbItens.find(x=>sbChave(x.rc,x.seq,x.op,x.item)===chave)){
+    erroEl.textContent='Este item já existe.'; erroEl.style.display='block'; return;
+  }
+
+  _sbItens.push({ rc, seq, op, item, analista:'Lory' });
+  _sbDados[chave] = { status, envio, finalizado:'', comentario };
+
+  try{
+    const db = getDB();
+    if(db){
+      const docItens = await db.collection('config').doc('sb_itens').get();
+      const itensAtuais = docItens.exists?(docItens.data().itens||[]):[];
+      itensAtuais.push({ rc, seq, op, item, analista:'Lory' });
+      await db.collection('config').doc('sb_itens').set({ itens:itensAtuais, dt:new Date().toISOString() });
+      await db.collection('gov_sb').doc(chave.replace(/[|]/g,'_')).set({
+        ..._sbDados[chave], chave, ts:new Date().toISOString()
+      });
+    }
+  } catch(e){ console.warn('sbAdicionarItem:', e); }
+
+  sbFecharModal();
+  sbRender();
+}
+
 </script>
 </body>
 </html>
-            
