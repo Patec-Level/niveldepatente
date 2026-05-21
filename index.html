@@ -5243,7 +5243,7 @@ function renderAdmMapaHistorico(){
       todos.push({data:r.data,dt:d[2]+'/'+(['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][parseInt(d[1])-1]),l3:r.l3||0,l4:r.l4||0,l5:r.l5||0,l6:r.l6||0,l7:r.l7||0,l8:r.l8||0,fromFb:true});
     }
   });
-  todos.sort((a,b)=>a.data.localeCompare(b.data));
+  todos.sort((a,b)=>b.data.localeCompare(a.data));
   tb.innerHTML=todos.map((r,i)=>{
     const patec=r.l3+r.l4+r.l5+r.l6;
     const geral=patec+r.l7+r.l8;
