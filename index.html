@@ -5214,14 +5214,17 @@ function pcpRecalcularTudo(){
 function renderAdmMapaHistorico(){
   const tb=document.getElementById('adm-mapa-tb');
   if(!tb) return;
-  // Preencher filtro com a última data disponível
+  // Preencher filtro com a última data disponível e aplicar filtro
   const todasDatas = [...DATAS_ISO_MAPA, ...mapaFirebase.map(r=>r.data)].sort();
   if(todasDatas.length){
     const ultima = todasDatas[todasDatas.length-1];
     const elDe = document.getElementById('adm-mapa-de');
     const elAte = document.getElementById('adm-mapa-ate');
-    if(elDe && !elDe.value) elDe.value = ultima;
-    if(elAte && !elAte.value) elAte.value = ultima;
+    if(elDe) elDe.value = ultima;
+    if(elAte) elAte.value = ultima;
+    // Aplicar filtro automaticamente
+    setTimeout(()=>filtrarHistMapa('filtro'), 50);
+    return;
   }
   // Combinar dados fixos + Firebase
   const todos=[];
