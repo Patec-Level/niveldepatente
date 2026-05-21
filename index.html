@@ -3691,6 +3691,15 @@ function distResultHTML(d, titulo, cor){
 }
 
 function renderDistribuicao(){
+  // Preencher filtros de data com a última data disponível
+  const todasDtsProd = pcpData.map(r=>r.data).sort();
+  if(todasDtsProd.length){
+    const ultima = todasDtsProd[todasDtsProd.length-1];
+    const elDe = document.getElementById('adm-prod-de');
+    const elAte = document.getElementById('adm-prod-ate');
+    if(elDe && !elDe.value) elDe.value = ultima;
+    if(elAte && !elAte.value) elAte.value = ultima;
+  }
   const colab=document.getElementById('dist-colab')?.value;
   const sel=document.getElementById('dist-ciclo-sel')?.value||'atual';
   // Mostrar/esconder custom dates
@@ -5205,6 +5214,15 @@ function pcpRecalcularTudo(){
 function renderAdmMapaHistorico(){
   const tb=document.getElementById('adm-mapa-tb');
   if(!tb) return;
+  // Preencher filtro com a última data disponível
+  const todasDatas = [...DATAS_ISO_MAPA, ...mapaFirebase.map(r=>r.data)].sort();
+  if(todasDatas.length){
+    const ultima = todasDatas[todasDatas.length-1];
+    const elDe = document.getElementById('adm-mapa-de');
+    const elAte = document.getElementById('adm-mapa-ate');
+    if(elDe && !elDe.value) elDe.value = ultima;
+    if(elAte && !elAte.value) elAte.value = ultima;
+  }
   // Combinar dados fixos + Firebase
   const todos=[];
   DATAS_ISO_MAPA.forEach((iso,i)=>{
@@ -5886,6 +5904,16 @@ function pcpAtualizarRegistroDia(dt){
 
 function renderAdmPCP(){
   if(!document.getElementById('adm-pcp-tb')) return;
+  // Preencher filtro com a última data disponível
+  const todasDtsPcp = pcpData.map(r=>r.data).sort();
+  if(todasDtsPcp.length){
+    const ultima = todasDtsPcp[todasDtsPcp.length-1];
+    const elFiltro = document.getElementById('adm-pcp-filtro-dt');
+    if(elFiltro && !elFiltro.value) elFiltro.value = ultima;
+    // Também pré-preencher o campo de nova data PCP
+    const elDt = document.getElementById('adm-pcp-dt');
+    if(elDt && !elDt.value) elDt.value = ultima;
+  }
   const sums={f1:0,f2:0,f6:0,f3:0,f4:0,f5:0};
   pcpData.forEach(r=>{
     sums.f1+=r.f1||0;sums.f2+=r.f2||0;sums.f6+=r.f6||0;
