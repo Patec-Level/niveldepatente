@@ -2624,8 +2624,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <tr>
                 <th>RC</th>
                 <th>Item</th>
-                <th>Oportunidade</th>
-                <th>Item OP</th>
                 <th>Status Tratamento</th>
                 <th>Envio</th>
                 <th>Prazo Retorno</th>
@@ -9931,8 +9929,6 @@ function xglRender(){
     return `<tr id="xgl-row-${idx}">
       <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
       <td>${r.item||'—'}</td>
-      <td>${r.oport||'—'}</td>
-      <td>${r.itemop||'—'}</td>
       <td>
         <select style="font-size:11px;padding:3px 6px;width:100%;min-width:160px"
           onchange="xglSalvarCampo('${chave}','status',this.value,${idx})">
