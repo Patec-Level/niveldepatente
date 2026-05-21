@@ -9938,23 +9938,11 @@ function xglRender(){
       <td style="font-size:11px">${r.analista||'—'}</td>
       <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
       <td>${r.item||'—'}</td>
-      <td>
-        <select style="font-size:11px;padding:3px 6px;width:100%;min-width:160px"
-          onchange="xglSalvarCampo('${chave}','status',this.value,${idx})">
-          <option value="">— selecione —</option>
-          ${optsStatus}
-        </select>
-      </td>
-      <td>
-        <input type="date" value="${envio}" style="font-size:11px;padding:2px 4px;width:110px"
-          onchange="xglSalvarCampo('${chave}','envio',this.value,${idx})">
-      </td>
-      <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo||'—'}</td>
+      <td style="font-size:11px">${statusAtual||'—'}</td>
+      <td style="font-size:11px">${envio?fmtBR(envio):'—'}</td>
+      <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo?fmtBR(prazo):'—'}</td>
       <td style="text-align:center;font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
-      <td>
-        <input type="date" value="${finalizado}" style="font-size:11px;padding:2px 4px;width:110px"
-          onchange="xglSalvarCampo('${chave}','finalizado',this.value,${idx})">
-      </td>
+      <td style="font-size:11px">${finalizado?fmtBR(finalizado):'—'}</td>
     </tr>`;
   }).join('');
 }
@@ -10135,7 +10123,7 @@ function govBuscarRC(rc){
             <select style="font-size:11px;padding:2px 5px;min-width:150px"
               onchange="govBuscaSalvar('${r.aba}','${r.chave}','status',this.value)">
               <option value="">— selecione —</option>
-              ${GOV_STATUS_OPCOES.map(o=>`<option value="${o}" ${r.status===o?'selected':''}>${o}</option>`).join('')}
+              ${(r.aba==='XGL'?XGL_STATUS_OPCOES:GOV_STATUS_OPCOES).map(o=>`<option value="${o}" ${r.status===o?'selected':''}>${o}</option>`).join('')}
             </select>
           </td>
           <td><input type="date" value="${r.envio}" style="font-size:11px;padding:2px 4px;width:105px"
