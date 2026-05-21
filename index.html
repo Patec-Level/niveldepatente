@@ -9702,7 +9702,7 @@ function govRenderMapa(dados){
         <input type="date" value="${envio}" style="font-size:11px;padding:2px 4px;width:110px"
           onchange="govSalvarCampo('${chave}','envio',this.value,${idx})">
       </td>
-      <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo||'—'}</td>
+      <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo?fmtBR(prazo):'—'}</td>
       <td style="text-align:center;font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
       <td>
         <input type="date" value="${finalizado}" style="font-size:11px;padding:2px 4px;width:110px"
@@ -10049,6 +10049,8 @@ async function govImportarPlanilha(input){
 
 
 // ── BUSCA DE RC (todas as abas Governança) ──
+function fmtBR(d){ return d&&d!=='—'?d.split('-').reverse().join('/'):d||'—'; }
+
 function govBuscarRC(rc){
   const el = document.getElementById('gov-busca-resultado');
   if(!el) return;
@@ -10064,8 +10066,8 @@ function govBuscarRC(rc){
     const m = _govDados[chave]||{};
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const status = govCalcStatus(prazo, m.finalizado||'');
-    resultados.push({aba:'MAPA', rc:r.rc, seq:r.seq, op:r.num_oport, item:r.item_rc,
-      status: m.status||'—', envio:m.envio||'—', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'—'});
+    resultados.push({aba:'MAPA', chave, analista:r.analista||'—', rc:r.rc, seq:r.seq, op:r.num_oport, item:r.item_rc,
+      status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||''});
   });
 
   // XGL
@@ -10074,8 +10076,8 @@ function govBuscarRC(rc){
     const m = _xglDados[chave]||{};
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const status = govCalcStatus(prazo, m.finalizado||'');
-    resultados.push({aba:'XGL', rc:r.rc, seq:r.item, op:r.oport, item:r.itemop,
-      status: m.status||'—', envio:m.envio||'—', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'—'});
+    resultados.push({aba:'XGL', chave, analista:'—', rc:r.rc, seq:r.item, op:r.oport, item:r.itemop,
+      status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||''});
   });
 
   if(!resultados.length){
@@ -10084,32 +10086,65 @@ function govBuscarRC(rc){
     return;
   }
 
+  const optsStatus = GOV_STATUS_OPCOES.map(o=>`<option value="${o}">${o}</option>`).join('');
+
   el.style.display='block';
   el.innerHTML = `
     <div style="font-size:11px;font-weight:600;color:var(--az);margin-bottom:6px">${resultados.length} resultado(s) para RC <strong>${rcBusca}</strong>:</div>
-    <div class="tw" style="max-height:220px">
+    <div class="tw" style="max-height:260px">
     <table>
       <thead><tr>
-        <th>Aba</th><th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
+        <th>Aba</th><th>Analista</th><th>RC</th><th>Item</th><th>Oportunidade</th>
         <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th>
       </tr></thead>
       <tbody>
-        ${resultados.map(r=>`<tr>
+        ${resultados.map((r,i)=>`<tr>
           <td style="font-weight:700;color:var(--azm)">${r.aba}</td>
+          <td style="font-size:11px">${r.analista}</td>
           <td style="font-weight:700;color:var(--az)">${r.rc}</td>
           <td>${r.seq||'—'}</td>
           <td>${r.op||'—'}</td>
-          <td>${r.item||'—'}</td>
-          <td>${r.status}</td>
-          <td>${r.envio}</td>
-          <td>${r.prazo}</td>
+          <td>
+            <select style="font-size:11px;padding:2px 5px;min-width:150px"
+              onchange="govBuscaSalvar('${r.aba}','${r.chave}','status',this.value)">
+              <option value="">— selecione —</option>
+              ${GOV_STATUS_OPCOES.map(o=>`<option value="${o}" ${r.status===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+          </td>
+          <td><input type="date" value="${r.envio}" style="font-size:11px;padding:2px 4px;width:105px"
+            onchange="govBuscaSalvar('${r.aba}','${r.chave}','envio',this.value)"></td>
+          <td>${fmtBR(r.prazo)}</td>
           <td style="${govCorStatus(r.statusCalc)}">${r.statusCalc||'—'}</td>
-          <td>${r.finalizado}</td>
+          <td><input type="date" value="${r.finalizado}" style="font-size:11px;padding:2px 4px;width:105px"
+            onchange="govBuscaSalvar('${r.aba}','${r.chave}','finalizado',this.value)"></td>
         </tr>`).join('')}
       </tbody>
     </table>
     </div>
   `;
+}
+
+async function govBuscaSalvar(aba, chave, campo, valor){
+  // Salvar no objeto correto conforme a aba
+  if(aba === 'MAPA'){
+    if(!_govDados[chave]) _govDados[chave] = {};
+    _govDados[chave][campo] = valor;
+    try{
+      const db = getDB(); if(!db) return;
+      await db.collection('gov_mapa').doc(chave.replace(/[|]/g,'_')).set({
+        ..._govDados[chave], chave, ts: new Date().toISOString()
+      });
+    } catch(e){ console.warn('govBuscaSalvar:', e); }
+  } else if(aba === 'XGL'){
+    if(!_xglDados[chave]) _xglDados[chave] = {};
+    _xglDados[chave][campo] = valor;
+    try{
+      const db = getDB(); if(!db) return;
+      await db.collection('gov_xgl').doc(chave.replace(/[|]/g,'_')).set({
+        ..._xglDados[chave], chave, ts: new Date().toISOString()
+      });
+    } catch(e){ console.warn('xglBuscaSalvar:', e); }
+  }
 }
 
 function govLimparBusca(){
