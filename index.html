@@ -2622,6 +2622,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <table>
             <thead>
               <tr>
+                <th>Analista</th>
                 <th>RC</th>
                 <th>Item</th>
                 <th>Status Tratamento</th>
@@ -9934,6 +9935,7 @@ function xglRender(){
     ).join('');
 
     return `<tr id="xgl-row-${idx}">
+      <td style="font-size:11px">${r.analista||'—'}</td>
       <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
       <td>${r.item||'—'}</td>
       <td>
