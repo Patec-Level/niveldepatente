@@ -2581,14 +2581,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div id="gov-sem-dados" style="text-align:center;padding:3rem;color:var(--tx2);font-size:13px;display:none">
           📡 Nenhum dado disponível. Faça upload no Radar Estratégico (ADM).
         </div>
-        <!-- Upload novos itens -->
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:.75rem">
-          <label class="btn btn-p" style="font-size:11px;cursor:pointer">
-            📂 Upload planilha radar
-            <input type="file" id="gov-mapa-upload" accept=".xlsx,.xls" style="display:none" onchange="govMapaUpload(this)">
-          </label>
-          <span id="gov-mapa-upload-status" style="font-size:11px;color:var(--vd)"></span>
-        </div>
         <div class="tw" style="max-height:560px" id="gov-mapa-wrap">
           <table id="gov-mapa-table">
             <thead>
@@ -6324,8 +6316,8 @@ async function radarOnFile(file){
 
     _radarDados=rows;
     _radarTs=new Date().toISOString();
-    // Atualizar Fila Level Board nos itens do MAPA (sem sobrescrever outros campos)
-    govAtualizarFila(rows);
+    // Atualizar MAPA: fila + novos itens (sem sobrescrever Status/Envio/Finalizado)
+    govSincronizarMapa(rows);
     radarRenderPreview(rows);
     if(progEl) progEl.style.display='none';
     document.getElementById('radar-upload-preview').style.display='block';
@@ -10262,91 +10254,31 @@ function govRenderConcluidos(){
 }
 
 
-// ── UPLOAD NOVOS ITENS NO MAPA ──
-async function govMapaUpload(input){
-  const file = input.files[0];
-  if(!file) return;
-  const elStatus = document.getElementById('gov-mapa-upload-status');
-  elStatus.textContent = '⏳ Lendo planilha...';
 
-  const reader = new FileReader();
-  reader.onload = async e => {
-    try{
-      const wb = XLSX.read(e.target.result, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
 
-      // Filtrar só Analisar PATEC Finalizado (col STATUS MAPA)
-      const novos = raw.filter(r => {
-        const s = String(r['STATUS MAPA ']||r['STATUS MAPA']||'').trim();
-        return s === 'Analisar PATEC Finalizado';
-      });
 
-      if(!novos.length){
-        elStatus.textContent = '⚠️ Nenhum item com "Analisar PATEC Finalizado" encontrado.';
-        return;
-      }
+// ── SINCRONIZAR MAPA COM RADAR ──
+function govSincronizarMapa(rows){
+  // Filtrar só Analisar PATEC Finalizado
+  const aptos = rows.filter(r => (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado');
 
-      // Montar chaves dos novos itens
-      let adicionados = 0;
-      novos.forEach(r => {
-        const rc  = String(r['RC']||'').trim();
-        const seq = String(r['SEQ']||'').trim();
-        const op  = String(r['OPORTUNIDADE']||r['NUMERO_OPORTUNIDADE']||'').replace(/\.0$/,'').trim();
-        if(!rc) return;
-        const chave = rc + '|' + seq + '|' + op;
-        // Só adiciona se não existir ainda
-        if(!_govDados[chave]){
-          _govDados[chave] = { status: 'AG. TRATAMENTO', envio: '', finalizado: '' };
-          adicionados++;
-        }
-      });
-
-      elStatus.textContent = '✓ ' + adicionados + ' itens novos adicionados de ' + novos.length + ' encontrados.';
-
-      // Re-renderizar radar com novos dados
-      if(adicionados > 0){
-        // Atualizar _radarDados com novos itens (mesclar)
-        const raw2 = XLSX.utils.sheet_to_json(ws, {defval:''});
-        const novasRows = raw2.filter(r=>r['RC']&&r['RC']!=='RC').map(r=>({
-          analista_auto: String(r['STATUS MAPA ']||r['STATUS MAPA']||'').trim(),
-          rc:            String(r['RC']||'').trim(),
-          seq:           String(r['SEQ']||'').trim(),
-          num_oport:     String(r['OPORTUNIDADE']||r['NUMERO_OPORTUNIDADE']||'').trim(),
-          sla:           Number(r['SLA']||0),
-          fila:          String(r['Fila ( esteira) ']||r['Fila ']||r['Fila']||'').trim(),
-          analista:      String(r['Analista PATEC']||r['Analista ']||r['Analista']||'').trim(),
-          validade:      String(Object.entries(r).find(([k])=>k.toLowerCase().includes('validade'))?.[1]||'').trim(),
-          idas:          Number(r['Idas ao mercado']||r['IDAS AO MERCADO']||0),
-          item_rc:       String(r['Item da RC']||r['ITEM']||r['Item']||'').trim(),
-        }));
-        // Mesclar com _radarDados existente (sem duplicar)
-        const chavesExist = new Set((_radarDados||[]).map(r=>r.rc+'|'+r.seq+'|'+r.num_oport));
-        novasRows.forEach(r => {
-          if(!chavesExist.has(r.rc+'|'+r.seq+'|'+r.num_oport)) _radarDados.push(r);
-        });
-        govInicializar();
-      }
-      // Limpar input
-      input.value = '';
-    } catch(err){
-      elStatus.textContent = '❌ Erro: ' + err.message;
+  // Adicionar itens novos com AG. TRATAMENTO (sem sobrescrever existentes)
+  let novos = 0;
+  aptos.forEach(r => {
+    const chave = govChave(r);
+    if(!_govDados[chave]){
+      _govDados[chave] = { status: 'AG. TRATAMENTO', envio: '', finalizado: '' };
+      novos++;
     }
-  };
-  reader.readAsArrayBuffer(file);
-}
+  });
 
+  if(novos > 0) console.log('Gov MAPA: ' + novos + ' itens novos adicionados');
 
-// ── ATUALIZAR FILA LEVEL BOARD NO MAPA ──
-function govAtualizarFila(rows){
-  // Para cada item do radar, atualizar a fila no _radarDados que o MAPA usa
-  // A fila já está em rows — o MAPA lê direto do _radarDados ao renderizar
-  // Só precisamos garantir que se a Governança estiver aberta, ela re-renderiza
+  // Re-renderizar se Governança estiver aberta
   const pgGov = document.getElementById('p-governanca');
-  if(pgGov && pgGov.classList.contains('active') && _govTabAtiva === 'mapa'){
+  if(pgGov && pgGov.classList.contains('active')){
     setTimeout(govInicializar, 300);
   }
-  console.log('Fila Level Board atualizada para', rows.length, 'itens');
 }
 
 </script>
