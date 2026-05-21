@@ -2572,8 +2572,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div class="stabs" style="margin-bottom:1rem">
         <button class="stab active" onclick="govSetTab('mapa',this)">🗺 MAPA</button>
         <button class="stab" onclick="govSetTab('xgl',this)">📋 XGL</button>
-        <button class="stab" onclick="govSetTab('concluidos',this)">✅ Concluídos</button>
         <button class="stab" onclick="govSetTab('statusb',this)">📊 Status B</button>
+        <button class="stab" onclick="govSetTab('concluidos',this)">✅ Concluídos</button>
       </div>
 
       <!-- ABA MAPA -->
@@ -10133,11 +10133,11 @@ function govRenderConcluidos(){
     return !!(_govDados[chave]?.finalizado);
   });
 
-  // Também incluir concluídos da base embutida que não estão no radar atual
+  // Todos os concluídos: do radar + da base embutida
   const chavesRadar = new Set(dadosMapa.map(r=>govChave(r)));
   const concBase = Object.entries(_govDados)
-    .filter(([k,v]) => v.finalizado && !chavesRadar.has(k))
-    .map(([k,v]) => ({_chaveBase: k, ...v}));
+    .filter(([k,v]) => v && v.finalizado && !chavesRadar.has(k))
+    .map(([k,v]) => ({chave:k, ...v}));
 
   if(ct) ct.textContent = (concluidos.length + concBase.length) + ' item(ns) concluído(s)';
 
@@ -10163,11 +10163,10 @@ function govRenderConcluidos(){
     </tr>`;
   }).join('');
 
-  // Da base embutida (sem dados do radar)
-  html += concBase.map(([k,m]) => {
-    if(typeof k !== 'string') return '';
-    const partes = k.split('|');
-    const prazo = govCalcPrazo(m.status||'', m.envio||'');
+  // Da base embutida (itens que não estão mais no radar)
+  html += concBase.map(item => {
+    const partes = (item.chave||'').split('|');
+    const prazo = govCalcPrazo(item.status||'', item.envio||'');
     return `<tr>
       <td style="font-size:11px;color:var(--tx2)">—</td>
       <td style="font-size:11px;color:var(--tx2)">—</td>
@@ -10176,10 +10175,10 @@ function govRenderConcluidos(){
       <td>${partes[1]||'—'}</td>
       <td>${partes[2]||'—'}</td>
       <td>${partes[3]||'—'}</td>
-      <td>${m.status||'—'}</td>
-      <td>${m.envio||'—'}</td>
+      <td>${item.status||'—'}</td>
+      <td>${item.envio||'—'}</td>
       <td>${prazo||'—'}</td>
-      <td style="color:var(--vd);font-weight:700">${m.finalizado}</td>
+      <td style="color:var(--vd);font-weight:700">${item.finalizado}</td>
     </tr>`;
   }).join('');
 
