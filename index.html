@@ -2609,12 +2609,51 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- ABA XGL -->
       <div id="gov-tab-xgl" style="display:none">
 
-        <!-- Upload XGL -->
-        <div class="cd" style="margin-bottom:1rem;padding:.75rem 1rem">
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <div style="font-size:12px;font-weight:600;color:var(--az)">📂 Upload planilha XGL</div>
-            <input type="file" id="xgl-file-input" accept=".xlsx,.xls" style="font-size:11px" onchange="xglOnFile(this)">
-            <span id="xgl-upload-info" style="font-size:11px;color:var(--vd)"></span>
+        <!-- Botão adicionar novo item -->
+        <div style="margin-bottom:.75rem;display:flex;gap:8px;align-items:center">
+          <button class="btn btn-p" style="font-size:11px" onclick="xglAbrirModal()">＋ Adicionar item</button>
+        </div>
+
+        <!-- Modal adicionar item XGL -->
+        <div id="xgl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center">
+          <div class="cd" style="width:380px;max-width:95vw;padding:1.5rem;position:relative">
+            <div style="font-weight:700;font-size:14px;margin-bottom:1rem">➕ Novo item XGL</div>
+            <div style="display:flex;flex-direction:column;gap:.75rem">
+              <div class="field-wrap">
+                <span class="field-label">Analista</span>
+                <input type="text" id="xgl-new-analista" placeholder="Nome do analista" style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">RC</span>
+                <input type="text" id="xgl-new-rc" placeholder="Número da RC" style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Item (SEQ)</span>
+                <input type="text" id="xgl-new-item" placeholder="Ex: 10" style="width:100%;font-size:12px;padding:5px 10px" value="10">
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Status Tratamento</span>
+                <select id="xgl-new-status" style="width:100%;font-size:12px;padding:5px 10px">
+                  <option value="">— selecione —</option>
+                  <option>AG. TRATAMENTO</option>
+                  <option>FORNECEDOR</option>
+                  <option>MDG</option>
+                  <option>REQUISITANTE</option>
+                  <option>VALIDAÇÃO DO THIAGO</option>
+                  <option>XGL BAIXO</option>
+                  <option>XGL ALTO</option>
+                </select>
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Envio</span>
+                <input type="date" id="xgl-new-envio" style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">
+              <button class="btn btn-s" onclick="xglFecharModal()">Cancelar</button>
+              <button class="btn btn-p" onclick="xglAdicionarItem()">💾 Salvar</button>
+            </div>
+            <span id="xgl-modal-erro" style="font-size:11px;color:var(--vm);display:none;margin-top:.5rem"></span>
           </div>
         </div>
 
@@ -10090,7 +10129,7 @@ function govBuscarRC(rc){
     const m = _xglDados[chave]||{};
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const status = govCalcStatus(prazo, m.finalizado||'');
-    resultados.push({aba:'XGL', chave, analista:'—', rc:r.rc, seq:r.item, op:r.oport, item:r.itemop,
+    resultados.push({aba:'XGL', chave, analista:r.analista||'—', rc:r.rc, seq:r.item, op:r.oport, item:r.itemop,
       status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||''});
   });
 
@@ -10324,6 +10363,72 @@ async function xglCarregarBase(){
   console.log('XGL base carregada:', _XGL_BASE_ITENS.length, 'itens');
 }
 
+
+// ── MODAL ADICIONAR ITEM XGL ──
+function xglAbrirModal(){
+  const modal = document.getElementById('xgl-modal');
+  if(modal){ modal.style.display='flex'; }
+  // Preencher data de hoje
+  const elEnvio = document.getElementById('xgl-new-envio');
+  if(elEnvio && !elEnvio.value) elEnvio.value = new Date().toISOString().split('T')[0];
+  document.getElementById('xgl-modal-erro').style.display = 'none';
+}
+
+function xglFecharModal(){
+  const modal = document.getElementById('xgl-modal');
+  if(modal) modal.style.display = 'none';
+  // Limpar campos
+  ['xgl-new-analista','xgl-new-rc','xgl-new-envio'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  const sel = document.getElementById('xgl-new-status');
+  if(sel) sel.value = '';
+  const item = document.getElementById('xgl-new-item');
+  if(item) item.value = '10';
+}
+
+async function xglAdicionarItem(){
+  const analista = (document.getElementById('xgl-new-analista')?.value||'').trim();
+  const rc       = (document.getElementById('xgl-new-rc')?.value||'').trim();
+  const item     = (document.getElementById('xgl-new-item')?.value||'10').trim();
+  const status   = (document.getElementById('xgl-new-status')?.value||'').trim();
+  const envio    = (document.getElementById('xgl-new-envio')?.value||'').trim();
+  const erroEl   = document.getElementById('xgl-modal-erro');
+
+  if(!rc){ erroEl.textContent='RC obrigatória.'; erroEl.style.display='block'; return; }
+
+  const chave = rc + '|' + item;
+
+  // Verificar duplicata
+  if(_xglItens.find(x => x.rc===rc && x.item===item)){
+    erroEl.textContent='Este item já existe na lista XGL.'; erroEl.style.display='block'; return;
+  }
+
+  // Adicionar ao array
+  _xglItens.push({ rc, item, oport:'', itemop:'', analista });
+  _xglDados[chave] = { status: status||'AG. TRATAMENTO', envio, finalizado:'' };
+
+  // Salvar no Firebase
+  try{
+    const db = getDB();
+    if(db){
+      // Salvar item
+      const docItens = await db.collection('config').doc('xgl_itens').get();
+      const itensAtuais = docItens.exists ? (docItens.data().itens||[]) : [];
+      itensAtuais.push({ rc, item, oport:'', itemop:'', analista });
+      await db.collection('config').doc('xgl_itens').set({ itens: itensAtuais, dt: new Date().toISOString() });
+      // Salvar dados manuais
+      await db.collection('gov_xgl').doc(chave.replace(/[|]/g,'_')).set({
+        ..._xglDados[chave], chave, ts: new Date().toISOString()
+      });
+    }
+  } catch(e){ console.warn('xglAdicionarItem Firebase:', e); }
+
+  xglFecharModal();
+  xglRender();
+}
+
 </script>
 </body>
 </html>
+            
