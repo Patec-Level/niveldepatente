@@ -3326,7 +3326,7 @@ function go(id, el) {
   if(id==='vg-mercado') mktCarregarTudo();
   if(id==='analista-auto') setTimeout(aaPublicoCarregar, 100);
   if(id==='planilha-critica') setTimeout(pcInicializar, 100);
-  if(id==='governanca') setTimeout(()=>{ govCarregarFirebase().then(()=>govInicializar()); }, 100);
+  if(id==='governanca') setTimeout(()=>{ govCarregarFirebase().then(()=>govInicializar()); }, 300);
   // Auto-login em módulos sem senha
   if(id==='adm') setTimeout(()=>{
     const login=document.getElementById('adm-login');
@@ -6249,6 +6249,9 @@ async function fbCarregarRadar(){
       // Renderizar automaticamente se a página radar estiver visível
       const pg=document.getElementById('p-radar');
       if(pg&&pg.classList.contains('active')) renderRadarOperacional();
+      // Atualizar governança se estiver ativa
+      const pgGov=document.getElementById('p-governanca');
+      if(pgGov&&pgGov.classList.contains('active')) govInicializar();
     }
   } catch(e){ console.warn('Radar load:',e); }
 }
@@ -9602,7 +9605,12 @@ function govSetTab(aba, btn){
   if(aba === 'concluidos') govRenderConcluidos();
 }
 
-function govInicializar(){
+async function govInicializar(){
+  // Se radar ainda não carregou, aguardar
+  if(!_radarDados || !_radarDados.length){
+    await fbCarregarRadar();
+    await new Promise(r=>setTimeout(r,200));
+  }
   // Filtro obrigatório: STATUS MAPA = 'Analisar PATEC Finalizado'
   const dados = (_radarDados || []).filter(r => (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado');
   if(!dados.length){
@@ -10188,3 +10196,4 @@ function govRenderConcluidos(){
 </script>
 </body>
 </html>
+        
