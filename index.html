@@ -9691,23 +9691,11 @@ function govRenderMapa(dados){
       <td>${r.item_rc||'—'}</td>
       <td>${r.num_oport||'—'}</td>
       <td>${r.seq||'—'}</td>
-      <td>
-        <select style="font-size:11px;padding:3px 6px;width:100%;min-width:160px"
-          onchange="govSalvarCampo('${chave}','status',this.value,${idx})">
-          <option value="">— selecione —</option>
-          ${optsStatus}
-        </select>
-      </td>
-      <td>
-        <input type="date" value="${envio}" style="font-size:11px;padding:2px 4px;width:110px"
-          onchange="govSalvarCampo('${chave}','envio',this.value,${idx})">
-      </td>
+      <td style="font-size:11px">${statusAtual||'—'}</td>
+      <td style="font-size:11px">${envio?fmtBR(envio):'—'}</td>
       <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo?fmtBR(prazo):'—'}</td>
       <td style="text-align:center;font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
-      <td>
-        <input type="date" value="${finalizado}" style="font-size:11px;padding:2px 4px;width:110px"
-          onchange="govSalvarCampo('${chave}','finalizado',this.value,${idx})">
-      </td>
+      <td style="font-size:11px">${finalizado?fmtBR(finalizado):'—'}</td>
       <td style="font-size:11px;${corVal(r.validade)}">${r.validade||'—'}</td>
       <td style="text-align:center">${r.idas||'—'}</td>
     </tr>`;
@@ -10094,7 +10082,7 @@ function govBuscarRC(rc){
     <div class="tw" style="max-height:260px">
     <table>
       <thead><tr>
-        <th>Aba</th><th>Analista</th><th>RC</th><th>Item</th><th>Oportunidade</th>
+        <th>Aba</th><th>Analista</th><th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
         <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th>
       </tr></thead>
       <tbody>
@@ -10104,6 +10092,7 @@ function govBuscarRC(rc){
           <td style="font-weight:700;color:var(--az)">${r.rc}</td>
           <td>${r.seq||'—'}</td>
           <td>${r.op||'—'}</td>
+          <td>${r.item||'—'}</td>
           <td>
             <select style="font-size:11px;padding:2px 5px;min-width:150px"
               onchange="govBuscaSalvar('${r.aba}','${r.chave}','status',this.value)">
@@ -10112,16 +10101,29 @@ function govBuscarRC(rc){
             </select>
           </td>
           <td><input type="date" value="${r.envio}" style="font-size:11px;padding:2px 4px;width:105px"
-            onchange="govBuscaSalvar('${r.aba}','${r.chave}','envio',this.value)"></td>
-          <td>${fmtBR(r.prazo)}</td>
-          <td style="${govCorStatus(r.statusCalc)}">${r.statusCalc||'—'}</td>
+            onchange="govBuscaSalvarAtualizar('${r.aba}','${r.chave}','envio',this.value,this)"></td>
+          <td id="busca-prazo-${r.chave.replace(/[|]/g,'_')}">${fmtBR(r.prazo)}</td>
+          <td id="busca-status-${r.chave.replace(/[|]/g,'_')}" style="${govCorStatus(r.statusCalc)}">${r.statusCalc||'—'}</td>
           <td><input type="date" value="${r.finalizado}" style="font-size:11px;padding:2px 4px;width:105px"
-            onchange="govBuscaSalvar('${r.aba}','${r.chave}','finalizado',this.value)"></td>
+            onchange="govBuscaSalvarAtualizar('${r.aba}','${r.chave}','finalizado',this.value,this)"></td>
         </tr>`).join('')}
       </tbody>
     </table>
     </div>
   `;
+}
+
+async function govBuscaSalvarAtualizar(aba, chave, campo, valor, el){
+  await govBuscaSalvar(aba, chave, campo, valor);
+  // Recalcular prazo e status na linha da busca
+  const dados = aba==='MAPA' ? (_govDados[chave]||{}) : (_xglDados[chave]||{});
+  const prazo = govCalcPrazo(dados.status||'', dados.envio||'');
+  const statusCalc = govCalcStatus(prazo, dados.finalizado||'');
+  const idKey = chave.replace(/[|]/g,'_');
+  const elPrazo = document.getElementById('busca-prazo-'+idKey);
+  const elStatus = document.getElementById('busca-status-'+idKey);
+  if(elPrazo) elPrazo.textContent = prazo ? fmtBR(prazo) : '—';
+  if(elStatus){ elStatus.textContent = statusCalc||'—'; elStatus.style.cssText = govCorStatus(statusCalc); }
 }
 
 async function govBuscaSalvar(aba, chave, campo, valor){
