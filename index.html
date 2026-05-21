@@ -10316,8 +10316,7 @@ async function govMapaUpload(input){
           sla:           Number(r['SLA']||0),
           fila:          String(r['Fila ( esteira) ']||r['Fila ']||r['Fila']||'').trim(),
           analista:      String(r['Analista PATEC']||r['Analista ']||r['Analista']||'').trim(),
-          validade:      String(r['Validade da 
-Proposta ']||r['Validade da Proposta ']||r['Validade da Proposta']||'').trim(),
+          validade:      String(Object.entries(r).find(([k])=>k.toLowerCase().includes('validade'))?.[1]||'').trim(),
           idas:          Number(r['Idas ao mercado']||r['IDAS AO MERCADO']||0),
           item_rc:       String(r['Item da RC']||r['ITEM']||r['Item']||'').trim(),
         }));
