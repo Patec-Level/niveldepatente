@@ -9560,10 +9560,16 @@ function govChave(r){
 
 function govAddDiasUteis(dataStr, dias){
   if(!dataStr || !dias) return null;
-  let d = new Date(dataStr + 'T12:00:00');
+  // Validar formato da data antes de usar
+  const clean = String(dataStr).trim().split('T')[0];
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(clean)) return null;
+  let d = new Date(clean + 'T12:00:00');
+  if(isNaN(d.getTime())) return null;
   let adicionados = 0;
-  while(adicionados < dias){
+  let seguranca = 0;
+  while(adicionados < dias && seguranca < 500){
     d.setDate(d.getDate() + 1);
+    seguranca++;
     const dow = d.getDay();
     const iso = d.toISOString().split('T')[0];
     if(dow !== 0 && dow !== 6 && !GOV_FERIADOS.includes(iso)) adicionados++;
@@ -10196,4 +10202,3 @@ function govRenderConcluidos(){
 </script>
 </body>
 </html>
-        
