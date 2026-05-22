@@ -9126,10 +9126,13 @@ async function bkCarregarFirebase(){
       });
       // Debug: verificar col 32
       if(rowsArr.length > 0){
-        const sample = rowsArr.slice(0,5).map(r=>r[32]);
-        console.log('[BK] Amostra col 32 após reconstrução:', sample);
-        const keys0 = Object.keys(allRows[0]||{});
-        console.log('[BK] Chaves do primeiro objeto:', keys0);
+        const keys0 = Object.keys(allRows[0]||{}).sort();
+        console.log('[BK] Chaves:', keys0.join(','));
+        console.log('[BK] c32 existe?', 'c32' in (allRows[0]||{}), '| valor:', (allRows[0]||{})['c32']);
+        console.log('[BK] arr[32]:', rowsArr[0][32]);
+        // Buscar LIBERAR
+        const comLiberar = allRows.filter(o => String(o.c32||'').includes('LIBERAR'));
+        console.log('[BK] Objetos com LIBERAR em c32:', comLiberar.length);
       }
       _bkDados = { headers: hdrs, rows: rowsArr, arquivo: d.arquivo, dt: d.dt };
       bkAtualizarInfoFirebase();
