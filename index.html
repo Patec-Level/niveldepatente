@@ -6404,19 +6404,30 @@ let _radarFiltroGrupo  = ''; // filtro de grupo/visão
 async function fbCarregarRadar(){
   try {
     const db=getDB(); if(!db) return;
-    const doc=await db.collection('config').doc('radar_dados').get();
-    if(doc.exists){
-      const d=doc.data();
-      _radarDados=d.rows||[];
-      _radarTs=d.ts||null;
-      console.log('Radar: '+_radarDados.length+' registros');
-      // Renderizar automaticamente se a página radar estiver visível
-      const pg=document.getElementById('p-radar');
-      if(pg&&pg.classList.contains('active')) renderRadarOperacional();
-      // Atualizar governança se estiver ativa
-      const pgGov=document.getElementById('p-governanca');
-      if(pgGov&&pgGov.classList.contains('active')) govInicializar();
+    const meta=await db.collection('config').doc('radar_dados').get();
+    if(!meta.exists) return;
+    const d=meta.data();
+    _radarTs=d.ts||null;
+    const nChunks = d.nChunks||0;
+
+    if(nChunks > 0){
+      // Carregar em chunks
+      const promises = [];
+      for(let i=0;i<nChunks;i++) promises.push(db.collection('config').doc('radar_dados_'+i).get());
+      const docs = await Promise.all(promises);
+      _radarDados = docs.flatMap(c => c.exists ? (c.data().rows||[]) : []);
+    } else {
+      // Fallback: documento único (legado)
+      _radarDados = d.rows||[];
     }
+
+    console.log('Radar: '+_radarDados.length+' registros ('+( nChunks||1)+' chunk(s))');
+    // Renderizar automaticamente se a página radar estiver visível
+    const pg=document.getElementById('p-radar');
+    if(pg&&pg.classList.contains('active')) renderRadarOperacional();
+    // Atualizar governança se estiver ativa
+    const pgGov=document.getElementById('p-governanca');
+    if(pgGov&&pgGov.classList.contains('active')) govInicializar();
   } catch(e){ console.warn('Radar load:',e); }
 }
 
@@ -6517,14 +6528,35 @@ function radarRenderPreview(rows){
 async function radarSalvarFirebase(){
   try {
     const db=getDB(); if(!db){alert('Firebase não conectado.');return;}
-    const payload={rows:_radarDados, ts:_radarTs, n:_radarDados.length};
-    // Forçar substituição completa
-    await db.collection('config').doc('radar_dados').set(payload);
-    console.log('✓ Radar salvo no Firebase:', _radarDados.length, 'registros');
+    const CHUNK = 400;
+    const total = _radarDados.length;
+    const nChunks = Math.ceil(total / CHUNK);
+
+    // Apagar chunks antigos
+    const oldMeta = await db.collection('config').doc('radar_dados').get();
+    if(oldMeta.exists){
+      const oldN = oldMeta.data().nChunks || 0;
+      const del = [];
+      for(let i=0;i<oldN;i++) del.push(db.collection('config').doc('radar_dados_'+i).delete());
+      await Promise.all(del);
+    }
+
+    // Salvar metadados
+    await db.collection('config').doc('radar_dados').set({
+      ts: _radarTs, n: total, nChunks, rows: []
+    });
+
+    // Salvar chunks
+    for(let i=0;i<nChunks;i++){
+      const slice = _radarDados.slice(i*CHUNK, (i+1)*CHUNK);
+      await db.collection('config').doc('radar_dados_'+i).set({ rows: slice, chunk: i });
+    }
+
+    console.log('✓ Radar salvo em', nChunks, 'chunks:', total, 'registros');
     const ok=document.getElementById('radar-salvo-ok');
     if(ok){
       ok.style.display='inline';
-      ok.textContent='✓ Salvo! '+_radarDados.length+' registros.';
+      ok.textContent='✓ Salvo! '+total+' registros.';
       setTimeout(()=>{ok.style.display='none';ok.textContent='✓ Salvo! Radar atualizado.';},5000);
     }
     renderRadarOperacional();
