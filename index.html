@@ -6897,9 +6897,9 @@ function _renderRadarCore(){
   // Status usa EXATAMENTE o mesmo número do card Itens Críticos + limiares do ADM
   const pctCriticos   = rows.length>0 ? Math.round(criticos/rows.length*100) : 0;
   const _limEstavel = r.limiar_estavel||10;
-  const limiarAlerta  = r.limiar_alerta||25;
-  if(pctCriticos>=limiarAlerta){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
-  else if(pctCriticos>=limiarEstavel){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
+  const _limAlerta2  = r.limiar_alerta||25;
+  if(pctCriticos>=_limAlerta2){saude='Operação Crítica';saudeIco='🔴';saudeCor='var(--vm)';}
+  else if(pctCriticos>=_limEstavel){saude='Operação em Alerta';saudeIco='🟡';saudeCor='var(--am)';}
   else{saude='Operação Estável';saudeIco='🟢';saudeCor='var(--vd)';}
   if(stEl){stEl.textContent=saude+' · '+criticos+' itens críticos ('+pctCriticos+'%)';stEl.style.color=saudeCor;}
   if(icoEl) icoEl.textContent=saudeIco;
