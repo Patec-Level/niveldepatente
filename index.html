@@ -9087,7 +9087,8 @@ async function bkSalvarFirebase(){
       arquivo: _bkDados.arquivo,
       dt: _bkDados.dt,
       total: rowsObj.length,
-      chunks: totalChunks
+      chunks: totalChunks,
+      idxFluxo: idxFluxo
     });
     // Salvar novos chunks
     for(let c = 0; c < totalChunks; c++){
@@ -9144,7 +9145,8 @@ async function bkCarregarFirebase(){
         const comLiberar = allRows.filter(o => String(o.c32||'').includes('LIBERAR'));
         console.log('[BK] Objetos com LIBERAR em c32:', comLiberar.length);
       }
-      _bkDados = { headers: hdrs, rows: rowsArr, arquivo: d.arquivo, dt: d.dt };
+      _bkDados = { headers: hdrs, rows: rowsArr, arquivo: d.arquivo, dt: d.dt, idxFluxo: d.idxFluxo !== undefined ? d.idxFluxo : -1 };
+      console.log('[BK Load] idxFluxo carregado do Firebase:', _bkDados.idxFluxo);
       bkAtualizarInfoFirebase();
       aaVerificarDados();
     }
