@@ -8482,10 +8482,8 @@ function renderCascata(){
   _dAnterior.setDate(_dAnterior.getDate()-1);
   const dtAnterior = _dAnterior.toISOString().split('T')[0];
 
-  // Preferir marco automático do AG. TRATAMENTO se existir
-  const hoje = new Date().toISOString().split('T')[0];
-  const marcoAuto = _paHistorico.find(h => h.dt === hoje && h.label && h.label.includes('Auto'));
-  const marco = marcoAuto || paGetMarcoBase();
+  // Marco base = mais recente anterior ou igual à data de início selecionada
+  const marco = paGetMarcoBase(dtInicio);
   let backlogBase = marco.val;
   if(marco.dt <= dtAnterior){
     paDiasUteis(marco.dt, dtAnterior).forEach(d=>{
@@ -8514,10 +8512,16 @@ function renderCascata(){
   // KPIs
   const totalSaidas  = linhas.reduce((s,l)=>s+l.saidas,0);
   const totalEntrada = linhas.reduce((s,l)=>s+l.entrada,0);
-  // Se existe marco automático de hoje, usar ele como backlog atual real
-  const hojeStr = new Date().toISOString().split('T')[0];
-  const marcoHoje = _paHistorico.find(h => h.dt === hojeStr && h.label && h.label.includes('Auto'));
-  if(marcoHoje) backlogAtual = marcoHoje.val;
+  // Backlog atual = contagem real AG. TRATAMENTO do radar (mesma lógica do card)
+  if(_radarDados && _radarDados.length){
+    const itensMapa = _radarDados.filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
+    const agTrat = itensMapa.filter(r=>{
+      const chave = govChave(r);
+      const m = _govDados[chave]||{};
+      return !m.status || m.status==='' || m.status==='AG. TRATAMENTO';
+    }).length;
+    if(agTrat > 0) backlogAtual = agTrat;
+  }
   const reducao      = backlogBase - backlogAtual;
   _backlogAtualGlobal = backlogAtual; // salva para uso no ADM
   const kpiEl = document.getElementById('pa-kpis');
@@ -8808,11 +8812,17 @@ async function paHistoricoSalvarFirebase(){
 
 // Manter compatibilidade
 function paHistoricoSalvar(){ paHistoricoSalvarFirebase(); }
-// Base do gráfico = ÚLTIMO registro do histórico (data mais recente)
-function paGetMarcoBase(){
+// Base do gráfico = marco mais recente ANTERIOR ou IGUAL à data de início
+function paGetMarcoBase(dtRef){
   if(!_paHistorico.length) return {dt:'2026-05-06', val:488};
-  const sorted = [..._paHistorico].sort((a,b)=>b.dt.localeCompare(a.dt));
-  return sorted[0];
+  const ref = dtRef || new Date().toISOString().split('T')[0];
+  // Filtrar marcos até a data de referência, excluindo marcos automáticos futuros
+  const candidatos = [..._paHistorico]
+    .filter(h => h.dt <= ref)
+    .sort((a,b) => b.dt.localeCompare(a.dt));
+  if(candidatos.length) return candidatos[0];
+  // Se não há marco anterior, usar o mais antigo
+  return [..._paHistorico].sort((a,b) => a.dt.localeCompare(b.dt))[0];
 }
 
 async function paEntradaCarregarFirebase(){
