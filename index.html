@@ -2648,6 +2648,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <span class="field-label">Envio</span>
                 <input type="date" id="xgl-new-envio" style="width:100%;font-size:12px;padding:5px 10px">
               </div>
+              <div class="field-wrap">
+                <span class="field-label">Comentário</span>
+                <input type="text" id="xgl-new-comentario" placeholder="Observação..." style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
             </div>
             <div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">
               <button class="btn btn-s" onclick="xglFecharModal()">Cancelar</button>
@@ -2689,6 +2693,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <th>Status</th>
                 <th>Finalizado</th>
                 <th>Conclusão</th>
+                <th>Comentário</th>
               </tr>
             </thead>
             <tbody id="xgl-tbody"></tbody>
@@ -10080,6 +10085,7 @@ function xglRender(){
           onchange="xglSalvarConclusao('${chave}',this.value,${idx})">
           ${conclusaoOpts}
         </select>`:'—'}</td>
+      <td style="text-align:center"><button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px" onclick="xglAbrirComentario('${chave}')">💬</button></td>
     </tr>`;
   }).join('');
   // Verificar devoluções pendentes
@@ -10511,12 +10517,13 @@ function xglFecharModal(){
 }
 
 async function xglAdicionarItem(){
-  const analista = (document.getElementById('xgl-new-analista')?.value||'').trim();
-  const rc       = (document.getElementById('xgl-new-rc')?.value||'').trim();
-  const item     = (document.getElementById('xgl-new-item')?.value||'10').trim();
-  const status   = (document.getElementById('xgl-new-status')?.value||'').trim();
-  const envio    = (document.getElementById('xgl-new-envio')?.value||'').trim();
-  const erroEl   = document.getElementById('xgl-modal-erro');
+  const analista   = (document.getElementById('xgl-new-analista')?.value||'').trim();
+  const rc         = (document.getElementById('xgl-new-rc')?.value||'').trim();
+  const item       = (document.getElementById('xgl-new-item')?.value||'10').trim();
+  const status     = (document.getElementById('xgl-new-status')?.value||'').trim();
+  const envio      = (document.getElementById('xgl-new-envio')?.value||'').trim();
+  const comentario = (document.getElementById('xgl-new-comentario')?.value||'').trim();
+  const erroEl     = document.getElementById('xgl-modal-erro');
 
   if(!rc){ erroEl.textContent='RC obrigatória.'; erroEl.style.display='block'; return; }
 
@@ -10529,7 +10536,7 @@ async function xglAdicionarItem(){
 
   // Adicionar ao array
   _xglItens.push({ rc, item, oport:'', itemop:'', analista });
-  _xglDados[chave] = { status: status||'AG. TRATAMENTO', envio, finalizado:'' };
+  _xglDados[chave] = { status: status||'AG. TRATAMENTO', envio, finalizado:'', comentario };
 
   // Salvar no Firebase
   try{
@@ -10810,6 +10817,50 @@ function xglCopiarDevolucao(){
     if(m.comentario) texto += '   Obs: ' + m.comentario + '\n';
     texto += '\n';
   });
+}
+
+
+// ── MODAL COMENTÁRIO XGL ──
+function xglAbrirComentario(chave){
+  let modal = document.getElementById('xgl-coment-modal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'xgl-coment-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center';
+    modal.innerHTML = `
+      <div class="cd" style="width:420px;max-width:95vw;padding:1.5rem">
+        <div style="font-weight:700;font-size:14px;margin-bottom:1rem">💬 Comentário — XGL</div>
+        <textarea id="xgl-coment-texto" rows="4" style="width:100%;font-size:12px;padding:8px;border:1px solid var(--brd);border-radius:6px;resize:vertical"
+          placeholder="Digite o comentário..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:1rem;justify-content:flex-end">
+          <button class="btn btn-s" onclick="document.getElementById('xgl-coment-modal').style.display='none'">Cancelar</button>
+          <button class="btn btn-p" onclick="xglSalvarComentarioModal()">💾 Salvar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  const m = _xglDados[chave] || {};
+  document.getElementById('xgl-coment-texto').value = m.comentario || '';
+  modal.dataset.chave = chave;
+  modal.style.display = 'flex';
+}
+
+async function xglSalvarComentarioModal(){
+  const modal = document.getElementById('xgl-coment-modal');
+  const chave = modal.dataset.chave;
+  const texto = document.getElementById('xgl-coment-texto').value.trim();
+  if(!_xglDados[chave]) _xglDados[chave] = {};
+  _xglDados[chave].comentario = texto;
+  try{
+    const db = getDB();
+    if(db){
+      await db.collection('gov_xgl').doc(chave.replace(/[|]/g,'_')).set({
+        ..._xglDados[chave], chave, ts: new Date().toISOString()
+      });
+    }
+  } catch(e){ console.warn('xglSalvarComentarioModal:', e); }
+  modal.style.display = 'none';
+  xglRender();
 }
 
 </script>
