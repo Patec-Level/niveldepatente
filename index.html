@@ -8497,7 +8497,7 @@ function renderCascata(){
   const diasUteis = paDiasUteis(dtInicio, dtFim).filter(d => d > dtAnterior);
 
   const linhas=[];
-  // Calcular valor real do AG. TRATAMENTO para ancorar o gráfico
+  // Valor real do AG. TRATAMENTO — sempre ancora o backlog final
   const _backlogRealRadar = (()=>{
     if(!_radarDados || !_radarDados.length) return null;
     const itensMapa = _radarDados.filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
@@ -8505,17 +8505,17 @@ function renderCascata(){
     return agTrat > 0 ? agTrat : null;
   })();
 
-  let backlogAtual=backlogBase;
+  let backlogAtual = backlogBase;
   const hojeISO = new Date().toISOString().split('T')[0];
   diasUteis.forEach((d, idx)=>{
     const saidas  = saidasPorDia[d]||0;
     const entrada = (_paEntradas.find(e=>e.dt===d)?.val)||0;
     const saldo   = entrada - saidas;
     const isUltimo = idx === diasUteis.length - 1;
-    // Último dia do período que inclui hoje: ancorar no valor real do radar
-    const backlogFim = (isUltimo && d >= hojeISO && _backlogRealRadar !== null)
+    // Último dia: sempre ancorar no valor real do radar (independente do filtro)
+    const backlogFim = (isUltimo && _backlogRealRadar !== null)
       ? _backlogRealRadar
-      : Math.max(0, backlogAtual+saldo);
+      : Math.max(0, backlogAtual + saldo);
     linhas.push({data:d, backlogInicio:backlogAtual, saidas, entrada, saldo, backlogFim});
     backlogAtual = backlogFim;
   });
@@ -8525,18 +8525,7 @@ function renderCascata(){
   // KPIs
   const totalSaidas  = linhas.reduce((s,l)=>s+l.saidas,0);
   const totalEntrada = linhas.reduce((s,l)=>s+l.entrada,0);
-  // Backlog Atual final = sempre o valor real do AG. TRATAMENTO do radar
-  const backlogFinalReal = (()=>{
-    if(!_radarDados || !_radarDados.length) return backlogAtual;
-    const itensMapa = _radarDados.filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
-    const agTrat = itensMapa.filter(r=>{
-      const chave = govChave(r);
-      const m = _govDados[chave]||{};
-      return !m.status || m.status==='' || m.status==='AG. TRATAMENTO';
-    }).length;
-    return agTrat > 0 ? agTrat : backlogAtual;
-  })();
-  backlogAtual = backlogFinalReal;
+  // backlogAtual já está correto (ancorado no radar pelo forEach acima)
   const reducao = backlogBase - backlogAtual;
   _backlogAtualGlobal = backlogAtual; // salva para uso no ADM
   const kpiEl = document.getElementById('pa-kpis');
