@@ -10307,6 +10307,9 @@ function govBuscarRC(rc){
           ${r.aba==='STATUS B'?`<td>
             <button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px"
               onclick="sbAbrirComentario('${r.chave}')">💬</button>
+          </td>`:r.aba==='XGL'?`<td>
+            <button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px"
+              onclick="xglAbrirComentario('${r.chave}')">💬</button>
           </td>`:'<td></td>'}
         </tr>`).join('')}
       </tbody>
