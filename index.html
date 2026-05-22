@@ -6461,6 +6461,7 @@ async function radarOnFile(file){
       idas:          Number(r['Idas ao mercado']||r['IDAS AO MERCADO']||r['Idas']||0),
       item_rc:       String(r['Item da RC']||r['ITEM']||r['Item']||'').trim(),
       familia:       (()=>{ const v=String(r['Familia']||r['FAMILIA']||'').trim(); return v.endsWith('.0')?v.slice(0,-2):v; })(),
+      cat_familia:   String(r['Categoria Familia']||r['Categoria Família']||r['CATEGORIA FAMILIA']||r['CATEGORIA FAMÍLIA']||r['categoria familia']||r['categoria família']||'').trim(),
       status_ctrl:   String(r['Status de Controle']||'').trim(),
       seguimento:    (()=>{
         const k=Object.keys(r).find(k=>k==='Seguimento');
@@ -6960,12 +6961,14 @@ function renderRadarTopFamilias(rows){
   const barsEl  = document.getElementById('radar-top-familias-bars');
   if(!barsEl) return;
 
-  // Contar por família
+  // Contar por família e guardar categoria
   const contagem = {};
+  const catMap = {};
   rows.forEach(d=>{
     const f = d.familia ? String(d.familia).trim() : '';
     if(!f || f==='0' || f==='undefined') return;
     contagem[f] = (contagem[f]||0) + 1;
+    if(d.cat_familia && !catMap[f]) catMap[f] = String(d.cat_familia).trim();
   });
 
   // Top 5
@@ -6987,9 +6990,12 @@ function renderRadarTopFamilias(rows){
   barsEl.innerHTML = top5.map(([fam, cnt], i)=>{
     const pct = Math.round(cnt/total*100);
     const w   = Math.round(cnt/maxVal*100);
-    return `<div style="margin-bottom:.875rem">
+    const cat = catMap[fam] || '';
+    return `<div style="margin-bottom:.875rem;position:relative" class="fam-bar-wrap">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="font-size:12px;font-weight:700;color:var(--tx)">${fam}</span>
+        <span style="font-size:12px;font-weight:700;color:var(--tx);${cat?'cursor:help':''}" ${cat?'title="'+cat+'"':''}>
+          ${fam}${cat?' <span style="font-size:10px;font-weight:400;color:var(--tx2)">('+cat+')</span>':''}
+        </span>
         <span style="font-size:12px;font-weight:700;color:${cores[i]}">${cnt} <span style="font-size:10px;color:var(--tx2);font-weight:400">(${pct}%)</span></span>
       </div>
       <div style="height:10px;background:var(--cin);border-radius:5px;overflow:hidden">
