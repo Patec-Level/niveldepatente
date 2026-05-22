@@ -9776,7 +9776,7 @@ function govSetTab(aba, btn){
   document.getElementById('gov-tab-concluidos').style.display = aba === 'concluidos' ? 'block' : 'none';
   document.getElementById('gov-tab-statusb').style.display    = aba === 'statusb'    ? 'block' : 'none';
   if(aba === 'statusb') setTimeout(()=>{ if(!_sbItens.length) sbCarregarFirebase().then(sbRender); else sbRender(); }, 100);
-  if(aba === 'xgl') xglRender();
+  if(aba === 'xgl'){ if(!_xglItens||!_xglItens.length){ xglCarregarFirebase().then(xglRender); } else { xglRender(); } }
   if(aba === 'concluidos') govRenderConcluidos();
 }
 
@@ -10047,7 +10047,7 @@ function xglRender(){
   const tbody = document.getElementById('xgl-tbody');
   if(!tbody) return;
   if(!_xglItens.length){
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--tx2);padding:1.5rem">📂 Faça o upload da planilha XGL acima.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum item cadastrado.</td></tr>';
     return;
   }
 
@@ -10128,7 +10128,14 @@ async function xglSalvarLinha(chave, idx){
   } catch(e){ alert('Erro ao salvar: '+e.message); }
 }
 
-// Carregar ao iniciar
+// Carregar base embutida imediatamente (síncrono)
+_xglItens = [..._XGL_BASE_ITENS];
+Object.entries(_XGL_BASE_DADOS).forEach(([chave, d]) => {
+  if(!_xglDados[chave]){
+    _xglDados[chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
+  }
+});
+// Depois carregar Firebase (sobrescreve com dados salvos pelos usuários)
 xglCarregarFirebase();
 
 
@@ -10479,17 +10486,17 @@ const _XGL_BASE_ITENS = [{"rc": "36117806", "item": "10", "oport": "", "itemop":
 const _XGL_BASE_DADOS = {"36117806|10": {"status": "XGL BAIXO", "envio": "2026-02-20", "finalizado": ""}, "36129108|10": {"status": "XGL BAIXO", "envio": "2026-05-19", "finalizado": ""}, "36168829|10": {"status": "REQUISITANTE", "envio": "2026-05-19", "finalizado": ""}, "36203999|10": {"status": "XGL BAIXO", "envio": "2026-03-05", "finalizado": ""}, "36224117|10": {"status": "XGL BAIXO", "envio": "2026-04-08", "finalizado": ""}, "36012037|10": {"status": "XGL BAIXO", "envio": "2026-03-17", "finalizado": ""}, "36283936|10": {"status": "XGL BAIXO", "envio": "2026-03-31", "finalizado": ""}, "36257855|10": {"status": "XGL BAIXO", "envio": "2026-03-17", "finalizado": ""}, "36149020|10": {"status": "XGL BAIXO", "envio": "2026-03-20", "finalizado": ""}, "35857611|20": {"status": "XGL BAIXO", "envio": "2026-03-24", "finalizado": ""}, "36227641|10": {"status": "XGL BAIXO", "envio": "2026-03-27", "finalizado": ""}, "36227667|10": {"status": "XGL BAIXO", "envio": "2026-03-27", "finalizado": ""}, "36227668|10": {"status": "XGL BAIXO", "envio": "2026-03-27", "finalizado": ""}, "36269456|10": {"status": "XGL BAIXO", "envio": "2026-04-24", "finalizado": ""}, "36160831|10": {"status": "XGL BAIXO", "envio": "2026-04-06", "finalizado": ""}, "35290342|30": {"status": "XGL BAIXO", "envio": "2026-04-08", "finalizado": ""}, "36372908|10": {"status": "REQUISITANTE", "envio": "2026-05-19", "finalizado": ""}, "36290696|10": {"status": "XGL BAIXO", "envio": "2026-04-10", "finalizado": ""}, "36290697|10": {"status": "XGL BAIXO", "envio": "2026-04-10", "finalizado": ""}, "36268484|10": {"status": "XGL BAIXO", "envio": "2026-04-15", "finalizado": ""}, "36274405|10": {"status": "REQUISITANTE", "envio": "2026-05-21", "finalizado": ""}, "36282887|10": {"status": "XGL BAIXO", "envio": "2026-04-27", "finalizado": ""}, "35387091|20": {"status": "REQUISITANTE", "envio": "2026-04-29", "finalizado": ""}, "36266010|10": {"status": "REQUISITANTE", "envio": "2026-04-27", "finalizado": ""}, "36264445|10": {"status": "REQUISITANTE", "envio": "2026-04-23", "finalizado": ""}, "36164726|10": {"status": "REQUISITANTE", "envio": "2026-03-30", "finalizado": ""}, "36266020|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36269083|10": {"status": "REQUISITANTE", "envio": "2026-04-01", "finalizado": ""}, "36075294|20": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36226453|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36356965|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36153029|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36302802|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36302737|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36357126|10": {"status": "REQUISITANTE", "envio": "2026-04-06", "finalizado": ""}, "36194132|10": {"status": "REQUISITANTE", "envio": "2026-04-09", "finalizado": ""}, "36079598|10": {"status": "REQUISITANTE", "envio": "2026-04-07", "finalizado": ""}, "36075307|10": {"status": "REQUISITANTE", "envio": "2026-04-08", "finalizado": ""}, "36316367|10": {"status": "REQUISITANTE", "envio": "2026-04-08", "finalizado": ""}, "36261494|10": {"status": "REQUISITANTE", "envio": "2026-04-09", "finalizado": ""}, "36093161|10": {"status": "REQUISITANTE", "envio": "2026-04-09", "finalizado": ""}, "36130629|10": {"status": "REQUISITANTE", "envio": "2026-04-09", "finalizado": ""}, "36128905|10": {"status": "REQUISITANTE", "envio": "2026-04-15", "finalizado": ""}, "36302794|10": {"status": "REQUISITANTE", "envio": "2026-04-13", "finalizado": ""}, "36334292|10": {"status": "REQUISITANTE", "envio": "2026-04-20", "finalizado": ""}, "36357119|10": {"status": "REQUISITANTE", "envio": "2026-04-17", "finalizado": ""}, "36357045|10": {"status": "REQUISITANTE", "envio": "2026-04-22", "finalizado": ""}, "36357016|10": {"status": "REQUISITANTE", "envio": "2026-04-22", "finalizado": ""}, "36356981|10": {"status": "REQUISITANTE", "envio": "2026-04-22", "finalizado": ""}, "36357140|10": {"status": "REQUISITANTE", "envio": "2026-04-22", "finalizado": ""}, "36357011|10": {"status": "REQUISITANTE", "envio": "2026-04-17", "finalizado": ""}, "36169964|10": {"status": "REQUISITANTE", "envio": "2026-04-28", "finalizado": ""}, "36241197|10": {"status": "XGL ALTO", "envio": "2026-04-29", "finalizado": ""}, "36322572|10": {"status": "REQUISITANTE", "envio": "2026-05-05", "finalizado": ""}, "35842755|10": {"status": "REQUISITANTE", "envio": "2026-05-04", "finalizado": ""}, "36351257|10": {"status": "REQUISITANTE", "envio": "2026-05-08", "finalizado": ""}, "36328267|10": {"status": "REQUISITANTE", "envio": "2026-05-21", "finalizado": ""}, "36331440|10": {"status": "REQUISITANTE", "envio": "2026-05-07", "finalizado": ""}, "35763685|20": {"status": "REQUISITANTE", "envio": "2026-05-12", "finalizado": ""}, "36230457|10": {"status": "REQUISITANTE", "envio": "2026-05-21", "finalizado": ""}, "36268698|10": {"status": "XGL BAIXO", "envio": "2026-05-21", "finalizado": ""}, "36269074|10": {"status": "XGL BAIXO", "envio": "2026-05-21", "finalizado": ""}, "36269078|10": {"status": "XGL BAIXO", "envio": "2026-05-21", "finalizado": ""}};
 
 async function xglCarregarBase(){
-  // Carregar itens se ainda não houver
+  // Sempre garantir que _xglItens tem os dados base
   if(!_xglItens || !_xglItens.length){
     _xglItens = [..._XGL_BASE_ITENS];
   }
-  // Mesclar dados (sem sobrescrever Firebase)
+  // Mesclar dados base (sem sobrescrever Firebase)
   Object.entries(_XGL_BASE_DADOS).forEach(([chave, d]) => {
     if(!_xglDados[chave]){
-      _xglDados[chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'' };
+      _xglDados[chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
     }
   });
-  console.log('XGL base carregada:', _XGL_BASE_ITENS.length, 'itens');
+  console.log('XGL base carregada:', _xglItens.length, 'itens');
 }
 
 
