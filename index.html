@@ -6937,8 +6937,7 @@ function _renderRadarCore(){
   const _limAlerta = r.limiar_alerta||25;
 
   const pctCrit = total>0?Math.round(criticos/total*100):0;
-  const tipCrit = 'Regra: Estável < '+_limEstavel+'% | Alerta entre '+_limEstavel+'% e '+_limAlerta+'% | Crítico > '+_limAlerta+'%
-Atual: '+pctCrit+'% de itens críticos ('+criticos+' de '+total+')';
+  const tipCrit = 'Regra: Estável < '+_limEstavel+'% | Alerta entre '+_limEstavel+'% e '+_limAlerta+'% | Crítico > '+_limAlerta+'% | Atual: '+pctCrit+'% ('+criticos+' de '+total+')';
 
   const linha1 = [
     {label:'Total de RCs',   val:totalRCs,         cor:'var(--az)',  bg:'var(--azc)',  ico:'🗂'},
