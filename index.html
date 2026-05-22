@@ -2657,7 +2657,26 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           </div>
         </div>
 
-        <div class="tw" style="max-height:540px">
+        <!-- Painel Devolução -->
+        <div id="xgl-devolucao-painel" style="display:none;margin-bottom:1rem">
+          <div class="cd" style="border-left:3px solid var(--vm)">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.75rem">
+              <div style="font-weight:700;font-size:13px;color:var(--vm)">📋 Pendentes de envio — Devolução</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-s" style="font-size:11px" onclick="xglCopiarDevolucao()">📋 Copiar relação Teams</button>
+                <button class="btn btn-r" style="font-size:11px" onclick="document.getElementById('xgl-devolucao-painel').style.display='none'">✕</button>
+              </div>
+            </div>
+            <div class="tw" style="max-height:220px">
+              <table>
+                <thead><tr><th>Analista</th><th>RC</th><th>Item</th><th>Conclusão</th><th>Comentário</th><th>Enviado?</th></tr></thead>
+                <tbody id="xgl-dev-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="tw" style="max-height:480px">
           <table>
             <thead>
               <tr>
@@ -2669,6 +2688,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <th>Prazo Retorno</th>
                 <th>Status</th>
                 <th>Finalizado</th>
+                <th>Conclusão</th>
               </tr>
             </thead>
             <tbody id="xgl-tbody"></tbody>
@@ -10041,6 +10061,12 @@ function xglRender(){
       `<option value="${o}" ${statusAtual===o?'selected':''}>${o}</option>`
     ).join('');
 
+    const conclusao = m.conclusao || '';
+    const conclusaoOpts = ['','Republicado','Devolvido','Pedido'].map(o=>
+      `<option value="${o}" ${conclusao===o?'selected':''}>${o||'— selecione —'}</option>`
+    ).join('');
+    const mostrarConclusao = !!finalizado;
+
     return `<tr id="xgl-row-${idx}">
       <td style="font-size:11px">${r.analista||'—'}</td>
       <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
@@ -10050,8 +10076,14 @@ function xglRender(){
       <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo?fmtBR(prazo):'—'}</td>
       <td style="text-align:center;font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
       <td style="font-size:11px">${finalizado?fmtBR(finalizado):'—'}</td>
+      <td>${mostrarConclusao?`<select style="font-size:11px;padding:2px 5px;min-width:110px"
+          onchange="xglSalvarConclusao('${chave}',this.value,${idx})">
+          ${conclusaoOpts}
+        </select>`:'—'}</td>
     </tr>`;
   }).join('');
+  // Verificar devoluções pendentes
+  setTimeout(xglAtualizarPainelDevolucao, 100);
 }
 
 async function xglSalvarCampo(chave, campo, valor, idx){
@@ -10234,8 +10266,8 @@ function govBuscarRC(rc){
           <td style="font-size:11px">${r.analista}</td>
           <td style="font-weight:700;color:var(--az)">${r.rc}</td>
           <td>${r.seq||'—'}</td>
-          <td>${r.op||'—'}</td>
-          <td>${r.item||'—'}</td>
+          <td>${r.aba!=='XGL'?r.op||'—':''}</td>
+          <td>${r.aba!=='XGL'?r.item||'—':''}</td>
           <td>
             <select style="font-size:11px;padding:2px 5px;min-width:150px"
               onchange="govBuscaSalvar('${r.aba}','${r.chave}','status',this.value)">
@@ -10694,6 +10726,112 @@ async function sbSalvarComentario(){
   modal.style.display = 'none';
   // Atualizar tabela se visível
   sbRender();
+}
+
+
+// ════════════════════════════════════════════
+// XGL — CONCLUSÃO E DEVOLUÇÃO
+// ════════════════════════════════════════════
+async function xglSalvarConclusao(chave, valor, idx){
+  if(!_xglDados[chave]) _xglDados[chave] = {};
+  _xglDados[chave].conclusao = valor;
+  // Auto-save
+  try{
+    const db = getDB(); if(!db) return;
+    await db.collection('gov_xgl').doc(chave.replace(/[|]/g,'_')).set({
+      ..._xglDados[chave], chave, ts: new Date().toISOString()
+    });
+  } catch(e){ console.warn('xglSalvarConclusao:', e); }
+
+  // Se for Devolução, mostrar painel
+  if(valor === 'Devolvido') xglAtualizarPainelDevolucao();
+}
+
+function xglAtualizarPainelDevolucao(){
+  const devs = _xglItens.filter(r => {
+    const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
+    const m = _xglDados[chave] || {};
+    return m.conclusao === 'Devolvido' && !m.enviadoTeams;
+  });
+
+  const painel = document.getElementById('xgl-devolucao-painel');
+  if(!devs.length){ if(painel) painel.style.display='none'; return; }
+
+  if(painel) painel.style.display='block';
+  const tbody = document.getElementById('xgl-dev-tbody');
+  if(!tbody) return;
+
+  tbody.innerHTML = devs.map(r => {
+    const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
+    const m = _xglDados[chave] || {};
+    const enviado = !!m.enviadoTeams;
+    return `<tr>
+      <td style="font-size:11px">${r.analista||'—'}</td>
+      <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
+      <td>${r.item||'—'}</td>
+      <td style="color:var(--vm);font-weight:600">Devolvido</td>
+      <td style="font-size:11px;max-width:180px">${m.comentario||'—'}</td>
+      <td style="text-align:center">
+        ${enviado
+          ? `<span style="color:var(--vd);font-size:11px;font-weight:700">✓ Enviado</span>`
+          : `<button class="btn btn-g" style="font-size:10px;padding:3px 8px"
+               onclick="xglMarcarEnviado('${chave}')">Marcar enviado</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function xglMarcarEnviado(chave){
+  if(!_xglDados[chave]) _xglDados[chave] = {};
+  _xglDados[chave].enviadoTeams = true;
+  try{
+    const db = getDB(); if(!db) return;
+    await db.collection('gov_xgl').doc(chave.replace(/[|]/g,'_')).set({
+      ..._xglDados[chave], chave, ts: new Date().toISOString()
+    });
+  } catch(e){ console.warn('xglMarcarEnviado:', e); }
+  xglAtualizarPainelDevolucao();
+}
+
+function xglCopiarDevolucao(){
+  const devs = _xglItens.filter(r => {
+    const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
+    const m = _xglDados[chave] || {};
+    return m.conclusao === 'Devolvido' && !m.enviadoTeams;
+  });
+
+  if(!devs.length){ alert('Nenhuma devolução pendente.'); return; }
+
+  let texto = '📋 *Relação de Devoluções — PATEC*
+
+';
+  devs.forEach((r,i) => {
+    const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
+    const m = _xglDados[chave] || {};
+    texto += `${i+1}. *RC ${r.rc}* | Item ${r.item}
+`;
+    texto += `   Analista: ${r.analista||'—'}
+`;
+    texto += `   Conclusão: Devolução
+`;
+    if(m.comentario) texto += `   Obs: ${m.comentario}
+`;
+    texto += '
+';
+  });
+
+  navigator.clipboard.writeText(texto).then(()=>{
+    alert('✓ Relação copiada! Cole no Teams.');
+  }).catch(()=>{
+    // Fallback
+    const el = document.createElement('textarea');
+    el.value = texto;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    alert('✓ Relação copiada! Cole no Teams.');
+  });
 }
 
 </script>
