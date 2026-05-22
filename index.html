@@ -8514,6 +8514,10 @@ function renderCascata(){
   // KPIs
   const totalSaidas  = linhas.reduce((s,l)=>s+l.saidas,0);
   const totalEntrada = linhas.reduce((s,l)=>s+l.entrada,0);
+  // Se existe marco automático de hoje, usar ele como backlog atual real
+  const hojeStr = new Date().toISOString().split('T')[0];
+  const marcoHoje = _paHistorico.find(h => h.dt === hojeStr && h.label && h.label.includes('Auto'));
+  if(marcoHoje) backlogAtual = marcoHoje.val;
   const reducao      = backlogBase - backlogAtual;
   _backlogAtualGlobal = backlogAtual; // salva para uso no ADM
   const kpiEl = document.getElementById('pa-kpis');
