@@ -10028,18 +10028,34 @@ async function xglCarregarFirebase(){
       await new Promise(r=>setTimeout(r,300));
     }
     const db = getDB(); if(!db) return;
-    // Carregar itens
+    // Carregar itens do Firebase (prioridade total)
     const docItens = await db.collection('config').doc('xgl_itens').get();
-    if(docItens.exists) _xglItens = docItens.data().itens || [];
-    // Carregar dados manuais
+    if(docItens.exists && docItens.data().itens && docItens.data().itens.length){
+      _xglItens = docItens.data().itens;
+    } else {
+      // Firebase vazio — usar base embutida
+      _xglItens = [..._XGL_BASE_ITENS];
+    }
+    // Carregar dados manuais do Firebase
     const snap = await db.collection('gov_xgl').get();
     _xglDados = {};
     snap.forEach(doc => {
       const d = doc.data();
-      if(d.chave) _xglDados[d.chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'' };
+      if(d.chave) _xglDados[d.chave] = {
+        status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'',
+        comentario: d.comentario||'', conclusao: d.conclusao||'', enviadoTeams: d.enviadoTeams||false
+      };
     });
-    console.log('XGL carregado:', _xglItens.length, 'itens,', Object.keys(_xglDados).length, 'registros manuais');
-    await xglCarregarBase();
+    // Preencher dados base só para itens que NÃO têm dados no Firebase
+    Object.entries(_XGL_BASE_DADOS).forEach(([chave, d]) => {
+      if(!_xglDados[chave]){
+        _xglDados[chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: '', conclusao: '', enviadoTeams: false };
+      }
+    });
+    console.log('XGL carregado:', _xglItens.length, 'itens,', Object.keys(_xglDados).length, 'registros');
+    // Renderizar se aba estiver visível
+    const tab = document.getElementById('gov-tab-xgl');
+    if(tab && tab.style.display !== 'none') xglRender();
   } catch(e){ console.warn('xglCarregarFirebase:', e); }
 }
 
@@ -10128,14 +10144,8 @@ async function xglSalvarLinha(chave, idx){
   } catch(e){ alert('Erro ao salvar: '+e.message); }
 }
 
-// Carregar base embutida imediatamente (síncrono)
-_xglItens = [..._XGL_BASE_ITENS];
-Object.entries(_XGL_BASE_DADOS).forEach(([chave, d]) => {
-  if(!_xglDados[chave]){
-    _xglDados[chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
-  }
-});
-// Depois carregar Firebase (sobrescreve com dados salvos pelos usuários)
+// Carregar Firebase primeiro — ele tem prioridade total
+// Base embutida só serve como fallback se Firebase estiver vazio
 xglCarregarFirebase();
 
 
