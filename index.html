@@ -6407,14 +6407,21 @@ async function fbCarregarRadar(){
     const nChunks = d.nChunks||0;
 
     if(nChunks > 0){
-      // Carregar em chunks
+      // Carregar em chunks novos
       const promises = [];
       for(let i=0;i<nChunks;i++) promises.push(db.collection('config').doc('radar_dados_'+i).get());
       const docs = await Promise.all(promises);
       _radarDados = docs.flatMap(c => c.exists ? (c.data().rows||[]) : []);
+    } else if(d.rows && d.rows.length > 0){
+      // Fallback: documento único (legado com dados)
+      _radarDados = d.rows;
     } else {
-      // Fallback: documento único (legado)
-      _radarDados = d.rows||[];
+      // Tentar carregar chunks com nome alternativo (caso tenha sido salvo parcialmente)
+      const chunkTry = [];
+      for(let i=0;i<20;i++) chunkTry.push(db.collection('config').doc('radar_dados_'+i).get());
+      const tryDocs = await Promise.all(chunkTry);
+      const fromChunks = tryDocs.flatMap(c => c.exists ? (c.data().rows||[]) : []);
+      if(fromChunks.length > 0) _radarDados = fromChunks;
     }
 
     console.log('Radar: '+_radarDados.length+' registros ('+( nChunks||1)+' chunk(s))');
