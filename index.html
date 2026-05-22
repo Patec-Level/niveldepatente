@@ -9744,8 +9744,16 @@ function pcRenderFluxo(){
 
   // Usa dados do _bkDados (Upload Backlog)
   if(!_bkDados || !_bkDados.rows || !_bkDados.rows.length){
-    el.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:1.5rem">📂 Nenhuma planilha carregada. Acesse ADM → Upload Backlog.</td></tr>';
-    if(ct) ct.textContent = '0 registro(s)';
+    // Tentar carregar do Firebase primeiro
+    el.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--az);padding:1.5rem">⏳ Carregando dados...</td></tr>';
+    bkCarregarFirebase().then(()=>{
+      if(_bkDados && _bkDados.rows && _bkDados.rows.length){
+        pcRenderFluxo();
+      } else {
+        el.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:1.5rem">📂 Nenhuma planilha carregada. Acesse ADM → Upload Backlog.</td></tr>';
+        if(ct) ct.textContent = '0 registro(s)';
+      }
+    });
     return;
   }
 
