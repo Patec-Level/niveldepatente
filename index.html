@@ -10799,38 +10799,16 @@ function xglCopiarDevolucao(){
     const m = _xglDados[chave] || {};
     return m.conclusao === 'Devolvido' && !m.enviadoTeams;
   });
-
   if(!devs.length){ alert('Nenhuma devolução pendente.'); return; }
-
-  let texto = '📋 *Relação de Devoluções — PATEC*
-
-';
+  let texto = '\uD83D\uDCCB *Relação de Devoluções — PATEC*\n\n';
   devs.forEach((r,i) => {
     const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
     const m = _xglDados[chave] || {};
-    texto += `${i+1}. *RC ${r.rc}* | Item ${r.item}
-`;
-    texto += `   Analista: ${r.analista||'—'}
-`;
-    texto += `   Conclusão: Devolução
-`;
-    if(m.comentario) texto += `   Obs: ${m.comentario}
-`;
-    texto += '
-';
-  });
-
-  navigator.clipboard.writeText(texto).then(()=>{
-    alert('✓ Relação copiada! Cole no Teams.');
-  }).catch(()=>{
-    // Fallback
-    const el = document.createElement('textarea');
-    el.value = texto;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    alert('✓ Relação copiada! Cole no Teams.');
+    texto += (i+1) + '. *RC ' + r.rc + '* | Item ' + r.item + '\n';
+    texto += '   Analista: ' + (r.analista||'—') + '\n';
+    texto += '   Conclusão: Devolução\n';
+    if(m.comentario) texto += '   Obs: ' + m.comentario + '\n';
+    texto += '\n';
   });
 }
 
