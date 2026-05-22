@@ -8501,7 +8501,14 @@ function renderCascata(){
   const _backlogRealRadar = (()=>{
     if(!_radarDados || !_radarDados.length) return null;
     const itensMapa = _radarDados.filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
-    const agTrat = itensMapa.filter(r=>{ const m=_govDados[govChave(r)]||{}; return !m.status||m.status===''||m.status==='AG. TRATAMENTO'; }).length;
+    // Se _govDados vazio, contar todos do MAPA como AG. TRATAMENTO
+    const govVazio = !_govDados || Object.keys(_govDados).length === 0;
+    const agTrat = govVazio ? itensMapa.length : itensMapa.filter(r=>{
+      const chave = [r.rc, r.seq, r.num_oport].map(v=>String(v||'').trim()).join('|');
+      const m = _govDados[chave]||{};
+      return !m.status || m.status==='' || m.status==='AG. TRATAMENTO';
+    }).length;
+    console.log('[PA] AG.TRATAMENTO contado:', agTrat, '| govDados keys:', Object.keys(_govDados||{}).length);
     return agTrat > 0 ? agTrat : null;
   })();
 
