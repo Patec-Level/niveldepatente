@@ -3267,7 +3267,10 @@ async function fbCarregarTudo(){
   console.log('✓ Firebase: todos os dados carregados e renderizados');
     fbCarregarMapaDiario();
   fbCarregarPCPDiario();
-  fbCarregarRadar();
+  fbCarregarRadar().then(()=>{ 
+    // Registrar backlog AG. TRATAMENTO após radar carregar
+    setTimeout(paAtualizarBacklogAuto, 800);
+  });
   // Atualizar Painel Estratégico se estiver aberto
   if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
     renderCardsDia();
@@ -8479,7 +8482,10 @@ function renderCascata(){
   _dAnterior.setDate(_dAnterior.getDate()-1);
   const dtAnterior = _dAnterior.toISOString().split('T')[0];
 
-  const marco = paGetMarcoBase(); // usa o último registro do histórico como base
+  // Preferir marco automático do AG. TRATAMENTO se existir
+  const hoje = new Date().toISOString().split('T')[0];
+  const marcoAuto = _paHistorico.find(h => h.dt === hoje && h.label && h.label.includes('Auto'));
+  const marco = marcoAuto || paGetMarcoBase();
   let backlogBase = marco.val;
   if(marco.dt <= dtAnterior){
     paDiasUteis(marco.dt, dtAnterior).forEach(d=>{
