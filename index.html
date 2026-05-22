@@ -8548,15 +8548,18 @@ function renderCascata(){
     return agTrat > 0 ? agTrat : null;
   })();
 
-  let backlogAtual = backlogBase;
   const hojeISO = new Date().toISOString().split('T')[0];
+  // Ancorar no radar APENAS se data fim incluir hoje ou futuro
+  const anchorarRadar = dtFim >= hojeISO && _backlogRealRadar !== null;
+
+  let backlogAtual = backlogBase;
   diasUteis.forEach((d, idx)=>{
     const saidas  = saidasPorDia[d]||0;
     const entrada = (_paEntradas.find(e=>e.dt===d)?.val)||0;
     const saldo   = entrada - saidas;
     const isUltimo = idx === diasUteis.length - 1;
-    // Último dia: sempre ancorar no valor real do radar (independente do filtro)
-    const backlogFim = (isUltimo && _backlogRealRadar !== null)
+    // Último dia: ancorar no radar só se período incluir hoje
+    const backlogFim = (isUltimo && anchorarRadar)
       ? _backlogRealRadar
       : Math.max(0, backlogAtual + saldo);
     linhas.push({data:d, backlogInicio:backlogAtual, saidas, entrada, saldo, backlogFim});
@@ -8568,7 +8571,6 @@ function renderCascata(){
   // KPIs
   const totalSaidas  = linhas.reduce((s,l)=>s+l.saidas,0);
   const totalEntrada = linhas.reduce((s,l)=>s+l.entrada,0);
-  // backlogAtual já está correto (ancorado no radar pelo forEach acima)
   const reducao = backlogBase - backlogAtual;
   _backlogAtualGlobal = backlogAtual; // salva para uso no ADM
   const kpiEl = document.getElementById('pa-kpis');
