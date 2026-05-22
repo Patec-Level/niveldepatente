@@ -10310,6 +10310,9 @@ function govBuscarRC(rc){
           </td>`:r.aba==='XGL'?`<td>
             <button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px"
               onclick="xglAbrirComentario('${r.chave}')">💬</button>
+          </td>`:r.aba==='MAPA'?`<td>
+            <button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px"
+              onclick="mapaAbrirComentario('${r.chave}')">💬</button>
           </td>`:'<td></td>'}
         </tr>`).join('')}
       </tbody>
@@ -10881,6 +10884,49 @@ async function xglSalvarComentarioModal(){
   } catch(e){ console.warn('xglSalvarComentarioModal:', e); }
   modal.style.display = 'none';
   xglRender();
+}
+
+
+// ── MODAL COMENTÁRIO MAPA ──
+function mapaAbrirComentario(chave){
+  let modal = document.getElementById('mapa-coment-modal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'mapa-coment-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center';
+    modal.innerHTML = `
+      <div class="cd" style="width:420px;max-width:95vw;padding:1.5rem">
+        <div style="font-weight:700;font-size:14px;margin-bottom:1rem">💬 Comentário — MAPA</div>
+        <textarea id="mapa-coment-texto" rows="4" style="width:100%;font-size:12px;padding:8px;border:1px solid var(--brd);border-radius:6px;resize:vertical"
+          placeholder="Digite o comentário..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:1rem;justify-content:flex-end">
+          <button class="btn btn-s" onclick="document.getElementById('mapa-coment-modal').style.display='none'">Cancelar</button>
+          <button class="btn btn-p" onclick="mapaSalvarComentario()">💾 Salvar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  const m = _govDados[chave] || {};
+  document.getElementById('mapa-coment-texto').value = m.comentario || '';
+  modal.dataset.chave = chave;
+  modal.style.display = 'flex';
+}
+
+async function mapaSalvarComentario(){
+  const modal = document.getElementById('mapa-coment-modal');
+  const chave = modal.dataset.chave;
+  const texto = document.getElementById('mapa-coment-texto').value.trim();
+  if(!_govDados[chave]) _govDados[chave] = {};
+  _govDados[chave].comentario = texto;
+  try{
+    const db = getDB();
+    if(db){
+      await db.collection('gov_mapa').doc(chave.replace(/[|]/g,'_')).set({
+        ..._govDados[chave], chave, ts: new Date().toISOString()
+      });
+    }
+  } catch(e){ console.warn('mapaSalvarComentario:', e); }
+  modal.style.display = 'none';
 }
 
 </script>
