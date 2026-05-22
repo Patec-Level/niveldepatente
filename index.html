@@ -6480,6 +6480,8 @@ async function radarOnFile(file){
     // Atualizar MAPA: fila + novos itens (sem sobrescrever Status/Envio/Finalizado)
     govSincronizarMapa(rows);
     radarRenderPreview(rows);
+    // Atualizar backlog automático após upload
+    setTimeout(paAtualizarBacklogAuto, 500);
     if(progEl) progEl.style.display='none';
     document.getElementById('radar-upload-preview').style.display='block';
     // Auto-salvar no Firebase imediatamente
@@ -8444,15 +8446,18 @@ function paPeriodoHoje(){
   const r    = radarGetRegras();
   const dtIni = document.getElementById('pa-dt-inicio');
   const dtFim = document.getElementById('pa-dt-fim');
-  if(dtIni && !dtIni.value) dtIni.value = r.pa_backlog_dt||'2026-05-19';
-  if(dtFim) dtFim.value = hoje;
   renderCascata();
 }
 
 function renderCascata(){
   const dtInicioEl = document.getElementById('pa-dt-inicio');
   const dtFimEl    = document.getElementById('pa-dt-fim');
-  if(!dtInicioEl?.value) return;
+  if(!dtInicioEl?.value){
+    // Sem data selecionada — limpar gráfico
+    const c = document.getElementById('pa-cascata-container');
+    if(c) c.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--tx2);font-size:13px">Selecione uma data para visualizar o gráfico.</div>';
+    return;
+  }
 
   const r        = radarGetRegras();
   const dtInicio = dtInicioEl.value;
@@ -8692,7 +8697,7 @@ function renderPlanoAcao(){
   const dtIni  = document.getElementById('pa-dt-inicio');
   const dtFim  = document.getElementById('pa-dt-fim');
   const hoje   = HOJE.toISOString().split('T')[0];
-  if(dtIni && !dtIni.value) dtIni.value = r.pa_backlog_dt||'2026-05-19';
+  // datas não preenchidas automaticamente
   if(dtFim && !dtFim.value) dtFim.value = hoje;
   renderCascata();
 }
@@ -9872,6 +9877,8 @@ function govRenderMapa(dados){
 }
 
 async function govSalvarCampo(chave, campo, valor, idx){
+  // Atualizar backlog auto quando status muda no MAPA
+  if(campo === 'status') setTimeout(paAtualizarBacklogAuto, 300);
   if(!_govDados[chave]) _govDados[chave] = {};
   _govDados[chave][campo] = valor;
   // Re-renderizar só a linha para atualizar prazo e status
@@ -10339,6 +10346,7 @@ async function govBuscaSalvar(aba, chave, campo, valor){
   if(aba === 'MAPA'){
     if(!_govDados[chave]) _govDados[chave] = {};
     _govDados[chave][campo] = valor;
+    if(campo === 'status') setTimeout(paAtualizarBacklogAuto, 300);
     try{
       const db = getDB(); if(!db) return;
       await db.collection('gov_mapa').doc(chave.replace(/[|]/g,'_')).set({
@@ -10927,6 +10935,54 @@ async function mapaSalvarComentario(){
     }
   } catch(e){ console.warn('mapaSalvarComentario:', e); }
   modal.style.display = 'none';
+}
+
+
+// ════════════════════════════════════════════
+// BACKLOG AUTOMÁTICO — AG. TRATAMENTO DO MAPA
+// ════════════════════════════════════════════
+function paAtualizarBacklogAuto(){
+  if(!_radarDados || !_radarDados.length) return;
+
+  // Contar itens do MAPA com AG. TRATAMENTO
+  const itensMapa = (_radarDados||[]).filter(r =>
+    (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado'
+  );
+  const totalAgTrat = itensMapa.filter(r => {
+    const chave = govChave(r);
+    const m = _govDados[chave] || {};
+    return !m.status || m.status === 'AG. TRATAMENTO';
+  }).length;
+
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Atualizar ou criar marco do dia no histórico
+  const idxExist = _paHistorico.findIndex(h => h.dt === hoje && h.label && h.label.includes('Auto'));
+  if(idxExist >= 0){
+    _paHistorico[idxExist].val = totalAgTrat;
+    _paHistorico[idxExist].label = 'Backlog Auto — AG. Tratamento';
+  } else {
+    _paHistorico.push({ dt: hoje, val: totalAgTrat, label: 'Backlog Auto — AG. Tratamento' });
+  }
+
+  // Ordenar e salvar
+  _paHistorico.sort((a,b) => a.dt.localeCompare(b.dt));
+  localStorage.setItem('patec_pa_historico', JSON.stringify(_paHistorico));
+
+  // Salvar no Firebase
+  const db = getDB();
+  if(db){
+    db.collection('config').doc('pa_historico').set({
+      lista: _paHistorico, ts: new Date().toISOString()
+    }).then(() => {
+      console.log('✓ Backlog auto atualizado:', totalAgTrat, 'itens AG. TRATAMENTO em', hoje);
+      // Atualizar gráfico se estiver visível
+      if(typeof renderCascata === 'function') renderCascata();
+      if(typeof paHistoricoRender === 'function') paHistoricoRender();
+    }).catch(e => console.warn('paAtualizarBacklogAuto:', e));
+  }
+
+  return totalAgTrat;
 }
 
 </script>
