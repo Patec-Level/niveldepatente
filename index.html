@@ -10226,7 +10226,7 @@ function govBuscarRC(rc){
     <table>
       <thead><tr>
         <th>Aba</th><th>Analista</th><th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
-        <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th>
+        <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th><th></th>
       </tr></thead>
       <tbody>
         ${resultados.map((r,i)=>`<tr>
@@ -10249,6 +10249,10 @@ function govBuscarRC(rc){
           <td id="busca-status-${r.chave.replace(/[|]/g,'_')}" style="${govCorStatus(r.statusCalc)}">${r.statusCalc||'—'}</td>
           <td><input type="date" value="${r.finalizado}" style="font-size:11px;padding:2px 4px;width:105px"
             onchange="govBuscaSalvarAtualizar('${r.aba}','${r.chave}','finalizado',this.value,this)"></td>
+          ${r.aba==='STATUS B'?`<td>
+            <button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px"
+              onclick="sbAbrirComentario('${r.chave}')">💬</button>
+          </td>`:'<td></td>'}
         </tr>`).join('')}
       </tbody>
     </table>
@@ -10641,6 +10645,54 @@ async function sbAdicionarItem(){
   } catch(e){ console.warn('sbAdicionarItem:', e); }
 
   sbFecharModal();
+  sbRender();
+}
+
+
+// ── MODAL COMENTÁRIO STATUS B ──
+function sbAbrirComentario(chave){
+  // Criar modal se não existir
+  let modal = document.getElementById('sb-coment-modal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'sb-coment-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center';
+    modal.innerHTML = `
+      <div class="cd" style="width:420px;max-width:95vw;padding:1.5rem">
+        <div style="font-weight:700;font-size:14px;margin-bottom:1rem">💬 Comentário</div>
+        <textarea id="sb-coment-texto" rows="4" style="width:100%;font-size:12px;padding:8px;border:1px solid var(--brd);border-radius:6px;resize:vertical"
+          placeholder="Digite o comentário..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:1rem;justify-content:flex-end">
+          <button class="btn btn-s" onclick="document.getElementById('sb-coment-modal').style.display='none'">Cancelar</button>
+          <button class="btn btn-p" onclick="sbSalvarComentario()">💾 Salvar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  // Preencher com comentário atual
+  const m = _sbDados[chave] || {};
+  document.getElementById('sb-coment-texto').value = m.comentario || '';
+  modal.dataset.chave = chave;
+  modal.style.display = 'flex';
+}
+
+async function sbSalvarComentario(){
+  const modal = document.getElementById('sb-coment-modal');
+  const chave = modal.dataset.chave;
+  const texto = document.getElementById('sb-coment-texto').value.trim();
+  if(!_sbDados[chave]) _sbDados[chave] = {};
+  _sbDados[chave].comentario = texto;
+  // Salvar no Firebase
+  try{
+    const db = getDB();
+    if(db){
+      await db.collection('gov_sb').doc(chave.replace(/[|]/g,'_')).set({
+        ..._sbDados[chave], chave, ts: new Date().toISOString()
+      });
+    }
+  } catch(e){ console.warn('sbSalvarComentario:', e); }
+  modal.style.display = 'none';
+  // Atualizar tabela se visível
   sbRender();
 }
 
