@@ -9759,8 +9759,14 @@ function pcRenderFluxo(){
 
   const rows = _bkDados.rows;
 
-  // Filtrar col AG (index 32) = 'LIBERAR ITEM'
-  const liberados = rows.filter(r => String(r[32]||'').trim() === 'LIBERAR ITEM');
+  // Debug: ver o que tem na col 32
+  const amostra = rows.slice(0,3).map(r => r[32]);
+  console.log('[Fluxo] Amostra col 32:', amostra, '| Total rows:', rows.length);
+  const todosVals = [...new Set(rows.map(r=>String(r[32]||'').trim()))].slice(0,10);
+  console.log('[Fluxo] Valores únicos col 32:', todosVals);
+
+  // Filtrar col AG 'Tirar do Fluxo' — valor contém 'LIBERAR'
+  const liberados = rows.filter(r => String(r[32]||'').trim().toUpperCase().includes('LIBERAR'));
 
   // Deduplicar por RC(F=5) + Item(G=6) + Oportunidade(H=7) + ItemOP(I=8)
   const vistos = new Set();
