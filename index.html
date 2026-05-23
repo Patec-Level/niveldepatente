@@ -11349,6 +11349,15 @@ async function alertaXGLDevolucao(chave){
   alertaSalvarEnviados();
 }
 
+// ── TESTE RÁPIDO — digite testarAlertas() no console ──
+async function testarAlertas(){
+  console.log('[PATEC] Limpando histórico de enviados e disparando alertas...');
+  _alertasEnviados = {};
+  alertaSalvarEnviados();
+  await alertasDisparar('teste-manual');
+  console.log('[PATEC] Teste concluído. Verifique o histórico no EmailJS.');
+}
+
 </script>
 </body>
 </html>
