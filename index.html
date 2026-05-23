@@ -8436,7 +8436,7 @@ initMetaGap();
 
 // Carregar Firebase e aplicar na topbar
 paEntradaCarregarFirebase();
-fbCarregarTudo().then(()=>{ initMetaGap(); const pg=document.getElementById('p-radar'); if(pg&&pg.classList.contains('active')) renderRadarOperacional(); });
+fbCarregarTudo().then(()=>{ initMetaGap(); const pg=document.getElementById('p-radar'); if(pg&&pg.classList.contains('active')) renderRadarOperacional(); setTimeout(()=>alertasDisparar('auto-load'), 4000); });
 
 // ════════════════════════════════════════════
 // PLANO DE AÇÃO
