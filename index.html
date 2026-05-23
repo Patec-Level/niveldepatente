@@ -746,6 +746,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('pa-entradas',this)">📥 Entradas Plano de Ação</button>
         <button class="stab" onclick="setAdmTab('analista-upload',this)">📂 Upload Backlog</button>
         <button class="stab" onclick="setAdmTab('analista-auto',this)">🤖 Analista Automático</button>
+        <button class="stab" onclick="setAdmTab('email-teste',this)">📧 Testar E-mails</button>
       </div>
 
       <!-- ── GESTÃO DE CICLOS ── -->
@@ -1858,6 +1859,45 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 </table>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TESTAR E-MAILS ── -->
+      <div id="adm-email-teste" class="adm-tab" style="display:none">
+        <div class="cd">
+          <div class="cd-t">📧 Teste de Alertas por E-mail</div>
+          <div class="al al-b" style="margin-bottom:1rem">
+            ℹ O botão abaixo limpa o histórico de enviados e dispara todos os alertas. Use para verificar se os e-mails estão chegando corretamente.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem">
+            <button class="btn btn-p" onclick="emailTesteDisparar()" id="btn-email-teste">
+              🚀 Disparar Alertas Agora
+            </button>
+            <button class="btn btn-s" onclick="emailTesteVerHistorico()">
+              📋 Ver Histórico de Enviados
+            </button>
+            <button class="btn btn-s" style="color:var(--vm);border-color:var(--vm)" onclick="emailTesteLimparHistorico()">
+              🗑 Limpar Histórico
+            </button>
+          </div>
+          <div id="email-teste-log" style="background:#F5F7FB;border:1px solid var(--brd);border-radius:9px;padding:1rem;font-size:12px;font-family:monospace;min-height:80px;max-height:300px;overflow-y:auto;white-space:pre-wrap;color:var(--tx2)">
+            Aguardando...
+          </div>
+        </div>
+        <div class="cd">
+          <div class="cd-t">📬 Destinatários Configurados</div>
+          <div class="tw">
+            <table>
+              <thead><tr><th>Analista</th><th>E-mail</th><th>Tipo</th></tr></thead>
+              <tbody>
+                <tr><td>Lory</td><td>loreanny.couto.prestserv@petrobras.com.br</td><td><span class="pl pl-az">Alertas</span></td></tr>
+                <tr><td>Wanessa</td><td>wanessa.oliveira.prestserv@petrobras.com.br</td><td><span class="pl pl-az">Alertas</span></td></tr>
+                <tr><td>Ludy</td><td>ludimila.reis.prestserv@petrobras.com.br</td><td><span class="pl pl-az">Alertas</span></td></tr>
+                <tr><td>Kaio</td><td>kaio.c.silva.prestserv@petrobras.com.br</td><td><span class="pl pl-ok">Devolução XGL</span></td></tr>
+                <tr><td>Amanda</td><td>amanda.m.souza.prestserv@petrobras.com.br</td><td><span class="pl pl-ok">Devolução XGL</span></td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
