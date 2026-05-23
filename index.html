@@ -10921,8 +10921,11 @@ async function xglSalvarConclusao(chave, valor, idx){
     });
   } catch(e){ console.warn('xglSalvarConclusao:', e); }
 
-  // Se for Devolução, mostrar painel
-  if(valor === 'Devolvido') xglAtualizarPainelDevolucao();
+  // Se for Devolução: mostrar painel + enviar alerta
+  if(valor === 'Devolvido'){
+    xglAtualizarPainelDevolucao();
+    setTimeout(()=>alertaXGLDevolucao(chave), 500);
+  }
 }
 
 function xglAtualizarPainelDevolucao(){
@@ -11129,9 +11132,15 @@ function paAtualizarBacklogAuto(){
 // ════════════════════════════════════════════
 // SISTEMA DE ALERTAS — EMAILJS
 // ════════════════════════════════════════════
-const EMAILJS_SERVICE          = 'service_8kj9q8d';
-const EMAILJS_TEMPLATE_NOVOS   = 'template_2mfwafp';  // Novos itens MAPA
-const EMAILJS_TEMPLATE_VENCIDOS = 'template_49qxbnt'; // Vencidos MAPA + XGL + Status B
+const EMAILJS_SERVICE             = 'service_8kj9q8d';
+const EMAILJS_TEMPLATE_NOVOS      = 'template_2mfwafp';  // Novos + Vencidos por analista
+const EMAILJS_TEMPLATE_DEVOLUCAO  = 'template_49qxbnt';  // Devolução XGL
+
+// Equipe de devolução XGL — recebe alerta quando item é marcado como Devolvido
+const EQUIPE_DEVOLUCAO = [
+  { nome: 'Kaio',   email: 'kaio.c.silva.prestserv@petrobras.com.br' },
+  { nome: 'Amanda', email: 'amanda.m.souza.prestserv@petrobras.com.br' }
+];
 
 const ANALISTAS_EMAIL = {
   'Lory':    'loreanny.couto.prestserv@petrobras.com.br',
@@ -11297,6 +11306,51 @@ async function alertasDisparar(origem){
   console.log('[Alertas] Disparando alertas — origem:', origem);
   await alertasEnviarPorAnalista();
   console.log('[Alertas] Concluído');
+}
+
+
+// ── ALERTA DEVOLUÇÃO XGL ──
+async function alertaXGLDevolucao(chave){
+  // Buscar dados do item
+  const item = (_xglItens||[]).find(r => xglChave(r.rc, r.item, r.oport, r.itemop) === chave);
+  if(!item) return;
+  const m = _xglDados[chave]||{};
+
+  const keyEnv = 'xgl_dev_alerta_' + chave;
+  if(_alertasEnviados[keyEnv]) return; // já enviado
+
+  const dataFin = m.finalizado ? m.finalizado.split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR');
+  const comentario = m.comentario || '—';
+  const analista = item.analista || '—';
+
+  const lista = 'Analista: ' + analista + '
+' +
+                'RC: ' + item.rc + '
+' +
+                'Item: ' + item.item + '
+' +
+                'Data Finalização: ' + dataFin + '
+' +
+                'Comentário: ' + comentario;
+
+  // Enviar para cada membro da equipe de devolução
+  for(const dest of EQUIPE_DEVOLUCAO){
+    try{
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_DEVOLUCAO, {
+        email_analista: dest.email,
+        analista_nome:  dest.nome,
+        rc:             item.rc,
+        lista_itens:    lista,
+        data:           dataFin
+      });
+      console.log('✓ Alerta devolução enviado para', dest.nome);
+    } catch(e){
+      console.warn('Erro alerta devolução para', dest.nome, e);
+    }
+  }
+
+  _alertasEnviados[keyEnv] = new Date().toISOString();
+  alertaSalvarEnviados();
 }
 
 </script>
