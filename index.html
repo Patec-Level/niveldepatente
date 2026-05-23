@@ -11323,14 +11323,10 @@ async function alertaXGLDevolucao(chave){
   const comentario = m.comentario || '—';
   const analista = item.analista || '—';
 
-  const lista = 'Analista: ' + analista + '
-' +
-                'RC: ' + item.rc + '
-' +
-                'Item: ' + item.item + '
-' +
-                'Data Finalização: ' + dataFin + '
-' +
+  const lista = 'Analista: ' + analista + '\n' +
+                'RC: ' + item.rc + '\n' +
+                'Item: ' + item.item + '\n' +
+                'Data Finalização: ' + dataFin + '\n' +
                 'Comentário: ' + comentario;
 
   // Enviar para cada membro da equipe de devolução
