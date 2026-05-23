@@ -335,6 +335,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 .mkt-var-dn{color:#B02020;background:#FDEAEA;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
 .mkt-var-neu{color:var(--tx2);background:var(--cin);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
 </style>
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+  emailjs.init('9F0OwSYL5JdtG8MYj');
+</script>
 </head>
 <body>
 <button id="hbg" onclick="document.getElementById('sb').classList.toggle('mob-open')">☰</button>
@@ -6500,6 +6506,8 @@ async function radarOnFile(file){
     radarRenderPreview(rows);
     // Atualizar backlog automático após upload
     setTimeout(paAtualizarBacklogAuto, 500);
+    // Disparar alertas após upload do radar
+    setTimeout(()=>alertasDisparar('radar_upload'), 2000);
     if(progEl) progEl.style.display='none';
     document.getElementById('radar-upload-preview').style.display='block';
     // Auto-salvar no Firebase imediatamente
@@ -11115,6 +11123,180 @@ function paAtualizarBacklogAuto(){
   }
 
   return totalAgTrat;
+}
+
+
+// ════════════════════════════════════════════
+// SISTEMA DE ALERTAS — EMAILJS
+// ════════════════════════════════════════════
+const EMAILJS_SERVICE          = 'service_8kj9q8d';
+const EMAILJS_TEMPLATE_NOVOS   = 'template_2mfwafp';  // Novos itens MAPA
+const EMAILJS_TEMPLATE_VENCIDOS = 'template_49qxbnt'; // Vencidos MAPA + XGL + Status B
+
+const ANALISTAS_EMAIL = {
+  'Lory':    'loreanny.couto.prestserv@petrobras.com.br',
+  'Ludy':    'ludimila.reis.prestserv@petrobras.com.br',
+  'Wanessa': 'wanessa.oliveira.prestserv@petrobras.com.br',
+  'Loreanny':'loreanny.couto.prestserv@petrobras.com.br',
+  'Ludimila':'ludimila.reis.prestserv@petrobras.com.br',
+};
+
+// Chaves dos itens já conhecidos (evita reenvio)
+let _alertasEnviados = JSON.parse(localStorage.getItem('patec_alertas_enviados')||'{}');
+
+function alertaSalvarEnviados(){
+  localStorage.setItem('patec_alertas_enviados', JSON.stringify(_alertasEnviados));
+}
+
+async function alertaEnviarEmail(email, nome, assunto, mensagem, listaItens, template){
+  try {
+    const tpl = template || EMAILJS_TEMPLATE_NOVOS;
+    await emailjs.send(EMAILJS_SERVICE, tpl, {
+      email_analista: email,
+      analista_nome:  nome,
+      mensagem:       mensagem,
+      lista_itens:    listaItens,
+      data:           new Date().toLocaleDateString('pt-BR')
+    });
+    console.log('✓ Alerta enviado para', nome, '('+email+')');
+    return true;
+  } catch(e){
+    console.warn('Erro ao enviar alerta para', nome, e);
+    return false;
+  }
+}
+
+// ── ALERTAS UNIFICADOS — 1 E-MAIL POR ANALISTA ──
+async function alertasEnviarPorAnalista(){
+  if(!_radarDados || !_radarDados.length) return;
+
+  const hoje = new Date().toISOString().split('T')[0];
+  const porAnalista = {}; // { nome: { novos: [], vencidos: [] } }
+
+  // ── MAPA: Novos ──
+  const itensMapa = _radarDados.filter(r => (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado');
+  itensMapa.forEach(r => {
+    const an = (r.analista||'').trim(); if(!an) return;
+    const chave = r.rc+'|'+r.seq+'|'+r.num_oport;
+    const keyEnv = 'mapa_novo_'+chave;
+    if(_alertasEnviados[keyEnv]) return;
+    if(!porAnalista[an]) porAnalista[an] = {novos:[], vencidos:[]};
+    porAnalista[an].novos.push({ tipo:'MAPA', rc:r.rc, seq:r.seq, op:r.num_oport, sla:r.sla, keyEnv });
+  });
+
+  // ── MAPA: Vencidos ──
+  itensMapa.forEach(r => {
+    const an = (r.analista||'').trim(); if(!an) return;
+    const chave = govChave(r);
+    const m = _govDados[chave]||{};
+    const prazo = govCalcPrazo(m.status||'', m.envio||'');
+    if(!prazo || prazo >= hoje || m.finalizado) return;
+    const keyEnv = 'mapa_venc_'+chave+'_'+hoje;
+    if(_alertasEnviados[keyEnv]) return;
+    if(!porAnalista[an]) porAnalista[an] = {novos:[], vencidos:[]};
+    porAnalista[an].vencidos.push({ tipo:'MAPA', rc:r.rc, seq:r.seq, status:m.status, prazo, keyEnv });
+  });
+
+  // ── XGL: Novos ──
+  (_xglItens||[]).forEach(r => {
+    const an = (r.analista||'').trim(); if(!an) return;
+    const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
+    const keyEnv = 'xgl_novo_'+chave;
+    if(_alertasEnviados[keyEnv]) return;
+    if(!porAnalista[an]) porAnalista[an] = {novos:[], vencidos:[]};
+    porAnalista[an].novos.push({ tipo:'XGL', rc:r.rc, seq:r.item, keyEnv });
+  });
+
+  // ── XGL: Vencidos ──
+  (_xglItens||[]).forEach(r => {
+    const an = (r.analista||'').trim(); if(!an) return;
+    const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
+    const m = _xglDados[chave]||{};
+    const prazo = govCalcPrazo(m.status||'', m.envio||'');
+    if(!prazo || prazo >= hoje || m.finalizado) return;
+    const keyEnv = 'xgl_venc_'+chave+'_'+hoje;
+    if(_alertasEnviados[keyEnv]) return;
+    if(!porAnalista[an]) porAnalista[an] = {novos:[], vencidos:[]};
+    porAnalista[an].vencidos.push({ tipo:'XGL', rc:r.rc, seq:r.item, status:m.status, prazo, keyEnv });
+  });
+
+  // ── STATUS B: Novos e Vencidos ──
+  (_sbItens||[]).forEach(r => {
+    const an = (r.analista||'Lory').trim();
+    const chave = sbChave(r.rc, r.seq, r.op, r.item);
+    const m = _sbDados[chave]||{};
+    const prazo = govCalcPrazo(m.status||'', m.envio||'');
+    // Novo
+    const keyNovo = 'sb_novo_'+chave;
+    if(!_alertasEnviados[keyNovo]){
+      if(!porAnalista[an]) porAnalista[an] = {novos:[], vencidos:[]};
+      porAnalista[an].novos.push({ tipo:'Status B', rc:r.rc, seq:r.seq, keyEnv:keyNovo });
+    }
+    // Vencido
+    if(prazo && prazo < hoje && !m.finalizado){
+      const keyVenc = 'sb_venc_'+chave+'_'+hoje;
+      if(!_alertasEnviados[keyVenc]){
+        if(!porAnalista[an]) porAnalista[an] = {novos:[], vencidos:[]};
+        porAnalista[an].vencidos.push({ tipo:'Status B', rc:r.rc, seq:r.seq, status:m.status, prazo, keyEnv:keyVenc });
+      }
+    }
+  });
+
+  // ── ENVIAR 1 E-MAIL POR ANALISTA ──
+  for(const [analista, dados] of Object.entries(porAnalista)){
+    const email = ANALISTAS_EMAIL[analista];
+    if(!email) continue;
+    if(!dados.novos.length && !dados.vencidos.length) continue;
+
+    let lista = '';
+
+    if(dados.novos.length){
+      lista += '📋 ITENS NOVOS (' + dados.novos.length + ' item(ns))\n';
+      lista += 'Informamos que novos itens foram inseridos no sistema e estão disponíveis para análise.\n\n';
+      dados.novos.forEach((i,n) => {
+        lista += (n+1) + '. [' + i.tipo + '] RC ' + i.rc + ' | SEQ ' + i.seq;
+        if(i.op) lista += ' | OP ' + i.op;
+        if(i.sla) lista += ' | SLA ' + i.sla + ' dias';
+        lista += '\n';
+      });
+      lista += '\n';
+    }
+
+    if(dados.vencidos.length){
+      lista += '⚠️ ITENS COM PRAZO VENCIDO (' + dados.vencidos.length + ' item(ns))\n';
+      lista += 'Identificamos itens com prazo vencido no sistema que requerem verificação/análise.\n\n';
+      dados.vencidos.forEach((i,n) => {
+        lista += (n+1) + '. [' + i.tipo + '] RC ' + i.rc + ' | SEQ ' + i.seq;
+        if(i.status) lista += ' | Status: ' + i.status;
+        if(i.prazo) lista += ' | Prazo: ' + i.prazo.split('-').reverse().join('/');
+        lista += '\n';
+      });
+    }
+
+    try{
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_NOVOS, {
+        email_analista: email,
+        analista_nome:  analista,
+        lista_itens:    lista,
+        data:           new Date().toLocaleDateString('pt-BR')
+      });
+      console.log('✓ Alerta enviado para', analista, '('+email+')');
+      // Marcar todos como enviados
+      [...dados.novos, ...dados.vencidos].forEach(i => {
+        _alertasEnviados[i.keyEnv] = new Date().toISOString();
+      });
+      alertaSalvarEnviados();
+    } catch(e){
+      console.warn('Erro ao enviar alerta para', analista, e);
+    }
+  }
+}
+
+// ── DISPARAR TODOS OS ALERTAS ──
+async function alertasDisparar(origem){
+  console.log('[Alertas] Disparando alertas — origem:', origem);
+  await alertasEnviarPorAnalista();
+  console.log('[Alertas] Concluído');
 }
 
 </script>
