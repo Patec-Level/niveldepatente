@@ -1942,7 +1942,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
             <!-- Col 3: Simulação PA + Seções -->
             <div>
-              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">📉 Simulação Plano de Ação</div>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">📉 Plano de Ação — Período</div>
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <div style="flex:1"><div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Início</div>
+                <input type="date" id="apres-pa-ini" style="width:100%;font-size:12px;padding:5px 10px"></div>
+                <div style="flex:1"><div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Fim</div>
+                <input type="date" id="apres-pa-fim" style="width:100%;font-size:12px;padding:5px 10px"></div>
+              </div>
               <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Itens tratados por dia (simulação)</div>
               <input type="number" id="apres-meta-dia" min="1" placeholder="Ex: 30" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
               <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">📋 Seções do Slide</div>
@@ -11479,6 +11485,20 @@ function admApresentacaoInit(){
     const r = radarGetRegras ? radarGetRegras() : {};
     metaEl.value = r.pa_meta_dia || 30;
   }
+  // Popular datas PA (default = mesmo período de apuração)
+  const paIniEl = document.getElementById('apres-pa-ini');
+  const paFimEl = document.getElementById('apres-pa-fim');
+  if(paIniEl && !paIniEl.value){
+    const paIni = document.getElementById('pa-dt-inicio')?.value;
+    if(paIni) paIniEl.value = paIni;
+    else if(iniEl?.value) paIniEl.value = iniEl.value;
+  }
+  if(paFimEl && !paFimEl.value){
+    const paFim = document.getElementById('pa-dt-fim')?.value;
+    if(paFim) paFimEl.value = paFim;
+    else if(fimEl?.value) paFimEl.value = fimEl.value;
+  }
+
   // Popular checkboxes de analistas
   const list = document.getElementById('apres-analistas-list');
   if(list && _radarDados?.length){
@@ -11532,6 +11552,9 @@ async function admApresentacaoGerar(){
   const dataFmt   = dataRef.split('-').reverse().join('/');
   const casIni    = document.getElementById('apres-cas-ini')?.value || '';
   const casFim    = document.getElementById('apres-cas-fim')?.value || dataRef;
+  // Plano de Ação tem período próprio (normalmente um dia atrás do apuração)
+  const paIni     = document.getElementById('apres-pa-ini')?.value || casIni;
+  const paFim     = document.getElementById('apres-pa-fim')?.value || casFim;
   const metaDiaSim= parseInt(document.getElementById('apres-meta-dia')?.value) || 30;
   const incResumo  = document.getElementById('apres-inc-resumo')?.checked;
   const incMapa    = document.getElementById('apres-inc-mapa')?.checked;
@@ -11661,10 +11684,10 @@ async function admApresentacaoGerar(){
   // ── Capturar imagem Cascata ──
   let cascataImg = '';
   if(incCascata){
-    const paIni = document.getElementById('pa-dt-inicio');
-    const paFim = document.getElementById('pa-dt-fim');
-    if(paIni && casIni) paIni.value = casIni;
-    if(paFim && casFim) paFim.value = casFim;
+    const paIniEl2 = document.getElementById('pa-dt-inicio');
+    const paFimEl2 = document.getElementById('pa-dt-fim');
+    if(paIniEl2) paIniEl2.value = paIni || casIni;
+    if(paFimEl2) paFimEl2.value = paFim || casFim;
     // Mostrar a página do PA temporariamente para o canvas renderizar
     const pgPA = document.getElementById('p-plano-acao');
     const pgPAHidden = pgPA && !pgPA.classList.contains('active');
@@ -11690,7 +11713,8 @@ async function admApresentacaoGerar(){
     });
 
     // Backlog Inicial = marco + saídas reais até dia anterior ao início
-    const dtIni = casIni || dataRef;
+    const dtIni = paIni || casIni || dataRef;
+    const dtFimPA = paFim || casFim;
     const marco = typeof paGetMarcoBase==='function' ? paGetMarcoBase(dtIni) : {val:0,dt:dtIni};
     const _dAnt = new Date(dtIni+'T12:00:00'); _dAnt.setDate(_dAnt.getDate()-1);
     const dtAnt = _dAnt.toISOString().split('T')[0];
@@ -11704,7 +11728,7 @@ async function admApresentacaoGerar(){
     }
 
     // Percorrer dias úteis do período com saídas reais
-    const diasUteis = typeof paDiasUteis==='function' ? paDiasUteis(dtIni, casFim).filter(d=>d>dtAnt) : [];
+    const diasUteis = typeof paDiasUteis==='function' ? paDiasUteis(dtIni, dtFimPA).filter(d=>d>dtAnt) : [];
     // Ancoragem no Radar — mesma lógica do renderCascata
     const _hojeISO = new Date().toISOString().split('T')[0];
     const _FILAS_AG_PA = ['patec','análise de oportunidade'];
@@ -11713,7 +11737,7 @@ async function admApresentacaoGerar(){
       (r.analista_auto||'').trim()==='Analisar PATEC Finalizado' &&
       _FILAS_AG_PA.includes(_normFPA(r.fila))
     ).length || null;
-    const _anchorarRadar = casFim >= _hojeISO && _backlogRealRadar !== null;
+    const _anchorarRadar = dtFimPA >= _hojeISO && _backlogRealRadar !== null;
 
     let backlogAtual = backlogBase;
     let totalSaidas = 0, totalEntradas = 0;
@@ -11764,11 +11788,11 @@ async function admApresentacaoGerar(){
     simLinhas = `
       <div class="sim-grid">
         <div class="sim-card">
-          <div class="sim-label">Backlog Inicial (${casIni?casIni.split('-').reverse().join('/'):'—'})</div>
+          <div class="sim-label">Backlog Inicial (${dtIni?dtIni.split('-').reverse().join('/'):'—'})</div>
           <div class="sim-val">${backlogBase.toLocaleString('pt-BR')}</div>
         </div>
         <div class="sim-card">
-          <div class="sim-label">Backlog Atual (${casFim.split('-').reverse().join('/')})</div>
+          <div class="sim-label">Backlog Atual (${dtFimPA.split('-').reverse().join('/')})</div>
           <div class="sim-val">${backlogAtual.toLocaleString('pt-BR')}</div>
         </div>
         <div class="sim-card">
