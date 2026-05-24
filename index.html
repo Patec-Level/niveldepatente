@@ -1906,41 +1906,49 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- ── APRESENTAÇÃO ── -->
       <div id="adm-apresentacao" class="adm-tab" style="display:none">
         <div class="cd">
-          <div class="cd-t">🖥️ Gerador de Slide para Apresentação</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div class="cd-t">🖥️ Gerador de Slide — Nível Diretoria</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.25rem">
 
-            <!-- Coluna 1 -->
+            <!-- Col 1: Identificação -->
             <div>
-              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Filtro — Analista Automático</div>
-              <select id="apres-filtro-analista" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
-                <option value="">Todos os analistas</option>
-              </select>
-              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;margin-top:12px;text-transform:uppercase;letter-spacing:.5px">Título da Apresentação</div>
-              <input type="text" id="apres-titulo" value="PATEC — Reunião de Gestão" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
-              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">Data de Referência</div>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">🏷️ Identificação</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Título</div>
+              <input type="text" id="apres-titulo" value="Visão Geral de PATEC" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Subtítulo / Área</div>
+              <input type="text" id="apres-subtitulo" value="BPO de Compras · DPV" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Data de Referência (Atual)</div>
               <input type="date" id="apres-data" style="width:100%;font-size:12px;padding:5px 10px">
             </div>
 
-            <!-- Coluna 2 -->
+            <!-- Col 2: Período -->
             <div>
-              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Período — Gráfico Cascata</div>
-              <div style="display:flex;gap:6px;margin-bottom:8px">
-                <div style="flex:1"><div style="font-size:11px;color:var(--tx2);margin-bottom:3px">De</div>
-                <input type="date" id="apres-cas-ini" style="width:100%;font-size:12px;padding:5px 10px"></div>
-                <div style="flex:1"><div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Até</div>
-                <input type="date" id="apres-cas-fim" style="width:100%;font-size:12px;padding:5px 10px"></div>
-              </div>
-              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;margin-top:12px;text-transform:uppercase;letter-spacing:.5px">Seções a incluir</div>
-              <div style="display:flex;flex-direction:column;gap:5px">
-                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-resumo" checked> Resumo do Dia</label>
-                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-prazo" checked> Distribuição por Prazo</label>
-                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-aa" checked> Analista Automático (KPIs)</label>
-                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-cascata" checked> Gráfico Cascata</label>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">📅 Período de Apuração</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Data Inicial (comparação)</div>
+              <input type="date" id="apres-cas-ini" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Data Final</div>
+              <input type="date" id="apres-cas-fim" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Filtro Analista Automático</div>
+              <select id="apres-filtro-analista" style="width:100%;font-size:12px;padding:5px 10px">
+                <option value="">Todos os analistas</option>
+              </select>
+            </div>
+
+            <!-- Col 3: Simulação PA + Seções -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">📉 Simulação Plano de Ação</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Itens tratados por dia (simulação)</div>
+              <input type="number" id="apres-meta-dia" min="1" placeholder="Ex: 30" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">📋 Seções do Slide</div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-resumo" checked> Resumo do Período (Mapa)</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-mapa" checked> Detalhamento Mapa (Governança)</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-prazo" checked> Distribuição por Prazo (Donut)</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-cascata" checked> Plano de Ação (Cascata + Simulação)</label>
               </div>
             </div>
           </div>
           <button class="btn btn-p" onclick="admApresentacaoGerar()" style="width:100%;justify-content:center;font-size:13px;padding:10px">
-            🖨️ Gerar Slide para Impressão
+            🖨️ Gerar Slide para Apresentação
           </button>
         </div>
       </div>
@@ -11445,14 +11453,11 @@ async function testarAlertas(){
 
 
 // ════════════════════════════════════════════
-// APRESENTAÇÃO — GERADOR DE SLIDE
+// APRESENTAÇÃO — GERADOR DE SLIDE (v2)
 // ════════════════════════════════════════════
 function admApresentacaoInit(){
-  // Preencher data padrão
   const dtEl = document.getElementById('apres-data');
   if(dtEl && !dtEl.value) dtEl.value = new Date().toISOString().split('T')[0];
-
-  // Preencher datas cascata com padrão do PA se disponível
   const iniEl = document.getElementById('apres-cas-ini');
   const fimEl = document.getElementById('apres-cas-fim');
   if(iniEl && !iniEl.value){
@@ -11460,38 +11465,39 @@ function admApresentacaoInit(){
     const paFim = document.getElementById('pa-dt-fim')?.value;
     if(paIni) iniEl.value = paIni;
     if(paFim) fimEl.value = paFim;
-    else fimEl.value = new Date().toISOString().split('T')[0];
+    else if(fimEl) fimEl.value = new Date().toISOString().split('T')[0];
   }
-
-  // Popular filtro de analistas
+  const metaEl = document.getElementById('apres-meta-dia');
+  if(metaEl && !metaEl.value){
+    const r = radarGetRegras ? radarGetRegras() : {};
+    metaEl.value = r.pa_meta_dia || 30;
+  }
   const sel = document.getElementById('apres-filtro-analista');
   if(sel && _radarDados?.length){
     const analistas = [...new Set(_radarDados.map(r=>r.analista_auto).filter(Boolean))].sort();
     sel.innerHTML = '<option value="">Todos os analistas</option>' +
       analistas.map(a=>`<option value="${a}">${a}</option>`).join('');
-    // Espelhar filtro ativo atual
     if(_radarFiltroStatus) sel.value = _radarFiltroStatus;
   }
 }
 
 function admApresentacaoGerar(){
-  const titulo   = document.getElementById('apres-titulo')?.value || 'PATEC — Reunião de Gestão';
-  const dataRef  = document.getElementById('apres-data')?.value || new Date().toISOString().split('T')[0];
-  const dataFmt  = dataRef.split('-').reverse().join('/');
-  const filtroAn = document.getElementById('apres-filtro-analista')?.value || '';
-  const casIni   = document.getElementById('apres-cas-ini')?.value || '';
-  const casFim   = document.getElementById('apres-cas-fim')?.value || dataRef;
-  const incResumo   = document.getElementById('apres-inc-resumo')?.checked;
-  const incPrazo    = document.getElementById('apres-inc-prazo')?.checked;
-  const incAA       = document.getElementById('apres-inc-aa')?.checked;
-  const incCascata  = document.getElementById('apres-inc-cascata')?.checked;
-
-  // ── Dados do Radar filtrados ──
-  let rows = _radarDados || [];
-  if(filtroAn) rows = rows.filter(r=>r.analista_auto === filtroAn);
+  const titulo    = document.getElementById('apres-titulo')?.value || 'Visão Geral de PATEC';
+  const subtitulo = document.getElementById('apres-subtitulo')?.value || 'BPO de Compras · DPV';
+  const dataRef   = document.getElementById('apres-data')?.value || new Date().toISOString().split('T')[0];
+  const dataFmt   = dataRef.split('-').reverse().join('/');
+  const filtroAn  = document.getElementById('apres-filtro-analista')?.value || '';
+  const casIni    = document.getElementById('apres-cas-ini')?.value || '';
+  const casFim    = document.getElementById('apres-cas-fim')?.value || dataRef;
+  const metaDiaSim= parseInt(document.getElementById('apres-meta-dia')?.value) || 30;
+  const incResumo  = document.getElementById('apres-inc-resumo')?.checked;
+  const incMapa    = document.getElementById('apres-inc-mapa')?.checked;
+  const incPrazo   = document.getElementById('apres-inc-prazo')?.checked;
+  const incCascata = document.getElementById('apres-inc-cascata')?.checked;
   const filtroLabel = filtroAn || 'Todos os analistas';
+  const periodoLabel = casIni ? (casIni.split('-').reverse().join('/') + ' a ' + casFim.split('-').reverse().join('/')) : dataFmt;
 
-  // ── Dados Resumo do Dia (mapa) ──
+  // ── Helper: getMapa ──
   const getMapa=(d)=>{
     const fb=mapaFirebase.find(r=>r.data===d);
     if(fb) return fb;
@@ -11499,200 +11505,367 @@ function admApresentacaoGerar(){
     if(idx>=0) return{l3:L[3][idx]||0,l4:L[4][idx]||0,l5:L[5][idx]||0,l6:L[6][idx]||0,l7:L[7][idx]||0,l8:L[8][idx]||0};
     return{l3:0,l4:0,l5:0,l6:0,l7:0,l8:0};
   };
-  const estGetDiaAnteriorApres=(d)=>{
-    const dts=[...new Set([...DATAS_ISO_MAPA,...mapaFirebase.map(r=>r.data)])].sort();
-    const idx=dts.indexOf(d); return idx>0?dts[idx-1]:null;
-  };
-  const mapaHoje = getMapa(dataRef);
-  const dtAntApres = estGetDiaAnteriorApres(dataRef);
-  const mapaAntApres = dtAntApres ? getMapa(dtAntApres) : null;
-  const rl3=mapaHoje.l3||0, rl4=mapaHoje.l4||0, rl5=mapaHoje.l5||0, rl6=mapaHoje.l6||0, rl7=mapaHoje.l7||0, rl8=mapaHoje.l8||0;
-  const rl3a=mapaAntApres?.l3??null, rl4a=mapaAntApres?.l4??null, rl5a=mapaAntApres?.l5??null;
-  const rl6a=mapaAntApres?.l6??null, rl7a=mapaAntApres?.l7??null, rl8a=mapaAntApres?.l8??null;
-  const rTotPatec=rl3+rl4+rl5+rl6, rTotGeral=rl3+rl4+rl5+rl6+rl7+rl8;
-  const rTotPatecAnt=mapaAntApres?(rl3a+rl4a+rl5a+rl6a):null;
-  const rTotGeralAnt=mapaAntApres?(rl3a+rl4a+rl5a+rl6a+rl7a+rl8a):null;
-  const rTotAbrir=rl7+rl8, rTotAbrirAnt=mapaAntApres?(rl7a+rl8a):null;
-  const varApres=(v,ant)=>{
+
+  // ── Dados Mapa: dia inicial e dia atual ──
+  const mapaAtual = getMapa(casFim || dataRef);
+  const mapaIni   = casIni ? getMapa(casIni) : null;
+  const ra=mapaAtual, ri=mapaIni;
+  const varM=(v,ant)=>{
     if(ant===null||ant===undefined) return '';
     const d=v-ant;
-    if(d===0) return '<span style="color:#888;font-size:12px">= dia ant.</span>';
-    const cor=d>0?'#D94040':'#3A7D44'; const ico=d>0?'▲':'▼';
-    return `<span style="color:${cor};font-size:12px;font-weight:700">${ico} ${d>0?'+':''}${d} vs dia ant.</span>`;
+    if(d===0) return `<span class="var-neutro">= início</span>`;
+    const cls=d>0?'var-up':'var-dn'; const ico=d>0?'▲':'▼';
+    return `<span class="${cls}">${ico} ${d>0?'+':''}${d}</span>`;
   };
+  const rTotPatec=( ra.l3||0)+(ra.l4||0)+(ra.l5||0)+(ra.l6||0);
+  const rTotGeral=(ra.l3||0)+(ra.l4||0)+(ra.l5||0)+(ra.l6||0)+(ra.l7||0)+(ra.l8||0);
+  const iTotPatec=ri?((ri.l3||0)+(ri.l4||0)+(ri.l5||0)+(ri.l6||0)):null;
+  const iTotGeral=ri?((ri.l3||0)+(ri.l4||0)+(ri.l5||0)+(ri.l6||0)+(ri.l7||0)+(ri.l8||0)):null;
 
-  // ── KPIs Resumo Radar ──
-  const totalItens = rows.length;
-  const FILAS_AG = ['patec','análise de oportunidade'];
-  const normF = v=>String(v||'').trim().toLowerCase();
-  const agTrat = rows.filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado' && FILAS_AG.includes(normF(r.fila))).length;
+  // ── Distribuição por Prazo (dados atuais do radar) ──
+  let rows = _radarDados || [];
+  if(filtroAn) rows = rows.filter(r=>r.analista_auto===filtroAn);
   const vencidos = rows.filter(r=>Number(r.prazo_c||0)>=91).length;
   const proxVenc  = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60&&v<=90; }).length;
   const dentroP   = rows.filter(r=>Number(r.prazo_c||0)<=59).length;
-  const total3 = vencidos + proxVenc + dentroP;
+  const total3 = vencidos+proxVenc+dentroP;
   const pct = n => total3>0 ? Math.round(n/total3*100) : 0;
 
-  // ── KPIs Analista Auto ──
-  const aaRows = (_aaAptas||window._aaAptas||[]).filter(a=>!filtroAn||(a.analista||'')===(filtroAn));
-  const aaRCs   = [...new Set(aaRows.map(a=>a.rc))].length;
-  const aaRegs  = aaRows.length;
-  const aaAnals = [...new Set(aaRows.map(a=>a.analista).filter(Boolean))].length;
+  // ── Detalhamento Mapa Governança (status em tratativa) ──
+  const STATUS_EXCLUIR = ['patec finalizado','saiu do dpv','concluído','concluido','finalizado'];
+  const govItens = (_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
+  const govCounts = {};
+  govItens.forEach(r=>{
+    const ch = govChave ? govChave(r) : (r.rc+'|'+r.item);
+    const m = _govDados[ch] || {};
+    const st = (m.status||'AG. TRATAMENTO').toUpperCase();
+    if(!STATUS_EXCLUIR.includes(st.toLowerCase())){
+      govCounts[st] = (govCounts[st]||0)+1;
+    }
+  });
+  const govOrdem = ['AG. TRATAMENTO','XGL','REQUISITANTE','FORNECEDOR','VALIDAÇÃO DO THIAGO','EMITIR PEDIDO PATEC','MDG','FILA DE PUBLICAÇÃO','FILA DE DEVOLUÇÃO','REPUBLICAÇÃO','DEVOLUÇÃO'];
+  const govSorted = [...Object.entries(govCounts)].sort((a,b)=>b[1]-a[1]);
+  const govTotal = govSorted.reduce((s,[,v])=>s+v,0);
 
-  // ── Cascata: capturar imagem do canvas existente ──
-  let cascataImg = '';
-  if(incCascata){
-    // Sincronizar datas e re-renderizar
-    const paIni = document.getElementById('pa-dt-inicio');
-    const paFim = document.getElementById('pa-dt-fim');
-    if(paIni && casIni){ paIni.value = casIni; }
-    if(paFim && casFim){ paFim.value = casFim; }
-    if(typeof renderCascata === 'function') renderCascata();
-    const canvas = document.getElementById('pa-chart-cascata');
-    if(canvas) cascataImg = canvas.toDataURL('image/png');
-  }
+  // ── XGL não concluídos ──
+  const XGL_EXCLUIR = ['concluído','concluido','finalizado','saiu do dpv','patec finalizado'];
+  const xglPendentes = (_xglItens||[]).filter(r=>{
+    const ch = xglChave ? xglChave(r.rc,r.item,r.oport,r.itemop) : r.rc;
+    const m = _xglDados[ch] || {};
+    return !XGL_EXCLUIR.includes((m.status||'').toLowerCase());
+  });
+  const xglTotal = xglPendentes.length;
 
-  // ── Donut: capturar imagem ──
+  // ── Capturar imagem Donut ──
   let donutImg = '';
   if(incPrazo){
     const canvas = document.getElementById('radar-chart-prazo');
     if(canvas) donutImg = canvas.toDataURL('image/png');
   }
 
-  // ── Montar HTML da apresentação ──
-  const secResumo = incResumo ? `
-    <section>
-      <h2>📊 Resumo do Dia — ${dataFmt}</h2>
-      <div class="res-grid">
-        <div class="res-card" style="background:#EBF0FA">
-          <div class="res-label" style="color:#3266AD">PATEC Finalizado</div>
-          <div class="res-val" style="color:#3266AD">${rl3}</div>
-          <div>${varApres(rl3,rl3a)}</div>
-        </div>
-        <div class="res-card" style="background:#EBF0FA">
-          <div class="res-label" style="color:#3266AD">Ag. PATEC Finalizar</div>
-          <div class="res-val" style="color:#3266AD">${rl4}</div>
-          <div>${varApres(rl4,rl4a)}</div>
-        </div>
-        <div class="res-card" style="background:#e8f5e9">
-          <div class="res-label" style="color:#2E7D32">100% Reprovado</div>
-          <div class="res-val" style="color:#2E7D32">${rl5}</div>
-          <div>${varApres(rl5,rl5a)}</div>
-        </div>
-        <div class="res-card" style="background:#e8f5e9">
-          <div class="res-label" style="color:#2E7D32">PATEC Cancelado</div>
-          <div class="res-val" style="color:#2E7D32">${rl6}</div>
-          <div>${varApres(rl6,rl6a)}</div>
-        </div>
-        <div class="res-card" style="background:#e3f2fd">
-          <div class="res-label" style="color:#1565C0">Total PATEC</div>
-          <div class="res-val" style="color:#1565C0">${rTotPatec}</div>
-          <div>${varApres(rTotPatec,rTotPatecAnt)}</div>
-        </div>
-        <div class="res-card res-big" style="background:#f5f5f5;grid-row:span 2">
-          <div class="res-label" style="color:#0d2137">Total Geral</div>
-          <div class="res-val" style="color:#0d2137;font-size:42px">${rTotGeral}</div>
-          <div>${varApres(rTotGeral,rTotGeralAnt)}</div>
-        </div>
-        <div class="res-card" style="background:#FFF8E1">
-          <div class="res-label" style="color:#E65100">Abrir ID Não</div>
-          <div class="res-val" style="color:#E65100">${rl7}</div>
-          <div>${varApres(rl7,rl7a)}</div>
-        </div>
-        <div class="res-card" style="background:#FFF8E1">
-          <div class="res-label" style="color:#E65100">Abrir PATEC Obrig.</div>
-          <div class="res-val" style="color:#E65100">${rl8}</div>
-          <div>${varApres(rl8,rl8a)}</div>
-        </div>
-        <div class="res-card" style="background:#FFF8E1">
-          <div class="res-label" style="color:#E65100">Soma (Abrir)</div>
-          <div class="res-val" style="color:#E65100">${rTotAbrir}</div>
-          <div>${varApres(rTotAbrir,rTotAbrirAnt)}</div>
-        </div>
-      </div>
-    </section>` : '';
+  // ── Capturar imagem Cascata ──
+  let cascataImg = '';
+  if(incCascata){
+    const paIni = document.getElementById('pa-dt-inicio');
+    const paFim = document.getElementById('pa-dt-fim');
+    if(paIni && casIni) paIni.value = casIni;
+    if(paFim && casFim) paFim.value = casFim;
+    if(typeof renderCascata === 'function') renderCascata();
+    const canvas = document.getElementById('pa-chart-cascata');
+    if(canvas) cascataImg = canvas.toDataURL('image/png');
+  }
 
-  const secPrazo = incPrazo ? `
-    <section>
-      <h2>⏱️ Distribuição por Prazo</h2>
-      <div class="subtitle">${filtroLabel}</div>
-      ${donutImg ? `<div style="text-align:center"><img src="${donutImg}" style="max-height:280px"></div>` : ''}
-      <div class="prazo-legenda">
-        <div class="pl-item"><span class="dot" style="background:#D94040"></span>Vencida ≥ 91 dias: <strong>${pct(vencidos)}%</strong></div>
-        <div class="pl-item"><span class="dot" style="background:#E87722"></span>Próx. vencimento 60–90 dias: <strong>${pct(proxVenc)}%</strong></div>
-        <div class="pl-item"><span class="dot" style="background:#3A7D44"></span>Dentro do prazo ≤ 59 dias: <strong>${pct(dentroP)}%</strong></div>
-      </div>
-    </section>` : '';
+  // ── Simulação PA ──
+  let simLinhas = '';
+  if(incCascata){
+    // Backlog no dia inicial do filtro
+    const marco = typeof paGetMarcoBase==='function' ? paGetMarcoBase(casIni||dataRef) : {val:0,dt:''};
+    const backlogBase = marco.val || 0;
 
-  const secAA = incAA ? `
-    <section>
-      <h2>🤖 Analista Automático</h2>
-      <div class="subtitle">${filtroLabel}</div>
-      <div class="kpis">
-        <div class="kpi"><div class="kval" style="color:#1565C0">${aaRCs}</div><div class="klbl">RCs Aptas</div></div>
-        <div class="kpi"><div class="kval" style="color:#2E7D32">${aaRegs}</div><div class="klbl">Registros</div></div>
-        <div class="kpi"><div class="kval" style="color:#6A1E9E">${aaAnals}</div><div class="klbl">Analistas</div></div>
-      </div>
-    </section>` : '';
+    // Dias úteis desde início até hoje
+    const diasDecorridos = typeof paDiasUteis==='function' ? paDiasUteis(casIni||dataRef, casFim).length : 0;
+    const saidaAcum = diasDecorridos * metaDiaSim;
+    // Entradas acumuladas no período
+    const entradasAcum = (_paEntradas||[]).filter(e=>e.dt>=casIni&&e.dt<=casFim).reduce((s,e)=>s+(e.val||0),0);
+    const backlogAtual = Math.max(0, backlogBase - saidaAcum + entradasAcum);
 
-  const secCascata = incCascata ? `
-    <section>
-      <h2>📉 Gráfico Cascata — Plano de Ação</h2>
-      <div class="subtitle">${casIni ? casIni.split('-').reverse().join('/'):'—'} até ${casFim.split('-').reverse().join('/')}</div>
-      ${cascataImg ? `<div style="text-align:center"><img src="${cascataImg}" style="max-width:100%;max-height:340px"></div>` : '<div style="color:#999;text-align:center;padding:2rem">Gráfico não disponível</div>'}
-    </section>` : '';
+    // Projeção SEM novas entradas
+    const diasParaZerarSem = metaDiaSim>0 ? Math.ceil(backlogAtual/metaDiaSim) : 999;
+    const dtZerarSem = typeof paDiasUteis==='function' ? (() => {
+      const futuros = [];
+      let d = new Date(casFim+'T12:00:00');
+      while(futuros.length < diasParaZerarSem+60){
+        d.setDate(d.getDate()+1);
+        const iso=d.toISOString().split('T')[0];
+        const dow=d.getDay();
+        if(dow!==0&&dow!==6) futuros.push(iso);
+      }
+      return futuros[diasParaZerarSem-1] ? futuros[diasParaZerarSem-1].split('-').reverse().join('/') : '—';
+    })() : '—';
 
+    // Média de entradas diárias no período
+    const mediaEntrada = diasDecorridos>0 ? Math.round(entradasAcum/diasDecorridos) : 0;
+    // Projeção COM entradas (saldo líquido por dia)
+    const saldoLiq = metaDiaSim - mediaEntrada;
+    const dtZerarCom = saldoLiq>0 ? (() => {
+      const diasNec = Math.ceil(backlogAtual/saldoLiq);
+      const futuros = [];
+      let d = new Date(casFim+'T12:00:00');
+      while(futuros.length < diasNec+120){
+        d.setDate(d.getDate()+1);
+        const iso=d.toISOString().split('T')[0];
+        if(d.getDay()!==0&&d.getDay()!==6) futuros.push(iso);
+      }
+      return futuros[diasNec-1] ? futuros[diasNec-1].split('-').reverse().join('/') : '—';
+    })() : 'Backlog crescendo';
+
+    simLinhas = `
+      <div class="sim-grid">
+        <div class="sim-card">
+          <div class="sim-label">Backlog Inicial (${casIni?casIni.split('-').reverse().join('/'):'—'})</div>
+          <div class="sim-val">${backlogBase.toLocaleString('pt-BR')}</div>
+        </div>
+        <div class="sim-card">
+          <div class="sim-label">Backlog Atual (${casFim.split('-').reverse().join('/')})</div>
+          <div class="sim-val">${backlogAtual.toLocaleString('pt-BR')}</div>
+        </div>
+        <div class="sim-card">
+          <div class="sim-label">Meta diária simulada</div>
+          <div class="sim-val">${metaDiaSim}/dia</div>
+        </div>
+        <div class="sim-card sim-green">
+          <div class="sim-label">📅 Conclusão SEM novas entradas</div>
+          <div class="sim-val">${dtZerarSem}</div>
+          <div class="sim-sub">${diasParaZerarSem} dias úteis</div>
+        </div>
+        <div class="sim-card ${saldoLiq>0?'sim-orange':'sim-red'}">
+          <div class="sim-label">📅 Conclusão COM entradas (média ${mediaEntrada}/dia)</div>
+          <div class="sim-val">${dtZerarCom}</div>
+          <div class="sim-sub">${saldoLiq>0?'Saldo líquido: '+saldoLiq+'/dia':'Entradas > Saídas'}</div>
+        </div>
+      </div>`;
+  }
+
+  // ── Montar barras governança ──
+  const maxGov = govSorted.length ? govSorted[0][1] : 1;
+  const govBars = govSorted.map(([st,cnt])=>{
+    const w = Math.round(cnt/maxGov*100);
+    const cores = {'AG. TRATAMENTO':'#1565C0','XGL':'#6A1E9E','REQUISITANTE':'#E87722','FORNECEDOR':'#2E7D32',
+      'VALIDAÇÃO DO THIAGO':'#D94040','EMITIR PEDIDO PATEC':'#1565C0','MDG':'#546E7A',
+      'FILA DE PUBLICAÇÃO':'#00838F','FILA DE DEVOLUÇÃO':'#E65100','REPUBLICAÇÃO':'#BF360C','DEVOLUÇÃO':'#BF360C'};
+    const cor = cores[st]||'#546E7A';
+    const pct2 = govTotal>0?Math.round(cnt/govTotal*100):0;
+    return `<div class="gov-row">
+      <div class="gov-lbl">${st}</div>
+      <div class="gov-bar-wrap"><div class="gov-bar" style="width:${w}%;background:${cor}"></div></div>
+      <div class="gov-cnt">${cnt} <span style="color:#999;font-size:10px">(${pct2}%)</span></div>
+    </div>`;
+  }).join('');
+
+  // ══════════════════════════
+  // HTML DO SLIDE
+  // ══════════════════════════
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>${titulo}</title>
+<title>${titulo} — ${dataFmt}</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;padding:20px}
-  .slide{background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.1);padding:36px 44px;margin-bottom:24px;page-break-inside:avoid;max-width:960px;margin-left:auto;margin-right:auto}
-  .slide-header{text-align:center;background:linear-gradient(135deg,#0d2137 0%,#1565C0 100%);color:#fff;border-radius:10px;padding:28px 24px;margin-bottom:20px}
-  .slide-header h1{font-size:26px;font-weight:700;margin-bottom:6px}
-  .slide-header .meta{font-size:13px;opacity:.8}
-  section{background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.1);padding:32px 40px;margin-bottom:20px;max-width:960px;margin-left:auto;margin-right:auto;page-break-inside:avoid}
-  h2{font-size:18px;font-weight:700;color:#0d2137;margin-bottom:4px;border-bottom:2px solid #e8eef4;padding-bottom:10px;margin-bottom:16px}
-  .subtitle{font-size:12px;color:#666;margin-top:-12px;margin-bottom:16px}
-  .kpis{display:flex;gap:16px;flex-wrap:wrap}
-  .kpi{flex:1;min-width:120px;background:#f7f9fc;border-radius:10px;padding:18px 16px;text-align:center}
-  .kval{font-size:32px;font-weight:800;margin-bottom:4px}
-  .klbl{font-size:12px;color:#666;font-weight:600}
-  .prazo-legenda{display:flex;flex-direction:column;gap:10px;margin-top:16px}
-  .res-grid{display:grid;grid-template-columns:repeat(5,1fr) 1.8fr;grid-template-rows:auto auto;gap:10px}
-  .res-card{border-radius:10px;padding:14px 16px;border:1px solid rgba(0,0,0,.07)}
-  .res-label{font-size:10px;font-weight:700;color:#666;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
-  .res-val{font-size:28px;font-weight:800;line-height:1;margin-bottom:4px}
-  .res-big{display:flex;flex-direction:column;justify-content:center}
-  .pl-item{display:flex;align-items:center;gap:10px;font-size:15px}
-  .dot{width:14px;height:14px;border-radius:50%;display:inline-block;flex-shrink:0}
-  @media print{
-    body{background:#fff;padding:0}
-    .no-print{display:none!important}
-    section,.slide{box-shadow:none;margin-bottom:0;page-break-after:always}
-  }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
+.page{width:297mm;min-height:210mm;background:#fff;margin:0 auto 24px;padding:0;box-shadow:0 4px 32px rgba(0,0,0,.15);position:relative;overflow:hidden}
+/* Header */
+.hdr{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 60%,#388e3c 100%);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
+.hdr-title{color:#fff;font-size:20px;font-weight:700;letter-spacing:.3px}
+.hdr-title span{font-weight:300}
+.hdr-right{text-align:right;color:rgba(255,255,255,.9)}
+.hdr-right .brand{font-size:22px;font-weight:900;letter-spacing:-1px}
+.hdr-right .sub{font-size:10px;opacity:.8;margin-top:1px}
+/* Body */
+.body{padding:16px 28px;display:grid;gap:14px}
+/* Section title */
+.sec-title{font-size:11px;font-weight:700;color:#1b5e20;text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid #1b5e20;padding-bottom:4px;margin-bottom:10px}
+/* Resumo do Mapa */
+.mapa-grid{display:grid;grid-template-columns:repeat(5,1fr) 1.6fr;grid-template-rows:auto auto;gap:8px}
+.mcard{border-radius:8px;padding:10px 12px;border:1px solid rgba(0,0,0,.08)}
+.mcard-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;color:#555}
+.mcard-val{font-size:22px;font-weight:800;line-height:1;margin-bottom:2px}
+.mcard-big{display:flex;flex-direction:column;justify-content:center;grid-row:span 2}
+.mcard-big .mcard-val{font-size:36px}
+.var-up{color:#c62828;font-size:10px;font-weight:700}
+.var-dn{color:#2e7d32;font-size:10px;font-weight:700}
+.var-neutro{color:#777;font-size:10px}
+/* Layout 2 colunas */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px}
+/* Governança bars */
+.gov-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.gov-lbl{font-size:10px;font-weight:600;color:#333;width:160px;flex-shrink:0}
+.gov-bar-wrap{flex:1;background:#f0f0f0;border-radius:4px;height:14px;overflow:hidden}
+.gov-bar{height:100%;border-radius:4px;transition:width .3s}
+.gov-cnt{font-size:11px;font-weight:700;color:#333;width:60px;text-align:right;flex-shrink:0}
+/* Donut section */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut-img img{max-height:160px}
+.prazo-leg{display:flex;flex-direction:column;gap:8px}
+.pl-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.pl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.pl-pct{font-size:22px;font-weight:800;min-width:52px}
+/* XGL badge */
+.xgl-badge{display:inline-block;background:#6A1E9E;color:#fff;font-size:13px;font-weight:700;padding:6px 16px;border-radius:8px;margin-top:4px}
+/* Cascata + Sim */
+.cascata-img img{max-width:100%;max-height:220px;border-radius:6px}
+.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.sim-card{border-radius:8px;padding:10px 12px;background:#f7f9fc;border:1px solid #dde3ed}
+.sim-label{font-size:9px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:4px}
+.sim-val{font-size:18px;font-weight:800;color:#1565C0}
+.sim-sub{font-size:10px;color:#777;margin-top:2px}
+.sim-green{background:#e8f5e9;border-color:#a5d6a7} .sim-green .sim-val{color:#1b5e20}
+.sim-orange{background:#fff8e1;border-color:#ffcc80} .sim-orange .sim-val{color:#e65100}
+.sim-red{background:#ffebee;border-color:#ef9a9a} .sim-red .sim-val{color:#b71c1c}
+/* Footer */
+.ftr{background:#1b5e20;padding:7px 28px;display:flex;justify-content:space-between;align-items:center;position:absolute;bottom:0;left:0;right:0}
+.ftr-txt{color:rgba(255,255,255,.7);font-size:9px}
+/* Print */
+@media print{
+  body{background:#fff}
+  .page{box-shadow:none;margin:0;page-break-after:always}
+  .no-print{display:none!important}
+}
 </style>
 </head>
 <body>
-<div class="no-print" style="text-align:center;margin-bottom:20px">
-  <button onclick="window.print()" style="background:#1565C0;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>
+<div class="no-print" style="text-align:center;padding:16px;background:#1b5e20">
+  <button onclick="window.print()" style="background:#fff;color:#1b5e20;border:none;padding:10px 32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-right:12px">🖨️ Imprimir / Salvar PDF</button>
+  <span style="color:rgba(255,255,255,.8);font-size:12px">Configure sua impressora para A4 Paisagem · Sem margens</span>
 </div>
-<div class="slide slide-header">
-  <h1>${titulo}</h1>
-  <div class="meta">Data de referência: ${dataFmt} &nbsp;·&nbsp; Filtro: ${filtroLabel}</div>
+
+<div class="page">
+  <!-- HEADER -->
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">${titulo} <span>${dataFmt}</span></div>
+      <div style="color:rgba(255,255,255,.75);font-size:11px;margin-top:2px">${subtitulo} &nbsp;·&nbsp; Período: ${periodoLabel}</div>
+    </div>
+    <div class="hdr-right">
+      <div class="brand">level</div>
+      <div class="sub">Gestão PATEC · DPV</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    ${incResumo ? `
+    <!-- RESUMO DO MAPA -->
+    <div>
+      <div class="sec-title">📊 Resumo do Mapa PATEC — variação: ${casIni?casIni.split('-').reverse().join('/'):'—'} → ${casFim.split('-').reverse().join('/')}</div>
+      <div class="mapa-grid">
+        <div class="mcard" style="background:#EBF0FA">
+          <div class="mcard-lbl" style="color:#3266AD">PATEC Finalizado</div>
+          <div class="mcard-val" style="color:#3266AD">${ra.l3||0}</div>
+          <div>${varM(ra.l3||0, ri?.l3)}</div>
+        </div>
+        <div class="mcard" style="background:#EBF0FA">
+          <div class="mcard-lbl" style="color:#3266AD">Ag. PATEC Finalizar</div>
+          <div class="mcard-val" style="color:#3266AD">${ra.l4||0}</div>
+          <div>${varM(ra.l4||0, ri?.l4)}</div>
+        </div>
+        <div class="mcard" style="background:#e8f5e9">
+          <div class="mcard-lbl" style="color:#2E7D32">100% Reprovado</div>
+          <div class="mcard-val" style="color:#2E7D32">${ra.l5||0}</div>
+          <div>${varM(ra.l5||0, ri?.l5)}</div>
+        </div>
+        <div class="mcard" style="background:#e8f5e9">
+          <div class="mcard-lbl" style="color:#2E7D32">PATEC Cancelado</div>
+          <div class="mcard-val" style="color:#2E7D32">${ra.l6||0}</div>
+          <div>${varM(ra.l6||0, ri?.l6)}</div>
+        </div>
+        <div class="mcard" style="background:#e3f2fd">
+          <div class="mcard-lbl" style="color:#1565C0">Total PATEC</div>
+          <div class="mcard-val" style="color:#1565C0">${rTotPatec}</div>
+          <div>${varM(rTotPatec, iTotPatec)}</div>
+        </div>
+        <div class="mcard mcard-big" style="background:#f5f5f5">
+          <div class="mcard-lbl" style="color:#0d2137">Total Geral</div>
+          <div class="mcard-val" style="color:#0d2137">${rTotGeral}</div>
+          <div>${varM(rTotGeral, iTotGeral)}</div>
+        </div>
+        <div class="mcard" style="background:#FFF8E1">
+          <div class="mcard-lbl" style="color:#E65100">Abrir ID Não</div>
+          <div class="mcard-val" style="color:#E65100">${ra.l7||0}</div>
+          <div>${varM(ra.l7||0, ri?.l7)}</div>
+        </div>
+        <div class="mcard" style="background:#FFF8E1">
+          <div class="mcard-lbl" style="color:#E65100">Abrir PATEC Obrig.</div>
+          <div class="mcard-val" style="color:#E65100">${ra.l8||0}</div>
+          <div>${varM(ra.l8||0, ri?.l8)}</div>
+        </div>
+        <div class="mcard" style="background:#FFF8E1">
+          <div class="mcard-lbl" style="color:#E65100">Soma (Abrir)</div>
+          <div class="mcard-val" style="color:#E65100">${(ra.l7||0)+(ra.l8||0)}</div>
+          <div>${varM((ra.l7||0)+(ra.l8||0), ri?(ri.l7||0)+(ri.l8||0):null)}</div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <div class="three-col">
+
+      ${incMapa ? `
+      <!-- DETALHAMENTO GOVERNANÇA -->
+      <div>
+        <div class="sec-title">🗺️ Detalhamento — Governança (Em Tratativa)</div>
+        ${govBars}
+        ${xglTotal>0?`<div style="margin-top:8px"><div class="mcard-lbl">XGL Pendentes</div><span class="xgl-badge">${xglTotal}</span></div>`:''}
+      </div>` : '<div></div>'}
+
+      ${incPrazo ? `
+      <!-- DISTRIBUIÇÃO POR PRAZO -->
+      <div>
+        <div class="sec-title">⏱️ Distribuição por Prazo (Hoje)</div>
+        <div class="donut-wrap">
+          ${donutImg ? `<div class="donut-img"><img src="${donutImg}"></div>` : ''}
+          <div class="prazo-leg">
+            <div class="pl-row"><div class="pl-dot" style="background:#3A7D44"></div><div><div class="pl-pct" style="color:#3A7D44">${pct(dentroP)}%</div><div style="font-size:10px;color:#555">Dentro do prazo ≤59d</div></div></div>
+            <div class="pl-row"><div class="pl-dot" style="background:#E87722"></div><div><div class="pl-pct" style="color:#E87722">${pct(proxVenc)}%</div><div style="font-size:10px;color:#555">Próx. vencimento 60–90d</div></div></div>
+            <div class="pl-row"><div class="pl-dot" style="background:#D94040"></div><div><div class="pl-pct" style="color:#D94040">${pct(vencidos)}%</div><div style="font-size:10px;color:#555">Vencida ≥91d</div></div></div>
+          </div>
+        </div>
+      </div>` : '<div></div>'}
+
+      <!-- ESPAÇO DIREITO -->
+      <div></div>
+
+    </div>
+
+    ${incCascata ? `
+    <!-- PLANO DE AÇÃO -->
+    <div>
+      <div class="sec-title">📉 Plano de Ação — Cascata e Simulação de Backlog</div>
+      <div class="two-col">
+        <div class="cascata-img">
+          ${cascataImg ? `<img src="${cascataImg}">` : '<div style="color:#999;text-align:center;padding:2rem;border:1px dashed #ccc;border-radius:8px">Gráfico não disponível</div>'}
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:8px">Simulação · Meta: ${metaDiaSim} itens/dia</div>
+          ${simLinhas}
+        </div>
+      </div>
+    </div>` : ''}
+
+  </div><!-- /body -->
+
+  <!-- FOOTER -->
+  <div class="ftr">
+    <div class="ftr-txt">PATEC · Gestão de Compras · ${dataFmt}</div>
+    <div class="ftr-txt">${filtroLabel} · Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+  </div>
 </div>
-${secResumo}
-${secPrazo}
-${secAA}
-${secCascata}
+
 </body></html>`;
 
-  // Abrir em nova aba
   const blob = new Blob([html], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  window.open(URL.createObjectURL(blob), '_blank');
 }
 
 </script>
