@@ -11553,8 +11553,13 @@ async function admApresentacaoGerar(){
     }
   });
   const govSorted = [...Object.entries(govCounts)].sort((a,b)=>b[1]-a[1]);
-  // ── Ag. Tratamento — valor do govCounts (mesma base da governança) ──
-  const agTrat = govCounts['AG. TRATAMENTO'] || 0;
+  // ── Ag. Tratamento — mesma regra do Radar Estratégico ──
+  const _FILAS_AG_TRAT = ['patec','análise de oportunidade'];
+  const agTrat = (_radarDados||[]).filter(d=>
+    (!filtroAn || d.analista_auto===filtroAn) &&
+    d.analista_auto==='Analisar PATEC Finalizado' &&
+    _FILAS_AG_TRAT.includes(normF2(d.fila))
+  ).length;
 
   // ── XGL não concluídos ──
   const XGL_EXCLUIR = ['concluído','concluido','finalizado','saiu do dpv','patec finalizado'];
@@ -11573,19 +11578,21 @@ async function admApresentacaoGerar(){
   const maiorSLAVal  = maiorSLAItem ? Number(maiorSLAItem.sla||0) : 0;
   const maiorSLAFila = maiorSLAItem ? (maiorSLAItem.fila||'—') : '—';
 
-  // ── Capturar imagem Donut — precisa navegar até radar e aguardar render ──
+  // ── Capturar imagem Donut ──
   let donutImg = '';
   if(incPrazo){
-    // Aplicar filtro no radar se necessário e capturar
-    if(filtroAn && typeof radarFiltrarStatus === 'function'){
-      radarFiltrarStatus(filtroAn);
-    } else if(!filtroAn && typeof radarLimparFiltro === 'function'){
-      radarLimparFiltro();
-    }
-    // Aguardar um tick para garantir render
-    await new Promise(r=>setTimeout(r,300));
-    const canvas = document.getElementById('radar-chart-prazo');
-    if(canvas) donutImg = canvas.toDataURL('image/png');
+    const canvasDonut = document.getElementById('radar-chart-prazo');
+    // Tornar página do radar visível temporariamente se necessário
+    const pgRadar = document.getElementById('p-radar');
+    const radarHidden = pgRadar && !pgRadar.classList.contains('active');
+    if(radarHidden){ pgRadar.style.display='block'; pgRadar.style.visibility='hidden'; pgRadar.style.position='fixed'; pgRadar.style.top='0'; pgRadar.style.left='0'; }
+    // Aplicar filtro e re-renderizar
+    if(filtroAn){ _radarFiltroStatus = filtroAn; _radarComboSelecionados = []; }
+    else { _radarFiltroStatus = ''; _radarComboSelecionados = []; }
+    if(typeof renderRadarOperacional === 'function') renderRadarOperacional();
+    await new Promise(r=>setTimeout(r,800));
+    if(canvasDonut){ try { donutImg = canvasDonut.toDataURL('image/png'); } catch(e){} }
+    if(radarHidden){ pgRadar.style.display=''; pgRadar.style.visibility=''; pgRadar.style.position=''; pgRadar.style.top=''; pgRadar.style.left=''; }
   }
 
   // ── Capturar imagem Cascata ──
@@ -11595,10 +11602,17 @@ async function admApresentacaoGerar(){
     const paFim = document.getElementById('pa-dt-fim');
     if(paIni && casIni) paIni.value = casIni;
     if(paFim && casFim) paFim.value = casFim;
+    // Mostrar a página do PA temporariamente para o canvas renderizar
+    const pgPA = document.getElementById('p-plano-acao');
+    const pgPAHidden = pgPA && !pgPA.classList.contains('active');
+    if(pgPAHidden){ pgPA.style.display='block'; pgPA.style.visibility='hidden'; }
     if(typeof renderCascata === 'function') renderCascata();
-    await new Promise(r=>setTimeout(r,500));
-    const canvas = document.getElementById('pa-chart-cascata');
-    if(canvas) cascataImg = canvas.toDataURL('image/png');
+    await new Promise(r=>setTimeout(r,800));
+    const canvasCascata = document.getElementById('pa-chart-cascata');
+    if(canvasCascata && canvasCascata.width > 10){
+      try { cascataImg = canvasCascata.toDataURL('image/png'); } catch(e){}
+    }
+    if(pgPAHidden){ pgPA.style.display=''; pgPA.style.visibility=''; }
   }
 
   // ── Simulação PA ──
