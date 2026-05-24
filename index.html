@@ -1927,16 +1927,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <input type="date" id="apres-cas-ini" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
               <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Data Final</div>
               <input type="date" id="apres-cas-fim" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
-              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:3px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">🎯 Filtro — Donut + Indicadores</div>
-              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Tipo de Análise</div>
-              <select id="apres-tipo-analise" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:6px" onchange="admApresentacaoAtualizarFiltro()">
-                <option value="todos">Todos os analistas do mapa</option>
-                <option value="finalizado">Apenas Analisar PATEC Finalizado</option>
-                <option value="custom">Analista específico...</option>
-              </select>
-              <select id="apres-filtro-analista" style="width:100%;font-size:12px;padding:5px 10px;display:none">
-                <option value="">— selecione —</option>
-              </select>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">🎯 Filtro — Donut + Indicadores</div>
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <button class="btn btn-s" onclick="apresSelTodos()" style="font-size:10px;padding:3px 8px">✓ Todos</button>
+                <button class="btn btn-s" onclick="apresSelNenhum()" style="font-size:10px;padding:3px 8px">✕ Nenhum</button>
+              </div>
+              <div id="apres-analistas-wrap" style="background:var(--cin);border:1px solid var(--brd);border-radius:8px;padding:6px 8px;max-height:160px;overflow-y:auto;font-size:12px">
+                <label style="display:flex;align-items:center;gap:5px;padding:2px 0;font-weight:700;border-bottom:1px solid var(--brd);margin-bottom:4px">
+                  <input type="checkbox" id="apres-chk-todos" onchange="apresToggleTodos(this)" checked> Todos os analistas
+                </label>
+                <div id="apres-analistas-list"></div>
+              </div>
             </div>
 
             <!-- Col 3: Simulação PA + Seções -->
@@ -11478,27 +11479,50 @@ function admApresentacaoInit(){
     const r = radarGetRegras ? radarGetRegras() : {};
     metaEl.value = r.pa_meta_dia || 30;
   }
-  // Popular select de analista específico
-  const sel = document.getElementById('apres-filtro-analista');
-  if(sel && _radarDados?.length){
+  // Popular checkboxes de analistas
+  const list = document.getElementById('apres-analistas-list');
+  if(list && _radarDados?.length){
     const analistas = [...new Set(_radarDados.map(r=>r.analista_auto).filter(Boolean))].sort();
-    sel.innerHTML = '<option value="">— selecione —</option>' +
-      analistas.map(a=>`<option value="${a}">${a}</option>`).join('');
+    list.innerHTML = analistas.map(a=>`
+      <label style="display:flex;align-items:center;gap:5px;padding:2px 0;cursor:pointer">
+        <input type="checkbox" value="${a}" checked onchange="apresAtualizarTodos()"> ${a}
+      </label>`).join('');
   }
-  admApresentacaoAtualizarFiltro();
+}
+
+function apresAtualizarTodos(){
+  const all = [...document.querySelectorAll('#apres-analistas-list input[type=checkbox]')];
+  const cb = document.getElementById('apres-chk-todos');
+  if(cb) cb.checked = all.every(c=>c.checked);
 }
 
 function admApresentacaoAtualizarFiltro(){
-  const tipo = document.getElementById('apres-tipo-analise')?.value;
-  const selCustom = document.getElementById('apres-filtro-analista');
-  if(selCustom) selCustom.style.display = tipo==='custom' ? 'block' : 'none';
+  // noop — kept for compatibility
+}
+
+function apresToggleTodos(cb){
+  const checks = document.querySelectorAll('#apres-analistas-list input[type=checkbox]');
+  checks.forEach(c=>{ c.checked = cb.checked; });
+}
+
+function apresSelTodos(){
+  const cb = document.getElementById('apres-chk-todos');
+  if(cb) cb.checked = true;
+  document.querySelectorAll('#apres-analistas-list input[type=checkbox]').forEach(c=>c.checked=true);
+}
+
+function apresSelNenhum(){
+  const cb = document.getElementById('apres-chk-todos');
+  if(cb) cb.checked = false;
+  document.querySelectorAll('#apres-analistas-list input[type=checkbox]').forEach(c=>c.checked=false);
 }
 
 function admApresentacaoGetFiltro(){
-  const tipo = document.getElementById('apres-tipo-analise')?.value || 'todos';
-  if(tipo==='finalizado') return 'Analisar PATEC Finalizado';
-  if(tipo==='custom') return document.getElementById('apres-filtro-analista')?.value || '';
-  return ''; // todos
+  // Retorna array de analistas selecionados ([] = todos)
+  const todosChk = document.getElementById('apres-chk-todos');
+  if(todosChk?.checked) return []; // todos
+  const checks = [...document.querySelectorAll('#apres-analistas-list input[type=checkbox]:checked')];
+  return checks.map(c=>c.value);
 }
 
 async function admApresentacaoGerar(){
@@ -11513,11 +11537,11 @@ async function admApresentacaoGerar(){
   const incMapa    = document.getElementById('apres-inc-mapa')?.checked;
   const incPrazo   = document.getElementById('apres-inc-prazo')?.checked;
   const incCascata = document.getElementById('apres-inc-cascata')?.checked;
-  // Filtro para Donut + Indicadores (escolhido pelo usuário)
-  const filtroAn   = admApresentacaoGetFiltro();
-  const tipoAnalise = document.getElementById('apres-tipo-analise')?.value || 'todos';
-  const filtroLabel = tipoAnalise==='finalizado' ? 'Analisar PATEC Finalizado' :
-                      tipoAnalise==='custom' ? (filtroAn||'Todos') : 'Todos os analistas';
+  // Filtro para Donut + Indicadores (multi-seleção)
+  const filtroAnArr = admApresentacaoGetFiltro(); // [] = todos, [...] = selecionados
+  const filtroLabel = filtroAnArr.length===0 ? 'Todos os analistas' :
+                      filtroAnArr.length===1 ? filtroAnArr[0] :
+                      filtroAnArr.length + ' analistas selecionados';
   const periodoLabel = casIni ? (casIni.split('-').reverse().join('/') + ' a ' + casFim.split('-').reverse().join('/')) : dataFmt;
 
   // ── Helper: getMapa ──
@@ -11545,10 +11569,10 @@ async function admApresentacaoGerar(){
   const iTotPatec=ri?((ri.l3||0)+(ri.l4||0)+(ri.l5||0)+(ri.l6||0)):null;
   const iTotGeral=ri?((ri.l3||0)+(ri.l4||0)+(ri.l5||0)+(ri.l6||0)+(ri.l7||0)+(ri.l8||0)):null;
 
-  // ── Rows filtradas pelo analista (para Donut + Resumo Mapa) ──
+  // ── Rows filtradas pelo analista (para Donut + Indicadores) ──
   const normF2 = v=>String(v||'').trim().toLowerCase();
   let rows = _radarDados || [];
-  if(filtroAn) rows = rows.filter(r=>r.analista_auto===filtroAn);
+  if(filtroAnArr.length>0) rows = rows.filter(r=>filtroAnArr.includes(r.analista_auto));
 
   // ── Distribuição por Prazo — usa mesmos rows do resumo mapa ──
   const vencidos = rows.filter(r=>Number(r.prazo_c||0)>=91).length;
@@ -11609,7 +11633,8 @@ async function admApresentacaoGerar(){
     const radarHidden = pgRadar && !pgRadar.classList.contains('active');
     if(radarHidden){ pgRadar.style.display='block'; pgRadar.style.visibility='hidden'; pgRadar.style.position='fixed'; pgRadar.style.top='0'; pgRadar.style.left='0'; }
     // Aplicar filtro e re-renderizar
-    if(filtroAn){ _radarFiltroStatus = filtroAn; _radarComboSelecionados = []; }
+    if(filtroAnArr.length===1){ _radarFiltroStatus = filtroAnArr[0]; _radarComboSelecionados = []; }
+    else if(filtroAnArr.length>1){ _radarFiltroStatus = ''; _radarComboSelecionados = [...filtroAnArr]; }
     else { _radarFiltroStatus = ''; _radarComboSelecionados = []; }
     if(typeof renderRadarOperacional === 'function') renderRadarOperacional();
     await new Promise(r=>setTimeout(r,800));
