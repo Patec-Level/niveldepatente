@@ -1927,9 +1927,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <input type="date" id="apres-cas-ini" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
               <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Data Final</div>
               <input type="date" id="apres-cas-fim" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
-              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Filtro Analista Automático</div>
-              <select id="apres-filtro-analista" style="width:100%;font-size:12px;padding:5px 10px">
-                <option value="">Todos os analistas</option>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:3px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">🎯 Filtro — Donut + Indicadores</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Tipo de Análise</div>
+              <select id="apres-tipo-analise" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:6px" onchange="admApresentacaoAtualizarFiltro()">
+                <option value="todos">Todos os analistas do mapa</option>
+                <option value="finalizado">Apenas Analisar PATEC Finalizado</option>
+                <option value="custom">Analista específico...</option>
+              </select>
+              <select id="apres-filtro-analista" style="width:100%;font-size:12px;padding:5px 10px;display:none">
+                <option value="">— selecione —</option>
               </select>
             </div>
 
@@ -11472,13 +11478,27 @@ function admApresentacaoInit(){
     const r = radarGetRegras ? radarGetRegras() : {};
     metaEl.value = r.pa_meta_dia || 30;
   }
+  // Popular select de analista específico
   const sel = document.getElementById('apres-filtro-analista');
   if(sel && _radarDados?.length){
     const analistas = [...new Set(_radarDados.map(r=>r.analista_auto).filter(Boolean))].sort();
-    sel.innerHTML = '<option value="">Todos os analistas</option>' +
+    sel.innerHTML = '<option value="">— selecione —</option>' +
       analistas.map(a=>`<option value="${a}">${a}</option>`).join('');
-    if(_radarFiltroStatus) sel.value = _radarFiltroStatus;
   }
+  admApresentacaoAtualizarFiltro();
+}
+
+function admApresentacaoAtualizarFiltro(){
+  const tipo = document.getElementById('apres-tipo-analise')?.value;
+  const selCustom = document.getElementById('apres-filtro-analista');
+  if(selCustom) selCustom.style.display = tipo==='custom' ? 'block' : 'none';
+}
+
+function admApresentacaoGetFiltro(){
+  const tipo = document.getElementById('apres-tipo-analise')?.value || 'todos';
+  if(tipo==='finalizado') return 'Analisar PATEC Finalizado';
+  if(tipo==='custom') return document.getElementById('apres-filtro-analista')?.value || '';
+  return ''; // todos
 }
 
 async function admApresentacaoGerar(){
@@ -11486,7 +11506,6 @@ async function admApresentacaoGerar(){
   const subtitulo = document.getElementById('apres-subtitulo')?.value || 'BPO de Compras · DPV';
   const dataRef   = document.getElementById('apres-data')?.value || new Date().toISOString().split('T')[0];
   const dataFmt   = dataRef.split('-').reverse().join('/');
-  const filtroAn  = document.getElementById('apres-filtro-analista')?.value || '';
   const casIni    = document.getElementById('apres-cas-ini')?.value || '';
   const casFim    = document.getElementById('apres-cas-fim')?.value || dataRef;
   const metaDiaSim= parseInt(document.getElementById('apres-meta-dia')?.value) || 30;
@@ -11494,7 +11513,11 @@ async function admApresentacaoGerar(){
   const incMapa    = document.getElementById('apres-inc-mapa')?.checked;
   const incPrazo   = document.getElementById('apres-inc-prazo')?.checked;
   const incCascata = document.getElementById('apres-inc-cascata')?.checked;
-  const filtroLabel = filtroAn || 'Todos os analistas';
+  // Filtro para Donut + Indicadores (escolhido pelo usuário)
+  const filtroAn   = admApresentacaoGetFiltro();
+  const tipoAnalise = document.getElementById('apres-tipo-analise')?.value || 'todos';
+  const filtroLabel = tipoAnalise==='finalizado' ? 'Analisar PATEC Finalizado' :
+                      tipoAnalise==='custom' ? (filtroAn||'Todos') : 'Todos os analistas';
   const periodoLabel = casIni ? (casIni.split('-').reverse().join('/') + ' a ' + casFim.split('-').reverse().join('/')) : dataFmt;
 
   // ── Helper: getMapa ──
@@ -11553,10 +11576,9 @@ async function admApresentacaoGerar(){
     }
   });
   const govSorted = [...Object.entries(govCounts)].sort((a,b)=>b[1]-a[1]);
-  // ── Ag. Tratamento — mesma regra do Radar Estratégico ──
+  // ── Ag. Tratamento — mesma regra do Radar (sempre base PATEC Finalizado) ──
   const _FILAS_AG_TRAT = ['patec','análise de oportunidade'];
   const agTrat = (_radarDados||[]).filter(d=>
-    (!filtroAn || d.analista_auto===filtroAn) &&
     d.analista_auto==='Analisar PATEC Finalizado' &&
     _FILAS_AG_TRAT.includes(normF2(d.fila))
   ).length;
