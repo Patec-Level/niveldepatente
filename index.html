@@ -11615,19 +11615,45 @@ async function admApresentacaoGerar(){
     if(pgPAHidden){ pgPA.style.display=''; pgPA.style.visibility=''; }
   }
 
-  // ── Simulação PA ──
+  // ── Simulação PA — usa mesma lógica do renderCascata ──
   let simLinhas = '';
   if(incCascata){
-    // Backlog no dia inicial do filtro
-    const marco = typeof paGetMarcoBase==='function' ? paGetMarcoBase(casIni||dataRef) : {val:0,dt:''};
-    const backlogBase = marco.val || 0;
+    // Saídas reais por dia (mesma lógica do renderCascata)
+    const _saidasPorDia = {};
+    (registros||[]).forEach(reg=>{
+      if(!reg.data||!reg.f||reg.pres==='Folga'||reg.pres==='Férias') return;
+      const v=reg.f[0]||0;
+      if(v>0) _saidasPorDia[reg.data]=(_saidasPorDia[reg.data]||0)+v;
+    });
 
-    // Dias úteis desde início até hoje
-    const diasDecorridos = typeof paDiasUteis==='function' ? paDiasUteis(casIni||dataRef, casFim).length : 0;
-    const saidaAcum = diasDecorridos * metaDiaSim;
+    // Backlog Inicial = marco + saídas reais até dia anterior ao início
+    const dtIni = casIni || dataRef;
+    const marco = typeof paGetMarcoBase==='function' ? paGetMarcoBase(dtIni) : {val:0,dt:dtIni};
+    const _dAnt = new Date(dtIni+'T12:00:00'); _dAnt.setDate(_dAnt.getDate()-1);
+    const dtAnt = _dAnt.toISOString().split('T')[0];
+    let backlogBase = marco.val || 0;
+    if(marco.dt <= dtAnt && typeof paDiasUteis==='function'){
+      paDiasUteis(marco.dt, dtAnt).forEach(d=>{
+        const s=_saidasPorDia[d]||0;
+        const e=(_paEntradas||[]).find(x=>x.dt===d)?.val||0;
+        backlogBase = Math.max(0, backlogBase - s + e);
+      });
+    }
+
+    // Percorrer dias úteis do período com saídas reais
+    const diasUteis = typeof paDiasUteis==='function' ? paDiasUteis(dtIni, casFim).filter(d=>d>dtAnt) : [];
+    let backlogAtual = backlogBase;
+    let totalSaidas = 0, totalEntradas = 0;
+    diasUteis.forEach(d=>{
+      const s = _saidasPorDia[d]||0;
+      const e = (_paEntradas||[]).find(x=>x.dt===d)?.val||0;
+      totalSaidas += s; totalEntradas += e;
+      backlogAtual = Math.max(0, backlogAtual - s + e);
+    });
+
     // Entradas acumuladas no período
-    const entradasAcum = (_paEntradas||[]).filter(e=>e.dt>=casIni&&e.dt<=casFim).reduce((s,e)=>s+(e.val||0),0);
-    const backlogAtual = Math.max(0, backlogBase - saidaAcum + entradasAcum);
+    const entradasAcum = totalEntradas;
+    const diasDecorridos = diasUteis.length;
 
     // Projeção SEM novas entradas
     const diasParaZerarSem = metaDiaSim>0 ? Math.ceil(backlogAtual/metaDiaSim) : 999;
