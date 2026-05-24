@@ -11581,6 +11581,11 @@ async function admApresentacaoGerar(){
   const total3 = vencidos+proxVenc+dentroP;
   const pct = n => total3>0 ? Math.round(n/total3*100) : 0;
 
+  // ── Donut Governança (PATEC Finalizado) ──
+  const govDentroP  = govItens.filter(r=>Number(r.prazo_c||0)<=59).length;
+  const govTotal3   = govVencidos+govProxVenc+govDentroP;
+  const pctGov = n => govTotal3>0 ? Math.round(n/govTotal3*100) : 0;
+
   // ── Detalhamento Governança — APENAS "Analisar PATEC Finalizado" ──
   // Usa mesma lógica da aba Governança: status do _govDados ou default AG. TRATAMENTO
   const STATUS_EXCLUIR = ['patec finalizado','saiu do dpv','concluído','concluido','finalizado'];
@@ -11638,6 +11643,26 @@ async function admApresentacaoGerar(){
     await new Promise(r=>setTimeout(r,800));
     if(canvasDonut){ try { donutImg = canvasDonut.toDataURL('image/png'); } catch(e){} }
     if(radarHidden){ pgRadar.style.display=''; pgRadar.style.visibility=''; pgRadar.style.position=''; pgRadar.style.top=''; pgRadar.style.left=''; }
+  }
+
+  // ── Capturar imagem Donut Governança (fixo: PATEC Finalizado) ──
+  let govDonutImg = '';
+  if(incMapa){
+    // Aplicar filtro PATEC Finalizado no radar e capturar
+    const pgRadar2 = document.getElementById('p-radar');
+    const r2Hidden = pgRadar2 && !pgRadar2.classList.contains('active');
+    if(r2Hidden){ pgRadar2.style.display='block'; pgRadar2.style.visibility='hidden'; pgRadar2.style.position='fixed'; pgRadar2.style.top='0'; pgRadar2.style.left='0'; }
+    _radarFiltroStatus = 'Analisar PATEC Finalizado'; _radarComboSelecionados = [];
+    _radarRowsBase = govItens;
+    if(typeof renderRadarOperacional === 'function') renderRadarOperacional();
+    await new Promise(r=>setTimeout(r,800));
+    const canvasGov = document.getElementById('radar-chart-prazo');
+    if(canvasGov){ try { govDonutImg = canvasGov.toDataURL('image/png'); } catch(e){} }
+    if(r2Hidden){ pgRadar2.style.display=''; pgRadar2.style.visibility=''; pgRadar2.style.position=''; pgRadar2.style.top=''; pgRadar2.style.left=''; }
+    // Restaurar filtro original
+    if(filtroAnArr.length===1){ _radarFiltroStatus = filtroAnArr[0]; _radarComboSelecionados = []; }
+    else if(filtroAnArr.length>1){ _radarFiltroStatus = ''; _radarComboSelecionados = [...filtroAnArr]; }
+    else { _radarFiltroStatus = ''; _radarComboSelecionados = []; }
   }
 
   // ── Capturar imagem Cascata ──
@@ -11921,22 +11946,15 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
       </div>
     </div>` : ''}
 
+    <!-- LINHA 2: DONUT MULTI-SELEÇÃO + DETALHAMENTO + INDICADORES -->
     <div class="three-col">
 
-      ${incMapa ? `
-      <!-- DETALHAMENTO GOVERNANÇA -->
-      <div>
-        <div class="sec-title">🗺️ Detalhamento — Governança (Em Tratativa)</div>
-        ${govBars}
-        ${xglTotalCalc>0?`<div class="gov-row" style="margin-top:4px"><div class="gov-lbl" style="color:#6A1E9E;font-weight:700">XGL PENDENTES</div><div class="gov-bar-wrap"><div class="gov-bar" style="width:${Math.round(xglTotalCalc/(govSorted[0]?.[1]||1)*100)}%;background:#6A1E9E"></div></div><div class="gov-cnt">${xglTotalCalc} <span style="color:#999;font-size:10px">(${govTotalFinal>0?Math.round(xglTotalCalc/govTotalFinal*100):0}%)</span></div></div>`:''}
-      </div>` : '<div></div>'}
-
       ${incPrazo ? `
-      <!-- DISTRIBUIÇÃO POR PRAZO -->
+      <!-- DONUT 1: Filtro multi-seleção -->
       <div>
-        <div class="sec-title">⏱️ Distribuição por Prazo (Hoje)</div>
+        <div class="sec-title">⏱️ Distribuição por Prazo — ${filtroLabel}</div>
         <div class="donut-wrap">
-          ${donutImg ? `<div class="donut-img"><img src="${donutImg}"></div>` : ''}
+          ${donutImg ? `<div class="donut-img"><img src="${donutImg}"></div>` : '<div style="color:#999;font-size:11px">Gráfico não disponível</div>'}
           <div class="prazo-leg">
             <div class="pl-row"><div class="pl-dot" style="background:#3A7D44"></div><div><div class="pl-pct" style="color:#3A7D44">${pct(dentroP)}%</div><div style="font-size:10px;color:#555">Dentro do prazo ≤59d</div></div></div>
             <div class="pl-row"><div class="pl-dot" style="background:#E87722"></div><div><div class="pl-pct" style="color:#E87722">${pct(proxVenc)}%</div><div style="font-size:10px;color:#555">Próx. vencimento 60–90d</div></div></div>
@@ -11945,9 +11963,28 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
         </div>
       </div>` : '<div></div>'}
 
-      <!-- MAIOR SLA + KPIs RADAR -->
+      ${incMapa ? `
+      <!-- DETALHAMENTO GOVERNANÇA + DONUT 2 -->
       <div>
-        <div class="sec-title">⏱️ Indicadores Críticos</div>
+        <div class="sec-title">🗺️ Detalhamento — Governança (Em Tratativa)</div>
+        ${govBars}
+        ${xglTotalCalc>0?`<div class="gov-row" style="margin-top:4px"><div class="gov-lbl" style="color:#6A1E9E;font-weight:700">XGL PENDENTES</div><div class="gov-bar-wrap"><div class="gov-bar" style="width:${Math.round(xglTotalCalc/(govSorted[0]?.[1]||1)*100)}%;background:#6A1E9E"></div></div><div class="gov-cnt">${xglTotalCalc} <span style="color:#999;font-size:10px">(${govTotalFinal>0?Math.round(xglTotalCalc/govTotalFinal*100):0}%)</span></div></div>`:''}
+        <div style="margin-top:10px">
+          <div style="font-size:9px;font-weight:700;color:#1b5e20;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Prazo — PATEC Finalizado</div>
+          <div class="donut-wrap">
+            ${govDonutImg ? `<div class="donut-img"><img src="${govDonutImg}" style="max-height:110px"></div>` : ''}
+            <div class="prazo-leg" style="gap:4px">
+              <div class="pl-row"><div class="pl-dot" style="background:#3A7D44"></div><div><div class="pl-pct" style="color:#3A7D44;font-size:16px">${pctGov(govDentroP)}%</div><div style="font-size:9px;color:#555">≤59d</div></div></div>
+              <div class="pl-row"><div class="pl-dot" style="background:#E87722"></div><div><div class="pl-pct" style="color:#E87722;font-size:16px">${pctGov(govProxVenc)}%</div><div style="font-size:9px;color:#555">60–90d</div></div></div>
+              <div class="pl-row"><div class="pl-dot" style="background:#D94040"></div><div><div class="pl-pct" style="color:#D94040;font-size:16px">${pctGov(govVencidos)}%</div><div style="font-size:9px;color:#555">≥91d</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>` : '<div></div>'}
+
+      <!-- INDICADORES CRÍTICOS -->
+      <div>
+        <div class="sec-title">🚨 Indicadores Críticos</div>
         <div style="margin-bottom:10px">
           <div class="mcard" style="background:#ffebee;border:1px solid #ef9a9a">
             <div class="mcard-lbl" style="color:#b71c1c">Maior SLA</div>
