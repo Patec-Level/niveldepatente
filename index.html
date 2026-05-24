@@ -3678,7 +3678,7 @@ function renderCardsDia(){
       <!-- Linha 2: 3 cards Abrir -->
       ${cardHTML({label:'Abrir ID Não',        val:l7, ant:l7a, cor:'var(--am)', bg:'var(--amc)'})}
       ${cardHTML({label:'Abrir PATEC Obrig.',  val:l8, ant:l8a, cor:'var(--am)', bg:'var(--amc)'})}
-      ${cardHTML({label:'Soma (Abrir)',        val:totAbrir, ant:totAbrirAnt, cor:'var(--am)', bg:'var(--amc)'})}
+      ${cardHTML({label:'Total Abrir PATEC',        val:totAbrir, ant:totAbrirAnt, cor:'var(--am)', bg:'var(--amc)'})}
     </div>`;
 }
 function estPcpHoje(){
@@ -11525,6 +11525,13 @@ function admApresentacaoGerar(){
   // ── Distribuição por Prazo (dados atuais do radar) ──
   let rows = _radarDados || [];
   if(filtroAn) rows = rows.filter(r=>r.analista_auto===filtroAn);
+  // Maior SLA
+  const maiorSLAItem = rows.length ? rows.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, rows[0]) : null;
+  const maiorSLAVal  = maiorSLAItem ? Number(maiorSLAItem.sla||0) : 0;
+  const maiorSLAFila = maiorSLAItem ? (maiorSLAItem.fila||'—') : '—';
+  const FILAS_AG2 = ['patec','análise de oportunidade'];
+  const normF2 = v=>String(v||'').trim().toLowerCase();
+  const agTrat = rows.filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado' && FILAS_AG2.includes(normF2(r.fila))).length;
   const vencidos = rows.filter(r=>Number(r.prazo_c||0)>=91).length;
   const proxVenc  = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60&&v<=90; }).length;
   const dentroP   = rows.filter(r=>Number(r.prazo_c||0)<=59).length;
@@ -11673,7 +11680,7 @@ function admApresentacaoGerar(){
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
-.page{width:297mm;min-height:210mm;background:#fff;margin:0 auto 24px;padding:0;box-shadow:0 4px 32px rgba(0,0,0,.15);position:relative;overflow:hidden}
+.page{width:1200px;background:#fff;margin:0 auto 24px;padding:0;box-shadow:0 4px 32px rgba(0,0,0,.15);position:relative;overflow:hidden}
 /* Header */
 .hdr{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 60%,#388e3c 100%);padding:14px 28px;display:flex;align-items:center;justify-content:space-between}
 .hdr-title{color:#fff;font-size:20px;font-weight:700;letter-spacing:.3px}
@@ -11682,16 +11689,16 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
 .hdr-right .brand{font-size:22px;font-weight:900;letter-spacing:-1px}
 .hdr-right .sub{font-size:10px;opacity:.8;margin-top:1px}
 /* Body */
-.body{padding:16px 28px;display:grid;gap:14px}
+.body{padding:10px 20px;display:grid;gap:10px}
 /* Section title */
 .sec-title{font-size:11px;font-weight:700;color:#1b5e20;text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid #1b5e20;padding-bottom:4px;margin-bottom:10px}
 /* Resumo do Mapa */
 .mapa-grid{display:grid;grid-template-columns:repeat(5,1fr) 1.6fr;grid-template-rows:auto auto;gap:8px}
-.mcard{border-radius:8px;padding:10px 12px;border:1px solid rgba(0,0,0,.08)}
+.mcard{border-radius:8px;padding:8px 10px;border:1px solid rgba(0,0,0,.08)}
 .mcard-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;color:#555}
-.mcard-val{font-size:22px;font-weight:800;line-height:1;margin-bottom:2px}
+.mcard-val{font-size:20px;font-weight:800;line-height:1;margin-bottom:2px}
 .mcard-big{display:flex;flex-direction:column;justify-content:center;grid-row:span 2}
-.mcard-big .mcard-val{font-size:36px}
+.mcard-big .mcard-val{font-size:30px}
 .var-up{color:#c62828;font-size:10px;font-weight:700}
 .var-dn{color:#2e7d32;font-size:10px;font-weight:700}
 .var-neutro{color:#777;font-size:10px}
@@ -11724,13 +11731,14 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
 .sim-orange{background:#fff8e1;border-color:#ffcc80} .sim-orange .sim-val{color:#e65100}
 .sim-red{background:#ffebee;border-color:#ef9a9a} .sim-red .sim-val{color:#b71c1c}
 /* Footer */
-.ftr{background:#1b5e20;padding:7px 28px;display:flex;justify-content:space-between;align-items:center;position:absolute;bottom:0;left:0;right:0}
+.ftr{background:#1b5e20;padding:7px 28px;display:flex;justify-content:space-between;align-items:center;margin-top:10px}
 .ftr-txt{color:rgba(255,255,255,.7);font-size:9px}
 /* Print */
 @media print{
   body{background:#fff}
-  .page{box-shadow:none;margin:0;page-break-after:always}
+  .page{box-shadow:none;margin:0;width:100%;page-break-after:always}
   .no-print{display:none!important}
+  @page{size:A4 landscape;margin:5mm}
 }
 </style>
 </head>
@@ -11802,7 +11810,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
           <div>${varM(ra.l8||0, ri?.l8)}</div>
         </div>
         <div class="mcard" style="background:#FFF8E1">
-          <div class="mcard-lbl" style="color:#E65100">Soma (Abrir)</div>
+          <div class="mcard-lbl" style="color:#E65100">Total Abrir PATEC</div>
           <div class="mcard-val" style="color:#E65100">${(ra.l7||0)+(ra.l8||0)}</div>
           <div>${varM((ra.l7||0)+(ra.l8||0), ri?(ri.l7||0)+(ri.l8||0):null)}</div>
         </div>
@@ -11833,8 +11841,35 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
         </div>
       </div>` : '<div></div>'}
 
-      <!-- ESPAÇO DIREITO -->
-      <div></div>
+      <!-- MAIOR SLA + KPIs RADAR -->
+      <div>
+        <div class="sec-title">⏱️ Indicadores Críticos</div>
+        <div style="margin-bottom:10px">
+          <div class="mcard" style="background:#ffebee;border:1px solid #ef9a9a">
+            <div class="mcard-lbl" style="color:#b71c1c">Maior SLA</div>
+            <div class="mcard-val" style="color:#b71c1c;font-size:28px">${maiorSLAVal} dias</div>
+            <div style="font-size:10px;color:#555;margin-top:3px">Fila: <strong>${maiorSLAFila}</strong></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div class="mcard" style="background:#f3e5f5">
+            <div class="mcard-lbl" style="color:#6A1E9E">Total Itens</div>
+            <div class="mcard-val" style="color:#6A1E9E;font-size:20px">${rows.length.toLocaleString('pt-BR')}</div>
+          </div>
+          <div class="mcard" style="background:#e8f5e9">
+            <div class="mcard-lbl" style="color:#2e7d32">Ag. Tratamento</div>
+            <div class="mcard-val" style="color:#2e7d32;font-size:20px">${agTrat.toLocaleString('pt-BR')}</div>
+          </div>
+          <div class="mcard" style="background:#fff3e0">
+            <div class="mcard-lbl" style="color:#e65100">Próx. Venc.</div>
+            <div class="mcard-val" style="color:#e65100;font-size:20px">${proxVenc}</div>
+          </div>
+          <div class="mcard" style="background:#ffebee">
+            <div class="mcard-lbl" style="color:#c62828">Vencidos</div>
+            <div class="mcard-val" style="color:#c62828;font-size:20px">${vencidos}</div>
+          </div>
+        </div>
+      </div>
 
     </div>
 
