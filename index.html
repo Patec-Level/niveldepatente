@@ -11491,7 +11491,37 @@ function admApresentacaoGerar(){
   if(filtroAn) rows = rows.filter(r=>r.analista_auto === filtroAn);
   const filtroLabel = filtroAn || 'Todos os analistas';
 
-  // ── KPIs Resumo ──
+  // ── Dados Resumo do Dia (mapa) ──
+  const getMapa=(d)=>{
+    const fb=mapaFirebase.find(r=>r.data===d);
+    if(fb) return fb;
+    const idx=DATAS_ISO_MAPA.indexOf(d);
+    if(idx>=0) return{l3:L[3][idx]||0,l4:L[4][idx]||0,l5:L[5][idx]||0,l6:L[6][idx]||0,l7:L[7][idx]||0,l8:L[8][idx]||0};
+    return{l3:0,l4:0,l5:0,l6:0,l7:0,l8:0};
+  };
+  const estGetDiaAnteriorApres=(d)=>{
+    const dts=[...new Set([...DATAS_ISO_MAPA,...mapaFirebase.map(r=>r.data)])].sort();
+    const idx=dts.indexOf(d); return idx>0?dts[idx-1]:null;
+  };
+  const mapaHoje = getMapa(dataRef);
+  const dtAntApres = estGetDiaAnteriorApres(dataRef);
+  const mapaAntApres = dtAntApres ? getMapa(dtAntApres) : null;
+  const rl3=mapaHoje.l3||0, rl4=mapaHoje.l4||0, rl5=mapaHoje.l5||0, rl6=mapaHoje.l6||0, rl7=mapaHoje.l7||0, rl8=mapaHoje.l8||0;
+  const rl3a=mapaAntApres?.l3??null, rl4a=mapaAntApres?.l4??null, rl5a=mapaAntApres?.l5??null;
+  const rl6a=mapaAntApres?.l6??null, rl7a=mapaAntApres?.l7??null, rl8a=mapaAntApres?.l8??null;
+  const rTotPatec=rl3+rl4+rl5+rl6, rTotGeral=rl3+rl4+rl5+rl6+rl7+rl8;
+  const rTotPatecAnt=mapaAntApres?(rl3a+rl4a+rl5a+rl6a):null;
+  const rTotGeralAnt=mapaAntApres?(rl3a+rl4a+rl5a+rl6a+rl7a+rl8a):null;
+  const rTotAbrir=rl7+rl8, rTotAbrirAnt=mapaAntApres?(rl7a+rl8a):null;
+  const varApres=(v,ant)=>{
+    if(ant===null||ant===undefined) return '';
+    const d=v-ant;
+    if(d===0) return '<span style="color:#888;font-size:12px">= dia ant.</span>';
+    const cor=d>0?'#D94040':'#3A7D44'; const ico=d>0?'▲':'▼';
+    return `<span style="color:${cor};font-size:12px;font-weight:700">${ico} ${d>0?'+':''}${d} vs dia ant.</span>`;
+  };
+
+  // ── KPIs Resumo Radar ──
   const totalItens = rows.length;
   const FILAS_AG = ['patec','análise de oportunidade'];
   const normF = v=>String(v||'').trim().toLowerCase();
@@ -11531,13 +11561,53 @@ function admApresentacaoGerar(){
   // ── Montar HTML da apresentação ──
   const secResumo = incResumo ? `
     <section>
-      <h2>📋 Resumo — ${dataFmt}</h2>
-      <div class="subtitle">${filtroLabel}</div>
-      <div class="kpis">
-        <div class="kpi"><div class="kval" style="color:#3A7D44">${totalItens.toLocaleString('pt-BR')}</div><div class="klbl">Total de Itens</div></div>
-        <div class="kpi"><div class="kval" style="color:#E87722">${agTrat.toLocaleString('pt-BR')}</div><div class="klbl">Ag. Tratamento</div></div>
-        <div class="kpi"><div class="kval" style="color:#D94040">${vencidos.toLocaleString('pt-BR')}</div><div class="klbl">Prazo Vencido</div></div>
-        <div class="kpi"><div class="kval" style="color:#E87722">${proxVenc.toLocaleString('pt-BR')}</div><div class="klbl">Próx. Vencimento</div></div>
+      <h2>📊 Resumo do Dia — ${dataFmt}</h2>
+      <div class="res-grid">
+        <div class="res-card" style="background:#EBF0FA">
+          <div class="res-label" style="color:#3266AD">PATEC Finalizado</div>
+          <div class="res-val" style="color:#3266AD">${rl3}</div>
+          <div>${varApres(rl3,rl3a)}</div>
+        </div>
+        <div class="res-card" style="background:#EBF0FA">
+          <div class="res-label" style="color:#3266AD">Ag. PATEC Finalizar</div>
+          <div class="res-val" style="color:#3266AD">${rl4}</div>
+          <div>${varApres(rl4,rl4a)}</div>
+        </div>
+        <div class="res-card" style="background:#e8f5e9">
+          <div class="res-label" style="color:#2E7D32">100% Reprovado</div>
+          <div class="res-val" style="color:#2E7D32">${rl5}</div>
+          <div>${varApres(rl5,rl5a)}</div>
+        </div>
+        <div class="res-card" style="background:#e8f5e9">
+          <div class="res-label" style="color:#2E7D32">PATEC Cancelado</div>
+          <div class="res-val" style="color:#2E7D32">${rl6}</div>
+          <div>${varApres(rl6,rl6a)}</div>
+        </div>
+        <div class="res-card" style="background:#e3f2fd">
+          <div class="res-label" style="color:#1565C0">Total PATEC</div>
+          <div class="res-val" style="color:#1565C0">${rTotPatec}</div>
+          <div>${varApres(rTotPatec,rTotPatecAnt)}</div>
+        </div>
+        <div class="res-card res-big" style="background:#f5f5f5;grid-row:span 2">
+          <div class="res-label" style="color:#0d2137">Total Geral</div>
+          <div class="res-val" style="color:#0d2137;font-size:42px">${rTotGeral}</div>
+          <div>${varApres(rTotGeral,rTotGeralAnt)}</div>
+        </div>
+        <div class="res-card" style="background:#FFF8E1">
+          <div class="res-label" style="color:#E65100">Abrir ID Não</div>
+          <div class="res-val" style="color:#E65100">${rl7}</div>
+          <div>${varApres(rl7,rl7a)}</div>
+        </div>
+        <div class="res-card" style="background:#FFF8E1">
+          <div class="res-label" style="color:#E65100">Abrir PATEC Obrig.</div>
+          <div class="res-val" style="color:#E65100">${rl8}</div>
+          <div>${varApres(rl8,rl8a)}</div>
+        </div>
+        <div class="res-card" style="background:#FFF8E1">
+          <div class="res-label" style="color:#E65100">Soma (Abrir)</div>
+          <div class="res-val" style="color:#E65100">${rTotAbrir}</div>
+          <div>${varApres(rTotAbrir,rTotAbrirAnt)}</div>
+        </div>
       </div>
     </section>` : '';
 
@@ -11591,6 +11661,11 @@ function admApresentacaoGerar(){
   .kval{font-size:32px;font-weight:800;margin-bottom:4px}
   .klbl{font-size:12px;color:#666;font-weight:600}
   .prazo-legenda{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+  .res-grid{display:grid;grid-template-columns:repeat(5,1fr) 1.8fr;grid-template-rows:auto auto;gap:10px}
+  .res-card{border-radius:10px;padding:14px 16px;border:1px solid rgba(0,0,0,.07)}
+  .res-label{font-size:10px;font-weight:700;color:#666;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+  .res-val{font-size:28px;font-weight:800;line-height:1;margin-bottom:4px}
+  .res-big{display:flex;flex-direction:column;justify-content:center}
   .pl-item{display:flex;align-items:center;gap:10px;font-size:15px}
   .dot{width:14px;height:14px;border-radius:50%;display:inline-block;flex-shrink:0}
   @media print{
