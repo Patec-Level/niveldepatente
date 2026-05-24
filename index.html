@@ -11843,7 +11843,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
       <div>
         <div class="sec-title">🗺️ Detalhamento — Governança (Em Tratativa)</div>
         ${govBars}
-        ${xglTotal>0?`<div style="margin-top:8px"><div class="mcard-lbl">XGL Pendentes</div><span class="xgl-badge">${xglTotal}</span></div>`:''}
+        ${xglTotalCalc>0?`<div class="gov-row" style="margin-top:4px"><div class="gov-lbl" style="color:#6A1E9E;font-weight:700">XGL PENDENTES</div><div class="gov-bar-wrap"><div class="gov-bar" style="width:${Math.round(xglTotalCalc/(govSorted[0]?.[1]||1)*100)}%;background:#6A1E9E"></div></div><div class="gov-cnt">${xglTotalCalc} <span style="color:#999;font-size:10px">(${govTotalFinal>0?Math.round(xglTotalCalc/govTotalFinal*100):0}%)</span></div></div>`:''}
       </div>` : '<div></div>'}
 
       ${incPrazo ? `
