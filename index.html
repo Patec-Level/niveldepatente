@@ -6868,7 +6868,12 @@ function _desenharDonut(rows){
   });
 }
 
+// Guarda os dados já filtrados pelo filtro principal para uso no donut
+let _radarRowsBase = [];
+
 function renderRadarChartPrazo(rowsBase){
+  // Salva base filtrada pelo filtro principal (simples ou combinação)
+  _radarRowsBase = rowsBase;
   // Chamada pelo render principal — popula o dropdown do gráfico com base nos dados atuais
   const sel=document.getElementById('radar-donut-filtro-status');
   if(sel){
@@ -6887,13 +6892,10 @@ function renderRadarChartPrazo(rowsBase){
 }
 
 function radarAtualizarDonut(){
-  // Filtro independente do gráfico — usa _radarDados completo (não o filtro principal)
   const sel=document.getElementById('radar-donut-filtro-status');
   const val=sel?.value||'';
-  // Base: todos os dados OU filtro principal se ativo (mantém coerência)
-  const base = _radarFiltroStatus
-    ? _radarDados.filter(r=>r.analista_auto===_radarFiltroStatus)
-    : _radarDados;
+  // Sempre parte da base já filtrada pelo filtro principal (simples ou combinação)
+  const base = _radarRowsBase.length ? _radarRowsBase : _radarDados;
   const rows = val ? base.filter(r=>r.analista_auto===val) : base;
   _desenharDonut(rows);
 }
