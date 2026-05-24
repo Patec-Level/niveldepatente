@@ -373,7 +373,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('planilha-critica',this)">🔴 Planilha Crítica</div>
   <div class="sb-it" onclick="go('governanca',this)">⚖️ Governança</div>
   <div class="sb-sec">Em breve</div>
-  <div class="sb-it" style="opacity:.45;cursor:default">📊 Status B <span class="sb-badge">breve</span></div>
+
   <div class="sb-sec">ADM</div>
   <div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>
 </nav>
@@ -747,6 +747,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('analista-upload',this)">📂 Upload Backlog</button>
         <button class="stab" onclick="setAdmTab('analista-auto',this)">🤖 Analista Automático</button>
         <button class="stab" onclick="setAdmTab('email-teste',this)">📧 Testar E-mails</button>
+        <button class="stab" onclick="setAdmTab('apresentacao',this);admApresentacaoInit()">🖥️ Apresentação</button>
       </div>
 
       <!-- ── GESTÃO DE CICLOS ── -->
@@ -1902,6 +1903,48 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+      <!-- ── APRESENTAÇÃO ── -->
+      <div id="adm-apresentacao" class="adm-tab" style="display:none">
+        <div class="cd">
+          <div class="cd-t">🖥️ Gerador de Slide para Apresentação</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+
+            <!-- Coluna 1 -->
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Filtro — Analista Automático</div>
+              <select id="apres-filtro-analista" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+                <option value="">Todos os analistas</option>
+              </select>
+              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;margin-top:12px;text-transform:uppercase;letter-spacing:.5px">Título da Apresentação</div>
+              <input type="text" id="apres-titulo" value="PATEC — Reunião de Gestão" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px">Data de Referência</div>
+              <input type="date" id="apres-data" style="width:100%;font-size:12px;padding:5px 10px">
+            </div>
+
+            <!-- Coluna 2 -->
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Período — Gráfico Cascata</div>
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <div style="flex:1"><div style="font-size:11px;color:var(--tx2);margin-bottom:3px">De</div>
+                <input type="date" id="apres-cas-ini" style="width:100%;font-size:12px;padding:5px 10px"></div>
+                <div style="flex:1"><div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Até</div>
+                <input type="date" id="apres-cas-fim" style="width:100%;font-size:12px;padding:5px 10px"></div>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px;margin-top:12px;text-transform:uppercase;letter-spacing:.5px">Seções a incluir</div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-resumo" checked> Resumo do Dia</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-prazo" checked> Distribuição por Prazo</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-aa" checked> Analista Automático (KPIs)</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres-inc-cascata" checked> Gráfico Cascata</label>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-p" onclick="admApresentacaoGerar()" style="width:100%;justify-content:center;font-size:13px;padding:10px">
+            🖨️ Gerar Slide para Impressão
+          </button>
+        </div>
+      </div>
+
     </div><!-- /adm-painel -->
   </div><!-- /p-adm -->
 
@@ -2279,7 +2322,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
         <div class="cd">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:.75rem">
-          <div class="cd-t" style="margin:0">📊 Distribuição por Prazo (Col C)</div>
+          <div class="cd-t" style="margin:0">📊 Distribuição por Prazo</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-size:11px;font-weight:600;color:var(--tx2);white-space:nowrap">Filtrar por Analista Automático:</span>
             <div style="position:relative;min-width:200px">
@@ -11398,6 +11441,183 @@ async function testarAlertas(){
   alertaSalvarEnviados();
   await alertasDisparar('teste-manual');
   console.log('[PATEC] Teste concluído. Verifique o histórico no EmailJS.');
+}
+
+
+// ════════════════════════════════════════════
+// APRESENTAÇÃO — GERADOR DE SLIDE
+// ════════════════════════════════════════════
+function admApresentacaoInit(){
+  // Preencher data padrão
+  const dtEl = document.getElementById('apres-data');
+  if(dtEl && !dtEl.value) dtEl.value = new Date().toISOString().split('T')[0];
+
+  // Preencher datas cascata com padrão do PA se disponível
+  const iniEl = document.getElementById('apres-cas-ini');
+  const fimEl = document.getElementById('apres-cas-fim');
+  if(iniEl && !iniEl.value){
+    const paIni = document.getElementById('pa-dt-inicio')?.value;
+    const paFim = document.getElementById('pa-dt-fim')?.value;
+    if(paIni) iniEl.value = paIni;
+    if(paFim) fimEl.value = paFim;
+    else fimEl.value = new Date().toISOString().split('T')[0];
+  }
+
+  // Popular filtro de analistas
+  const sel = document.getElementById('apres-filtro-analista');
+  if(sel && _radarDados?.length){
+    const analistas = [...new Set(_radarDados.map(r=>r.analista_auto).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">Todos os analistas</option>' +
+      analistas.map(a=>`<option value="${a}">${a}</option>`).join('');
+    // Espelhar filtro ativo atual
+    if(_radarFiltroStatus) sel.value = _radarFiltroStatus;
+  }
+}
+
+function admApresentacaoGerar(){
+  const titulo   = document.getElementById('apres-titulo')?.value || 'PATEC — Reunião de Gestão';
+  const dataRef  = document.getElementById('apres-data')?.value || new Date().toISOString().split('T')[0];
+  const dataFmt  = dataRef.split('-').reverse().join('/');
+  const filtroAn = document.getElementById('apres-filtro-analista')?.value || '';
+  const casIni   = document.getElementById('apres-cas-ini')?.value || '';
+  const casFim   = document.getElementById('apres-cas-fim')?.value || dataRef;
+  const incResumo   = document.getElementById('apres-inc-resumo')?.checked;
+  const incPrazo    = document.getElementById('apres-inc-prazo')?.checked;
+  const incAA       = document.getElementById('apres-inc-aa')?.checked;
+  const incCascata  = document.getElementById('apres-inc-cascata')?.checked;
+
+  // ── Dados do Radar filtrados ──
+  let rows = _radarDados || [];
+  if(filtroAn) rows = rows.filter(r=>r.analista_auto === filtroAn);
+  const filtroLabel = filtroAn || 'Todos os analistas';
+
+  // ── KPIs Resumo ──
+  const totalItens = rows.length;
+  const FILAS_AG = ['patec','análise de oportunidade'];
+  const normF = v=>String(v||'').trim().toLowerCase();
+  const agTrat = rows.filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado' && FILAS_AG.includes(normF(r.fila))).length;
+  const vencidos = rows.filter(r=>Number(r.prazo_c||0)>=91).length;
+  const proxVenc  = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60&&v<=90; }).length;
+  const dentroP   = rows.filter(r=>Number(r.prazo_c||0)<=59).length;
+  const total3 = vencidos + proxVenc + dentroP;
+  const pct = n => total3>0 ? Math.round(n/total3*100) : 0;
+
+  // ── KPIs Analista Auto ──
+  const aaRows = (_aaAptas||window._aaAptas||[]).filter(a=>!filtroAn||(a.analista||'')===(filtroAn));
+  const aaRCs   = [...new Set(aaRows.map(a=>a.rc))].length;
+  const aaRegs  = aaRows.length;
+  const aaAnals = [...new Set(aaRows.map(a=>a.analista).filter(Boolean))].length;
+
+  // ── Cascata: capturar imagem do canvas existente ──
+  let cascataImg = '';
+  if(incCascata){
+    // Sincronizar datas e re-renderizar
+    const paIni = document.getElementById('pa-dt-inicio');
+    const paFim = document.getElementById('pa-dt-fim');
+    if(paIni && casIni){ paIni.value = casIni; }
+    if(paFim && casFim){ paFim.value = casFim; }
+    if(typeof renderCascata === 'function') renderCascata();
+    const canvas = document.getElementById('pa-chart-cascata');
+    if(canvas) cascataImg = canvas.toDataURL('image/png');
+  }
+
+  // ── Donut: capturar imagem ──
+  let donutImg = '';
+  if(incPrazo){
+    const canvas = document.getElementById('radar-chart-prazo');
+    if(canvas) donutImg = canvas.toDataURL('image/png');
+  }
+
+  // ── Montar HTML da apresentação ──
+  const secResumo = incResumo ? `
+    <section>
+      <h2>📋 Resumo — ${dataFmt}</h2>
+      <div class="subtitle">${filtroLabel}</div>
+      <div class="kpis">
+        <div class="kpi"><div class="kval" style="color:#3A7D44">${totalItens.toLocaleString('pt-BR')}</div><div class="klbl">Total de Itens</div></div>
+        <div class="kpi"><div class="kval" style="color:#E87722">${agTrat.toLocaleString('pt-BR')}</div><div class="klbl">Ag. Tratamento</div></div>
+        <div class="kpi"><div class="kval" style="color:#D94040">${vencidos.toLocaleString('pt-BR')}</div><div class="klbl">Prazo Vencido</div></div>
+        <div class="kpi"><div class="kval" style="color:#E87722">${proxVenc.toLocaleString('pt-BR')}</div><div class="klbl">Próx. Vencimento</div></div>
+      </div>
+    </section>` : '';
+
+  const secPrazo = incPrazo ? `
+    <section>
+      <h2>⏱️ Distribuição por Prazo</h2>
+      <div class="subtitle">${filtroLabel}</div>
+      ${donutImg ? `<div style="text-align:center"><img src="${donutImg}" style="max-height:280px"></div>` : ''}
+      <div class="prazo-legenda">
+        <div class="pl-item"><span class="dot" style="background:#D94040"></span>Vencida ≥ 91 dias: <strong>${pct(vencidos)}%</strong></div>
+        <div class="pl-item"><span class="dot" style="background:#E87722"></span>Próx. vencimento 60–90 dias: <strong>${pct(proxVenc)}%</strong></div>
+        <div class="pl-item"><span class="dot" style="background:#3A7D44"></span>Dentro do prazo ≤ 59 dias: <strong>${pct(dentroP)}%</strong></div>
+      </div>
+    </section>` : '';
+
+  const secAA = incAA ? `
+    <section>
+      <h2>🤖 Analista Automático</h2>
+      <div class="subtitle">${filtroLabel}</div>
+      <div class="kpis">
+        <div class="kpi"><div class="kval" style="color:#1565C0">${aaRCs}</div><div class="klbl">RCs Aptas</div></div>
+        <div class="kpi"><div class="kval" style="color:#2E7D32">${aaRegs}</div><div class="klbl">Registros</div></div>
+        <div class="kpi"><div class="kval" style="color:#6A1E9E">${aaAnals}</div><div class="klbl">Analistas</div></div>
+      </div>
+    </section>` : '';
+
+  const secCascata = incCascata ? `
+    <section>
+      <h2>📉 Gráfico Cascata — Plano de Ação</h2>
+      <div class="subtitle">${casIni ? casIni.split('-').reverse().join('/'):'—'} até ${casFim.split('-').reverse().join('/')}</div>
+      ${cascataImg ? `<div style="text-align:center"><img src="${cascataImg}" style="max-width:100%;max-height:340px"></div>` : '<div style="color:#999;text-align:center;padding:2rem">Gráfico não disponível</div>'}
+    </section>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>${titulo}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;padding:20px}
+  .slide{background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.1);padding:36px 44px;margin-bottom:24px;page-break-inside:avoid;max-width:960px;margin-left:auto;margin-right:auto}
+  .slide-header{text-align:center;background:linear-gradient(135deg,#0d2137 0%,#1565C0 100%);color:#fff;border-radius:10px;padding:28px 24px;margin-bottom:20px}
+  .slide-header h1{font-size:26px;font-weight:700;margin-bottom:6px}
+  .slide-header .meta{font-size:13px;opacity:.8}
+  section{background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.1);padding:32px 40px;margin-bottom:20px;max-width:960px;margin-left:auto;margin-right:auto;page-break-inside:avoid}
+  h2{font-size:18px;font-weight:700;color:#0d2137;margin-bottom:4px;border-bottom:2px solid #e8eef4;padding-bottom:10px;margin-bottom:16px}
+  .subtitle{font-size:12px;color:#666;margin-top:-12px;margin-bottom:16px}
+  .kpis{display:flex;gap:16px;flex-wrap:wrap}
+  .kpi{flex:1;min-width:120px;background:#f7f9fc;border-radius:10px;padding:18px 16px;text-align:center}
+  .kval{font-size:32px;font-weight:800;margin-bottom:4px}
+  .klbl{font-size:12px;color:#666;font-weight:600}
+  .prazo-legenda{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+  .pl-item{display:flex;align-items:center;gap:10px;font-size:15px}
+  .dot{width:14px;height:14px;border-radius:50%;display:inline-block;flex-shrink:0}
+  @media print{
+    body{background:#fff;padding:0}
+    .no-print{display:none!important}
+    section,.slide{box-shadow:none;margin-bottom:0;page-break-after:always}
+  }
+</style>
+</head>
+<body>
+<div class="no-print" style="text-align:center;margin-bottom:20px">
+  <button onclick="window.print()" style="background:#1565C0;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>
+</div>
+<div class="slide slide-header">
+  <h1>${titulo}</h1>
+  <div class="meta">Data de referência: ${dataFmt} &nbsp;·&nbsp; Filtro: ${filtroLabel}</div>
+</div>
+${secResumo}
+${secPrazo}
+${secAA}
+${secCascata}
+</body></html>`;
+
+  // Abrir em nova aba
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
 }
 
 </script>
