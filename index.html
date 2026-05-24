@@ -11705,13 +11705,26 @@ async function admApresentacaoGerar(){
 
     // Percorrer dias úteis do período com saídas reais
     const diasUteis = typeof paDiasUteis==='function' ? paDiasUteis(dtIni, casFim).filter(d=>d>dtAnt) : [];
+    // Ancoragem no Radar — mesma lógica do renderCascata
+    const _hojeISO = new Date().toISOString().split('T')[0];
+    const _FILAS_AG_PA = ['patec','análise de oportunidade'];
+    const _normFPA = v=>String(v||'').trim().toLowerCase();
+    const _backlogRealRadar = (_radarDados||[]).filter(r=>
+      (r.analista_auto||'').trim()==='Analisar PATEC Finalizado' &&
+      _FILAS_AG_PA.includes(_normFPA(r.fila))
+    ).length || null;
+    const _anchorarRadar = casFim >= _hojeISO && _backlogRealRadar !== null;
+
     let backlogAtual = backlogBase;
     let totalSaidas = 0, totalEntradas = 0;
-    diasUteis.forEach(d=>{
+    diasUteis.forEach((d, idx)=>{
       const s = _saidasPorDia[d]||0;
       const e = (_paEntradas||[]).find(x=>x.dt===d)?.val||0;
       totalSaidas += s; totalEntradas += e;
-      backlogAtual = Math.max(0, backlogAtual - s + e);
+      const isUltimo = idx === diasUteis.length - 1;
+      backlogAtual = (isUltimo && _anchorarRadar)
+        ? _backlogRealRadar
+        : Math.max(0, backlogAtual - s + e);
     });
 
     // Entradas acumuladas no período
