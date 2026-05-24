@@ -11600,12 +11600,7 @@ async function admApresentacaoGerar(){
     }
   });
   const govSorted = [...Object.entries(govCounts)].sort((a,b)=>b[1]-a[1]);
-  // ── Ag. Tratamento — mesma regra do Radar (sempre base PATEC Finalizado) ──
-  const _FILAS_AG_TRAT = ['patec','análise de oportunidade'];
-  const agTrat = (_radarDados||[]).filter(d=>
-    d.analista_auto==='Analisar PATEC Finalizado' &&
-    _FILAS_AG_TRAT.includes(normF2(d.fila))
-  ).length;
+  const govSubtotal = govSorted.reduce((s,[,v])=>s+v,0);
 
   // ── XGL não concluídos ──
   const XGL_EXCLUIR = ['concluído','concluido','finalizado','saiu do dpv','patec finalizado'];
@@ -11615,11 +11610,14 @@ async function admApresentacaoGerar(){
     return !XGL_EXCLUIR.includes((m.status||'').toLowerCase());
   });
   const xglTotalCalc = xglPendentes.length;
+  const govTotalFinal = govSubtotal + xglTotalCalc;
 
-  // Recalcular govTotal agora que temos xglTotalCalc
-  const govTotalFinal = govSorted.reduce((s,[,v])=>s+v,0) + xglTotalCalc;
+  // ── Indicadores Críticos — mesma base do Detalhamento (govCounts) ──
+  const agTrat      = govCounts['AG. TRATAMENTO'] || 0;
+  const govVencidos = govItens.filter(r=>Number(r.prazo_c||0)>=91).length;
+  const govProxVenc = govItens.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60&&v<=90; }).length;
 
-  // ── Maior SLA — apenas "Analisar PATEC Finalizado" ──
+  // ── Maior SLA — base govItens (PATEC Finalizado atual) ──
   const maiorSLAItem = govItens.length ? govItens.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, govItens[0]) : null;
   const maiorSLAVal  = maiorSLAItem ? Number(maiorSLAItem.sla||0) : 0;
   const maiorSLAFila = maiorSLAItem ? (maiorSLAItem.fila||'—') : '—';
@@ -11959,8 +11957,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           <div class="mcard" style="background:#f3e5f5">
-            <div class="mcard-lbl" style="color:#6A1E9E">Total Itens</div>
-            <div class="mcard-val" style="color:#6A1E9E;font-size:20px">${rows.length.toLocaleString('pt-BR')}</div>
+            <div class="mcard-lbl" style="color:#6A1E9E">Total Gov.</div>
+            <div class="mcard-val" style="color:#6A1E9E;font-size:20px">${govTotalFinal.toLocaleString('pt-BR')}</div>
           </div>
           <div class="mcard" style="background:#e8f5e9">
             <div class="mcard-lbl" style="color:#2e7d32">Ag. Tratamento</div>
@@ -11968,11 +11966,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
           </div>
           <div class="mcard" style="background:#fff3e0">
             <div class="mcard-lbl" style="color:#e65100">Próx. Venc.</div>
-            <div class="mcard-val" style="color:#e65100;font-size:20px">${proxVenc}</div>
+            <div class="mcard-val" style="color:#e65100;font-size:20px">${govProxVenc}</div>
           </div>
           <div class="mcard" style="background:#ffebee">
             <div class="mcard-lbl" style="color:#c62828">Vencidos</div>
-            <div class="mcard-val" style="color:#c62828;font-size:20px">${vencidos}</div>
+            <div class="mcard-val" style="color:#c62828;font-size:20px">${govVencidos}</div>
           </div>
         </div>
       </div>
