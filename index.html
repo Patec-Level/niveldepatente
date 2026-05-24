@@ -11583,22 +11583,18 @@ async function admApresentacaoGerar(){
   const pct = n => total3>0 ? Math.round(n/total3*100) : 0;
 
   // ── Detalhamento Governança — APENAS "Analisar PATEC Finalizado" ──
-  // Usa mesma lógica da aba Governança: status do _govDados ou default AG. TRATAMENTO
-  const STATUS_EXCLUIR = ['patec finalizado','saiu do dpv','concluído','concluido','finalizado'];
-  const GOV_FILAS_AG_AP = ['PATEC','ANALISE DE OPORTUNIDADE','ANÁLISE DE OPORTUNIDADE'];
+  // Mesma lógica EXATA do govRenderMapa
   const govItens = (_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
   const govCounts = {};
   govItens.forEach(r=>{
     const ch = typeof govChave==='function' ? govChave(r) : (r.rc+'|'+r.item);
     const m = _govDados[ch] || {};
-    // Mesma lógica da govRenderMapa: status salvo OU default por fila
-    let st = m.status ? m.status.toUpperCase() : '';
-    if(!st){
-      st = GOV_FILAS_AG_AP.some(f=>(r.fila||'').toUpperCase().includes(f)) ? 'AG. TRATAMENTO' : 'AG. TRATAMENTO';
+    // Mesma regra do govRenderMapa: status salvo OU AG. TRATAMENTO se fila PATEC/Análise de Oportunidade
+    let st = m.status || '';
+    if(!st && GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase()))){
+      st = 'AG. TRATAMENTO';
     }
-    if(!STATUS_EXCLUIR.includes(st.toLowerCase())){
-      govCounts[st] = (govCounts[st]||0)+1;
-    }
+    if(st) govCounts[st.toUpperCase()] = (govCounts[st.toUpperCase()]||0)+1;
   });
   const govSorted = [...Object.entries(govCounts)].sort((a,b)=>b[1]-a[1]);
   const govSubtotal = govSorted.reduce((s,[,v])=>s+v,0);
@@ -12033,8 +12029,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           <div class="mcard" style="background:#f3e5f5">
-            <div class="mcard-lbl" style="color:#6A1E9E">Total Gov.</div>
-            <div class="mcard-val" style="color:#6A1E9E;font-size:20px">${govTotalFinal.toLocaleString('pt-BR')}</div>
+            <div class="mcard-lbl" style="color:#6A1E9E">PATEC Finalizado</div>
+            <div class="mcard-val" style="color:#6A1E9E;font-size:20px">${govItens.length.toLocaleString('pt-BR')}</div>
           </div>
           <div class="mcard" style="background:#e8f5e9">
             <div class="mcard-lbl" style="color:#2e7d32">Ag. Tratamento</div>
