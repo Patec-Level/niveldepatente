@@ -11579,6 +11579,7 @@ async function admApresentacaoGerar(){
   const proxVenc  = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60&&v<=90; }).length;
   const dentroP   = rows.filter(r=>Number(r.prazo_c||0)<=59).length;
   const total3 = vencidos+proxVenc+dentroP;
+  const pctTotal = proxVenc+vencidos; // unificado como "próximo do vencimento"
   const pct = n => total3>0 ? Math.round(n/total3*100) : 0;
 
   // ── Detalhamento Governança — APENAS "Analisar PATEC Finalizado" ──
@@ -11894,11 +11895,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
   <div class="body">
 
     ${incResumo ? `
-    <!-- RESUMO DO MAPA + DONUT -->
+    <!-- RESUMO DO MAPA -->
     <div>
       <div class="sec-title">📊 Resumo do Mapa PATEC — variação: ${casIni?casIni.split('-').reverse().join('/'):'—'} → ${casFim.split('-').reverse().join('/')}</div>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start">
-        <div class="mapa-grid">
+      <div class="mapa-grid">
           <div class="mcard" style="background:#EBF0FA">
             <div class="mcard-lbl" style="color:#3266AD">PATEC Finalizado</div>
             <div class="mcard-val" style="color:#3266AD">${ra.l3||0}</div>
@@ -11944,24 +11944,63 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
             <div class="mcard-val" style="color:#E65100">${(ra.l7||0)+(ra.l8||0)}</div>
             <div>${varM((ra.l7||0)+(ra.l8||0), ri?(ri.l7||0)+(ri.l8||0):null)}</div>
           </div>
-        </div>
-        ${incPrazo ? `
-        <div style="min-width:220px">
-          <div style="font-size:9px;font-weight:700;color:#1b5e20;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⏱️ Prazo — ${filtroLabel}</div>
-          <div class="donut-wrap" style="flex-direction:column;align-items:center;gap:8px">
-            ${donutImg ? `<img src="${donutImg}" style="max-height:130px">` : ''}
-            <div class="prazo-leg" style="gap:4px">
-              <div class="pl-row"><div class="pl-dot" style="background:#3A7D44"></div><div><div class="pl-pct" style="color:#3A7D44;font-size:18px">${pct(dentroP)}%</div><div style="font-size:9px;color:#555">≤59d</div></div></div>
-              <div class="pl-row"><div class="pl-dot" style="background:#E87722"></div><div><div class="pl-pct" style="color:#E87722;font-size:18px">${pct(proxVenc)}%</div><div style="font-size:9px;color:#555">60–90d</div></div></div>
-              <div class="pl-row"><div class="pl-dot" style="background:#D94040"></div><div><div class="pl-pct" style="color:#D94040;font-size:18px">${pct(vencidos)}%</div><div style="font-size:9px;color:#555">≥91d</div></div></div>
-            </div>
-          </div>
-        </div>` : ''}
       </div>
     </div>` : ''}
 
-    <!-- LINHA 2: DETALHAMENTO + INDICADORES -->
-    <div class="two-col">
+    <!-- LINHA 2: DONUT + DETALHAMENTO + INDICADORES -->
+    <div class="three-col">
+
+      ${incPrazo ? `
+      <!-- DONUT -->
+      <div>
+        <div class="sec-title">⏱️ Distribuição por Prazo — ${filtroLabel}</div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <canvas id="slide-donut" width="180" height="180"></canvas>
+          <script>
+            (function(){
+              const c=document.getElementById('slide-donut');
+              if(!c)return;
+              const ctx=c.getContext('2d');
+              const cx=90,cy=90,r=75,ri=48;
+              const proxTotal=${proxVenc}+${vencidos};
+              const segs=[
+                {v:${dentroP},c:'#3A7D44',lbl:'${pct(dentroP)}%',sub:'Dentro do prazo'},
+                {v:proxTotal,c:'#E87722',lbl:'${Math.round(proxTotal/${total3||1}*100)}%',sub:'Próx. vencimento'}
+              ].filter(s=>s.v>0);
+              const tot=segs.reduce((a,s)=>a+s.v,0);
+              if(!tot)return;
+              let ang=-Math.PI/2;
+              segs.forEach(s=>{
+                const a=2*Math.PI*(s.v/tot);
+                ctx.beginPath(); ctx.moveTo(cx,cy);
+                ctx.arc(cx,cy,r,ang,ang+a);
+                ctx.closePath(); ctx.fillStyle=s.c; ctx.fill();
+                if(s.v/tot>0.04){
+                  const mid=ang+a/2;
+                  const lx=cx+Math.cos(mid)*(ri+r)/2;
+                  const ly=cy+Math.sin(mid)*(ri+r)/2;
+                  ctx.fillStyle='#fff'; ctx.font='bold 14px Segoe UI,Arial';
+                  ctx.textAlign='center'; ctx.textBaseline='middle';
+                  ctx.fillText(s.lbl,lx,ly);
+                }
+                ang+=a;
+              });
+              ctx.beginPath(); ctx.arc(cx,cy,ri,0,2*Math.PI);
+              ctx.fillStyle='#fff'; ctx.fill();
+            })();
+          <\/script>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="width:12px;height:12px;border-radius:50%;background:#3A7D44;flex-shrink:0"></div>
+              <div><div style="font-size:20px;font-weight:800;color:#3A7D44">${pct(dentroP)}%</div><div style="font-size:10px;color:#555">Dentro do prazo ≤59d</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="width:12px;height:12px;border-radius:50%;background:#E87722;flex-shrink:0"></div>
+              <div><div style="font-size:20px;font-weight:800;color:#E87722">${Math.round((${proxVenc}+${vencidos})/${total3||1}*100)}%</div><div style="font-size:10px;color:#555">Próx. vencimento ≥60d</div></div>
+            </div>
+          </div>
+        </div>
+      </div>` : '<div></div>'}
 
       ${incMapa ? `
       <!-- DETALHAMENTO GOVERNANÇA -->
