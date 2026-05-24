@@ -11481,7 +11481,7 @@ function admApresentacaoInit(){
   }
 }
 
-function admApresentacaoGerar(){
+async function admApresentacaoGerar(){
   const titulo    = document.getElementById('apres-titulo')?.value || 'Visão Geral de PATEC';
   const subtitulo = document.getElementById('apres-subtitulo')?.value || 'BPO de Compras · DPV';
   const dataRef   = document.getElementById('apres-data')?.value || new Date().toISOString().split('T')[0];
@@ -11522,50 +11522,68 @@ function admApresentacaoGerar(){
   const iTotPatec=ri?((ri.l3||0)+(ri.l4||0)+(ri.l5||0)+(ri.l6||0)):null;
   const iTotGeral=ri?((ri.l3||0)+(ri.l4||0)+(ri.l5||0)+(ri.l6||0)+(ri.l7||0)+(ri.l8||0)):null;
 
-  // ── Distribuição por Prazo (dados atuais do radar) ──
+  // ── Rows filtradas pelo analista (para Donut + Resumo Mapa) ──
+  const normF2 = v=>String(v||'').trim().toLowerCase();
   let rows = _radarDados || [];
   if(filtroAn) rows = rows.filter(r=>r.analista_auto===filtroAn);
-  // Maior SLA
-  const maiorSLAItem = rows.length ? rows.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, rows[0]) : null;
-  const maiorSLAVal  = maiorSLAItem ? Number(maiorSLAItem.sla||0) : 0;
-  const maiorSLAFila = maiorSLAItem ? (maiorSLAItem.fila||'—') : '—';
-  const FILAS_AG2 = ['patec','análise de oportunidade'];
-  const normF2 = v=>String(v||'').trim().toLowerCase();
-  const agTrat = rows.filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado' && FILAS_AG2.includes(normF2(r.fila))).length;
+
+  // ── Distribuição por Prazo — usa mesmos rows do resumo mapa ──
   const vencidos = rows.filter(r=>Number(r.prazo_c||0)>=91).length;
   const proxVenc  = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60&&v<=90; }).length;
   const dentroP   = rows.filter(r=>Number(r.prazo_c||0)<=59).length;
   const total3 = vencidos+proxVenc+dentroP;
   const pct = n => total3>0 ? Math.round(n/total3*100) : 0;
 
-  // ── Detalhamento Mapa Governança (status em tratativa) ──
+  // ── Detalhamento Governança — APENAS "Analisar PATEC Finalizado" ──
+  // Usa mesma lógica da aba Governança: status do _govDados ou default AG. TRATAMENTO
   const STATUS_EXCLUIR = ['patec finalizado','saiu do dpv','concluído','concluido','finalizado'];
+  const GOV_FILAS_AG_AP = ['PATEC','ANALISE DE OPORTUNIDADE','ANÁLISE DE OPORTUNIDADE'];
   const govItens = (_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
   const govCounts = {};
   govItens.forEach(r=>{
-    const ch = govChave ? govChave(r) : (r.rc+'|'+r.item);
+    const ch = typeof govChave==='function' ? govChave(r) : (r.rc+'|'+r.item);
     const m = _govDados[ch] || {};
-    const st = (m.status||'AG. TRATAMENTO').toUpperCase();
+    // Mesma lógica da govRenderMapa: status salvo OU default por fila
+    let st = m.status ? m.status.toUpperCase() : '';
+    if(!st){
+      st = GOV_FILAS_AG_AP.some(f=>(r.fila||'').toUpperCase().includes(f)) ? 'AG. TRATAMENTO' : 'AG. TRATAMENTO';
+    }
     if(!STATUS_EXCLUIR.includes(st.toLowerCase())){
       govCounts[st] = (govCounts[st]||0)+1;
     }
   });
-  const govOrdem = ['AG. TRATAMENTO','XGL','REQUISITANTE','FORNECEDOR','VALIDAÇÃO DO THIAGO','EMITIR PEDIDO PATEC','MDG','FILA DE PUBLICAÇÃO','FILA DE DEVOLUÇÃO','REPUBLICAÇÃO','DEVOLUÇÃO'];
   const govSorted = [...Object.entries(govCounts)].sort((a,b)=>b[1]-a[1]);
-  const govTotal = govSorted.reduce((s,[,v])=>s+v,0);
+  // ── Ag. Tratamento — valor do govCounts (mesma base da governança) ──
+  const agTrat = govCounts['AG. TRATAMENTO'] || 0;
 
   // ── XGL não concluídos ──
   const XGL_EXCLUIR = ['concluído','concluido','finalizado','saiu do dpv','patec finalizado'];
   const xglPendentes = (_xglItens||[]).filter(r=>{
-    const ch = xglChave ? xglChave(r.rc,r.item,r.oport,r.itemop) : r.rc;
+    const ch = typeof xglChave==='function' ? xglChave(r.rc,r.item,r.oport,r.itemop) : r.rc;
     const m = _xglDados[ch] || {};
     return !XGL_EXCLUIR.includes((m.status||'').toLowerCase());
   });
-  const xglTotal = xglPendentes.length;
+  const xglTotalCalc = xglPendentes.length;
 
-  // ── Capturar imagem Donut ──
+  // Recalcular govTotal agora que temos xglTotalCalc
+  const govTotalFinal = govSorted.reduce((s,[,v])=>s+v,0) + xglTotalCalc;
+
+  // ── Maior SLA — apenas "Analisar PATEC Finalizado" ──
+  const maiorSLAItem = govItens.length ? govItens.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, govItens[0]) : null;
+  const maiorSLAVal  = maiorSLAItem ? Number(maiorSLAItem.sla||0) : 0;
+  const maiorSLAFila = maiorSLAItem ? (maiorSLAItem.fila||'—') : '—';
+
+  // ── Capturar imagem Donut — precisa navegar até radar e aguardar render ──
   let donutImg = '';
   if(incPrazo){
+    // Aplicar filtro no radar se necessário e capturar
+    if(filtroAn && typeof radarFiltrarStatus === 'function'){
+      radarFiltrarStatus(filtroAn);
+    } else if(!filtroAn && typeof radarLimparFiltro === 'function'){
+      radarLimparFiltro();
+    }
+    // Aguardar um tick para garantir render
+    await new Promise(r=>setTimeout(r,300));
     const canvas = document.getElementById('radar-chart-prazo');
     if(canvas) donutImg = canvas.toDataURL('image/png');
   }
@@ -11578,6 +11596,7 @@ function admApresentacaoGerar(){
     if(paIni && casIni) paIni.value = casIni;
     if(paFim && casFim) paFim.value = casFim;
     if(typeof renderCascata === 'function') renderCascata();
+    await new Promise(r=>setTimeout(r,500));
     const canvas = document.getElementById('pa-chart-cascata');
     if(canvas) cascataImg = canvas.toDataURL('image/png');
   }
@@ -11661,7 +11680,7 @@ function admApresentacaoGerar(){
       'VALIDAÇÃO DO THIAGO':'#D94040','EMITIR PEDIDO PATEC':'#1565C0','MDG':'#546E7A',
       'FILA DE PUBLICAÇÃO':'#00838F','FILA DE DEVOLUÇÃO':'#E65100','REPUBLICAÇÃO':'#BF360C','DEVOLUÇÃO':'#BF360C'};
     const cor = cores[st]||'#546E7A';
-    const pct2 = govTotal>0?Math.round(cnt/govTotal*100):0;
+    const pct2 = govTotalFinal>0?Math.round(cnt/govTotalFinal*100):0;
     return `<div class="gov-row">
       <div class="gov-lbl">${st}</div>
       <div class="gov-bar-wrap"><div class="gov-bar" style="width:${w}%;background:${cor}"></div></div>
