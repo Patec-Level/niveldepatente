@@ -11969,17 +11969,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
         <div class="sec-title">🗺️ Detalhamento — Governança (Em Tratativa)</div>
         ${govBars}
         ${xglTotalCalc>0?`<div class="gov-row" style="margin-top:4px"><div class="gov-lbl" style="color:#6A1E9E;font-weight:700">XGL PENDENTES</div><div class="gov-bar-wrap"><div class="gov-bar" style="width:${Math.round(xglTotalCalc/(govSorted[0]?.[1]||1)*100)}%;background:#6A1E9E"></div></div><div class="gov-cnt">${xglTotalCalc} <span style="color:#999;font-size:10px">(${govTotalFinal>0?Math.round(xglTotalCalc/govTotalFinal*100):0}%)</span></div></div>`:''}
-        <div style="margin-top:10px">
-          <div style="font-size:9px;font-weight:700;color:#1b5e20;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Prazo — PATEC Finalizado</div>
-          <div class="donut-wrap">
-            ${govDonutImg ? `<div class="donut-img"><img src="${govDonutImg}" style="max-height:110px"></div>` : ''}
-            <div class="prazo-leg" style="gap:4px">
-              <div class="pl-row"><div class="pl-dot" style="background:#3A7D44"></div><div><div class="pl-pct" style="color:#3A7D44;font-size:16px">${pctGov(govDentroP)}%</div><div style="font-size:9px;color:#555">≤59d</div></div></div>
-              <div class="pl-row"><div class="pl-dot" style="background:#E87722"></div><div><div class="pl-pct" style="color:#E87722;font-size:16px">${pctGov(govProxVenc)}%</div><div style="font-size:9px;color:#555">60–90d</div></div></div>
-              <div class="pl-row"><div class="pl-dot" style="background:#D94040"></div><div><div class="pl-pct" style="color:#D94040;font-size:16px">${pctGov(govVencidos)}%</div><div style="font-size:9px;color:#555">≥91d</div></div></div>
-            </div>
-          </div>
-        </div>
+
       </div>` : '<div></div>'}
 
       <!-- INDICADORES CRÍTICOS -->
