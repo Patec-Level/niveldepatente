@@ -11613,18 +11613,25 @@ async function admApresentacaoGerar(){
   const xglTotalCalc = xglPendentes.length;
   const govTotalFinal = govSubtotal + xglTotalCalc;
 
-  // ── Indicadores Críticos — mesma base do Detalhamento (govCounts) ──
-  const agTrat      = govCounts['AG. TRATAMENTO'] || 0;
-  const govVencidos = govItens.filter(r=>Number(r.prazo_c||0)>=91).length;
-  const govProxVenc = govItens.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60&&v<=90; }).length;
-
-  // ── Donut Governança (PATEC Finalizado) ──
+  // ── Indicadores Críticos — mesma regra do Radar Estratégico ──
+  const _FILAS_AG  = ['patec','análise de oportunidade'];
+  const _FILAS_EM  = ['item em parada','mdg'];
+  // Ag. Tratamento: Analisar PATEC Finalizado + fila PATEC/Análise de Oportunidade
+  const agTrat     = rows.filter(d=>d.analista_auto==='Analisar PATEC Finalizado' && _FILAS_AG.includes(normF2(d.fila))).length;
+  // Em Tratativa: Analisar PATEC Finalizado + fila Item em Parada/MDG
+  const emTrat     = rows.filter(d=>d.analista_auto==='Analisar PATEC Finalizado' && _FILAS_EM.includes(normF2(d.fila))).length;
+  // Maior SLA: da base rows completa (filtro selecionado)
+  const maiorSLAItem2 = rows.length ? rows.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, rows[0]) : null;
+  // Próx. Vencimento (60-90d) e Vencidos (≥91d) — base rows
+  const govProxVenc = rows.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60&&v<=90; }).length;
+  const govVencidos = rows.filter(r=>Number(r.prazo_c||0)>=91).length;
+  // Total Gov = govItens totais em tratativa
   const govDentroP = govItens.filter(r=>Number(r.prazo_c||0)<=59).length;
   const govTotal3  = govVencidos+govProxVenc+govDentroP;
   const pctGov = n => govTotal3>0 ? Math.round(n/govTotal3*100) : 0;
 
-  // ── Maior SLA — base govItens (PATEC Finalizado atual) ──
-  const maiorSLAItem = govItens.length ? govItens.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, govItens[0]) : null;
+  // ── Maior SLA — base rows (filtro selecionado, mesma regra do radar) ──
+  const maiorSLAItem = rows.length ? rows.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, rows[0]) : null;
   const maiorSLAVal  = maiorSLAItem ? Number(maiorSLAItem.sla||0) : 0;
   const maiorSLAFila = maiorSLAItem ? (maiorSLAItem.fila||'—') : '—';
 
