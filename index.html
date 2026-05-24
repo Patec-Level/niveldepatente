@@ -11581,11 +11581,6 @@ async function admApresentacaoGerar(){
   const total3 = vencidos+proxVenc+dentroP;
   const pct = n => total3>0 ? Math.round(n/total3*100) : 0;
 
-  // ── Donut Governança (PATEC Finalizado) ──
-  const govDentroP  = govItens.filter(r=>Number(r.prazo_c||0)<=59).length;
-  const govTotal3   = govVencidos+govProxVenc+govDentroP;
-  const pctGov = n => govTotal3>0 ? Math.round(n/govTotal3*100) : 0;
-
   // ── Detalhamento Governança — APENAS "Analisar PATEC Finalizado" ──
   // Usa mesma lógica da aba Governança: status do _govDados ou default AG. TRATAMENTO
   const STATUS_EXCLUIR = ['patec finalizado','saiu do dpv','concluído','concluido','finalizado'];
@@ -11621,6 +11616,11 @@ async function admApresentacaoGerar(){
   const agTrat      = govCounts['AG. TRATAMENTO'] || 0;
   const govVencidos = govItens.filter(r=>Number(r.prazo_c||0)>=91).length;
   const govProxVenc = govItens.filter(r=>{ const v=Number(r.prazo_c||0); return v>=60&&v<=90; }).length;
+
+  // ── Donut Governança (PATEC Finalizado) ──
+  const govDentroP = govItens.filter(r=>Number(r.prazo_c||0)<=59).length;
+  const govTotal3  = govVencidos+govProxVenc+govDentroP;
+  const pctGov = n => govTotal3>0 ? Math.round(n/govTotal3*100) : 0;
 
   // ── Maior SLA — base govItens (PATEC Finalizado atual) ──
   const maiorSLAItem = govItens.length ? govItens.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, govItens[0]) : null;
