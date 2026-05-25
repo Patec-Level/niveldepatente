@@ -10957,12 +10957,26 @@ function govSincronizarMapa(rows){
 
   if(novos > 0){
     console.log('Gov MAPA: ' + novos + ' itens novos adicionados com AG. TRATAMENTO');
-    // Persistir novos itens no Firebase automaticamente
-    novasChaves.forEach(chave => {
-      if(typeof fbSet === 'function'){
-        fbSet('gov/' + chave.replace(/[|]/g, '_'), { status: 'AG. TRATAMENTO', envio: '', finalizado: '', ts: new Date().toISOString() });
+    // Persistir em lotes de 10 com delay para não sobrecarregar o Firebase
+    const LOTE = 10;
+    const persistirLote = async (idx) => {
+      if(idx >= novasChaves.length) return;
+      const lote = novasChaves.slice(idx, idx + LOTE);
+      if(typeof firebase !== 'undefined' && _fbLoaded){
+        try{
+          const db = firebase.firestore();
+          const batch = db.batch();
+          lote.forEach(chave => {
+            const ref = db.collection('patec-dashboard').doc('gov_' + chave.replace(/[|]/g,'_').substring(0,100));
+            batch.set(ref, { status: 'AG. TRATAMENTO', envio: '', finalizado: '', ts: new Date().toISOString() }, { merge: true });
+          });
+          await batch.commit();
+        } catch(e){ console.warn('Gov batch erro:', e.message); }
       }
-    });
+      // Próximo lote com delay de 500ms
+      setTimeout(() => persistirLote(idx + LOTE), 500);
+    };
+    setTimeout(() => persistirLote(0), 1000); // aguarda 1s após o upload
   }
 
   // Re-renderizar se Governança estiver aberta
