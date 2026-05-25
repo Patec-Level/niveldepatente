@@ -11795,7 +11795,7 @@ function aaCompletoChave(r){
 const _AAC_COLS = {
   analista:     ['Analista ','Analista','analista'],
   fila:         ['Fila ','Fila','fila'],
-  aa:           ['ANALISTA AUTOMATICO','Analista automatico','Analista Automático','analista_automatico'],
+  aa:           ['ANALISTA AUTOMATICO ','ANALISTA AUTOMATICO','Analista automatico','Analista Automático','analista_automatico'],
   rc:           ['RC','rc'],
   seq:          ['SEQ','Seq','seq'],
   op:           ['OPORTUNIDADE','Oportunidade','oportunidade'],
@@ -11804,8 +11804,8 @@ const _AAC_COLS = {
   status_patec: ['STATUS_PATEC','Status Patec'],
   familia:      ['Familia ','Familia','Família','familia'],
   tipo_familia: ['TIPO_FAMILIA','Tipo familia','Tipo família'],
-  fat_min:      ['FATURAMENTO_MINIMO','Faturamento minimo'],
-  vlr_pedido:   ['VALOR_PEDIDOFINAL','Valor pedido final'],
+  fat_min:      ['FATURAMENTO_MINIMO','Faturamento_minimo','Faturamento minimo'],
+  vlr_pedido:   ['VALOR_PEDIDOFINAL','VALOR_PEDIDO_FINAL','Valor pedido final'],
   vlr_total:    ['VALOR_TOTAL_JULGAMENTO','Valor total do julgamento'],
   id_sap:       ['ID_SAP_FORNECEDOR','Id sap fornecedor'],
   posicao:      ['POSICAO_FORNECEDOR','Posição fornecedor','Posição'],
@@ -11830,9 +11830,19 @@ function aaCompletoGet(r, ...keys){
     buscar.push(k);
     if(_AAC_COLS[k]) buscar.push(..._AAC_COLS[k]);
   }
+  // Também tentar com trim nas chaves do objeto r (para headers com espaço)
+  const rKeys = Object.keys(r);
   for(const k of buscar){
+    // Busca exata
     const v = r[k];
     if(v!==undefined && v!==null && String(v).trim()!=='') return String(v).trim();
+    // Busca com trim no header
+    const kTrim = k.trim();
+    const found = rKeys.find(rk => rk.trim()===kTrim);
+    if(found){
+      const v2 = r[found];
+      if(v2!==undefined && v2!==null && String(v2).trim()!=='') return String(v2).trim();
+    }
   }
   return '—';
 }
