@@ -10494,7 +10494,8 @@ function govBuscarRC(rc){
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const status = govCalcStatus(prazo, m.finalizado||'');
     resultados.push({aba:'MAPA', chave, analista:r.analista||'—', rc:r.rc, seq:r.seq, op:r.num_oport, item:r.item_rc,
-      status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||''});
+      status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'',
+      sla:r.sla||'—', fila:r.fila||'—', seguimento:r.seguimento||'—', cat_familia:r.cat_familia||'—'});
   });
 
   // XGL
@@ -10504,7 +10505,8 @@ function govBuscarRC(rc){
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const status = govCalcStatus(prazo, m.finalizado||'');
     resultados.push({aba:'XGL', chave, analista:r.analista||'—', rc:r.rc, seq:r.item, op:r.oport, item:r.itemop,
-      status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||''});
+      status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'',
+      sla:'—', fila:'—', seguimento:'—', cat_familia:'—'});
   });
 
   // STATUS B
@@ -10514,7 +10516,8 @@ function govBuscarRC(rc){
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const status = govCalcStatus(prazo, m.finalizado||'');
     resultados.push({aba:'STATUS B', chave, analista:r.analista||'Lory', rc:r.rc, seq:r.seq, op:r.op, item:r.item,
-      status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||''});
+      status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'',
+      sla:'—', fila:'—', seguimento:'—', cat_familia:'—'});
   });
 
   if(!resultados.length){
@@ -10525,19 +10528,29 @@ function govBuscarRC(rc){
 
   const optsStatus = GOV_STATUS_OPCOES.map(o=>`<option value="${o}">${o}</option>`).join('');
 
+  // Lista de analistas disponíveis para o select
+  const _govAnalistas = [...new Set((_radarDados||[]).map(r=>r.analista).filter(Boolean))].sort();
+  const _govAnalistasOpts = _govAnalistas.map(a=>`<option value="${a}">${a}</option>`).join('');
+
   el.style.display='block';
   el.innerHTML = `
     <div style="font-size:11px;font-weight:600;color:var(--az);margin-bottom:6px">${resultados.length} resultado(s) para RC <strong>${rcBusca}</strong>:</div>
-    <div class="tw" style="max-height:260px">
+    <div class="tw" style="max-height:320px">
     <table>
       <thead><tr>
         <th>Aba</th><th>Analista</th><th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
         <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th><th></th>
       </tr></thead>
       <tbody>
-        ${resultados.map((r,i)=>`<tr>
+        ${resultados.map((r,i)=>`
+        <tr>
           <td style="font-weight:700;color:var(--azm)">${r.aba}</td>
-          <td style="font-size:11px">${r.analista}</td>
+          <td style="font-size:11px;min-width:90px">
+            <select style="font-size:11px;padding:2px 4px;width:100%"
+              onchange="govBuscaSalvar('${r.aba}','${r.chave}','analista',this.value)">
+              ${_govAnalistasOpts.replace(`value="${r.analista}"`,`value="${r.analista}" selected`)}
+            </select>
+          </td>
           <td style="font-weight:700;color:var(--az)">${r.rc}</td>
           <td>${r.seq||'—'}</td>
           <td>${r.aba!=='XGL'?r.op||'—':''}</td>
@@ -10555,17 +10568,19 @@ function govBuscarRC(rc){
           <td id="busca-status-${r.chave.replace(/[|]/g,'_')}" style="${govCorStatus(r.statusCalc)}">${r.statusCalc||'—'}</td>
           <td><input type="date" value="${r.finalizado}" style="font-size:11px;padding:2px 4px;width:105px"
             onchange="govBuscaSalvarAtualizar('${r.aba}','${r.chave}','finalizado',this.value,this)"></td>
-          ${r.aba==='STATUS B'?`<td>
-            <button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px"
-              onclick="sbAbrirComentario('${r.chave}')">💬</button>
-          </td>`:r.aba==='XGL'?`<td>
-            <button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px"
-              onclick="xglAbrirComentario('${r.chave}')">💬</button>
-          </td>`:r.aba==='MAPA'?`<td>
-            <button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px"
-              onclick="mapaAbrirComentario('${r.chave}')">💬</button>
-          </td>`:'<td></td>'}
-        </tr>`).join('')}
+          ${r.aba==='STATUS B'?`<td><button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px" onclick="sbAbrirComentario('${r.chave}')">💬</button></td>`:r.aba==='XGL'?`<td><button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px" onclick="xglAbrirComentario('${r.chave}')">💬</button></td>`:r.aba==='MAPA'?`<td><button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px" onclick="mapaAbrirComentario('${r.chave}')">💬</button></td>`:'<td></td>'}
+        </tr>
+        ${r.aba==='MAPA'?`<tr style="background:#f7f9fc;border-top:none">
+          <td colspan="12" style="padding:4px 8px 8px 8px">
+            <div style="display:flex;gap:20px;font-size:11px;color:var(--tx2)">
+              <span>⏱️ <strong>SLA:</strong> ${r.sla} dias</span>
+              <span>📋 <strong>Fila Level Board:</strong> ${r.fila}</span>
+              <span>🏷️ <strong>Seguimento:</strong> ${r.seguimento}</span>
+              ${r.cat_familia&&r.cat_familia!=='—'?`<span>👨‍👩‍👧 <strong>Categoria Família:</strong> ${r.cat_familia}</span>`:''}
+            </div>
+          </td>
+        </tr>`:''}
+        `).join('')}
       </tbody>
     </table>
     </div>
@@ -10586,6 +10601,15 @@ async function govBuscaSalvarAtualizar(aba, chave, campo, valor, el){
 }
 
 async function govBuscaSalvar(aba, chave, campo, valor){
+  // Campo analista: atualizar direto no _radarDados (não persiste no Firebase)
+  if(campo === 'analista'){
+    const idx = (_radarDados||[]).findIndex(r=>govChave(r)===chave);
+    if(idx>=0) _radarDados[idx].analista = valor;
+    // Atualizar também no Firebase gov dados
+    const fb = {analista: valor};
+    if(typeof fbSet === 'function') await fbSet('gov_analista_'+chave, fb);
+    return;
+  }
   // Salvar no objeto correto conforme a aba
   if(aba === 'MAPA'){
     if(!_govDados[chave]) _govDados[chave] = {};
