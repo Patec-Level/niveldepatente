@@ -9871,19 +9871,20 @@ function pcExportar(){
   ]);
   XLSX.utils.book_append_sheet(wb, wsV, 'Vencido');
 
-  // Aba reprovado
-  const reprovados = filtrar(pcGetReprovados());
+  // Aba reprovado — mesma regra do pcFiltrar
+  const reprovados = filtrar((_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='PATEC Finalizado sem fornecedores aprovados'));
   const wsR = XLSX.utils.aoa_to_sheet([
     ['Analista','Validade Proposta','SLA','Idas Mercado','RC','Item','Oportunidade','Item OP','PATEC Obrig.'],
     ...reprovados.map(r=>[r.analista,r.validade,r.sla,r.idas,r.rc,r.item_rc||r.seq,r.num_oport,r.seq,r.patec_obrig])
   ]);
   XLSX.utils.book_append_sheet(wb, wsR, '100% Reprovado');
 
-  // Aba criticos
-  const criticos = filtrar(base.filter(r => {
-    const fam = (r.familia||'').trim();
-    const val = (r.validade||'').toLowerCase();
-    return fam === 'Crítica' && !val.includes('vencid');
+  // Aba criticos — mesma regra do pcFiltrar: status_ctrl = CRÍTICO e não vencido
+  const criticos = filtrar(base.filter(r=>{
+    const ctrl = (r.status_ctrl||'').toUpperCase();
+    const val  = (r.validade||'').toLowerCase();
+    const ehVencido = val.includes('vencimento') || val.includes('vencid');
+    return (ctrl==='CRÍTICO'||ctrl==='CRITICO') && !ehVencido;
   }));
   const wsC = XLSX.utils.aoa_to_sheet([
     ['Analista','Validade Proposta','SLA','Idas Mercado','RC','Item','Oportunidade','Item OP','PATEC Obrig.'],
@@ -10258,10 +10259,15 @@ function govExportar(){
   XLSX.utils.book_append_sheet(wb, wsX, 'XGL');
 
   // ── Aba Status B ──
-  const wsSB = [['Analista','RC','Seq','Oportunidade','Item','Status Tratamento','Envio','Prazo Retorno','Status','Finalizado','Comentário']];
-  (_sbItens||[]).forEach(r => {
+  const wsSB = [['Analista','RC','Seq','Oportunidade','Item OP','Status Tratamento','Envio','Prazo Retorno','Status','Finalizado','Comentário']];
+  // Combinar _SB_BASE_ITENS com _sbItens (Firebase pode ter mais)
+  const _sbTodos = _sbItens && _sbItens.length ? _sbItens : _SB_BASE_ITENS;
+  _sbTodos.forEach(r => {
     const chave = sbChave(r.rc, r.seq, r.op, r.item);
-    const m = _sbDados[chave] || {};
+    // Priorizar dados do Firebase sobre base
+    const mFb = _sbDados[chave] || {};
+    const mBase = _SB_BASE_DADOS[chave] || {};
+    const m = Object.keys(mFb).length ? mFb : mBase;
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const statusCalc = govCalcStatus(prazo, m.finalizado||'');
     wsSB.push([r.analista||'—',r.rc,r.seq,r.op||'',r.item||'',m.status||'',m.envio||'',prazo||'',statusCalc,m.finalizado||'',m.comentario||'']);
