@@ -10226,7 +10226,7 @@ function govAtualizar(){
   govCarregarFirebase().then(()=>govInicializar());
 }
 
-function govExportar(){
+async function govExportar(){
   const wb = XLSX.utils.book_new();
   const dt = new Date().toLocaleDateString('pt-BR').split('/').join('-');
 
@@ -10259,15 +10259,15 @@ function govExportar(){
   XLSX.utils.book_append_sheet(wb, wsX, 'XGL');
 
   // ── Aba Status B ──
+  // Garantir que _sbDados está carregado (dados da plataforma)
+  if(!Object.keys(_sbDados).length) await sbCarregarFirebase();
   const wsSB = [['Analista','RC','Seq','Oportunidade','Item OP','Status Tratamento','Envio','Prazo Retorno','Status','Finalizado','Comentário']];
-  // Combinar _SB_BASE_ITENS com _sbItens (Firebase pode ter mais)
   const _sbTodos = _sbItens && _sbItens.length ? _sbItens : _SB_BASE_ITENS;
   _sbTodos.forEach(r => {
     const chave = sbChave(r.rc, r.seq, r.op, r.item);
-    // Priorizar dados do Firebase sobre base
-    const mFb = _sbDados[chave] || {};
-    const mBase = _SB_BASE_DADOS[chave] || {};
-    const m = Object.keys(mFb).length ? mFb : mBase;
+    // Firebase sempre tem prioridade (é o que aparece na plataforma)
+    // _sbDados é carregado do Firebase via sbCarregarFirebase()
+    const m = _sbDados[chave] || _SB_BASE_DADOS[chave] || {};
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const statusCalc = govCalcStatus(prazo, m.finalizado||'');
     wsSB.push([r.analista||'—',r.rc,r.seq,r.op||'',r.item||'',m.status||'',m.envio||'',prazo||'',statusCalc,m.finalizado||'',m.comentario||'']);
