@@ -10491,10 +10491,12 @@ function govBuscarRC(rc){
   dadosMapa.filter(r=>(r.rc||'').includes(rcBusca)).forEach(r=>{
     const chave = govChave(r);
     const m = _govDados[chave]||{};
-    const prazo = govCalcPrazo(m.status||'', m.envio||'');
+    let statusDefault = m.status || '';
+    if(!statusDefault && GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase()))) statusDefault = 'AG. TRATAMENTO';
+    const prazo = govCalcPrazo(statusDefault, m.envio||'');
     const status = govCalcStatus(prazo, m.finalizado||'');
     resultados.push({aba:'MAPA', chave, analista:r.analista||'—', rc:r.rc, seq:r.seq, op:r.num_oport, item:r.item_rc,
-      status: m.status||'', envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'',
+      status: statusDefault, envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'',
       sla:r.sla||'—', fila:r.fila||'—', seguimento:r.seguimento||'—', cat_familia:r.cat_familia||'—'});
   });
 
@@ -10755,15 +10757,25 @@ function govSincronizarMapa(rows){
 
   // Adicionar itens novos com AG. TRATAMENTO (sem sobrescrever existentes)
   let novos = 0;
+  const novasChaves = [];
   aptos.forEach(r => {
     const chave = govChave(r);
     if(!_govDados[chave]){
       _govDados[chave] = { status: 'AG. TRATAMENTO', envio: '', finalizado: '' };
+      novasChaves.push(chave);
       novos++;
     }
   });
 
-  if(novos > 0) console.log('Gov MAPA: ' + novos + ' itens novos adicionados');
+  if(novos > 0){
+    console.log('Gov MAPA: ' + novos + ' itens novos adicionados com AG. TRATAMENTO');
+    // Persistir novos itens no Firebase automaticamente
+    novasChaves.forEach(chave => {
+      if(typeof fbSet === 'function'){
+        fbSet('gov/' + chave.replace(/[|]/g, '_'), { status: 'AG. TRATAMENTO', envio: '', finalizado: '', ts: new Date().toISOString() });
+      }
+    });
+  }
 
   // Re-renderizar se Governança estiver aberta
   const pgGov = document.getElementById('p-governanca');
