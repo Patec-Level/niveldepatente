@@ -365,7 +365,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it active" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
   <div class="sb-it" onclick="go('radar',this)">📡 Radar Estratégico</div>
   <div class="sb-it" onclick="go('plano-acao',this)">🎯 Plano de Ação</div>
-  <div class="sb-it" onclick="go('analista-auto',this)">🤖 Analista Automático</div>
+  <div class="sb-it" onclick="go('analista-auto',this)">📦 Analista Pedido</div>
+  <div class="sb-it" onclick="go('analista-completo',this)">🤖 Analista Automático Completo</div>
   <div style="padding:.5rem 1rem .1rem;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px">✏️ EXECUÇÃO</div>
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('pr-estrategico',this)">🎯 Painel Estratégico</div>
@@ -745,7 +746,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('radar-adm',this)">📡 Radar Estratégico</button>
         <button class="stab" onclick="setAdmTab('pa-entradas',this)">📥 Entradas Plano de Ação</button>
         <button class="stab" onclick="setAdmTab('analista-upload',this)">📂 Upload Backlog</button>
-        <button class="stab" onclick="setAdmTab('analista-auto',this)">🤖 Analista Automático</button>
+        <button class="stab" onclick="setAdmTab('analista-auto',this)">📦 Analista Pedido</button>
+        <button class="stab" onclick="setAdmTab('analista-completo-adm',this)">🤖 Analista Completo</button>
         <button class="stab" onclick="setAdmTab('email-teste',this)">📧 Testar E-mails</button>
         <button class="stab" onclick="setAdmTab('apresentacao',this);admApresentacaoInit()">🖥️ Apresentação</button>
       </div>
@@ -1966,6 +1968,29 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+      <!-- ── ANALISTA COMPLETO ── -->
+      <div id="adm-analista-completo-adm" class="adm-tab" style="display:none">
+        <div class="cd">
+          <div class="cd-t">🤖 Analista Automático Completo — Upload</div>
+          <div class="al al-b" style="margin-bottom:1rem">
+            ℹ Faça o upload da planilha para o Analista Automático Completo. Configure as regras abaixo após o upload.
+          </div>
+          <div style="margin-bottom:1rem">
+            <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:6px">📂 Upload da Planilha</div>
+            <input type="file" accept=".xlsx,.xls" id="aa-completo-file" onchange="aaCompletoOnFile(this)"
+              style="font-size:12px;padding:5px">
+            <div id="aa-completo-upload-info" style="font-size:11px;color:var(--tx2);margin-top:6px">Nenhuma planilha carregada.</div>
+          </div>
+          <div id="aa-completo-preview" style="display:none">
+            <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:8px">📊 Preview dos dados</div>
+            <div id="aa-completo-preview-info" style="font-size:12px;color:var(--vd);margin-bottom:8px"></div>
+            <button class="btn btn-p" onclick="aaCompletoSalvar()" style="margin-top:8px">
+              💾 Salvar no Firebase
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /adm-painel -->
   </div><!-- /p-adm -->
 
@@ -2472,7 +2497,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:.5rem">
           <div>
-            <div class="cd-t" style="margin:0">🤖 Analista Automático — Potencial Pedido Direto</div>
+            <div class="cd-t" style="margin:0">📦 Analista Pedido — Potencial Pedido Direto</div>
             <div style="font-size:11px;color:var(--tx2);margin-top:4px">RCs do backlog identificadas como aptas para pedido direto com base nas 7 regras de análise.</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2546,6 +2571,97 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     <!-- ══════════════════════════════════════════
          PLANILHA CRÍTICA
     ══════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- ANALISTA AUTOMÁTICO COMPLETO                    -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="p-analista-completo" class="page">
+      <!-- Header -->
+      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vd)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="cd-t" style="margin:0">🤖 Analista Automático Completo</div>
+            <div style="font-size:11px;color:var(--tx2);margin-top:4px" id="aac-ultima-att">Carregando...</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-s" style="font-size:11px" onclick="aaCompletoCarregar()">↺ Atualizar</button>
+            <button class="btn btn-g" style="font-size:11px" onclick="aaCompletoExportar()">📥 Exportar Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="cd" style="margin-bottom:1rem">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field-wrap" style="min-width:140px">
+            <span class="field-label">Analista</span>
+            <select id="aac-f-analista" onchange="aaCompletoFiltrar()" style="width:100%;font-size:12px;padding:5px 10px">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="field-wrap" style="min-width:160px">
+            <span class="field-label">Fila</span>
+            <select id="aac-f-fila" onchange="aaCompletoFiltrar()" style="width:100%;font-size:12px;padding:5px 10px">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div class="field-wrap" style="min-width:200px">
+            <span class="field-label">Analista Automático</span>
+            <select id="aac-f-aa" onchange="aaCompletoFiltrar()" style="width:100%;font-size:12px;padding:5px 10px">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="field-wrap" style="min-width:160px">
+            <span class="field-label">Buscar RC / OP</span>
+            <input type="text" id="aac-f-busca" oninput="aaCompletoFiltrar()" placeholder="RC, OP, fornecedor..." style="width:100%;font-size:12px;padding:5px 10px">
+          </div>
+          <button class="btn btn-s" style="font-size:11px" onclick="aaCompletoLimpar()">✕ Limpar</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kgrid" id="aac-kpis" style="margin-bottom:1rem"></div>
+
+      <!-- Tabela -->
+      <div class="cd">
+        <div style="font-size:12px;font-weight:600;color:var(--az);margin-bottom:.5rem" id="aac-count"></div>
+        <div id="aac-sem-dados" style="text-align:center;padding:3rem;color:var(--tx2);font-size:13px;display:none">
+          📂 Nenhum dado. Acesse ADM → Analista Completo para subir a planilha.
+        </div>
+        <div class="tw" style="max-height:560px" id="aac-tabela-wrap">
+          <table id="aac-tabela">
+            <thead>
+              <tr>
+                <th>Analista</th><th>Fila</th><th>Analista Auto.</th>
+                <th>RC</th><th>Seq</th><th>OP</th><th>Item OP</th>
+                <th>Centro</th><th>Família</th><th>Tipo Família</th>
+                <th>Fat. Mín.</th><th>Vlr Pedido</th><th>Vlr Total Julg.</th>
+                <th>ID SAP Forn.</th><th>Posição</th><th>CNPJ</th>
+                <th>Fornecedor</th><th>Aprov/Reprov</th><th>Q18</th>
+                <th>NM Material</th><th>Texto Breve</th><th>Mat. Idêntico</th>
+                <th>Fabric. (Forn)</th><th>Fabric. (PB)</th>
+                <th>PN (Forn)</th><th>PN (PB)</th><th>Urgência</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="aac-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal RC -->
+      <div id="aac-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;overflow-y:auto">
+        <div style="background:#fff;border-radius:12px;max-width:95vw;margin:2rem auto;padding:1.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <div class="cd-t" style="margin:0" id="aac-modal-title">RC —</div>
+            <button onclick="document.getElementById('aac-modal').style.display='none'"
+              style="background:var(--vm);color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px">✕ Fechar</button>
+          </div>
+          <div class="tw" id="aac-modal-conteudo"></div>
+        </div>
+      </div>
+    </div>
+
+
     <div id="p-planilha-critica" class="page">
 
       <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vm)">
@@ -3544,7 +3660,7 @@ function go(id, el) {
   const icons = {
     'vg-validade':'⏱',
     'pr-lancar':'✏️','pr-estrategico':'🎯','pr-equipe':'👥','pr-producao':'📋','pr-bancoferias':'🗓',
-    'radar':'📡','plano-acao':'🎯','analista-auto':'🤖','adm':'🔐'
+    'radar':'📡','plano-acao':'🎯','analista-auto':'📦','analista-completo':'🤖','adm':'🔐'
   };
   const ico = icons[id] || '◈';
   const iconEl = document.querySelector('.topbar .topbar-l + div span');
@@ -3556,7 +3672,7 @@ function go(id, el) {
     'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
-    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Automático','planilha-critica':'Planilha Crítica','governanca':'Governança','adm':'Administração',
+    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Pedido','analista-completo':'Analista Automático Completo','planilha-critica':'Planilha Crítica','governanca':'Governança','adm':'Administração',
     };
   document.getElementById('ttl').textContent = titles[id] || id;
   if(id==='pr-bancoferias'){renderFerias();renderBanco();renderBHECards();}
@@ -5234,6 +5350,7 @@ function setAdmTab(id,btn){
   if(id==='pa-entradas') setTimeout(paEntradaInitADM,50);
   if(id==='analista-upload') setTimeout(()=>{ bkAtualizarInfoFirebase(); },50);
   if(id==='analista-auto') setTimeout(()=>{ aaVerificarDados(); if(window._aaAptas) aaCarregarResultadoFirebase(); },50);
+  if(id==='analista-completo') setTimeout(aaCompletoCarregar, 100);
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
   if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
@@ -11558,6 +11675,318 @@ async function alertaXGLDevolucao(chave){
 
   _alertasEnviados[keyEnv] = new Date().toISOString();
   alertaSalvarEnviados();
+}
+
+// ════════════════════════════════════════════
+// ANALISTA AUTOMÁTICO COMPLETO
+// ════════════════════════════════════════════
+let _aaCompleto = null; // dados carregados
+
+function aaCompletoOnFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const info = document.getElementById('aa-completo-upload-info');
+  info.textContent = '⏳ Lendo planilha...';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      _aaCompleto = { rows, arquivo: file.name, dt: new Date().toISOString() };
+      info.textContent = '✓ ' + file.name + ' — ' + rows.length + ' registros';
+      const prev = document.getElementById('aa-completo-preview');
+      const prevInfo = document.getElementById('aa-completo-preview-info');
+      if(prev) prev.style.display = 'block';
+      if(prevInfo) prevInfo.textContent = rows.length + ' registros carregados. Clique em "Salvar no Firebase" para publicar.';
+    } catch(err){
+      info.textContent = '❌ Erro: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function aaCompletoSalvar(){
+  if(!_aaCompleto || !_aaCompleto.rows.length){ alert('Carregue a planilha primeiro.'); return; }
+  try{
+    if(typeof firebase === 'undefined' || !_fbLoaded) await loadFirebaseSDK();
+    const db = firebase.firestore();
+    // Salvar em chunks de 500
+    const rows = _aaCompleto.rows;
+    const CHUNK = 400;
+    for(let i=0; i<rows.length; i+=CHUNK){
+      await db.collection('patec-dashboard').doc('aa_completo_' + Math.floor(i/CHUNK)).set({
+        rows: rows.slice(i, i+CHUNK),
+        arquivo: _aaCompleto.arquivo,
+        dt: _aaCompleto.dt,
+        chunk: Math.floor(i/CHUNK),
+        total: rows.length
+      });
+    }
+    // Salvar metadata
+    await db.collection('patec-dashboard').doc('aa_completo_meta').set({
+      arquivo: _aaCompleto.arquivo,
+      dt: _aaCompleto.dt,
+      total: rows.length,
+      chunks: Math.ceil(rows.length/CHUNK)
+    });
+    document.getElementById('aa-completo-upload-info').textContent = '✅ Salvo com sucesso! ' + rows.length + ' registros publicados.';
+  } catch(err){
+    alert('Erro ao salvar: ' + err.message);
+  }
+}
+
+let _aacDados = []; // todos os dados carregados
+let _aacFiltrado = []; // dados após filtro
+
+async function aaCompletoCarregar(){
+  const elAtt = document.getElementById('aac-ultima-att');
+  const elSem = document.getElementById('aac-sem-dados');
+  const elWrap = document.getElementById('aac-tabela-wrap');
+  if(elAtt) elAtt.textContent = '⏳ Carregando...';
+  try{
+    if(typeof firebase === 'undefined' || !_fbLoaded) await loadFirebaseSDK();
+    const db = firebase.firestore();
+    const meta = await db.collection('patec-dashboard').doc('aa_completo_meta').get();
+    if(!meta.exists){
+      if(elSem){ elSem.style.display='block'; }
+      if(elWrap){ elWrap.style.display='none'; }
+      if(elAtt) elAtt.textContent = 'Nenhuma planilha carregada.';
+      return;
+    }
+    const d = meta.data();
+    const chunks = d.chunks || 1;
+    let rows = [];
+    for(let i=0; i<chunks; i++){
+      const doc = await db.collection('patec-dashboard').doc('aa_completo_' + i).get();
+      if(doc.exists) rows = rows.concat(doc.data().rows || []);
+    }
+    _aacDados = rows;
+    if(elAtt) elAtt.textContent = d.arquivo + ' · ' + rows.length + ' registros · ' + new Date(d.dt).toLocaleString('pt-BR');
+    if(elSem) elSem.style.display = rows.length ? 'none' : 'block';
+    if(elWrap) elWrap.style.display = rows.length ? '' : 'none';
+    aaCompletoPopularFiltros();
+    aaCompletoFiltrar();
+  } catch(err){
+    if(elAtt) elAtt.textContent = '❌ Erro: ' + err.message;
+  }
+}
+
+function aaCompletoChave(r){
+  return [r['RC']||r['rc']||'', r['Seq']||r['seq']||'', r['Oportunidade']||r['oportunidade']||'', r['Item OP']||r['item op']||r['Item_OP']||'']
+    .map(v=>String(v||'').trim()).join('|');
+}
+
+function aaCompletoGet(r, ...keys){
+  for(const k of keys){
+    const v = r[k];
+    if(v!==undefined && v!==null && v!=='') return String(v).trim();
+  }
+  return '—';
+}
+
+function aaCompletoPopularFiltros(){
+  const analistas = [...new Set(_aacDados.map(r=>aaCompletoGet(r,'Analista','analista')).filter(v=>v!=='—'))].sort();
+  const filas     = [...new Set(_aacDados.map(r=>aaCompletoGet(r,'Fila','fila')).filter(v=>v!=='—'))].sort();
+  const aas       = [...new Set(_aacDados.map(r=>aaCompletoGet(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático')).filter(v=>v!=='—'))].sort();
+
+  const sel = id => document.getElementById(id);
+  const opts = (arr, sel_el) => {
+    if(!sel_el) return;
+    const cur = sel_el.value;
+    sel_el.innerHTML = '<option value="">Todos</option>' + arr.map(v=>`<option value="${v}">${v}</option>`).join('');
+    sel_el.value = arr.includes(cur) ? cur : '';
+  };
+  opts(analistas, sel('aac-f-analista'));
+  opts(filas, sel('aac-f-fila'));
+  opts(aas, sel('aac-f-aa'));
+}
+
+function aaCompletoFiltrar(){
+  const fAn  = document.getElementById('aac-f-analista')?.value?.toLowerCase() || '';
+  const fFi  = document.getElementById('aac-f-fila')?.value?.toLowerCase() || '';
+  const fAa  = document.getElementById('aac-f-aa')?.value?.toLowerCase() || '';
+  const fBus = document.getElementById('aac-f-busca')?.value?.toLowerCase() || '';
+
+  _aacFiltrado = _aacDados.filter(r => {
+    const analista = aaCompletoGet(r,'Analista','analista').toLowerCase();
+    const fila     = aaCompletoGet(r,'Fila','fila').toLowerCase();
+    const aa       = aaCompletoGet(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático').toLowerCase();
+    const rc       = String(r['RC']||r['rc']||'').toLowerCase();
+    const op       = String(r['Oportunidade']||r['oportunidade']||'').toLowerCase();
+    const forn     = aaCompletoGet(r,'Nome do fornecedor','nome_fornecedor','Fornecedor').toLowerCase();
+    if(fAn  && !analista.includes(fAn))  return false;
+    if(fFi  && !fila.includes(fFi))      return false;
+    if(fAa  && !aa.includes(fAa))        return false;
+    if(fBus && !rc.includes(fBus) && !op.includes(fBus) && !forn.includes(fBus)) return false;
+    return true;
+  });
+
+  aaCompletoRenderTabela();
+  aaCompletoRenderKpis();
+}
+
+function aaCompletoLimpar(){
+  ['aac-f-analista','aac-f-fila','aac-f-aa'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const b=document.getElementById('aac-f-busca'); if(b) b.value='';
+  aaCompletoFiltrar();
+}
+
+function aaCompletoRenderKpis(){
+  const el = document.getElementById('aac-kpis');
+  if(!el) return;
+  const total = _aacFiltrado.length;
+  const rcs = new Set(_aacFiltrado.map(r=>aaCompletoChave(r))).size;
+  const forn = new Set(_aacFiltrado.map(r=>aaCompletoGet(r,'CNPJ','cnpj')).filter(v=>v!=='—')).size;
+  const ident = _aacFiltrado.filter(r=>String(r['Material Identico']||r['Material idêntico']||r['material_identico']||'').toLowerCase().includes('sim')).length;
+  el.innerHTML = `
+    <div class="kc"><div class="kn" style="color:var(--az)">${total.toLocaleString('pt-BR')}</div><div class="kl">Total Linhas</div></div>
+    <div class="kc"><div class="kn" style="color:var(--vd)">${rcs.toLocaleString('pt-BR')}</div><div class="kl">RCs Únicas</div></div>
+    <div class="kc"><div class="kn" style="color:var(--am)">${forn.toLocaleString('pt-BR')}</div><div class="kl">Fornecedores</div></div>
+    <div class="kc"><div class="kn" style="color:var(--vd)">${ident.toLocaleString('pt-BR')}</div><div class="kl">Mat. Idêntico Sim</div></div>
+  `;
+}
+
+function aaCompletoRenderTabela(){
+  const tbody = document.getElementById('aac-tbody');
+  const count = document.getElementById('aac-count');
+  if(!tbody) return;
+  if(count) count.textContent = _aacFiltrado.length + ' registro(s)';
+
+  const g = (r,...keys) => aaCompletoGet(r,...keys);
+  const cor = v => {
+    const vl = String(v||'').toLowerCase();
+    if(vl.includes('reprov')||vl.includes('não analisar')) return 'color:var(--vm)';
+    if(vl.includes('aprov')) return 'color:var(--vd)';
+    return '';
+  };
+
+  tbody.innerHTML = _aacFiltrado.map((r,i) => {
+    const rc  = g(r,'RC','rc');
+    const seq = g(r,'Seq','seq');
+    const op  = g(r,'Oportunidade','oportunidade');
+    const iop = g(r,'Item OP','item op','Item_OP');
+    const chave = [rc,seq,op,iop].join('|');
+    return `<tr>
+      <td style="font-size:11px">${g(r,'Analista','analista')}</td>
+      <td style="font-size:11px">${g(r,'Fila','fila')}</td>
+      <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${g(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático')}">${g(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático')}</td>
+      <td style="font-weight:700;color:var(--az)">${rc}</td>
+      <td>${seq}</td>
+      <td>${op}</td>
+      <td>${iop}</td>
+      <td style="font-size:11px">${g(r,'Centro','centro')}</td>
+      <td style="font-size:11px">${g(r,'Familia','família','Família','familia')}</td>
+      <td style="font-size:11px">${g(r,'Tipo familia','Tipo família','tipo_familia')}</td>
+      <td style="font-size:11px">${g(r,'Faturamento minimo','Faturamento mínimo','faturamento_minimo')}</td>
+      <td style="font-size:11px">${g(r,'Valor pedido final','valor_pedido_final')}</td>
+      <td style="font-size:11px">${g(r,'Valor total do julgamento','valor_total_julgamento')}</td>
+      <td style="font-size:11px">${g(r,'Id sap fornecedor','id_sap_fornecedor')}</td>
+      <td style="text-align:center">${g(r,'Posição fornecedor','posicao_fornecedor','Posição','posicao')}</td>
+      <td style="font-size:11px">${g(r,'CNPJ','cnpj')}</td>
+      <td style="font-size:11px">${g(r,'Nome do fornecedor','nome_fornecedor','Fornecedor','fornecedor')}</td>
+      <td style="font-size:11px;${cor(g(r,'Aprovado/reprovado','aprovado_reprovado','Aprovado','aprovado'))}">${g(r,'Aprovado/reprovado','aprovado_reprovado','Aprovado','aprovado')}</td>
+      <td style="font-size:11px">${g(r,'q18','Q18')}</td>
+      <td style="font-size:11px">${g(r,'NM Material','nm_material','NM','nm')}</td>
+      <td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${g(r,'Texto breve 1','texto_breve','Texto Breve 1')}">${g(r,'Texto breve 1','texto_breve','Texto Breve 1')}</td>
+      <td style="font-size:11px;font-weight:700;${g(r,'Material Identico','Material idêntico','material_identico').toLowerCase().includes('sim')?'color:var(--vd)':''}">${g(r,'Material Identico','Material idêntico','material_identico')}</td>
+      <td style="font-size:11px">${g(r,'Fabricante (fornecedor)','fabricante_fornecedor')}</td>
+      <td style="font-size:11px">${g(r,'fabricante (petrobras)','Fabricante (petrobras)','fabricante_petrobras')}</td>
+      <td style="font-size:11px">${g(r,'partnumber(fornecedor)','PN Fornecedor','pn_fornecedor')}</td>
+      <td style="font-size:11px">${g(r,'partnumber(petrobas)','PN Petrobras','pn_petrobras','partnumber(petrobras)')}</td>
+      <td style="font-size:11px">${g(r,'Urgencia','urgência','Urgência','urgencia')}</td>
+      <td><button style="background:var(--azc);border:none;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:11px;color:var(--az);font-weight:700"
+        onclick="aaCompletoVerRC('${chave.replace(/'/g,"\'")}')">🔍 Ver RC</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function aaCompletoVerRC(chave){
+  const [rc,seq,op,iop] = chave.split('|');
+  const itens = _aacDados.filter(r=>{
+    return String(r['RC']||r['rc']||'').trim()===rc &&
+           String(r['Seq']||r['seq']||'').trim()===seq &&
+           String(r['Oportunidade']||r['oportunidade']||'').trim()===op &&
+           String(r['Item OP']||r['item op']||r['Item_OP']||'').trim()===iop;
+  });
+
+  const g = (r,...keys) => aaCompletoGet(r,...keys);
+  const cor = v => {
+    const vl = String(v||'').toLowerCase();
+    if(vl.includes('reprov')||vl.includes('não analisar')) return 'background:#ffebee;color:var(--vm);font-weight:700';
+    if(vl.includes('aprov')) return 'background:#e8f5e9;color:var(--vd);font-weight:700';
+    return '';
+  };
+
+  const title = document.getElementById('aac-modal-title');
+  const conteudo = document.getElementById('aac-modal-conteudo');
+  if(title) title.textContent = `RC ${rc} · Seq ${seq} · OP ${op} · Item ${iop} — ${itens.length} fornecedor(es)`;
+
+  const r0 = itens[0] || {};
+  const infoRC = `<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:1rem;font-size:12px;background:#f7f9fc;border-radius:8px;padding:10px 14px">
+    <span>👤 <strong>Analista:</strong> ${g(r0,'Analista','analista')}</span>
+    <span>📋 <strong>Fila:</strong> ${g(r0,'Fila','fila')}</span>
+    <span>🏗️ <strong>Centro:</strong> ${g(r0,'Centro','centro')}</span>
+    <span>👨‍👩‍👧 <strong>Família:</strong> ${g(r0,'Familia','Família','familia')} (${g(r0,'Tipo familia','Tipo família')})</span>
+    <span>⚠️ <strong>Urgência:</strong> ${g(r0,'Urgencia','urgência','Urgência')}</span>
+    <span>🔧 <strong>NM:</strong> ${g(r0,'NM Material','nm_material','NM')}</span>
+    <span>📝 <strong>Texto:</strong> ${g(r0,'Texto breve 1','texto_breve')}</span>
+  </div>`;
+
+  const rows = itens.map((r,i) => {
+    const aprov = g(r,'Aprovado/reprovado','aprovado_reprovado','Aprovado');
+    const ident = g(r,'Material Identico','Material idêntico','material_identico');
+    const fabForn = g(r,'Fabricante (fornecedor)','fabricante_fornecedor');
+    const fabPB   = g(r,'fabricante (petrobras)','Fabricante (petrobras)','fabricante_petrobras');
+    const pnForn  = g(r,'partnumber(fornecedor)','pn_fornecedor');
+    const pnPB    = g(r,'partnumber(petrobas)','pn_petrobras','partnumber(petrobras)');
+    const fabMatch = fabForn!=='—'&&fabPB!=='—'&&fabForn.toLowerCase()===fabPB.toLowerCase();
+    const pnMatch  = pnForn!=='—'&&pnPB!=='—'&&pnForn.toLowerCase()===pnPB.toLowerCase();
+    return `<tr style="${cor(aprov)}">
+      <td style="text-align:center;font-weight:700">${g(r,'Posição fornecedor','Posição','posicao')}</td>
+      <td>${g(r,'CNPJ','cnpj')}</td>
+      <td style="font-weight:600">${g(r,'Nome do fornecedor','nome_fornecedor','Fornecedor')}</td>
+      <td>${aprov}</td>
+      <td style="text-align:center">${g(r,'q18','Q18')}</td>
+      <td style="font-weight:700;${ident.toLowerCase().includes('sim')?'color:var(--vd)':''}">${ident}</td>
+      <td style="${fabMatch?'color:var(--vd);font-weight:700':''}">${fabForn}</td>
+      <td style="${fabMatch?'color:var(--vd);font-weight:700':''}">${fabPB}</td>
+      <td style="${pnMatch?'color:var(--vd);font-weight:700':''}">${pnForn}</td>
+      <td style="${pnMatch?'color:var(--vd);font-weight:700':''}">${pnPB}</td>
+      <td>${g(r,'Faturamento minimo','Faturamento mínimo')}</td>
+      <td>${g(r,'Valor pedido final','valor_pedido_final')}</td>
+      <td>${g(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático')}</td>
+    </tr>`;
+  }).join('');
+
+  if(conteudo) conteudo.innerHTML = infoRC + `<table style="width:100%;font-size:12px">
+    <thead><tr style="background:#f0f4f8">
+      <th>Posição</th><th>CNPJ</th><th>Fornecedor</th><th>Aprov/Reprov</th><th>Q18</th>
+      <th>Mat. Idêntico</th><th>Fabric. (Forn)</th><th>Fabric. (PB)</th>
+      <th>PN (Forn)</th><th>PN (PB)</th><th>Fat. Mín.</th><th>Vlr Pedido</th><th>Analista Auto.</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  document.getElementById('aac-modal').style.display = 'block';
+}
+
+function aaCompletoExportar(){
+  if(!_aacFiltrado.length){ alert('Nenhum dado para exportar.'); return; }
+  const wb = XLSX.utils.book_new();
+  const colunas = ['Analista','Fila','Analista automatico','RC','Seq','Oportunidade','Item OP','Centro',
+    'Familia','Tipo familia','Faturamento minimo','Valor pedido final','Valor total do julgamento',
+    'Id sap fornecedor','Posição fornecedor','CNPJ','Nome do fornecedor','Aprovado/reprovado',
+    'q18','NM Material','Texto breve 1','Material Identico','Fabricante (fornecedor)',
+    'fabricante (petrobras)','partnumber(fornecedor)','partnumber(petrobas)','Urgencia'];
+  const ws = XLSX.utils.aoa_to_sheet([
+    colunas,
+    ..._aacFiltrado.map(r => colunas.map(c => r[c]??r[c.toLowerCase()]??''))
+  ]);
+  XLSX.utils.book_append_sheet(wb, ws, 'Analista Completo');
+  XLSX.writeFile(wb, 'Analista_Completo_' + new Date().toLocaleDateString('pt-BR').split('/').join('-') + '.xlsx');
 }
 
 // ── TESTE RÁPIDO — digite testarAlertas() no console ──
