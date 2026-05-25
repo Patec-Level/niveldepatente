@@ -6595,11 +6595,9 @@ async function radarOnFile(file){
       patec_obrig:   (()=>{
         const k=Object.keys(r).find(k=>k.includes('Patec')&&k.toLowerCase().includes('obrig'));
         const raw=k?String(r[k]||'').trim():'';
-        // Aceita 'Sim' (obrigatório) e 'Não' (não obrigatório)
-        // #N/A, vazio, qualquer outro valor → 'Não'
         if(raw==='Sim') return 'Sim';
         if(raw==='Não'||raw==='NAO'||raw.toLowerCase()==='não'||raw.toLowerCase()==='nao') return 'Não';
-        return 'Não'; // #N/A, vazio, etc
+        return ''; // #N/A, vazio — não conta nem como Sim nem como Não
       })(),
     }));
 
@@ -7147,12 +7145,12 @@ function renderRadarTopFamilias(rows){
     const cat = catMap[fam] || '';
     return `<div style="margin-bottom:.875rem;position:relative" class="fam-bar-wrap">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="font-size:12px;font-weight:700;color:var(--tx);${cat?'cursor:help':''};user-select:none" title="${cat||fam}">
+        <span style="font-size:12px;font-weight:700;color:var(--tx);${cat?'cursor:help':''};user-select:none"${cat?' title="'+cat+'"':''}>
           ${fam}
         </span>
         <span style="font-size:12px;font-weight:700;color:${cores[i]}">${cnt} <span style="font-size:10px;color:var(--tx2);font-weight:400">(${pct}%)</span></span>
       </div>
-      <div style="height:10px;background:var(--cin);border-radius:5px;overflow:hidden;cursor:${cat?'help':'default'}" title="${cat||''}">
+      <div style="height:10px;background:var(--cin);border-radius:5px;overflow:hidden;cursor:${cat?'help':'default'}"${cat?' title="'+cat+'"':''}>
         <div style="width:${w}%;height:100%;background:${cores[i]};border-radius:5px;transition:width .4s"></div>
       </div>
     </div>`;
