@@ -11787,22 +11787,63 @@ async function aaCompletoCarregar(){
 }
 
 function aaCompletoChave(r){
-  return [r['RC']||r['rc']||'', r['Seq']||r['seq']||'', r['Oportunidade']||r['oportunidade']||'', r['Item OP']||r['item op']||r['Item_OP']||'']
-    .map(v=>String(v||'').trim()).join('|');
+  return [_g(r,'rc'), _g(r,'seq'), _g(r,'op'), _g(r,'itemop')]
+    .map(v=>v==='—'?'':v).join('|');
 }
 
+// Mapeamento de colunas reais da planilha
+const _AAC_COLS = {
+  analista:     ['Analista ','Analista','analista'],
+  fila:         ['Fila ','Fila','fila'],
+  aa:           ['ANALISTA AUTOMATICO','Analista automatico','Analista Automático','analista_automatico'],
+  rc:           ['RC','rc'],
+  seq:          ['SEQ','Seq','seq'],
+  op:           ['OPORTUNIDADE','Oportunidade','oportunidade'],
+  itemop:       ['ITEM OP','Item OP','item op'],
+  centro:       ['CENTRO','Centro','centro'],
+  status_patec: ['STATUS_PATEC','Status Patec'],
+  familia:      ['Familia ','Familia','Família','familia'],
+  tipo_familia: ['TIPO_FAMILIA','Tipo familia','Tipo família'],
+  fat_min:      ['FATURAMENTO_MINIMO','Faturamento minimo'],
+  vlr_pedido:   ['VALOR_PEDIDOFINAL','Valor pedido final'],
+  vlr_total:    ['VALOR_TOTAL_JULGAMENTO','Valor total do julgamento'],
+  id_sap:       ['ID_SAP_FORNECEDOR','Id sap fornecedor'],
+  posicao:      ['POSICAO_FORNECEDOR','Posição fornecedor','Posição'],
+  cnpj:         ['CNPJ','cnpj'],
+  fornecedor:   ['NOME_FORNECEDOR','Nome do fornecedor','Fornecedor'],
+  aprovado:     ['Aprovado/ Reprovado ','Aprovado/reprovado','Aprovado','aprovado'],
+  q18:          ['Q18','q18'],
+  nm:           ['NM_MATERIAL','NM Material','NM'],
+  texto:        ['TEXTO_BREVE_1','Texto breve 1'],
+  identico:     ['MATERIAL_IDENTICO','Material Identico','Material idêntico'],
+  fab_forn:     ['FABRICANTE  ( Fornecedor)','Fabricante (fornecedor)'],
+  fab_pb:       ['FABRICANTE - ( Petrobras)','fabricante (petrobras)','Fabricante (petrobras)'],
+  pn_forn:      ['PARTNUMBER ( Fornecedor)','partnumber(fornecedor)'],
+  pn_pb:        ['PARTNUMBER ( Petrobras)','partnumber(petrobas)','partnumber(petrobras)'],
+  urgencia:     ['URGENCIA_NECESSIDADE','Urgencia','urgência','Urgência'],
+};
+
 function aaCompletoGet(r, ...keys){
+  // Aceita tanto chaves diretas quanto aliases do mapeamento
+  const buscar = [];
   for(const k of keys){
+    buscar.push(k);
+    if(_AAC_COLS[k]) buscar.push(..._AAC_COLS[k]);
+  }
+  for(const k of buscar){
     const v = r[k];
-    if(v!==undefined && v!==null && v!=='') return String(v).trim();
+    if(v!==undefined && v!==null && String(v).trim()!=='') return String(v).trim();
   }
   return '—';
 }
 
+// Atalhos
+const _g = (r, campo) => aaCompletoGet(r, campo, ...(_AAC_COLS[campo]||[]));
+
 function aaCompletoPopularFiltros(){
-  const analistas = [...new Set(_aacDados.map(r=>aaCompletoGet(r,'Analista','analista')).filter(v=>v!=='—'))].sort();
-  const filas     = [...new Set(_aacDados.map(r=>aaCompletoGet(r,'Fila','fila')).filter(v=>v!=='—'))].sort();
-  const aas       = [...new Set(_aacDados.map(r=>aaCompletoGet(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático')).filter(v=>v!=='—'))].sort();
+  const analistas = [...new Set(_aacDados.map(r=>_g(r,'analista')).filter(v=>v!=='—'))].sort();
+  const filas     = [...new Set(_aacDados.map(r=>_g(r,'fila')).filter(v=>v!=='—'))].sort();
+  const aas       = [...new Set(_aacDados.map(r=>_g(r,'aa')).filter(v=>v!=='—'))].sort();
 
   const sel = id => document.getElementById(id);
   const opts = (arr, sel_el) => {
@@ -11823,12 +11864,12 @@ function aaCompletoFiltrar(){
   const fBus = document.getElementById('aac-f-busca')?.value?.toLowerCase() || '';
 
   _aacFiltrado = _aacDados.filter(r => {
-    const analista = aaCompletoGet(r,'Analista','analista').toLowerCase();
-    const fila     = aaCompletoGet(r,'Fila','fila').toLowerCase();
-    const aa       = aaCompletoGet(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático').toLowerCase();
-    const rc       = String(r['RC']||r['rc']||'').toLowerCase();
-    const op       = String(r['Oportunidade']||r['oportunidade']||'').toLowerCase();
-    const forn     = aaCompletoGet(r,'Nome do fornecedor','nome_fornecedor','Fornecedor').toLowerCase();
+    const analista = _g(r,'analista').toLowerCase();
+    const fila     = _g(r,'fila').toLowerCase();
+    const aa       = _g(r,'aa').toLowerCase();
+    const rc       = _g(r,'rc').toLowerCase();
+    const op       = _g(r,'op').toLowerCase();
+    const forn     = _g(r,'fornecedor').toLowerCase();
     if(fAn  && !analista.includes(fAn))  return false;
     if(fFi  && !fila.includes(fFi))      return false;
     if(fAa  && !aa.includes(fAa))        return false;
@@ -11854,7 +11895,7 @@ function aaCompletoRenderKpis(){
   const total = _aacFiltrado.length;
   const rcs = new Set(_aacFiltrado.map(r=>aaCompletoChave(r))).size;
   const forn = new Set(_aacFiltrado.map(r=>aaCompletoGet(r,'CNPJ','cnpj')).filter(v=>v!=='—')).size;
-  const ident = _aacFiltrado.filter(r=>String(r['Material Identico']||r['Material idêntico']||r['material_identico']||'').toLowerCase().includes('sim')).length;
+  const ident = _aacFiltrado.filter(r=>_g(r,'identico').toLowerCase().includes('sim')).length;
   el.innerHTML = `
     <div class="kc"><div class="kn" style="color:var(--az)">${total.toLocaleString('pt-BR')}</div><div class="kl">Total Linhas</div></div>
     <div class="kc"><div class="kn" style="color:var(--vd)">${rcs.toLocaleString('pt-BR')}</div><div class="kl">RCs Únicas</div></div>
@@ -11869,7 +11910,6 @@ function aaCompletoRenderTabela(){
   if(!tbody) return;
   if(count) count.textContent = _aacFiltrado.length + ' registro(s)';
 
-  const g = (r,...keys) => aaCompletoGet(r,...keys);
   const cor = v => {
     const vl = String(v||'').toLowerCase();
     if(vl.includes('reprov')||vl.includes('não analisar')) return 'color:var(--vm)';
@@ -11878,39 +11918,40 @@ function aaCompletoRenderTabela(){
   };
 
   tbody.innerHTML = _aacFiltrado.map((r,i) => {
-    const rc  = g(r,'RC','rc');
-    const seq = g(r,'Seq','seq');
-    const op  = g(r,'Oportunidade','oportunidade');
-    const iop = g(r,'Item OP','item op','Item_OP');
-    const chave = [rc,seq,op,iop].join('|');
+    const rc  = _g(r,'rc');
+    const seq = _g(r,'seq');
+    const op  = _g(r,'op');
+    const iop = _g(r,'itemop');
+    const aprov = _g(r,'aprovado');
+    const chave = [rc==='—'?'':rc, seq==='—'?'':seq, op==='—'?'':op, iop==='—'?'':iop].join('|');
     return `<tr>
-      <td style="font-size:11px">${g(r,'Analista','analista')}</td>
-      <td style="font-size:11px">${g(r,'Fila','fila')}</td>
-      <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${g(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático')}">${g(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático')}</td>
+      <td style="font-size:11px">${_g(r,'analista')}</td>
+      <td style="font-size:11px">${_g(r,'fila')}</td>
+      <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_g(r,'aa')}">${_g(r,'aa')}</td>
       <td style="font-weight:700;color:var(--az)">${rc}</td>
       <td>${seq}</td>
       <td>${op}</td>
       <td>${iop}</td>
-      <td style="font-size:11px">${g(r,'Centro','centro')}</td>
-      <td style="font-size:11px">${g(r,'Familia','família','Família','familia')}</td>
-      <td style="font-size:11px">${g(r,'Tipo familia','Tipo família','tipo_familia')}</td>
-      <td style="font-size:11px">${g(r,'Faturamento minimo','Faturamento mínimo','faturamento_minimo')}</td>
-      <td style="font-size:11px">${g(r,'Valor pedido final','valor_pedido_final')}</td>
-      <td style="font-size:11px">${g(r,'Valor total do julgamento','valor_total_julgamento')}</td>
-      <td style="font-size:11px">${g(r,'Id sap fornecedor','id_sap_fornecedor')}</td>
-      <td style="text-align:center">${g(r,'Posição fornecedor','posicao_fornecedor','Posição','posicao')}</td>
-      <td style="font-size:11px">${g(r,'CNPJ','cnpj')}</td>
-      <td style="font-size:11px">${g(r,'Nome do fornecedor','nome_fornecedor','Fornecedor','fornecedor')}</td>
-      <td style="font-size:11px;${cor(g(r,'Aprovado/reprovado','aprovado_reprovado','Aprovado','aprovado'))}">${g(r,'Aprovado/reprovado','aprovado_reprovado','Aprovado','aprovado')}</td>
-      <td style="font-size:11px">${g(r,'q18','Q18')}</td>
-      <td style="font-size:11px">${g(r,'NM Material','nm_material','NM','nm')}</td>
-      <td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${g(r,'Texto breve 1','texto_breve','Texto Breve 1')}">${g(r,'Texto breve 1','texto_breve','Texto Breve 1')}</td>
-      <td style="font-size:11px;font-weight:700;${g(r,'Material Identico','Material idêntico','material_identico').toLowerCase().includes('sim')?'color:var(--vd)':''}">${g(r,'Material Identico','Material idêntico','material_identico')}</td>
-      <td style="font-size:11px">${g(r,'Fabricante (fornecedor)','fabricante_fornecedor')}</td>
-      <td style="font-size:11px">${g(r,'fabricante (petrobras)','Fabricante (petrobras)','fabricante_petrobras')}</td>
-      <td style="font-size:11px">${g(r,'partnumber(fornecedor)','PN Fornecedor','pn_fornecedor')}</td>
-      <td style="font-size:11px">${g(r,'partnumber(petrobas)','PN Petrobras','pn_petrobras','partnumber(petrobras)')}</td>
-      <td style="font-size:11px">${g(r,'Urgencia','urgência','Urgência','urgencia')}</td>
+      <td style="font-size:11px">${_g(r,'centro')}</td>
+      <td style="font-size:11px">${_g(r,'familia')}</td>
+      <td style="font-size:11px">${_g(r,'tipo_familia')}</td>
+      <td style="font-size:11px">${_g(r,'fat_min')}</td>
+      <td style="font-size:11px">${_g(r,'vlr_pedido')}</td>
+      <td style="font-size:11px">${_g(r,'vlr_total')}</td>
+      <td style="font-size:11px">${_g(r,'id_sap')}</td>
+      <td style="text-align:center">${_g(r,'posicao')}</td>
+      <td style="font-size:11px">${_g(r,'cnpj')}</td>
+      <td style="font-size:11px">${_g(r,'fornecedor')}</td>
+      <td style="font-size:11px;${cor(aprov)}">${aprov}</td>
+      <td style="font-size:11px">${_g(r,'q18')}</td>
+      <td style="font-size:11px">${_g(r,'nm')}</td>
+      <td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_g(r,'texto')}">${_g(r,'texto')}</td>
+      <td style="font-size:11px;font-weight:700;${_g(r,'identico').toLowerCase().includes('sim')?'color:var(--vd)':''}">${_g(r,'identico')}</td>
+      <td style="font-size:11px">${_g(r,'fab_forn')}</td>
+      <td style="font-size:11px">${_g(r,'fab_pb')}</td>
+      <td style="font-size:11px">${_g(r,'pn_forn')}</td>
+      <td style="font-size:11px">${_g(r,'pn_pb')}</td>
+      <td style="font-size:11px">${_g(r,'urgencia')}</td>
       <td><button style="background:var(--azc);border:none;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:11px;color:var(--az);font-weight:700"
         onclick="aaCompletoVerRC('${chave.replace(/'/g,"\'")}')">🔍 Ver RC</button></td>
     </tr>`;
@@ -11920,13 +11961,9 @@ function aaCompletoRenderTabela(){
 function aaCompletoVerRC(chave){
   const [rc,seq,op,iop] = chave.split('|');
   const itens = _aacDados.filter(r=>{
-    return String(r['RC']||r['rc']||'').trim()===rc &&
-           String(r['Seq']||r['seq']||'').trim()===seq &&
-           String(r['Oportunidade']||r['oportunidade']||'').trim()===op &&
-           String(r['Item OP']||r['item op']||r['Item_OP']||'').trim()===iop;
+    return _g(r,'rc')===rc && _g(r,'seq')===seq && _g(r,'op')===op && _g(r,'itemop')===iop;
   });
 
-  const g = (r,...keys) => aaCompletoGet(r,...keys);
   const cor = v => {
     const vl = String(v||'').toLowerCase();
     if(vl.includes('reprov')||vl.includes('não analisar')) return 'background:#ffebee;color:var(--vm);font-weight:700';
@@ -11940,38 +11977,38 @@ function aaCompletoVerRC(chave){
 
   const r0 = itens[0] || {};
   const infoRC = `<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:1rem;font-size:12px;background:#f7f9fc;border-radius:8px;padding:10px 14px">
-    <span>👤 <strong>Analista:</strong> ${g(r0,'Analista','analista')}</span>
-    <span>📋 <strong>Fila:</strong> ${g(r0,'Fila','fila')}</span>
-    <span>🏗️ <strong>Centro:</strong> ${g(r0,'Centro','centro')}</span>
-    <span>👨‍👩‍👧 <strong>Família:</strong> ${g(r0,'Familia','Família','familia')} (${g(r0,'Tipo familia','Tipo família')})</span>
-    <span>⚠️ <strong>Urgência:</strong> ${g(r0,'Urgencia','urgência','Urgência')}</span>
-    <span>🔧 <strong>NM:</strong> ${g(r0,'NM Material','nm_material','NM')}</span>
-    <span>📝 <strong>Texto:</strong> ${g(r0,'Texto breve 1','texto_breve')}</span>
+    <span>👤 <strong>Analista:</strong> ${_g(r0,'analista')}</span>
+    <span>📋 <strong>Fila:</strong> ${_g(r0,'fila')}</span>
+    <span>🏗️ <strong>Centro:</strong> ${_g(r0,'centro')}</span>
+    <span>👨‍👩‍👧 <strong>Família:</strong> ${_g(r0,'familia')} (${_g(r0,'tipo_familia')})</span>
+    <span>⚠️ <strong>Urgência:</strong> ${_g(r0,'urgencia')}</span>
+    <span>🔧 <strong>NM:</strong> ${_g(r0,'nm')}</span>
+    <span>📝 <strong>Texto:</strong> ${_g(r0,'texto')}</span>
   </div>`;
 
   const rows = itens.map((r,i) => {
-    const aprov = g(r,'Aprovado/reprovado','aprovado_reprovado','Aprovado');
-    const ident = g(r,'Material Identico','Material idêntico','material_identico');
-    const fabForn = g(r,'Fabricante (fornecedor)','fabricante_fornecedor');
-    const fabPB   = g(r,'fabricante (petrobras)','Fabricante (petrobras)','fabricante_petrobras');
-    const pnForn  = g(r,'partnumber(fornecedor)','pn_fornecedor');
-    const pnPB    = g(r,'partnumber(petrobas)','pn_petrobras','partnumber(petrobras)');
+    const aprov   = _g(r,'aprovado');
+    const ident   = _g(r,'identico');
+    const fabForn = _g(r,'fab_forn');
+    const fabPB   = _g(r,'fab_pb');
+    const pnForn  = _g(r,'pn_forn');
+    const pnPB    = _g(r,'pn_pb');
     const fabMatch = fabForn!=='—'&&fabPB!=='—'&&fabForn.toLowerCase()===fabPB.toLowerCase();
     const pnMatch  = pnForn!=='—'&&pnPB!=='—'&&pnForn.toLowerCase()===pnPB.toLowerCase();
     return `<tr style="${cor(aprov)}">
-      <td style="text-align:center;font-weight:700">${g(r,'Posição fornecedor','Posição','posicao')}</td>
-      <td>${g(r,'CNPJ','cnpj')}</td>
-      <td style="font-weight:600">${g(r,'Nome do fornecedor','nome_fornecedor','Fornecedor')}</td>
+      <td style="text-align:center;font-weight:700">${_g(r,'posicao')}</td>
+      <td>${_g(r,'cnpj')}</td>
+      <td style="font-weight:600">${_g(r,'fornecedor')}</td>
       <td>${aprov}</td>
-      <td style="text-align:center">${g(r,'q18','Q18')}</td>
+      <td style="text-align:center">${_g(r,'q18')}</td>
       <td style="font-weight:700;${ident.toLowerCase().includes('sim')?'color:var(--vd)':''}">${ident}</td>
       <td style="${fabMatch?'color:var(--vd);font-weight:700':''}">${fabForn}</td>
       <td style="${fabMatch?'color:var(--vd);font-weight:700':''}">${fabPB}</td>
       <td style="${pnMatch?'color:var(--vd);font-weight:700':''}">${pnForn}</td>
       <td style="${pnMatch?'color:var(--vd);font-weight:700':''}">${pnPB}</td>
-      <td>${g(r,'Faturamento minimo','Faturamento mínimo')}</td>
-      <td>${g(r,'Valor pedido final','valor_pedido_final')}</td>
-      <td>${g(r,'Analista automatico','Analista Automático','analista_automatico','Analista automático')}</td>
+      <td>${_g(r,'fat_min')}</td>
+      <td>${_g(r,'vlr_pedido')}</td>
+      <td>${_g(r,'aa')}</td>
     </tr>`;
   }).join('');
 
@@ -11990,14 +12027,19 @@ function aaCompletoVerRC(chave){
 function aaCompletoExportar(){
   if(!_aacFiltrado.length){ alert('Nenhum dado para exportar.'); return; }
   const wb = XLSX.utils.book_new();
-  const colunas = ['Analista','Fila','Analista automatico','RC','Seq','Oportunidade','Item OP','Centro',
-    'Familia','Tipo familia','Faturamento minimo','Valor pedido final','Valor total do julgamento',
-    'Id sap fornecedor','Posição fornecedor','CNPJ','Nome do fornecedor','Aprovado/reprovado',
-    'q18','NM Material','Texto breve 1','Material Identico','Fabricante (fornecedor)',
-    'fabricante (petrobras)','partnumber(fornecedor)','partnumber(petrobas)','Urgencia'];
+  const colNomes = ['Analista','Fila','Analista Automático','RC','Seq','Oportunidade','Item OP','Centro',
+    'Família','Tipo Família','Faturamento Mínimo','Valor Pedido Final','Valor Total Julgamento',
+    'ID SAP Fornecedor','Posição Fornecedor','CNPJ','Nome Fornecedor','Aprovado/Reprovado',
+    'Q18','NM Material','Texto Breve','Material Idêntico','Fabricante (Fornecedor)',
+    'Fabricante (Petrobras)','PN (Fornecedor)','PN (Petrobras)','Urgência'];
+  const colCampos = ['analista','fila','aa','rc','seq','op','itemop','centro',
+    'familia','tipo_familia','fat_min','vlr_pedido','vlr_total',
+    'id_sap','posicao','cnpj','fornecedor','aprovado',
+    'q18','nm','texto','identico','fab_forn',
+    'fab_pb','pn_forn','pn_pb','urgencia'];
   const ws = XLSX.utils.aoa_to_sheet([
-    colunas,
-    ..._aacFiltrado.map(r => colunas.map(c => r[c]??r[c.toLowerCase()]??''))
+    colNomes,
+    ..._aacFiltrado.map(r => colCampos.map(c => { const v=_g(r,c); return v==='—'?'':v; }))
   ]);
   XLSX.utils.book_append_sheet(wb, ws, 'Analista Completo');
   XLSX.writeFile(wb, 'Analista_Completo_' + new Date().toLocaleDateString('pt-BR').split('/').join('-') + '.xlsx');
