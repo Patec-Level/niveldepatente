@@ -5574,9 +5574,15 @@ async function fbCarregarPCPDiario(){
     }
     snap.docs.forEach(d=>{
       const reg=d.data();
-      const idx=pcpData.findIndex(r=>r.data===reg.data);
-      if(idx>=0) pcpData[idx]=reg;
-      else pcpData.push(reg);
+      // Só aceitar do Firebase se tiver campos completos (f2+f3+f4+f5+f6 com dados reais)
+      // Se todos zerados mas produção existe, preferir o recálculo da memória
+      const temCamposCompletos = (reg.f2||0)+(reg.f3||0)+(reg.f4||0)+(reg.f5||0)+(reg.f6||0) > 0;
+      const temProdReal = registros.some(r=>r.data===reg.data && ((r.f[5]||0)+(r.f[7]||0)+(r.f[9]||0)+(r.f[10]||0)+(r.f[8]||0)) > 0);
+      if(!temProdReal || temCamposCompletos){
+        const idx=pcpData.findIndex(r=>r.data===reg.data);
+        if(idx>=0) pcpData[idx]=reg;
+        else pcpData.push(reg);
+      }
     });
     pcpData.sort((a,b)=>a.data.localeCompare(b.data));
     console.log('✓ PCP diario Firebase: '+snap.docs.length+' registros');
