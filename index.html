@@ -2767,7 +2767,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <table>
               <thead><tr>
                 <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
-                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Validade Proposta</th>
+                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Validade Proposta</th><th>Status Governança</th>
               </tr></thead>
               <tbody id="pc-tbody-criticos"></tbody>
             </table>
@@ -9949,7 +9949,12 @@ function pcInicializar(){
   // KPIs gerais
   const vencidos   = base.filter(r => (r.validade||'').toLowerCase().includes('vencida') || (r.validade||'').toLowerCase().includes('vencid'));
   const reprovados = pcDadosReprovado();
-  const criticos   = base.filter(r => (r.status_ctrl||'').toUpperCase() === 'CRÍTICO' || (r.status_ctrl||'').toUpperCase() === 'CRITICO');
+  const criticos   = base.filter(r => {
+    const ctrl = (r.status_ctrl||'').toUpperCase();
+    const val  = (r.validade||'').toLowerCase();
+    const ehVencido = val.includes('vencimento') || val.includes('vencid');
+    return (ctrl === 'CRÍTICO' || ctrl === 'CRITICO') && !ehVencido;
+  });
 
   document.getElementById('pc-kpis').innerHTML = `
     <div class="kc" style="cursor:pointer" onclick="pcSetTab('vencido', document.querySelector('#pc-tabs .stab'))">
@@ -10052,8 +10057,50 @@ function pcRenderTabela(aba, rows, campos, comExtra){
     );
     if(comExtra) cells.push(`<td style="text-align:center;font-weight:600;color:${(r.patec_obrig||'').toLowerCase()==='sim'?'var(--vm)':'var(--tx2)'}">${r.patec_obrig||'—'}</td>`);
     if(comExtra) cells.push(`<td style="${corValidade(r.validade)}">${r.validade||'—'}</td>`);
+    if(aba === 'criticos'){
+      // Status da Governança — editável, sincroniza com govDados
+      const chaveGov = govChave(r);
+      const statusAtual = (_govDados[chaveGov]||{}).status || (GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase())) ? 'AG. TRATAMENTO' : '');
+      const optsStatus = GOV_STATUS_OPCOES.map(o=>`<option value="${o}" ${statusAtual===o?'selected':''}>${o}</option>`).join('');
+      cells.push(`<td>
+        <select style="font-size:11px;padding:2px 5px;min-width:150px"
+          onchange="pcAtualizarStatusGov('${chaveGov.replace(/'/g,"\'")}',this.value,this)">
+          <option value="">— selecione —</option>
+          ${optsStatus}
+        </select>
+      </td>`);
+    }
     return `<tr>${cells.join('')}</tr>`;
   }).join('');
+}
+
+async function pcAtualizarStatusGov(chave, valor, selEl){
+  // Atualizar _govDados em memória
+  if(!_govDados[chave]) _govDados[chave] = {};
+  _govDados[chave].status = valor;
+
+  // Salvar no Firebase (mesma lógica do govSalvarCampo)
+  try{
+    const db = getDB();
+    if(db){
+      const docId = chave.replace(/[|]/g,'_');
+      await db.collection('gov_mapa').doc(docId).set(
+        { status: valor, ts: new Date().toISOString() },
+        { merge: true }
+      );
+    }
+  } catch(e){ console.warn('pcAtualizarStatusGov:', e); }
+
+  // Re-renderizar a linha da Governança se ela estiver visível
+  const govBusca = document.getElementById('gov-busca-rc');
+  if(govBusca && govBusca.value){
+    govBuscarRC(govBusca.value);
+  }
+  // Também re-renderizar tabela gov se ativa
+  const aba = document.querySelector('.stab.active')?.textContent;
+  if(aba && aba.includes('MAPA')){
+    govRenderMapa((_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado'));
+  }
 }
 
 function pcBuscaSincronizada(val){
