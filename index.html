@@ -6758,7 +6758,14 @@ async function radarOnFile(file){
       familia:       (()=>{ const v=String(r['Familia']||r['FAMILIA']||'').trim(); return v.endsWith('.0')?v.slice(0,-2):v; })(),
       cat_familia:   String(r['Categoria Familia']||r['Categoria Família']||r['CATEGORIA FAMILIA']||r['CATEGORIA FAMÍLIA']||r['categoria familia']||r['categoria família']||'').trim(),
       tipo_familia:  String(r['TIPO_FAMILIA']||r['Tipo Familia']||r['Tipo Família']||r['tipo familia']||r['tipo família']||'').trim(),
-      familia_lq:    String(r['FAMILIA L OU Q']||r['Familia L ou Q']||r['familia l ou q']||r['FAMÍLIA L OU Q']||'').trim(),
+      familia_lq:    (()=>{
+        // Nome da coluna tem quebra de linha: 'FAMILIA\nL ou Q'
+        const k = Object.keys(r).find(k => {
+          const n = k.replace(/\s+/g,' ').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+          return n === 'FAMILIA L OU Q' || n === 'FAMILIA L/Q' || n.startsWith('FAMILIA') && n.includes('L OU Q');
+        });
+        return k ? String(r[k]||'').trim() : '';
+      })(),
       status_ctrl:   String(r['Status de Controle']||'').trim(),
       seguimento:    (()=>{
         const k=Object.keys(r).find(k=>k==='Seguimento');
@@ -6774,6 +6781,14 @@ async function radarOnFile(file){
       })(),
     }));
 
+    // Debug: log column names from first row to help identify FAMILIA L OU Q
+    if(rows.length > 0 && window._radarColsLogged !== true){
+      window._radarColsLogged = true;
+      const cols = Object.keys(rows[0] || {});
+      const familiaCol = cols.find(c => c.toUpperCase().includes('FAMILIA') || c.toUpperCase().includes('FAMÍLIA'));
+      console.log('[RADAR] Colunas encontradas com FAMILIA:', cols.filter(c=>c.toUpperCase().includes('FAMILIA')||c.toUpperCase().includes('FAMÍLIA')));
+      console.log('[RADAR] familia_lq do primeiro item:', rows[0]?.familia_lq);
+    }
     _radarDados=rows;
     _radarTs=new Date().toISOString();
     // Atualizar MAPA: fila + novos itens (sem sobrescrever Status/Envio/Finalizado)
