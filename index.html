@@ -7747,9 +7747,62 @@ async function renderResultadoMedicao(){
       +'<div style="text-align:center;padding:.5rem .875rem;background:'+bg+';border-radius:8px"><div style="font-size:9px;color:var(--tx2)">% Meta</div><div style="font-size:17px;font-weight:700;color:'+cor+'">'+(c.pct||0)+'%</div></div>'
       +'<div style="text-align:center;padding:.5rem .875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)"><div style="font-size:9px;color:var(--tx2)">Meta</div><div style="font-size:17px;font-weight:700;color:var(--az)">'+(c.meta||0).toLocaleString('pt-BR')+'</div></div>'
       +'<button class="btn btn-p" style="font-size:11px;padding:5px 12px" onclick="abrirResultadoCiclo('+i+')">📊 Ver detalhes</button>'
+      +'<button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="reabrirCiclo('+i+')">🔓 Reabrir</button>'
       +'<button class="btn btn-r" style="font-size:11px;padding:5px 10px" onclick="excluirCicloResultado('+i+')">🗑</button>'
       +'</div></div></div>';
   }).join('');
+}
+
+async function reabrirCiclo(idx){
+  const c = (window._resultadoCiclos||[])[idx];
+  if(!c) return;
+  const msg = `REABRIR CICLO\n\n` +
+    `Ciclo: ${c.nome}\n` +
+    `Período: ${fmtDt(c.inicio)} → ${fmtDt(c.fim||'')}\n\n` +
+    `O ciclo será reaberto para edição e validação.\n` +
+    `Os lançamentos de produção e mapa deste período voltam a ser editáveis.\n\n` +
+    `Confirmar reabertura?`;
+  if(!confirm(msg)) return;
+
+  // Restaurar como ciclo ativo para validação
+  const cicloReaberto = {
+    id: c.id,
+    nome: c.nome,
+    inicio: c.inicio,
+    fim: c.fim || '',
+    fim_previsto: c.fim || '',
+    meta: c.meta,
+    status: 'validacao',
+    reaberto_em: new Date().toISOString(),
+    ts_inicio: c.ts_encerramento || new Date().toISOString()
+  };
+  _cicloAtivo = cicloReaberto;
+  await fbSet('config', 'ciclo_ativo', cicloReaberto);
+
+  // Restaurar registros de produção do ciclo no array de registros
+  if(c.registros && c.registros.length){
+    // Adicionar apenas os registros que não existem ainda (pelo colab+data)
+    const existentes = new Set(registros.map(r => r.colab + '|' + r.data));
+    let novosRegs = 0;
+    c.registros.forEach(r => {
+      const chave = r.colab + '|' + r.data;
+      if(!existentes.has(chave)){
+        registros.push(r);
+        novosRegs++;
+      }
+    });
+    if(novosRegs > 0) console.log('Ciclo reaberto: '+novosRegs+' registros restaurados');
+  }
+
+  // Atualizar campo de fechamento no ADM
+  const dtEl = document.getElementById('adm-ciclo-fechamento');
+  if(dtEl) dtEl.value = c.fim || '';
+
+  initMetaGap();
+  alert('✅ Ciclo "' + c.nome + '" reaberto para validação!\n\nAcesse ADM → Gestão de Ciclos para editar e encerrar novamente quando estiver pronto.');
+  // Ir para ADM
+  go('adm', null);
+  setTimeout(() => setAdmTab('ciclos', document.querySelector('[onclick*="ciclos"]')), 300);
 }
 
 function excluirCicloResultado(idx){
