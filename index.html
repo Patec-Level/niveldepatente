@@ -2707,6 +2707,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- KPIs gerais -->
       <div class="kgrid" id="pc-kpis" style="margin-bottom:1rem"></div>
 
+      <!-- Filtros -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
+        <select id="pc-filtro-analista" onchange="pcFiltrar()" style="font-size:12px;padding:5px 10px;min-width:160px">
+          <option value="">Todos os analistas</option>
+        </select>
+        <input type="text" id="pc-busca" placeholder="🔍 Buscar RC, oportunidade..." oninput="pcBuscaSincronizada(this.value)" style="font-size:12px;padding:5px 10px;min-width:220px">
+        <button class="btn btn-s" style="font-size:11px" onclick="pcLimparFiltros()">✕ Limpar</button>
+      </div>
+
       <!-- Abas -->
       <div class="stabs" id="pc-tabs" style="margin-bottom:1rem">
         <button class="stab active" onclick="pcSetTab('vencido',this)">⏰ Vencido</button>
@@ -2758,7 +2767,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <table>
               <thead><tr>
                 <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
-                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th>
+                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Validade Proposta</th>
               </tr></thead>
               <tbody id="pc-tbody-criticos"></tbody>
             </table>
@@ -9930,6 +9939,11 @@ function pcInicializar(){
   // Popular filtro analista
   const analistas = [...new Set(base.map(r=>(r.analista||'').trim()).filter(Boolean))].sort();
   const sel = document.getElementById('pc-filtro-analista');
+  if(sel && _radarDados?.length){
+    const analistas = [...new Set(_radarDados.filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado').map(r=>r.analista).filter(Boolean))].sort();
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Todos os analistas</option>' + analistas.map(a=>`<option value="${a}"${a===cur?' selected':''}>${a}</option>`).join('');
+  }
   if(sel) sel.innerHTML = '<option value="">Todos</option>' + analistas.map(a=>`<option>${a}</option>`).join('');
 
   // KPIs gerais
@@ -10037,8 +10051,27 @@ function pcRenderTabela(aba, rows, campos, comExtra){
       `<td>${r.item_rc||'—'}</td>`,
     );
     if(comExtra) cells.push(`<td style="text-align:center;font-weight:600;color:${(r.patec_obrig||'').toLowerCase()==='sim'?'var(--vm)':'var(--tx2)'}">${r.patec_obrig||'—'}</td>`);
+    if(comExtra) cells.push(`<td style="${corValidade(r.validade)}">${r.validade||'—'}</td>`);
     return `<tr>${cells.join('')}</tr>`;
   }).join('');
+}
+
+function pcBuscaSincronizada(val){
+  // Sincronizar busca com governança
+  const govBusca = document.getElementById('gov-busca-rc');
+  if(govBusca && val && val.length>=5){
+    govBusca.value = val;
+    govBuscarRC(val);
+  }
+  pcFiltrar();
+}
+
+function pcLimparFiltros(){
+  const el1 = document.getElementById('pc-filtro-analista');
+  const el2 = document.getElementById('pc-busca');
+  if(el1) el1.value='';
+  if(el2) el2.value='';
+  pcFiltrar();
 }
 
 function pcSetTab(aba, btn){
@@ -10794,6 +10827,12 @@ async function govImportarPlanilha(input){
 function fmtBR(d){ return d&&d!=='—'?d.split('-').reverse().join('/'):d||'—'; }
 
 function govBuscarRC(rc){
+  // Sincronizar com pc-busca da planilha critica
+  const pcBusca = document.getElementById('pc-busca');
+  if(pcBusca && rc && rc.length>=5 && pcBusca.value !== rc){
+    pcBusca.value = rc;
+    pcFiltrar();
+  }
   const el = document.getElementById('gov-busca-resultado');
   if(!el) return;
   const rcBusca = rc.trim();
