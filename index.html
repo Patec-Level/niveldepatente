@@ -10543,7 +10543,7 @@ function xglOnFile(input){
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
       // Col B=1, C=2, D=3, E=4
-      _xglItens = rows.slice(1)
+      const novosDoArquivo = rows.slice(1)
         .filter(r => r[1] && String(r[1]).trim())
         .map(r => ({
           rc:     String(r[1]||'').trim(),
@@ -10551,16 +10551,15 @@ function xglOnFile(input){
           oport:  String(r[3]||'').trim(),
           itemop: String(r[4]||'').trim(),
         }));
-      // Deduplicar pela chave
-      const vistos = new Set();
-      _xglItens = _xglItens.filter(r => {
+      // Mesclar com itens existentes (não substituir)
+      const vistos = new Set(_xglItens.map(r => xglChave(r.rc, r.item, r.oport, r.itemop)));
+      let adicionados = 0;
+      novosDoArquivo.forEach(r => {
         const k = xglChave(r.rc, r.item, r.oport, r.itemop);
-        if(vistos.has(k)) return false;
-        vistos.add(k);
-        return true;
+        if(!vistos.has(k)){ _xglItens.push(r); vistos.add(k); adicionados++; }
       });
       document.getElementById('xgl-upload-info').textContent =
-        '✓ ' + file.name + ' — ' + _xglItens.length + ' itens carregados';
+        '✓ ' + file.name + ' — ' + adicionados + ' novos itens adicionados (total: ' + _xglItens.length + ')';
       xglSalvarItensFirebase();
       xglRender();
     } catch(err){
@@ -10589,14 +10588,16 @@ async function xglCarregarFirebase(){
       await new Promise(r=>setTimeout(r,300));
     }
     const db = getDB(); if(!db) return;
-    // Carregar itens do Firebase (prioridade total)
+    // Carregar itens do Firebase e MESCLAR com base embutida
     const docItens = await db.collection('config').doc('xgl_itens').get();
-    if(docItens.exists && docItens.data().itens && docItens.data().itens.length){
-      _xglItens = docItens.data().itens;
-    } else {
-      // Firebase vazio — usar base embutida
-      _xglItens = [..._XGL_BASE_ITENS];
-    }
+    const fbItens = (docItens.exists && docItens.data().itens) ? docItens.data().itens : [];
+    // Sempre mesclar: Firebase + base embutida (sem duplicatas)
+    const vistosXgl = new Set(fbItens.map(r => xglChave(r.rc, r.item, r.oport||"", r.itemop||"")));
+    _xglItens = [...fbItens];
+    _XGL_BASE_ITENS.forEach(r => {
+      const k = xglChave(r.rc, r.item, r.oport||"", r.itemop||"");
+      if(!vistosXgl.has(k)){ _xglItens.push(r); vistosXgl.add(k); }
+    });
     // Carregar dados manuais do Firebase
     const snap = await db.collection('gov_xgl').get();
     _xglDados = {};
@@ -11222,7 +11223,16 @@ async function sbCarregarFirebase(){
     const db = getDB(); if(!db) return;
     // Carregar itens
     const docItens = await db.collection('config').doc('sb_itens').get();
-    if(docItens.exists) _sbItens = docItens.data().itens || [];
+    if(docItens.exists){
+      const fbItens = docItens.data().itens || [];
+      // Mesclar Firebase + base embutida (Firebase tem prioridade)
+      const vistos = new Set(fbItens.map(r => sbChave(r.rc,r.seq,r.op,r.item)));
+      _sbItens = [...fbItens];
+      _SB_BASE_ITENS.forEach(r => {
+        const k = sbChave(r.rc,r.seq,r.op,r.item);
+        if(!vistos.has(k)){ _sbItens.push(r); vistos.add(k); }
+      });
+    }
     // Carregar dados manuais
     const snap = await db.collection('gov_sb').get();
     _sbDados = {};
@@ -11231,7 +11241,7 @@ async function sbCarregarFirebase(){
       if(d.chave) _sbDados[d.chave] = { status:d.status||'', envio:d.envio||'', finalizado:d.finalizado||'', comentario:d.comentario||'' };
     });
     // Mesclar base embutida
-    if(!_sbItens.length) _sbItens = [..._SB_BASE_ITENS];
+    // (mesclagem já feita acima)
     Object.entries(_SB_BASE_DADOS).forEach(([chave, d]) => {
       if(!_sbDados[chave]) _sbDados[chave] = { status:d.status||'', envio:d.envio||'', finalizado:d.finalizado||'', comentario:d.comentario||'' };
     });
