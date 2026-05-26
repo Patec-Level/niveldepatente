@@ -5580,23 +5580,29 @@ async function fbCarregarPCPDiario(){
     });
     pcpData.sort((a,b)=>a.data.localeCompare(b.data));
     console.log('✓ PCP diario Firebase: '+snap.docs.length+' registros');
-    // Recalcular dias que têm produção mas não têm PCP salvo no Firebase
+    // Recalcular TODOS os dias com produção usando os dados reais em memória
+    // (Firebase pode ter dados incompletos de versões anteriores)
     const diasComProd = [...new Set(registros.map(r=>r.data))];
     let recalc = 0;
     diasComProd.forEach(dt=>{
-      if(!pcpData.find(r=>r.data===dt)){
-        const calc = pcpCalcDia(dt);
-        if(!calc) return;
-        const novo = {data:dt, f1:calc.f1, f2:calc.f2, f6:calc.f6, f3:calc.f3, f4:calc.f4, f5:calc.f5};
-        pcpData.push(novo);
-        // Salvar no Firebase para não recalcular próxima vez
+      const calc = pcpCalcDia(dt);
+      if(!calc) return;
+      const novo = {data:dt, f1:calc.f1, f2:calc.f2, f6:calc.f6, f3:calc.f3, f4:calc.f4, f5:calc.f5};
+      const idx = pcpData.findIndex(r=>r.data===dt);
+      const atual = idx>=0 ? pcpData[idx] : null;
+      // Atualizar se não existe ou se os campos secundários estão zerados mas deveriam ter valor
+      const precisaAtualizar = !atual ||
+        ((calc.f2||0)+(calc.f6||0)+(calc.f3||0)+(calc.f4||0)+(calc.f5||0) > 0 &&
+         (atual.f2||0)+(atual.f6||0)+(atual.f3||0)+(atual.f4||0)+(atual.f5||0) === 0);
+      if(precisaAtualizar){
+        if(idx>=0) pcpData[idx]=novo; else pcpData.push(novo);
         fbSet('pcp_diario', dt.replace(/-/g,''), novo);
         recalc++;
       }
     });
     if(recalc > 0){
       pcpData.sort((a,b)=>a.data.localeCompare(b.data));
-      console.log('✓ PCP recalculado para '+recalc+' dias sem registro Firebase');
+      console.log('✓ PCP corrigido para '+recalc+' dias');
     }
     // Atualizar painel se aberto
     if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
