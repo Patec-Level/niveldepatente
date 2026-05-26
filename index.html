@@ -9787,11 +9787,15 @@ async function aaCarregarResultadoFirebase(){
               <td style="font-size:11px;color:var(--azm);font-weight:600">${a.regra}</td>
             </tr>
           `).join('');
-          document.getElementById('aa-resultado').style.display = 'block';
-          document.getElementById('aa-btn-exportar').style.display = 'inline-flex';
-          document.getElementById('aa-kpi-aptas').textContent = d.rcsUnicas||d.aptas.length;
+          const _elRes = document.getElementById('aa-resultado');
+          const _elBtn = document.getElementById('aa-btn-exportar');
+          const _elKpi = document.getElementById('aa-kpi-aptas');
+          const _elSts = document.getElementById('aa-proc-status');
+          if(_elRes) _elRes.style.display = 'block';
+          if(_elBtn) _elBtn.style.display = 'inline-flex';
+          if(_elKpi) _elKpi.textContent = d.rcsUnicas||d.aptas.length;
           const dt = d.dt ? new Date(d.dt).toLocaleString('pt-BR') : '';
-          document.getElementById('aa-proc-status').textContent = `Último processamento: ${dt} · ${d.aptas.length} registros`;
+          if(_elSts) _elSts.textContent = `Último processamento: ${dt} · ${d.aptas.length} registros`;
           window._aaAptas = d.aptas;
         }
       }
