@@ -10931,14 +10931,21 @@ async function govBuscaSalvar(aba, chave, campo, valor){
     // Re-renderizar tabela correspondente
     if(aba==='MAPA') govRenderMapa((_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado'));
     if(aba==='XGL'){
-      // Atualizar analista em _xglItens
+      // Atualizar analista em _xglItens e persistir
       const xglIdx = (_xglItens||[]).findIndex(r => xglChave(r.rc,r.item,r.oport,r.itemop) === chave);
       if(xglIdx>=0) _xglItens[xglIdx].analista = valor;
+      // Salvar lista atualizada no Firebase (garante persistência após recarregar)
+      xglSalvarItensFirebase();
       xglRender();
     }
     if(aba==='STATUS B'){
       const sbIdx = (_sbItens||[]).findIndex(r => sbChave(r.rc,r.seq,r.op,r.item) === chave);
       if(sbIdx>=0) _sbItens[sbIdx].analista = valor;
+      // Salvar lista atualizada no Firebase
+      try{
+        const db = getDB();
+        if(db) await db.collection('config').doc('sb_itens').set({ itens: _sbItens, dt: new Date().toISOString() });
+      } catch(e){ console.warn('sbSalvarAnalista:', e); }
       sbRender();
     }
     return;
