@@ -10032,9 +10032,9 @@ function pcRenderTabela(aba, rows, campos, comExtra){
     if(comExtra) cells.push(`<td style="text-align:center">${r.idas||'—'}</td>`);
     cells.push(
       `<td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>`,
-      `<td>${r.item_rc||r.seq||'—'}</td>`,
-      `<td>${r.num_oport||'—'}</td>`,
       `<td>${r.seq||'—'}</td>`,
+      `<td>${r.num_oport||'—'}</td>`,
+      `<td>${r.item_rc||'—'}</td>`,
     );
     if(comExtra) cells.push(`<td style="text-align:center;font-weight:600;color:${(r.patec_obrig||'').toLowerCase()==='sim'?'var(--vm)':'var(--tx2)'}">${r.patec_obrig||'—'}</td>`);
     return `<tr>${cells.join('')}</tr>`;
