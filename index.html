@@ -10220,7 +10220,8 @@ function pcRenderFluxo(){
 // GOVERNANÇA
 // ════════════════════════════════════════════
 let _govTabAtiva = 'mapa';
-let _govDados = {}; // { 'RC|SEQ|OP|IOP': { status, envio, finalizado } }
+let _govDados = {};
+let _govAnalistaOverrides = {}; // {chave: analista} — editados na plataforma, soberanos sobre upload // { 'RC|SEQ|OP|IOP': { status, envio, finalizado } }
 
 // Feriados nacionais BR (fixos + móveis aproximados)
 const GOV_FERIADOS = [
@@ -10914,13 +10915,21 @@ async function govBuscaSalvarAtualizar(aba, chave, campo, valor, el){
 }
 
 async function govBuscaSalvar(aba, chave, campo, valor){
-  // Campo analista: atualizar direto no _radarDados (não persiste no Firebase)
   if(campo === 'analista'){
+    // Salvar no override persistente (soberano sobre upload)
+    _govAnalistaOverrides[chave] = valor;
+    // Atualizar em memória
     const idx = (_radarDados||[]).findIndex(r=>govChave(r)===chave);
     if(idx>=0) _radarDados[idx].analista = valor;
-    // Atualizar também no Firebase gov dados
-    const fb = {analista: valor};
-    if(typeof fbSet === 'function') await fbSet('gov_analista_'+chave, fb);
+    // Persistir no Firebase — coleção dedicada
+    try{
+      const db = getDB();
+      if(db) await db.collection('gov_analista_overrides').doc(chave.replace(/[|]/g,'_')).set({
+        chave, analista: valor, ts: new Date().toISOString()
+      });
+    } catch(e){ console.warn('govBuscaSalvar analista:', e); }
+    // Re-renderizar tabela da governança para refletir
+    if(aba==='MAPA') govRenderMapa((_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado'));
     return;
   }
   // Salvar no objeto correto conforme a aba
@@ -11062,6 +11071,29 @@ function govRenderConcluidos(){
 
 
 // ── SINCRONIZAR MAPA COM RADAR ──
+async function govCarregarAnalistaOverrides(){
+  // Carregar overrides de analista do Firebase e aplicar em _radarDados
+  try{
+    const db = getDB(); if(!db) return;
+    const snap = await db.collection('gov_analista_overrides').get();
+    _govAnalistaOverrides = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      if(d.chave && d.analista) _govAnalistaOverrides[d.chave] = d.analista;
+    });
+    // Aplicar overrides em _radarDados
+    let aplicados = 0;
+    (_radarDados||[]).forEach(r => {
+      const chave = govChave(r);
+      if(_govAnalistaOverrides[chave]){
+        r.analista = _govAnalistaOverrides[chave];
+        aplicados++;
+      }
+    });
+    if(aplicados > 0) console.log('Gov: ' + aplicados + ' overrides de analista aplicados');
+  } catch(e){ console.warn('govCarregarAnalistaOverrides:', e); }
+}
+
 function govSincronizarMapa(rows){
   // Filtrar só Analisar PATEC Finalizado
   const aptos = rows.filter(r => (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado');
