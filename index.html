@@ -776,20 +776,25 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div id="ciclo-ativo-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px"></div>
         </div>
 
-        <!-- ENCERRAR CICLO -->
-        <div class="cd" style="border-top:3px solid var(--vm);margin-bottom:1rem">
-          <div class="cd-t">🔒 Encerrar ciclo de medição</div>
-          <div class="al al-a" style="margin-bottom:1rem">⚠ Ao encerrar, todos os dados (produção, PCP, mapa) são arquivados no Firebase. Os dados permanecem disponíveis no Resultado de Medição. Não é possível desfazer.</div>
+        <!-- VALIDAÇÃO DO CICLO ATUAL -->
+        <div class="cd" style="border-top:3px solid var(--am);margin-bottom:1rem">
+          <div class="cd-t">📋 Validação — Ciclo Abr/Mai 2026 (27/04 a 25/05)</div>
+          <div class="al al-b" style="margin-bottom:1rem">
+            ℹ Este ciclo está <strong>em validação</strong> — aberto para revisão e edição antes do fechamento. Os dados do dia 26/05 em diante já são contabilizados no novo ciclo automaticamente.
+          </div>
           <div id="ciclo-resumo-enc" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1rem;padding:1rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
             <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Total produzido</div><div style="font-size:20px;font-weight:700;color:var(--azm)" id="enc-total">—</div></div>
             <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">% da meta</div><div style="font-size:20px;font-weight:700" id="enc-pct">—</div></div>
             <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Dias úteis</div><div style="font-size:20px;font-weight:700;color:var(--az)" id="enc-dias">—</div></div>
             <div style="text-align:center"><div style="font-size:10px;color:var(--tx2)">Média/dia</div><div style="font-size:20px;font-weight:700;color:var(--az)" id="enc-media">—</div></div>
           </div>
+          <div class="al al-a" style="margin-bottom:1rem">
+            ⚠ Ao encerrar: produção e mapa PATEC ficam bloqueados para edição. Confirme a data antes de prosseguir.
+          </div>
           <div class="form-grid" style="margin-bottom:1rem">
             <div class="field-wrap">
-              <span class="field-label">Data de encerramento</span>
-              <input type="date" id="adm-ciclo-fechamento" style="width:100%">
+              <span class="field-label">Data de encerramento (confirme ou ajuste)</span>
+              <input type="date" id="adm-ciclo-fechamento" value="2026-05-25" style="width:100%">
             </div>
             <div class="field-wrap">
               <span class="field-label">Observação final</span>
@@ -797,23 +802,43 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn" style="background:var(--vm);color:#fff;font-weight:700;padding:9px 20px" onclick="encerrarCiclo()">🔒 Encerrar e arquivar ciclo</button>
-            <span id="ciclo-fechamento-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Ciclo encerrado e arquivado no Firebase!</span>
+            <button class="btn" style="background:var(--vm);color:#fff;font-weight:700;padding:9px 20px" onclick="encerrarCicloConfirmar()">🔒 Encerrar e arquivar ciclo</button>
+            <span id="ciclo-fechamento-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Ciclo encerrado e arquivado!</span>
           </div>
         </div>
 
-        <!-- INICIAR NOVO CICLO -->
-        <div class="cd" style="border-top:3px solid var(--vd)">
-          <div class="cd-t">🚀 Iniciar novo ciclo de medição</div>
-          <div class="al al-b" style="margin-bottom:1rem">ℹ Defina o nome, data de início e meta. A data de encerramento você define quando chegar o momento. Os colaboradores já começam a lançar produção no novo ciclo automaticamente.</div>
+        <!-- CICLO ATUAL EM ANDAMENTO -->
+        <div class="cd" style="border-top:3px solid var(--vd);margin-bottom:1rem">
+          <div class="cd-t">🟢 Ciclo em Andamento — Mai/Jun 2026 (26/05 →)</div>
+          <div class="al al-b" style="margin-bottom:1rem">
+            ℹ O novo ciclo já está contabilizando produção a partir de 26/05. O fechamento previsto é definido abaixo e usado em todas as projeções — mas você escolhe a data real quando encerrar.
+          </div>
+          <div id="ciclo-ativo-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem"></div>
+          <div class="form-grid" style="margin-bottom:1rem">
+            <div class="field-wrap">
+              <span class="field-label">Fechamento previsto (usado nas projeções)</span>
+              <input type="date" id="ciclo-fechamento-previsto" style="width:100%" onchange="cicloAtualizarPrevisto(this.value)">
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--tx2)" id="ciclo-datas-ativo"></div>
+        </div>
+
+        <!-- INICIAR NOVO CICLO (futuro) -->
+        <div class="cd" style="border-top:3px solid var(--azm)">
+          <div class="cd-t">🚀 Configurar próximo ciclo</div>
+          <div class="al al-b" style="margin-bottom:1rem">ℹ Configure o próximo ciclo. Os dados começam a ser registrados a partir da data de início. O fechamento é sempre manual — você confirma ou ajusta a data antes de encerrar.</div>
           <div class="form-grid" style="margin-bottom:1rem">
             <div class="field-wrap">
               <span class="field-label">Nome do ciclo</span>
-              <input type="text" id="novo-ciclo-nome" placeholder="Ex: Mai/Jun 2026" style="width:100%">
+              <input type="text" id="novo-ciclo-nome" placeholder="Ex: Jun/Jul 2026" style="width:100%">
             </div>
             <div class="field-wrap">
               <span class="field-label">Data de início</span>
               <input type="date" id="novo-ciclo-inicio" style="width:100%">
+            </div>
+            <div class="field-wrap">
+              <span class="field-label">Fechamento previsto</span>
+              <input type="date" id="novo-ciclo-fim-prev" style="width:100%">
             </div>
             <div class="field-wrap">
               <span class="field-label">Meta (itens)</span>
@@ -3566,11 +3591,24 @@ const CICLO_ATUAL = {
   id: 'maio2026',
   nome: 'Ciclo Abr/Mai 2026',
   inicio: '2026-04-27',
-  fim: '2026-05-26',
+  fim: '2026-05-25', // fechamento previsto — confirmar antes de encerrar
   meta_ciclo: 1980,
   dias_uteis: 22,
   status: 'ativo',
 };
+
+// Ciclo em validação (aberto para revisão antes de fechar)
+const CICLO_VALIDACAO = {
+  id: 'maio2026',
+  nome: 'Ciclo Abr/Mai 2026',
+  inicio: '2026-04-27',
+  fim_previsto: '2026-05-25',
+  meta_ciclo: 1980,
+  status: 'validacao', // aberto para edição antes do fechamento
+};
+
+// Novo ciclo já contabilizando 26/05 em diante
+const CICLO_NOVO_INICIO = '2026-05-26';
 
 const META  = 90;
 const DIAS_UTEIS = 22;
@@ -7567,7 +7605,7 @@ let _cicloAtivo = null;
 async function cicloCarregarAtivo(){
   try{
     const saved=await fbGet('config','ciclo_ativo');
-    _cicloAtivo=saved||{id:CICLO_ATUAL.id,nome:CICLO_ATUAL.nome,inicio:CICLO_ATUAL.inicio,fim:'',meta:CICLO_ATUAL.meta_ciclo};
+    _cicloAtivo=saved||{id:CICLO_ATUAL.id,nome:CICLO_ATUAL.nome,inicio:CICLO_ATUAL.inicio,fim:'',fim_previsto:CICLO_ATUAL.fim,meta:CICLO_ATUAL.meta_ciclo,status:'ativo'};
   }catch(e){
     _cicloAtivo={id:CICLO_ATUAL.id,nome:CICLO_ATUAL.nome,inicio:CICLO_ATUAL.inicio,fim:'',meta:CICLO_ATUAL.meta_ciclo};
   }
@@ -7606,56 +7644,76 @@ function initCicloADM(){
     el('adm-ciclo-fechamento').value=HOJE.toISOString().split('T')[0];
 }
 
-async function encerrarCiclo(){
-  const dtFech=document.getElementById('adm-ciclo-fechamento')?.value;
-  const obs=document.getElementById('adm-ciclo-obs')?.value||'';
-  if(!dtFech){alert('Informe a data de encerramento.');return;}
-  if(!confirm('Encerrar o ciclo atual e arquivar todos os dados no Firebase?'))return;
-  const ciclo=_cicloAtivo||CICLO_ATUAL;
-  const inicio=ciclo.inicio||CICLO_ATUAL.inicio;
-  const meta=ciclo.meta||CICLO_ATUAL.meta_ciclo;
-  const regsC=registros.filter(r=>r.data>=inicio);
-  const pcpC=pcpData.filter(r=>r.data>=inicio);
-  const regsA=regsC.filter(r=>r.pres!=='Folga'&&r.pres!=='Férias');
-  const dias=[...new Set(regsA.map(r=>r.data))].length;
-  const total=regsA.reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0),0);
-  const pct=meta>0?Math.round(total/meta*100):0;
-  const snap={
-    id:(ciclo.id||CICLO_ATUAL.id)+'_enc_'+Date.now(),
-    nome:ciclo.nome||CICLO_ATUAL.nome,
-    inicio,fim:dtFech,meta,realizado:total,pct,
-    dias_uteis:dias,obs,ts_encerramento:new Date().toISOString(),
-    n_registros:regsC.length,
-    registros:regsC,pcp:pcpC,
-    mapa:{datas:DATAS_MAPA,datas_iso:DATAS_ISO_MAPA,L3:L[3],L4:L[4],L5:L[5],L6:L[6],L7:L[7],L8:L[8]}
+async function encerrarCicloConfirmar(){
+  const dtFech = document.getElementById('adm-ciclo-fechamento')?.value;
+  const obs    = document.getElementById('adm-ciclo-obs')?.value || '';
+  if(!dtFech){ alert('Confirme ou ajuste a data de encerramento.'); return; }
+  const ciclo  = _cicloAtivo || CICLO_ATUAL;
+  const inicio = ciclo.inicio || CICLO_ATUAL.inicio;
+  const meta   = ciclo.meta   || CICLO_ATUAL.meta_ciclo;
+  const regsC  = registros.filter(r => r.data >= inicio && r.data <= dtFech);
+  const regsA  = regsC.filter(r => r.pres !== 'Folga' && r.pres !== 'Férias');
+  const dias   = [...new Set(regsA.map(r => r.data))].length;
+  const total  = regsA.reduce((s,r) => s + (r.f[0]||0) + (r.f[1]||0) + (r.f[2]||0), 0);
+  const pct    = meta > 0 ? Math.round(total / meta * 100) : 0;
+  const msg = `CONFIRMAR ENCERRAMENTO DO CICLO\n\n` +
+    `Ciclo: ${ciclo.nome || CICLO_ATUAL.nome}\n` +
+    `Período: ${fmtDt(inicio)} → ${fmtDt(dtFech)}\n` +
+    `Total produzido: ${total.toLocaleString('pt-BR')} itens (${pct}% da meta)\n` +
+    `Dias úteis: ${dias}\n\n` +
+    `⚠ Após encerrar, os dados ficam arquivados (não editáveis).\n` +
+    `Os dados permanecem acessíveis no Resultado de Medição.\n\n` +
+    `Confirmar encerramento?`;
+  if(!confirm(msg)) return;
+  const pcpC = pcpData.filter(r => r.data >= inicio && r.data <= dtFech);
+  const snap = {
+    id: (ciclo.id||CICLO_ATUAL.id) + '_enc_' + Date.now(),
+    nome: ciclo.nome||CICLO_ATUAL.nome,
+    inicio, fim: dtFech, meta, realizado: total, pct,
+    dias_uteis: dias, obs, ts_encerramento: new Date().toISOString(),
+    n_registros: regsC.length, registros: regsC, pcp: pcpC,
+    mapa: {datas:DATAS_MAPA,datas_iso:DATAS_ISO_MAPA,L3:L[3],L4:L[4],L5:L[5],L6:L[6],L7:L[7],L8:L[8]}
   };
-  await fbSet('ciclos_encerrados',snap.id,snap);
+  await fbSet('ciclos_encerrados', snap.id, snap);
+  if(_cicloAtivo){ _cicloAtivo.status='fechado'; _cicloAtivo.fim=dtFech; await fbSet('config','ciclo_ativo',_cicloAtivo); }
   ciclos_historico.push(snap);
-  localStorage.setItem('patec_ciclos_historico',JSON.stringify(ciclos_historico));
-  const ok=document.getElementById('ciclo-fechamento-ok');
-  if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',6000);}
-  alert('Ciclo '+snap.nome+' encerrado!\n\nTotal: '+total.toLocaleString('pt-BR')+' itens ('+pct+'% da meta)\nDias uteis: '+dias+'\n\nDados arquivados. Veja em Resultado de Medicao.');
+  localStorage.setItem('patec_ciclos_historico', JSON.stringify(ciclos_historico));
+  const ok = document.getElementById('ciclo-fechamento-ok');
+  if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',6000); }
+  alert('✅ Ciclo ' + snap.nome + ' encerrado!\n\nTotal: ' + total.toLocaleString('pt-BR') + ' itens (' + pct + '% da meta)\nDias úteis: ' + dias + '\n\nDados arquivados. Veja em Resultado de Medição.');
   renderResultadoMedicao();
 }
 
-async function iniciarNovoCiclo(){
-  const nome=document.getElementById('novo-ciclo-nome')?.value?.trim();
-  const inicio=document.getElementById('novo-ciclo-inicio')?.value;
-  const meta=parseInt(document.getElementById('novo-ciclo-meta')?.value||'0');
-  if(!nome){alert('Informe o nome do ciclo.');return;}
-  if(!inicio){alert('Informe a data de inicio.');return;}
-  if(!meta){alert('Informe a meta do ciclo.');return;}
-  if(!confirm('Iniciar novo ciclo "'+nome+'" a partir de '+fmtDt(inicio)+' com meta de '+meta.toLocaleString('pt-BR')+' itens?'))return;
-  _cicloAtivo={id:'ciclo_'+Date.now(),nome,inicio,fim:'',meta,status:'ativo',ts_inicio:new Date().toISOString()};
-  await fbSet('config','ciclo_ativo',_cicloAtivo);
-  localStorage.setItem('patec_meta',String(meta));
+async function encerrarCiclo(){ encerrarCicloConfirmar(); }
+
+async function cicloAtualizarPrevisto(novaData){
+  if(!novaData) return;
+  if(!_cicloAtivo) _cicloAtivo = {id:CICLO_ATUAL.id,nome:CICLO_ATUAL.nome,inicio:CICLO_ATUAL.inicio,meta:CICLO_ATUAL.meta_ciclo,status:'ativo'};
+  _cicloAtivo.fim_previsto = novaData;
+  await fbSet('config','ciclo_ativo', _cicloAtivo);
   initMetaGap();
-  const ok=document.getElementById('novo-ciclo-ok');
-  if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',4000);}
-  ['novo-ciclo-nome','novo-ciclo-inicio','novo-ciclo-meta'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  initCicloADM();
-  alert('Novo ciclo "'+nome+'" iniciado!\n\nData inicio: '+fmtDt(inicio)+'\nMeta: '+meta.toLocaleString('pt-BR')+' itens');
 }
+
+async function iniciarNovoCiclo(){
+  const nome    = document.getElementById('novo-ciclo-nome')?.value?.trim();
+  const inicio  = document.getElementById('novo-ciclo-inicio')?.value;
+  const fimPrev = document.getElementById('novo-ciclo-fim-prev')?.value || '';
+  const meta    = parseInt(document.getElementById('novo-ciclo-meta')?.value||'0');
+  if(!nome)  { alert('Informe o nome do ciclo.'); return; }
+  if(!inicio){ alert('Informe a data de início.'); return; }
+  if(!meta)  { alert('Informe a meta do ciclo.'); return; }
+  if(!confirm('Iniciar novo ciclo "'+nome+'" a partir de '+fmtDt(inicio)+' com meta de '+meta.toLocaleString('pt-BR')+' itens?')) return;
+  _cicloAtivo = {id:'ciclo_'+Date.now(),nome,inicio,fim:'',fim_previsto:fimPrev,meta,status:'ativo',ts_inicio:new Date().toISOString()};
+  await fbSet('config','ciclo_ativo', _cicloAtivo);
+  localStorage.setItem('patec_meta', String(meta));
+  initMetaGap();
+  const ok = document.getElementById('novo-ciclo-ok');
+  if(ok){ ok.style.display='inline'; setTimeout(()=>ok.style.display='none',4000); }
+  ['novo-ciclo-nome','novo-ciclo-inicio','novo-ciclo-fim-prev','novo-ciclo-meta'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  initCicloADM();
+  alert('✅ Novo ciclo "'+nome+'" iniciado!\n\nData início: '+fmtDt(inicio)+(fimPrev?'\nFechamento previsto: '+fmtDt(fimPrev):'')+' \nMeta: '+meta.toLocaleString('pt-BR')+' itens');
+}
+
 
 // ── RESULTADO DE MEDIÇÃO ──
 async function renderResultadoMedicao(){
@@ -7820,7 +7878,14 @@ function _renderResultadoColab(c){
 })();
 
 // compatibilidade
-function fecharCiclo(){encerrarCiclo();}
+function fecharCiclo(){encerrarCicloConfirmar();}
+
+function initCicloADMExtra(){
+  // Preencher o campo de fechamento previsto com o valor do ciclo ativo
+  const prevEl = document.getElementById('ciclo-fechamento-previsto');
+  if(prevEl && _cicloAtivo?.fim_previsto) prevEl.value = _cicloAtivo.fim_previsto;
+  else if(prevEl && CICLO_ATUAL.fim) prevEl.value = CICLO_ATUAL.fim;
+}
 function renderCicloHistorico(){renderResultadoMedicao();}
 function deletarCicloHist(id){if(confirm('Excluir?')){ciclos_historico=ciclos_historico.filter(c=>c.id!==id);localStorage.setItem('patec_ciclos_historico',JSON.stringify(ciclos_historico));renderResultadoMedicao();}}
 let _novoCicloData=null;
@@ -7828,6 +7893,9 @@ function cicloOnDrop(e){e.preventDefault();}
 function cicloOnFile(i){}
 function cicloLimpar(){}
 function ativarNovoCiclo(){iniciarNovoCiclo();}
+
+// Inicializar campo extra ao abrir ADM
+document.addEventListener("DOMContentLoaded",()=>{ setTimeout(initCicloADMExtra,1000); });
 
 // ════════════════════════════════════════════
 // INTELIGÊNCIA DE MERCADO
