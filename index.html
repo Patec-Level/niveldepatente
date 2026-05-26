@@ -6758,6 +6758,7 @@ async function radarOnFile(file){
       familia:       (()=>{ const v=String(r['Familia']||r['FAMILIA']||'').trim(); return v.endsWith('.0')?v.slice(0,-2):v; })(),
       cat_familia:   String(r['Categoria Familia']||r['Categoria Família']||r['CATEGORIA FAMILIA']||r['CATEGORIA FAMÍLIA']||r['categoria familia']||r['categoria família']||'').trim(),
       tipo_familia:  String(r['TIPO_FAMILIA']||r['Tipo Familia']||r['Tipo Família']||r['tipo familia']||r['tipo família']||'').trim(),
+      familia_lq:    String(r['FAMILIA L OU Q']||r['Familia L ou Q']||r['familia l ou q']||r['FAMÍLIA L OU Q']||'').trim(),
       status_ctrl:   String(r['Status de Controle']||'').trim(),
       seguimento:    (()=>{
         const k=Object.keys(r).find(k=>k==='Seguimento');
@@ -10192,7 +10193,8 @@ function pcBuscarRCDetalhe(rc){
                 <span>📋 <strong>Fila Level Board:</strong> ${r.fila||'—'}</span>
                 ${r.familia&&r.familia!=='—'?`<span>🏷️ <strong>Família:</strong> ${r.familia}</span>`:''}
                 <span>🔁 <strong>Seguimento:</strong> ${r.seguimento||'—'}</span>
-                ${r.tipo_familia&&r.tipo_familia!=='—'?`<span>📦 <strong>Tipo Família:</strong> ${r.tipo_familia}</span>`:''}
+                ${r.familia_lq&&r.familia_lq!=='—'?`<span>🔤 <strong>Família L ou Q:</strong> ${r.familia_lq}</span>`:''}
+              ${r.tipo_familia&&r.tipo_familia!=='—'?`<span>📦 <strong>Tipo Família:</strong> ${r.tipo_familia}</span>`:''}
                 ${r.cat_familia&&r.cat_familia!=='—'?`<span>👨‍👩‍👧 <strong>Categoria Família:</strong> ${r.cat_familia}</span>`:''}
               </div>
             </td>
@@ -10990,7 +10992,7 @@ function govBuscarRC(rc){
     const status = govCalcStatus(prazo, m.finalizado||'');
     resultados.push({aba:'MAPA', chave, analista:r.analista||'—', rc:r.rc, seq:r.seq, op:r.num_oport, item:r.item_rc,
       status: statusDefault, envio:m.envio||'', prazo:prazo||'—', statusCalc:status, finalizado:m.finalizado||'',
-      sla:r.sla||'—', fila:r.fila||'—', seguimento:r.seguimento||'—', cat_familia:r.cat_familia||'—', familia:r.familia||'—', tipo_familia:r.tipo_familia||'—'});
+      sla:r.sla||'—', fila:r.fila||'—', seguimento:r.seguimento||'—', cat_familia:r.cat_familia||'—', familia:r.familia||'—', tipo_familia:r.tipo_familia||'—', familia_lq:r.familia_lq||'—'});
   });
 
   // XGL
@@ -11072,6 +11074,7 @@ function govBuscarRC(rc){
               <span>📋 <strong>Fila Level Board:</strong> ${r.fila}</span>
               ${r.familia&&r.familia!=='—'?`<span>🏷️ <strong>Família:</strong> ${r.familia}</span>`:''}
               <span>🔁 <strong>Seguimento:</strong> ${r.seguimento}</span>
+              ${r.familia_lq&&r.familia_lq!=='—'?`<span>🔤 <strong>Família L ou Q:</strong> ${r.familia_lq}</span>`:''}
               ${r.tipo_familia&&r.tipo_familia!=='—'?`<span>📦 <strong>Tipo Família:</strong> ${r.tipo_familia}</span>`:''}
               ${r.cat_familia&&r.cat_familia!=='—'?`<span>👨‍👩‍👧 <strong>Categoria Família:</strong> ${r.cat_familia}</span>`:''}
             </div>
