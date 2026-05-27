@@ -9589,11 +9589,10 @@ async function bkSalvarFirebase(){
         await db.collection('config').doc('backlog_planilha_' + c).delete();
       }
     }
-    // Salvar metadados
-    // Salvar apenas headers das colunas usadas (evita limite 1MB)
-    const headersUsados = COLS_USADAS.map(i => ({i, v: String(headers[i]||'')}));
+    // Salvar headers completos como array posicional (índice = posição real na planilha)
+    const headersCompletos = Array.from({length: Math.max(...COLS_USADAS) + 1}, (_, i) => String(headers[i]||''));
     await db.collection('config').doc('backlog_planilha').set({
-      headers: headersUsados,
+      headers: headersCompletos,
       arquivo: _bkDados.arquivo,
       dt: _bkDados.dt,
       total: rowsObj.length,
@@ -9625,7 +9624,20 @@ async function bkCarregarFirebase(){
     const doc = await db.collection('config').doc('backlog_planilha').get();
     if(doc.exists){
       const d = doc.data();
-      const hdrs = (d.headers||[]).sort((a,b)=>a.i-b.i).map(h=>h.v);
+      // Headers podem ser array posicional (novo formato) ou array de {i,v} (formato antigo)
+      let hdrs = [];
+      if(Array.isArray(d.headers) && d.headers.length > 0){
+        if(typeof d.headers[0] === 'string'){
+          // Novo formato: array posicional direto
+          hdrs = d.headers;
+        } else {
+          // Formato antigo: [{i, v}] — reconverter
+          const maxI = Math.max(...d.headers.map(h=>h.i||0));
+          hdrs = new Array(maxI+1).fill('');
+          d.headers.forEach(h=>{ if(h.i !== undefined) hdrs[h.i] = h.v||''; });
+        }
+      }
+      const idxFluxo = d.idxFluxo !== undefined ? d.idxFluxo : hdrs.findIndex(h=>String(h||'').toUpperCase().includes('TIRAR')) || 30;
       const totalChunks = d.chunks || 1;
       // Carregar todos os chunks
       let allRows = [];
@@ -9633,8 +9645,8 @@ async function bkCarregarFirebase(){
         const chunkDoc = await db.collection('config').doc('backlog_planilha_' + c).get();
         if(chunkDoc.exists) allRows = allRows.concat(chunkDoc.data().rows || []);
       }
-      // Reconverter objetos para array (preservando índices originais das colunas)
-      const maxCol = 34;
+      // Reconverter objetos {c0,c1,...} para array posicional
+      const maxCol = Math.max(34, idxFluxo);
       const rowsArr = allRows.map(obj => {
         const arr = new Array(maxCol + 1).fill('');
         Object.keys(obj).forEach(k => {
@@ -9645,16 +9657,13 @@ async function bkCarregarFirebase(){
         });
         return arr;
       });
-      // Debug: verificar col 32
-      _bkDados = { headers: hdrs, rows: rowsArr, arquivo: d.arquivo, dt: d.dt, idxFluxo: d.idxFluxo !== undefined ? d.idxFluxo : 30 };
-      console.log('[BK Load] idxFluxo:', _bkDados.idxFluxo, '| rows:', rowsArr.length);
+      _bkDados = { headers: hdrs, rows: rowsArr, arquivo: d.arquivo, dt: d.dt, idxFluxo };
+      console.log('[BK Load] idxFluxo:', idxFluxo, '| rows:', rowsArr.length, '| header[30]:', hdrs[30]);
       bkAtualizarInfoFirebase();
       aaVerificarDados();
-      // Re-renderizar Planilha Crítica se já estiver aberta
       if(document.getElementById('p-planilha-critica')?.classList.contains('active')){
         setTimeout(()=>pcInicializar(), 100);
       }
-      // Re-renderizar Tirar do Fluxo se tbody já existir
       if(document.getElementById('pc-tbody-fluxo')) pcRenderFluxo();
     }
   } catch(e){ console.warn('bkCarregarFirebase:', e); }
