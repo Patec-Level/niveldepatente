@@ -1417,7 +1417,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <option value="">Todos os ciclos</option>
                 <option value="fevmar2026">Fev/Mar 2026 (26/02–25/03)</option>
                 <option value="marabr2026">Mar/Abr 2026 (26/03–25/04)</option>
-                <option value="abr_mai2026" selected>Abr/Mai 2026 (27/04 – Atual)</option>
+                <option value="abr_mai2026">Abr/Mai 2026 (27/04 – 25/05)</option>
+                <option value="mai_jun2026" selected>Mai/Jun 2026 (26/05 – Atual)</option>
               </select>
             </div>
             <div>
@@ -1532,7 +1533,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <div class="field-wrap">
                 <span class="field-label">Ciclo de medição</span>
                 <select id="dist-ciclo-sel" onchange="renderDistribuicao()" style="width:100%;padding:6px 10px;font-size:13px">
-                  <option value="atual">Ciclo atual (27/04 – hoje)</option>
+                  <option value="atual">Ciclo atual (26/05 – hoje)</option>
                   <option value="marabr">Ciclo Mar/Abr 2026 (26/03 – 24/04)</option>
                   <option value="custom">Período personalizado</option>
                 </select>
@@ -2246,7 +2247,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="field-wrap" style="min-width:180px">
             <span class="field-label">Ciclo</span>
             <select id="est-ciclo-sel" style="width:100%;font-size:12px;padding:5px 10px">
-              <option value="atual">Ciclo atual (a partir de 27/04)</option>
+              <option value="atual">Ciclo atual (a partir de 26/05)</option>
               <option value="custom">Período personalizado</option>
             </select>
           </div>
@@ -4052,9 +4053,9 @@ function setDistTab(id, btn){
 function distGetPeriodo(){
   const sel=document.getElementById('dist-ciclo-sel')?.value||'atual';
   const hoje=HOJE.toISOString().split('T')[0];
-  if(sel==='atual')  return{de:CICLO_ATUAL.inicio, ate:hoje};
+  if(sel==='atual')  return{de:(_cicloAtivo?.inicio||CICLO_MAIJUN.inicio), ate:hoje};
   if(sel==='marabr') return{de:'2026-03-26', ate:'2026-04-24'};
-  return{de:document.getElementById('dist-de')?.value||CICLO_ATUAL.inicio,
+  return{de:document.getElementById('dist-de')?.value||(_cicloAtivo?.inicio||CICLO_MAIJUN.inicio),
          ate:document.getElementById('dist-ate')?.value||hoje};
 }
 
@@ -4182,7 +4183,7 @@ function renderPainelEstrategico(){
     dtDe = document.getElementById('est-de')?.value || '';
     dtAte = document.getElementById('est-ate')?.value || hoje;
   } else {
-    dtDe = CICLO_ATUAL.inicio;
+    dtDe = (_cicloAtivo?.inicio || CICLO_MAIJUN.inicio);
     dtAte = hoje;
   }
 
@@ -5706,19 +5707,35 @@ async function mapaExcluirDia(dt){
   renderAdmMapaHistorico();
 }
 
-function filtrarHistMapa(modo, l12Anterior=null){
+function filtrarHistMapa(modo, l12Anterior=null, periodoDE=null, periodoATE=null){
   let dados=[];
+  // Fonte única: mapaFirebase (dados do Firebase) complementado por dados embutidos
+  const mapaFb = (_mapaFirebase||[]);
+  const mapaEmb = L[3].map((_,i)=>({dia:i+1,dt:DATAS_MAPA[i],dtiso:DATAS_ISO_MAPA[i],l3:L[3][i],l4:L[4][i],l5:L[5][i],l6:L[6][i],l7:L[7][i],l8:L[8][i]}));
+  // Merge: Firebase prevalece sobre embutido
+  const mapaAll = [...mapaEmb];
+  mapaFb.forEach(fb=>{
+    const idx=mapaAll.findIndex(e=>e.dtiso===fb.data);
+    const entry={dia:idx>=0?mapaAll[idx].dia:mapaAll.length+1, dt:fmtDt(fb.data), dtiso:fb.data,
+      l3:fb.l3||0,l4:fb.l4||0,l5:fb.l5||0,l6:fb.l6||0,l7:fb.l7||0,l8:fb.l8||0};
+    if(idx>=0) mapaAll[idx]=entry; else mapaAll.push(entry);
+  });
+  mapaAll.sort((a,b)=>a.dtiso.localeCompare(b.dtiso));
+
   if(modo==='all'){
-    dados=[...L[3].map((_,i)=>({dia:i+1,dt:DATAS_MAPA[i],dtiso:DATAS_ISO_MAPA[i],l3:L[3][i],l4:L[4][i],l5:L[5][i],l6:L[6][i],l7:L[7][i],l8:L[8][i]}))];
-    // Se não foi passado l12Anterior, usar o último dia do Mar/Abr como referência
+    dados=[...mapaAll];
     if(l12Anterior===null) l12Anterior=MAPA_ABR2026.L3.slice(-1)[0]+MAPA_ABR2026.L4.slice(-1)[0]+MAPA_ABR2026.L5.slice(-1)[0]+MAPA_ABR2026.L6.slice(-1)[0];
+  } else if(modo==='periodo' && periodoDE){
+    dados=mapaAll.filter(d=>d.dtiso>=periodoDE&&d.dtiso<=(periodoATE||'9999'));
   } else {
-    const dia=document.getElementById('adm-mapa-dia').value;
-    const de=document.getElementById('adm-mapa-de').value;
-    const ate=document.getElementById('adm-mapa-ate').value;
-    dados=L[3].map((_,i)=>({dia:i+1,dt:DATAS_MAPA[i],dtiso:DATAS_ISO_MAPA[i],l3:L[3][i],l4:L[4][i],l5:L[5][i],l6:L[6][i],l7:L[7][i],l8:L[8][i]}));
+    const dia=document.getElementById('adm-mapa-dia')?.value||'';
+    const de=document.getElementById('adm-mapa-de')?.value||'';
+    const ate=document.getElementById('adm-mapa-ate')?.value||'';
+    dados=[...mapaAll];
     if(dia) dados=dados.filter(d=>d.dtiso===dia);
     else if(de&&ate) dados=dados.filter(d=>d.dtiso>=de&&d.dtiso<=ate);
+    else if(de) dados=dados.filter(d=>d.dtiso>=de);
+    else if(ate) dados=dados.filter(d=>d.dtiso<=ate);
   }
   renderMapaTabela(dados, l12Anterior);
 }
@@ -5751,10 +5768,13 @@ function filtrarHistMapaCiclo(){
     // Mar/Abr: anterior é o último dia do Fev/Mar
     const dados=MAPA_ABR2026.datas.map((_,i)=>({dia:i+1,dt:MAPA_ABR2026.datas[i],dtiso:MAPA_ABR2026.datas_iso[i],l3:MAPA_ABR2026.L3[i],l4:MAPA_ABR2026.L4[i],l5:MAPA_ABR2026.L5[i],l6:MAPA_ABR2026.L6[i],l7:MAPA_ABR2026.L7[i],l8:MAPA_ABR2026.L8[i]}));
     renderMapaTabela(dados, ultimoL12(MAPA_FEV2026));
-  } else {
-    // Abr/Mai (atual): anterior é o último dia do Mar/Abr
+  } else if(ciclo==='abr_mai2026'){
+    // Abr/Mai: anterior é o último dia do Mar/Abr
     const ultimoABR = ultimoL12(MAPA_ABR2026);
-    filtrarHistMapa('all', ultimoABR);
+    filtrarHistMapa('periodo', ultimoABR, '2026-04-27', '2026-05-25');
+  } else {
+    // Mai/Jun (atual): filtrar a partir de 26/05
+    filtrarHistMapa('periodo', null, '2026-05-26', new Date().toISOString().split('T')[0]);
   }
 }
 
