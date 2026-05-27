@@ -11992,11 +11992,18 @@ async function alertasEnviarPorAnalista(){
     }
   });
 
-  // ── ENVIAR 1 E-MAIL POR ANALISTA ──
+  // ── ENVIAR 1 E-MAIL POR ANALISTA (máx 1x por dia) ──
   for(const [analista, dados] of Object.entries(porAnalista)){
     const email = ANALISTAS_EMAIL[analista];
     if(!email) continue;
     if(!dados.novos.length && !dados.vencidos.length) continue;
+
+    // Bloquear se já foi enviado hoje para este analista
+    const keyDiario = 'alerta_diario_' + analista + '_' + hoje;
+    if(_alertasEnviados[keyDiario]){
+      console.log('[Alertas] Já enviado hoje para', analista, '— pulando');
+      continue;
+    }
 
     let lista = '';
 
@@ -12031,7 +12038,8 @@ async function alertasEnviarPorAnalista(){
         data:           new Date().toLocaleDateString('pt-BR')
       });
       console.log('✓ Alerta enviado para', analista, '('+email+')');
-      // Marcar todos como enviados
+      // Marcar todos como enviados + chave diária
+      _alertasEnviados[keyDiario] = new Date().toISOString();
       [...dados.novos, ...dados.vencidos].forEach(i => {
         _alertasEnviados[i.keyEnv] = new Date().toISOString();
       });
@@ -12060,10 +12068,10 @@ async function emailTesteDisparar(){
   const el = document.getElementById('email-teste-log');
   if(el) el.textContent = '';
   emailTesteLog('🚀 Iniciando disparo de alertas...');
-  emailTesteLog('🗑 Limpando histórico de enviados...');
+  emailTesteLog('🗑 Limpando histórico de enviados (incluindo bloqueios diários)...');
   _alertasEnviados = {};
   alertaSalvarEnviados();
-  emailTesteLog('✓ Histórico limpo');
+  emailTesteLog('✓ Histórico limpo — bloqueio diário removido');
   try{
     emailTesteLog('📧 Disparando alertas por analista...');
     await alertasEnviarPorAnalista();
