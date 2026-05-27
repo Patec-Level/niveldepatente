@@ -3020,6 +3020,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- ABA STATUS B -->
       <div id="gov-tab-statusb" style="display:none">
 
+        <!-- KPIs Status B -->
+        <div class="kgrid" id="sb-kpis" style="margin-bottom:1rem"></div>
+
         <!-- Botão adicionar -->
         <div style="margin-bottom:.75rem;display:flex;gap:8px;align-items:center">
           <button class="btn btn-p" style="font-size:11px" onclick="sbAbrirModal()">＋ Adicionar item</button>
@@ -10735,14 +10738,18 @@ async function govInicializar(){
   document.getElementById('gov-sem-dados').style.display = 'none';
   document.getElementById('gov-mapa-wrap').style.display = 'block';
 
-  // KPIs
+  // KPIs MAPA
   const total    = dados.length;
+  const concluido = dados.filter(r => {
+    const k = govChave(r); const m = _govDados[k]||{};
+    return !!m.finalizado;
+  }).length;
+  const emAberto = total - concluido;
   const atrasado = dados.filter(r => {
-    const k = govChave(r);
-    const m = _govDados[k] || {};
+    const k = govChave(r); const m = _govDados[k]||{};
+    if(m.finalizado) return false;
     return govCalcStatus(govCalcPrazo(m.status, m.envio), m.finalizado) === 'ATRASADO';
   }).length;
-  const concluido = Object.values(_govDados).filter(m => !!m.finalizado).length;
   const semStatus = dados.filter(r => {
     const k = govChave(r);
     return !(_govDados[k]?.status);
@@ -10750,7 +10757,7 @@ async function govInicializar(){
 
   document.getElementById('gov-kpis').innerHTML = `
     <div class="kc"><div class="kn" style="color:var(--az)">${total}</div><div class="kl">Total</div></div>
-    <div class="kc"><div class="kn" style="color:var(--vm)">${atrasado}</div><div class="kl">Atrasados</div></div>
+    <div class="kc"><div class="kn" style="color:var(--am)">${emAberto}</div><div class="kl">Em Aberto<br><span style="font-size:10px;color:var(--vm);font-weight:600">${atrasado} atrasado${atrasado!==1?'s':''} · ${emAberto-atrasado} no prazo</span></div></div>
     <div class="kc"><div class="kn" style="color:var(--vd)">${concluido}</div><div class="kl">Concluídos</div></div>
     <div class="kc"><div class="kn" style="color:var(--am)">${semStatus}</div><div class="kl">Sem Status</div></div>
   `;
@@ -11974,6 +11981,27 @@ function sbRender(){
     tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum item cadastrado.</td></tr>';
     return;
   }
+
+  // ── KPIs Status B ──
+  let sbEmAberto = 0, sbConcluido = 0, sbAtrasado = 0;
+  _sbItens.forEach(r => {
+    const chave = sbChave(r.rc, r.seq, r.op, r.item);
+    const m = _sbDados[chave] || {};
+    const finalizado = m.finalizado || '';
+    if(finalizado){
+      sbConcluido++;
+    } else {
+      sbEmAberto++;
+      const prazo = govCalcPrazo(m.status||'', m.envio||'');
+      if(govCalcStatus(prazo, finalizado) === 'ATRASADO') sbAtrasado++;
+    }
+  });
+  const sbKpiEl = document.getElementById('sb-kpis');
+  if(sbKpiEl) sbKpiEl.innerHTML = `
+    <div class="kc"><div class="kn" style="color:var(--az)">${_sbItens.length}</div><div class="kl">Total</div></div>
+    <div class="kc"><div class="kn" style="color:var(--am)">${sbEmAberto}</div><div class="kl">Em Aberto<br><span style="font-size:10px;color:var(--vm);font-weight:600">${sbAtrasado} atrasado${sbAtrasado!==1?'s':''} · ${sbEmAberto-sbAtrasado} no prazo</span></div></div>
+    <div class="kc"><div class="kn" style="color:var(--vd)">${sbConcluido}</div><div class="kl">Concluídos</div></div>
+  `;
   tbody.innerHTML = _sbItens.map((r, idx) => {
     const chave = sbChave(r.rc, r.seq, r.op, r.item);
     const m = _sbDados[chave] || {};
