@@ -2783,6 +2783,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <thead><tr>
                 <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
                 <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th>
+                <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th>
               </tr></thead>
               <tbody id="pc-tbody-reprovado"></tbody>
             </table>
@@ -10217,6 +10218,33 @@ function pcRenderTabela(aba, rows, campos, comExtra){
     );
     if(comExtra) cells.push(`<td style="text-align:center;font-weight:600;color:${(r.patec_obrig||'').toLowerCase()==='sim'?'var(--vm)':'var(--tx2)'}">${r.patec_obrig||'—'}</td>`);
     if(comExtra) cells.push(`<td style="${corValidade(r.validade)}">${r.validade||'—'}</td>`);
+    if(aba === 'reprovado'){
+      // Colunas de governança para 100% Reprovados
+      const chaveGov = govChave(r);
+      const dadosGov = _govDados[chaveGov] || {};
+      const statusGov = dadosGov.status || (GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase())) ? 'AG. TRATAMENTO' : '');
+      const envioGov = dadosGov.envio || '';
+      const finalizadoGov = dadosGov.finalizado || '';
+      const prazoGov = govCalcPrazo(statusGov, envioGov);
+      const statusCalcGov = govCalcStatus(prazoGov, finalizadoGov);
+      const idKey = chaveGov.replace(/[|]/g,'_');
+      const optsStatus = GOV_STATUS_OPCOES.map(o=>`<option value="${o}" ${statusGov===o?'selected':''}>${o}</option>`).join('');
+      cells.push(
+        `<td>
+          <select style="font-size:11px;padding:2px 5px;min-width:150px"
+            onchange="pcAtualizarStatusGov('${chaveGov.replace(/'/g,"\\'")}',this.value,this)">
+            <option value="">— selecione —</option>
+            ${optsStatus}
+          </select>
+        </td>`,
+        `<td><input type="date" value="${envioGov}" style="font-size:11px;padding:2px 5px"
+          onchange="govBuscaSalvarAtualizar('MAPA','${chaveGov}','envio',this.value,this)"></td>`,
+        `<td id="pc-reprov-prazo-${idKey}" style="font-size:11px">${prazoGov?fmtBR(prazoGov):'—'}</td>`,
+        `<td id="pc-reprov-status-${idKey}" style="font-size:11px;${govCorStatus(statusCalcGov)}">${statusCalcGov||'—'}</td>`,
+        `<td><input type="date" value="${finalizadoGov}" style="font-size:11px;padding:2px 5px"
+          onchange="govBuscaSalvarAtualizar('MAPA','${chaveGov}','finalizado',this.value,this)"></td>`,
+      );
+    }
     if(aba === 'criticos'){
       // Status da Governança — editável, sincroniza com govDados
       const chaveGov = govChave(r);
@@ -11444,6 +11472,11 @@ async function govBuscaSalvarAtualizar(aba, chave, campo, valor, el){
   const pcStatus = document.getElementById('pc-busca-status-'+idKey);
   if(pcPrazo) pcPrazo.textContent = prazo ? fmtBR(prazo) : '—';
   if(pcStatus){ pcStatus.textContent = statusCalc||'—'; pcStatus.style.cssText = govCorStatus(statusCalc); }
+  // Atualizar linha de reprovado (tabela 100% Reprovados)
+  const rpPrazo = document.getElementById('pc-reprov-prazo-'+idKey);
+  const rpStatus = document.getElementById('pc-reprov-status-'+idKey);
+  if(rpPrazo) rpPrazo.textContent = prazo ? fmtBR(prazo) : '—';
+  if(rpStatus){ rpStatus.textContent = statusCalc||'—'; rpStatus.style.cssText = govCorStatus(statusCalc); }
 }
 
 async function govBuscaSalvar(aba, chave, campo, valor){
