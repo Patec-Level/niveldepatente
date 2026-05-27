@@ -2808,7 +2808,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <table>
               <thead><tr>
                 <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>SLA</th><th>Idas Mercado</th>
-                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Validade Proposta</th><th>Status Governança</th>
+                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Validade Proposta</th>
               </tr></thead>
               <tbody id="pc-tbody-criticos"></tbody>
             </table>
@@ -10298,19 +10298,6 @@ function pcRenderTabela(aba, rows, campos, comExtra){
     );
     if(comExtra) cells.push(`<td style="text-align:center;font-weight:600;color:${(r.patec_obrig||'').toLowerCase()==='sim'?'var(--vm)':'var(--tx2)'}">${r.patec_obrig||'—'}</td>`);
     if(comExtra && aba !== 'reprovado') cells.push(`<td style="${corValidade(r.validade)}">${r.validade||'—'}</td>`);
-    if(aba === 'criticos'){
-      // Status da Governança — editável, sincroniza com govDados
-      const chaveGov = govChave(r);
-      const statusAtual = (_govDados[chaveGov]||{}).status || (GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase())) ? 'AG. TRATAMENTO' : '');
-      const optsStatus = GOV_STATUS_OPCOES.map(o=>`<option value="${o}" ${statusAtual===o?'selected':''}>${o}</option>`).join('');
-      cells.push(`<td>
-        <select style="font-size:11px;padding:2px 5px;min-width:150px"
-          onchange="pcAtualizarStatusGov('${chaveGov.replace(/'/g,"\'")}',this.value,this)">
-          <option value="">— selecione —</option>
-          ${optsStatus}
-        </select>
-      </td>`);
-    }
     return `<tr>${cells.join('')}</tr>`;
   }).join('');
 }
