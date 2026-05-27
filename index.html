@@ -11063,10 +11063,8 @@ function xglRender(){
   const kpiEl = document.getElementById('xgl-kpis');
   if(kpiEl) kpiEl.innerHTML = `
     <div class="kc"><div class="kn" style="color:var(--az)">${_xglItens.length}</div><div class="kl">Total</div></div>
-    <div class="kc"><div class="kn" style="color:var(--am)">${xglEmAberto}</div><div class="kl">Em Aberto</div></div>
+    <div class="kc"><div class="kn" style="color:var(--am)">${xglEmAberto}</div><div class="kl">Em Aberto<br><span style="font-size:10px;color:var(--vm);font-weight:600">${xglAtrasado} atrasado${xglAtrasado!==1?'s':''} · ${xglEmAberto-xglAtrasado} no prazo</span></div></div>
     <div class="kc"><div class="kn" style="color:var(--vd)">${xglConcluido}</div><div class="kl">Concluídos</div></div>
-    <div class="kc"><div class="kn" style="color:var(--vm)">${xglAtrasado}</div><div class="kl">Atrasados</div></div>
-    <div class="kc"><div class="kn" style="color:var(--azm)">${xglHoje}</div><div class="kl">Vencem Hoje</div></div>
   `;
 
   tbody.innerHTML = _xglItens.map((r, idx) => {
@@ -13193,6 +13191,9 @@ async function admApresentacaoGerar(){
   const xglPendentes = (_xglItens||[]).filter(r=>{
     const ch = typeof xglChave==='function' ? xglChave(r.rc,r.item,r.oport,r.itemop) : r.rc;
     const m = _xglDados[ch] || {};
+    // Em aberto = sem finalizado E status não é concluído/finalizado
+    const finalizado = m.finalizado || '';
+    if(finalizado) return false;
     return !XGL_EXCLUIR.includes((m.status||'').toLowerCase());
   });
   const xglTotalCalc = xglPendentes.length;
