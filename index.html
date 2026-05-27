@@ -2903,55 +2903,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
 
         <!-- Modal adicionar item XGL -->
-        <!-- ══ MODAL DESFECHO ══ -->
-        <div id="desfecho-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
-          <div class="cd" style="width:420px;max-width:95vw;padding:1.5rem;position:relative">
-            <div style="font-weight:700;font-size:14px;margin-bottom:.25rem">✅ Desfecho do item</div>
-            <div style="font-size:11px;color:var(--tx2);margin-bottom:1rem" id="desfecho-modal-chave">—</div>
-            <div style="display:flex;flex-direction:column;gap:.75rem">
-              <div class="field-wrap">
-                <span class="field-label">Tipo de saída <span style="color:var(--vm)">*</span></span>
-                <select id="desfecho-tipo" style="width:100%;font-size:12px;padding:5px 10px" onchange="desfechoToggleDev()">
-                  <option value="">— selecione —</option>
-                  <option value="Pedido">🛒 Pedido</option>
-                  <option value="Devolução">↩ Devolução</option>
-                  <option value="Republicação">🔄 Republicação</option>
-                  <option value="XGL">📦 XGL</option>
-                </select>
-              </div>
-              <div id="desfecho-dev-campos" style="display:none;flex-direction:column;gap:.75rem">
-                <div class="field-wrap">
-                  <span class="field-label">Centro <span style="color:var(--vm)">*</span></span>
-                  <input type="text" id="desfecho-centro" placeholder="Ex: UN-RNCE/AB" style="width:100%;font-size:12px;padding:5px 10px">
-                </div>
-                <div class="field-wrap">
-                  <span class="field-label">Motivo da devolução <span style="color:var(--vm)">*</span></span>
-                  <select id="desfecho-motivo" style="width:100%;font-size:12px;padding:5px 10px">
-                    <option value="">— selecione —</option>
-                    <option>Falta de retorno CSPN</option>
-                    <option>Solicitação de cancelamento requisitante</option>
-                    <option>Acima do DPV</option>
-                    <option>Reprovado 100%</option>
-                    <option>PATEC cancelado</option>
-                    <option>Falta de retorno fornecedor</option>
-                    <option>Falta de retorno cadastro (Thiago)</option>
-                  </select>
-                </div>
-              </div>
-              <div class="field-wrap">
-                <span class="field-label">Observação</span>
-                <input type="text" id="desfecho-obs" placeholder="Opcional..." style="width:100%;font-size:12px;padding:5px 10px">
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">
-              <button class="btn btn-s" onclick="desfechoFechar()">Pular</button>
-              <button class="btn btn-p" onclick="desfechoSalvar()">💾 Salvar desfecho</button>
-            </div>
-            <span id="desfecho-modal-erro" style="font-size:11px;color:var(--vm);display:none;margin-top:.5rem"></span>
-          </div>
-        </div>
-        <!-- ══ fim MODAL DESFECHO ══ -->
-
         <div id="xgl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center">
           <div class="cd" style="width:380px;max-width:95vw;padding:1.5rem;position:relative">
             <div style="font-weight:700;font-size:14px;margin-bottom:1rem">➕ Novo item XGL</div>
@@ -13564,5 +13515,55 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
 }
 
 </script>
+
+<!-- ══ MODAL DESFECHO — raiz do documento, visível em qualquer página ══ -->
+<div id="desfecho-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;width:440px;max-width:95vw;padding:1.5rem;box-shadow:0 8px 32px rgba(13,35,71,.18)">
+    <div style="font-weight:700;font-size:15px;margin-bottom:.25rem;color:var(--az)">✅ Desfecho do item</div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:1.25rem;padding:.5rem .75rem;background:var(--cin);border-radius:6px" id="desfecho-modal-chave">—</div>
+    <div style="display:flex;flex-direction:column;gap:.875rem">
+      <div>
+        <div style="font-size:11px;font-weight:600;margin-bottom:4px">Tipo de saída <span style="color:var(--vm)">*</span></div>
+        <select id="desfecho-tipo" style="width:100%;font-size:13px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:8px" onchange="desfechoToggleDev()">
+          <option value="">— selecione —</option>
+          <option value="Pedido">🛒 Pedido</option>
+          <option value="Devolução">↩ Devolução</option>
+          <option value="Republicação">🔄 Republicação</option>
+          <option value="XGL">📦 XGL</option>
+        </select>
+      </div>
+      <div id="desfecho-dev-campos" style="display:none;flex-direction:column;gap:.75rem;background:var(--vmc);border-radius:8px;padding:.875rem;border:1px solid rgba(217,64,64,.15)">
+        <div>
+          <div style="font-size:11px;font-weight:600;margin-bottom:4px">Centro <span style="color:var(--vm)">*</span></div>
+          <input type="text" id="desfecho-centro" placeholder="Ex: 4142" style="width:100%;font-size:13px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:8px">
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;margin-bottom:4px">Motivo da devolução <span style="color:var(--vm)">*</span></div>
+          <select id="desfecho-motivo" style="width:100%;font-size:13px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:8px">
+            <option value="">— selecione —</option>
+            <option>Falta de retorno CSPN</option>
+            <option>Solicitação de cancelamento requisitante</option>
+            <option>Acima do DPV</option>
+            <option>Reprovado 100%</option>
+            <option>PATEC cancelado</option>
+            <option>Falta de retorno fornecedor</option>
+            <option>Falta de retorno cadastro (Thiago)</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;margin-bottom:4px">Observação</div>
+        <input type="text" id="desfecho-obs" placeholder="Opcional..." style="width:100%;font-size:13px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:8px">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1.5rem;justify-content:flex-end">
+      <button onclick="desfechoFechar()" style="background:var(--cin);color:var(--tx);border:1.5px solid var(--brd);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500">Pular</button>
+      <button onclick="desfechoSalvar()" style="background:var(--vd);color:#fff;border:none;padding:8px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">💾 Salvar desfecho</button>
+    </div>
+    <div id="desfecho-modal-erro" style="font-size:11px;color:var(--vm);display:none;margin-top:.75rem;padding:.5rem .75rem;background:var(--vmc);border-radius:6px"></div>
+  </div>
+</div>
+<!-- ══ fim MODAL DESFECHO ══ -->
+
 </body>
 </html>
