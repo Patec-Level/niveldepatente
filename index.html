@@ -2306,6 +2306,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+      <!-- FILTRO DE MEDIÇÃO — DEVOLUÇÕES -->
+      <div id="est-dev-section" style="display:none">
+        <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vm)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.875rem">
+            <div class="cd-t" style="margin:0">↩ Devoluções — Motivos do ciclo</div>
+            <span style="font-size:11px;color:var(--tx2)" id="est-dev-total-label"></span>
+          </div>
+          <div id="est-dev-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:1rem"></div>
+          <!-- Gráfico de barras: Devoluções por centro (Falta de retorno CSPN) -->
+          <div id="est-dev-cspn-wrap" style="display:none">
+            <div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:.5rem">📊 Devoluções por centro — Falta de retorno CSPN</div>
+            <canvas id="est-chart-dev-cspn" height="120"></canvas>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /p-pr-estrategico -->
 
     <!-- ══════════════════════════════════════════
@@ -2885,6 +2901,55 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
 
         <!-- Modal adicionar item XGL -->
+        <!-- ══ MODAL DESFECHO ══ -->
+        <div id="desfecho-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+          <div class="cd" style="width:420px;max-width:95vw;padding:1.5rem;position:relative">
+            <div style="font-weight:700;font-size:14px;margin-bottom:.25rem">✅ Desfecho do item</div>
+            <div style="font-size:11px;color:var(--tx2);margin-bottom:1rem" id="desfecho-modal-chave">—</div>
+            <div style="display:flex;flex-direction:column;gap:.75rem">
+              <div class="field-wrap">
+                <span class="field-label">Tipo de saída <span style="color:var(--vm)">*</span></span>
+                <select id="desfecho-tipo" style="width:100%;font-size:12px;padding:5px 10px" onchange="desfechoToggleDev()">
+                  <option value="">— selecione —</option>
+                  <option value="Pedido">🛒 Pedido</option>
+                  <option value="Devolução">↩ Devolução</option>
+                  <option value="Republicação">🔄 Republicação</option>
+                  <option value="XGL">📦 XGL</option>
+                </select>
+              </div>
+              <div id="desfecho-dev-campos" style="display:none;flex-direction:column;gap:.75rem">
+                <div class="field-wrap">
+                  <span class="field-label">Centro <span style="color:var(--vm)">*</span></span>
+                  <input type="text" id="desfecho-centro" placeholder="Ex: UN-RNCE/AB" style="width:100%;font-size:12px;padding:5px 10px">
+                </div>
+                <div class="field-wrap">
+                  <span class="field-label">Motivo da devolução <span style="color:var(--vm)">*</span></span>
+                  <select id="desfecho-motivo" style="width:100%;font-size:12px;padding:5px 10px">
+                    <option value="">— selecione —</option>
+                    <option>Falta de retorno CSPN</option>
+                    <option>Solicitação de cancelamento requisitante</option>
+                    <option>Acima do DPV</option>
+                    <option>Reprovado 100%</option>
+                    <option>PATEC cancelado</option>
+                    <option>Falta de retorno fornecedor</option>
+                    <option>Falta de retorno cadastro (Thiago)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-wrap">
+                <span class="field-label">Observação</span>
+                <input type="text" id="desfecho-obs" placeholder="Opcional..." style="width:100%;font-size:12px;padding:5px 10px">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">
+              <button class="btn btn-s" onclick="desfechoFechar()">Pular</button>
+              <button class="btn btn-p" onclick="desfechoSalvar()">💾 Salvar desfecho</button>
+            </div>
+            <span id="desfecho-modal-erro" style="font-size:11px;color:var(--vm);display:none;margin-top:.5rem"></span>
+          </div>
+        </div>
+        <!-- ══ fim MODAL DESFECHO ══ -->
+
         <div id="xgl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center">
           <div class="cd" style="width:380px;max-width:95vw;padding:1.5rem;position:relative">
             <div style="font-weight:700;font-size:14px;margin-bottom:1rem">➕ Novo item XGL</div>
@@ -3537,6 +3602,7 @@ async function fbCarregarTudo(){
   console.log('✓ Firebase: todos os dados carregados e renderizados');
     fbCarregarMapaDiario();
   fbCarregarPCPDiario();
+  desfechoCarregarFirebase();
   fbCarregarRadar().then(()=>{ 
     // Registrar backlog AG. TRATAMENTO após radar carregar
     setTimeout(paAtualizarBacklogAuto, 800);
@@ -3771,6 +3837,7 @@ function go(id, el) {
     renderCardsDia();
     estPcpHoje();
     renderPainelEstrategico();
+    estRenderDevolucoes();
   }
 
 }
@@ -11175,8 +11242,194 @@ function govBuscarRC(rc){
   `;
 }
 
+// ════════════════════════════════════════════
+// DESFECHO — Modal de tipo de saída ao finalizar
+// ════════════════════════════════════════════
+let _desfechoCtx = null; // {aba, chave, valor} — contexto pendente
+
+function desfechoToggleDev(){
+  const tipo = document.getElementById('desfecho-tipo')?.value;
+  const campos = document.getElementById('desfecho-dev-campos');
+  if(campos) campos.style.display = tipo === 'Devolução' ? 'flex' : 'none';
+}
+
+function desfechoAbrir(aba, chave, valor){
+  _desfechoCtx = {aba, chave, valor};
+  const el = document.getElementById('desfecho-modal');
+  if(!el) return;
+  // Reset form
+  document.getElementById('desfecho-tipo').value = '';
+  document.getElementById('desfecho-centro').value = '';
+  document.getElementById('desfecho-motivo').value = '';
+  document.getElementById('desfecho-obs').value = '';
+  document.getElementById('desfecho-dev-campos').style.display = 'none';
+  document.getElementById('desfecho-modal-erro').style.display = 'none';
+  document.getElementById('desfecho-modal-chave').textContent = `Chave: ${chave} · Finalizado: ${fmtBR(valor)||valor}`;
+  el.style.display = 'flex';
+}
+
+function desfechoFechar(){
+  const el = document.getElementById('desfecho-modal');
+  if(el) el.style.display = 'none';
+  _desfechoCtx = null;
+}
+
+async function desfechoSalvar(){
+  if(!_desfechoCtx) return;
+  const tipo = document.getElementById('desfecho-tipo').value;
+  const erroEl = document.getElementById('desfecho-modal-erro');
+  erroEl.style.display = 'none';
+
+  if(!tipo){ erroEl.textContent = 'Selecione o tipo de saída.'; erroEl.style.display='block'; return; }
+  if(tipo === 'Devolução'){
+    const centro = document.getElementById('desfecho-centro').value.trim();
+    const motivo = document.getElementById('desfecho-motivo').value;
+    if(!centro){ erroEl.textContent = 'Informe o centro.'; erroEl.style.display='block'; return; }
+    if(!motivo){ erroEl.textContent = 'Selecione o motivo da devolução.'; erroEl.style.display='block'; return; }
+  }
+
+  const {aba, chave} = _desfechoCtx;
+  const desfecho = {
+    tipo,
+    centro: tipo === 'Devolução' ? document.getElementById('desfecho-centro').value.trim() : '',
+    motivo: tipo === 'Devolução' ? document.getElementById('desfecho-motivo').value : '',
+    obs: document.getElementById('desfecho-obs').value.trim(),
+    ts: new Date().toISOString()
+  };
+
+  // Salvar no Firebase
+  try{
+    const db = getDB();
+    if(db){
+      const col = aba === 'MAPA' ? 'gov_mapa' : aba === 'XGL' ? 'gov_xgl' : 'gov_sb';
+      const docId = chave.replace(/[|]/g,'_');
+      await db.collection(col).doc(docId).set({ desfecho }, {merge:true});
+      // Também guardar em coleção dedicada para o painel estratégico
+      await db.collection('desfechos').doc(docId).set({
+        chave, aba, ...desfecho, finalizado: _desfechoCtx.valor
+      }, {merge:true});
+      console.log('✓ Desfecho salvo:', tipo, chave);
+    }
+  } catch(e){ console.warn('desfechoSalvar:', e); }
+
+  // Atualizar em memória
+  if(aba === 'MAPA'){ if(!_govDados[chave]) _govDados[chave]={}; _govDados[chave].desfecho = desfecho; }
+  else if(aba === 'XGL'){ if(!_xglDados[chave]) _xglDados[chave]={}; _xglDados[chave].desfecho = desfecho; }
+
+  // Adicionar ao cache local de desfechos
+  if(!_desfechoCache) _desfechoCache = {};
+  _desfechoCache[chave] = { chave, aba, ...desfecho, finalizado: _desfechoCtx.valor };
+
+  desfechoFechar();
+
+  // Re-renderizar seção de devoluções no painel estratégico se estiver aberto
+  if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
+    estRenderDevolucoes();
+  }
+}
+
+let _desfechoCache = {}; // cache em memória dos desfechos
+
+async function desfechoCarregarFirebase(){
+  try{
+    const db = getDB(); if(!db) return;
+    const snap = await db.collection('desfechos').get();
+    _desfechoCache = {};
+    snap.docs.forEach(d=>{ const data=d.data(); _desfechoCache[data.chave] = data; });
+    console.log('✓ Desfechos carregados:', snap.docs.length);
+    estRenderDevolucoes();
+  } catch(e){ console.warn('desfechoCarregarFirebase:', e); }
+}
+
+// ── Render de devoluções no Painel Estratégico ──
+let _estChartDevCSPN = null;
+function estRenderDevolucoes(){
+  const sec = document.getElementById('est-dev-section');
+  if(!sec) return;
+
+  const MOTIVOS = [
+    'Falta de retorno CSPN',
+    'Solicitação de cancelamento requisitante',
+    'Acima do DPV',
+    'Reprovado 100%',
+    'PATEC cancelado',
+    'Falta de retorno fornecedor',
+    'Falta de retorno cadastro (Thiago)',
+  ];
+
+  const devs = Object.values(_desfechoCache).filter(d => d.tipo === 'Devolução');
+  if(!devs.length){ sec.style.display='none'; return; }
+  sec.style.display='block';
+
+  // Cards por motivo
+  const contMotivo = {};
+  MOTIVOS.forEach(m=>contMotivo[m]=0);
+  devs.forEach(d=>{ if(d.motivo && contMotivo[d.motivo]!==undefined) contMotivo[d.motivo]++; });
+  const totalDevs = devs.length;
+
+  document.getElementById('est-dev-total-label').textContent = `${totalDevs} devolução${totalDevs!==1?'s':''} registrada${totalDevs!==1?'s':''}`;
+
+  const cores = ['#D94040','#C07A12','#1A4A8A','#0E9E6A','#7C3AED','#EA580C','#0891B2'];
+  const cardsEl = document.getElementById('est-dev-cards');
+  cardsEl.innerHTML = MOTIVOS.map((m,i)=>{
+    const cnt = contMotivo[m]||0;
+    const pct = totalDevs>0 ? Math.round(cnt/totalDevs*100) : 0;
+    return `<div style="background:var(--cin);border-radius:8px;padding:.75rem;border:1px solid var(--brd);border-left:3px solid ${cores[i]}">
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:3px;line-height:1.3">${m}</div>
+      <div style="font-size:22px;font-weight:700;color:${cnt>0?cores[i]:'var(--tx2)'}">${cnt}</div>
+      <div style="font-size:10px;color:var(--tx2)">${pct}% do total</div>
+    </div>`;
+  }).join('');
+
+  // Gráfico CSPN por centro
+  const cspnWrap = document.getElementById('est-dev-cspn-wrap');
+  const cspnDevs = devs.filter(d=>d.motivo==='Falta de retorno CSPN' && d.centro);
+  if(!cspnDevs.length){ cspnWrap.style.display='none'; return; }
+  cspnWrap.style.display='block';
+
+  const porCentro = {};
+  cspnDevs.forEach(d=>{ porCentro[d.centro]=(porCentro[d.centro]||0)+1; });
+  const centros = Object.keys(porCentro).sort((a,b)=>porCentro[b]-porCentro[a]);
+  const vals = centros.map(c=>porCentro[c]);
+
+  const ctx = document.getElementById('est-chart-dev-cspn');
+  if(!ctx) return;
+  if(_estChartDevCSPN) _estChartDevCSPN.destroy();
+  _estChartDevCSPN = new Chart(ctx, {
+    type: 'bar',
+    data:{
+      labels: centros,
+      datasets:[{
+        label:'Devoluções (Falta de retorno CSPN)',
+        data: vals,
+        backgroundColor: '#D94040',
+        borderRadius: 4,
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        datalabels:{
+          anchor:'end', align:'end', color:'var(--tx)',
+          font:{size:11,weight:'600'},
+          formatter: v => v
+        }
+      },
+      scales:{
+        y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},
+        x:{ticks:{font:{size:10},maxRotation:30},grid:{display:false}}
+      }
+    }
+  });
+}
+
 async function govBuscaSalvarAtualizar(aba, chave, campo, valor, el){
   await govBuscaSalvar(aba, chave, campo, valor);
+  // Se preencheu o campo "finalizado", abrir modal de desfecho
+  if(campo === 'finalizado' && valor){
+    desfechoAbrir(aba, chave, valor);
+  }
   // Recalcular prazo e status na linha da busca
   const dados = aba==='MAPA' ? (_govDados[chave]||{}) : (_xglDados[chave]||{});
   const prazo = govCalcPrazo(dados.status||'', dados.envio||'');
