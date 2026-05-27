@@ -9692,7 +9692,9 @@ function aaVerificarDados(){
   if(_bkDados && _bkDados.rows && _bkDados.rows.length){
     semDados.style.display = 'none';
     painel.style.display   = 'block';
-    const rcs = [...new Set(_bkDados.rows.map(r=>(r[5]||'').toString().trim()).filter(Boolean))];
+    const _iRC = (_bkDados.headers||[]).findIndex(h=>String(h||'').trim().toUpperCase()==='RC'); 
+    const _iRCf = _iRC >= 0 ? _iRC : 5;
+    const rcs = [...new Set(_bkDados.rows.map(r=>(r[_iRCf]||'').toString().trim()).filter(Boolean))];
     document.getElementById('aa-kpis').innerHTML = `
       <div class="kc"><div class="kn">${_bkDados.rows.length}</div><div class="kl">Linhas</div></div>
       <div class="kc"><div class="kn">${rcs.length}</div><div class="kl">RCs no backlog</div></div>
@@ -9709,11 +9711,21 @@ function aaProcessar(){
   document.getElementById('aa-proc-status').textContent = '⏳ Processando...';
 
   const rows = _bkDados.rows;
+  const headers = _bkDados.headers || [];
 
-  // Agrupar linhas por RC (col 5)
+  // Lookup dinâmico de colunas pelo nome do header
+  const idxH = (nomes) => {
+    const i = headers.findIndex(h => nomes.some(n => String(h||'').trim().toUpperCase() === n.toUpperCase()));
+    return i >= 0 ? i : -1;
+  };
+  const iRC   = idxH(['RC']) >= 0 ? idxH(['RC']) : 5;
+  const iSEQ  = idxH(['SEQ','ITEM_RC','Item da RC','ITEM RC']) >= 0 ? idxH(['SEQ','ITEM_RC','Item da RC','ITEM RC']) : 6;
+  const iIOP  = idxH(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) >= 0 ? idxH(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) : 8;
+
+  // Agrupar linhas por RC
   const porRC = {};
   rows.forEach((r, idx) => {
-    const rc = (r[5]||'').toString().trim();
+    const rc = (r[iRC]||'').toString().trim();
     if(!rc) return;
     if(!porRC[rc]) porRC[rc] = [];
     porRC[rc].push({r, idx});
@@ -9797,7 +9809,7 @@ function aaProcessar(){
         if(!jaExiste){
           aptas.push({
             rc,
-            item:      (r[8]||'').toString().trim(),
+            item:      (r[iSEQ]||'').toString().trim(),  // Item da RC (SEQ)
             analista:  (r[1]||'').toString().trim(),
             material:  (r[23]||'').toString().trim(),
             fornecedor:(r[19]||'').toString().trim(),
@@ -10366,23 +10378,36 @@ function pcGetFluxo(){
   if(!_bkDados || !_bkDados.rows || !_bkDados.rows.length) return [];
   const rows = _bkDados.rows;
   const headers = _bkDados.headers || [];
+
+  // Localizar colunas pelo nome do header
+  const idx = (nomes) => {
+    const i = headers.findIndex(h => nomes.some(n => String(h||'').trim().toUpperCase() === n.toUpperCase()));
+    return i >= 0 ? i : -1;
+  };
+  const iAnalista  = idx(['ANALISTA','Analista PATEC','Analista']) >= 0 ? idx(['ANALISTA','Analista PATEC','Analista']) : 1;
+  const iRC        = idx(['RC']) >= 0 ? idx(['RC']) : 5;
+  const iSEQ       = idx(['SEQ','ITEM_RC','Item da RC','ITEM RC']) >= 0 ? idx(['SEQ','ITEM_RC','Item da RC','ITEM RC']) : 6;
+  const iOP        = idx(['OPORTUNIDADE','NUMERO_OPORTUNIDADE','NUM_OPORTUNIDADE']) >= 0 ? idx(['OPORTUNIDADE','NUMERO_OPORTUNIDADE','NUM_OPORTUNIDADE']) : 7;
+  const iIOP       = idx(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) >= 0 ? idx(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) : 8;
+
   let idxFluxo = _bkDados.idxFluxo;
   if(idxFluxo === undefined || idxFluxo < 0)
     idxFluxo = headers.findIndex(h => String(h||'').toLowerCase().includes('tirar') || String(h||'').toLowerCase().includes('fluxo'));
   if(idxFluxo < 0) idxFluxo = 32;
+
   const liberados = rows.filter(r => String(r[idxFluxo]||'').trim().toUpperCase().includes('LIBERAR'));
   const vistos = new Set();
   return liberados.filter(r => {
-    const chave = [r[5],r[6],r[7],r[8]].map(v=>String(v||'').trim()).join('|');
+    const chave = [r[iRC],r[iSEQ],r[iOP],r[iIOP]].map(v=>String(v||'').trim()).join('|');
     if(vistos.has(chave)) return false;
     vistos.add(chave);
     return true;
   }).map(r => ({
-    analista: String(r[1]||'').trim(),
-    rc:       String(r[5]||'').trim(),
-    seq:      String(r[6]||'').trim(),
-    num_oport:String(r[7]||'').trim(),
-    item_rc:  String(r[8]||'').trim(),
+    analista:    String(r[iAnalista]||'').trim(),
+    rc:          String(r[iRC]||'').trim(),
+    seq:         String(r[iSEQ]||'').trim(),
+    num_oport:   String(r[iOP]||'').trim(),
+    item_rc:     String(r[iIOP]||'').trim(),
     validade: '',
     sla:      '',
     idas:     '',
@@ -10469,34 +10494,35 @@ function pcRenderFluxo(){
   }
 
   const rows = _bkDados.rows;
+  const headers = _bkDados.headers || [];
 
-  // Debug: ver o que tem na col 32
-  const amostra = rows.slice(0,3).map(r => r[32]);
-  console.log('[Fluxo] Amostra col 32:', amostra, '| Total rows:', rows.length);
-  const todosVals = [...new Set(rows.map(r=>String(r[32]||'').trim()))].slice(0,10);
-  console.log('[Fluxo] Valores únicos col 32:', todosVals);
+  // Localizar colunas pelo nome — mesma lógica do pcGetFluxo
+  const idx = (nomes) => {
+    const i = headers.findIndex(h => nomes.some(n => String(h||'').trim().toUpperCase() === n.toUpperCase()));
+    return i >= 0 ? i : -1;
+  };
+  const iAnalista = idx(['ANALISTA','Analista PATEC','Analista']) >= 0 ? idx(['ANALISTA','Analista PATEC','Analista']) : 1;
+  const iFila     = idx(['FILA','FILA LEVEL BOARD','Fila ( esteira) ','Fila']) >= 0 ? idx(['FILA','FILA LEVEL BOARD','Fila ( esteira) ','Fila']) : 3;
+  const iRC       = idx(['RC']) >= 0 ? idx(['RC']) : 5;
+  const iSEQ      = idx(['SEQ','ITEM_RC','Item da RC','ITEM RC']) >= 0 ? idx(['SEQ','ITEM_RC','Item da RC','ITEM RC']) : 6;
+  const iOP       = idx(['OPORTUNIDADE','NUMERO_OPORTUNIDADE','NUM_OPORTUNIDADE']) >= 0 ? idx(['OPORTUNIDADE','NUMERO_OPORTUNIDADE','NUM_OPORTUNIDADE']) : 7;
+  const iIOP      = idx(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) >= 0 ? idx(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) : 8;
 
   // Encontrar índice da coluna Tirar do Fluxo
-  const headers = _bkDados.headers || [];
   let idxFluxo = _bkDados.idxFluxo;
-  if(idxFluxo === undefined || idxFluxo < 0){
+  if(idxFluxo === undefined || idxFluxo < 0)
     idxFluxo = headers.findIndex(h => String(h||'').toLowerCase().includes('tirar') || String(h||'').toLowerCase().includes('fluxo'));
-  }
-  if(idxFluxo < 0) idxFluxo = 32; // fallback
-  console.log('[Fluxo] Usando índice:', idxFluxo, '| header:', headers[idxFluxo]);
+  if(idxFluxo < 0) idxFluxo = 32;
 
   // Filtrar — valor contém 'LIBERAR'
   const liberados = rows.filter(r => String(r[idxFluxo]||'').trim().toUpperCase().includes('LIBERAR'));
 
-  // Deduplicar por RC(F=5) + Item(G=6) + Oportunidade(H=7) + ItemOP(I=8)
+  // Deduplicar por RC + SEQ + OP + IOP
   const vistos = new Set();
   const unicos = [];
   liberados.forEach(r => {
-    const chave = [r[5],r[6],r[7],r[8]].map(v=>String(v||'').trim()).join('|');
-    if(!vistos.has(chave)){
-      vistos.add(chave);
-      unicos.push(r);
-    }
+    const chave = [r[iRC],r[iSEQ],r[iOP],r[iIOP]].map(v=>String(v||'').trim()).join('|');
+    if(!vistos.has(chave)){ vistos.add(chave); unicos.push(r); }
   });
 
   if(ct) ct.textContent = unicos.length + ' registro(s) únicos';
@@ -10507,12 +10533,12 @@ function pcRenderFluxo(){
   }
 
   el.innerHTML = unicos.map(r => `<tr>
-    <td>${String(r[1]||'').trim()||'—'}</td>
-    <td style="font-size:11px">${String(r[3]||'').trim()||'—'}</td>
-    <td style="font-weight:700;color:var(--az)">${String(r[5]||'').trim()||'—'}</td>
-    <td>${String(r[6]||'').trim()||'—'}</td>
-    <td>${String(r[7]||'').trim()||'—'}</td>
-    <td>${String(r[8]||'').trim()||'—'}</td>
+    <td>${String(r[iAnalista]||'').trim()||'—'}</td>
+    <td style="font-size:11px">${String(r[iFila]||'').trim()||'—'}</td>
+    <td style="font-weight:700;color:var(--az)">${String(r[iRC]||'').trim()||'—'}</td>
+    <td>${String(r[iSEQ]||'').trim()||'—'}</td>
+    <td>${String(r[iOP]||'').trim()||'—'}</td>
+    <td>${String(r[iIOP]||'').trim()||'—'}</td>
   </tr>`).join('');
 }
 
