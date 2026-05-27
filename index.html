@@ -3628,7 +3628,7 @@ const CICLO_MAIJUN = {
   inicio: '2026-05-26',
   fim: '',
   fim_previsto: '2026-06-25',
-  meta: 1800,
+  meta: 1980,
   status: 'ativo',
 };
 
@@ -4187,9 +4187,8 @@ function renderPainelEstrategico(){
     dtDe = document.getElementById('est-de')?.value || '';
     dtAte = document.getElementById('est-ate')?.value || hoje;
   } else {
-    // Sempre usar o inicio do novo ciclo como piso — nunca antes de 26/05
-    const _ini = (_cicloAtivo?.inicio || CICLO_MAIJUN.inicio);
-    dtDe = _ini >= CICLO_NOVO_INICIO ? _ini : CICLO_NOVO_INICIO;
+    // HARD: sempre a partir de 26/05/2026 (início fixo do ciclo Mai/Jun)
+    dtDe = CICLO_NOVO_INICIO; // '2026-05-26'
     dtAte = hoje;
   }
 
@@ -4227,13 +4226,10 @@ function renderPainelEstrategico(){
   const gapCor = gap>=0?'var(--vd)':'var(--vm)';
   const ritmo = nDias>0?Math.round(totalAnalis/nDias):0;
   const cicloInicio = (_cicloAtivo?.inicio||CICLO_MAIJUN.inicio);
-  // Detectar se ciclo ativo é o antigo (fechado/encerrado) e usar CICLO_MAIJUN
-  const _cicloEhNovo = !_cicloAtivo || _cicloAtivo.id==='maijun2026' || (_cicloAtivo.inicio||'')>='2026-05-26';
-  const cicloMetaTotal = _cicloEhNovo ? CICLO_MAIJUN.meta
-    : ((_cicloAtivo?.meta) || parseInt(localStorage.getItem('patec_meta')||'0') || CICLO_ATUAL.meta_ciclo);
-  // Usar data de encerramento do input (se >= novo ciclo), senão CICLO_MAIJUN
-  const _fimInput = document.getElementById('est-fim-ciclo')?.value || localStorage.getItem('patec_fim_ciclo') || '';
-  const _fimSalvo = (_fimInput && _fimInput >= CICLO_NOVO_INICIO) ? _fimInput : CICLO_MAIJUN.fim_previsto;
+  // Meta e fim do ciclo Mai/Jun 2026 (fixos)
+  const cicloMetaTotal = CICLO_MAIJUN.meta; // 1800
+  const _fimInput = document.getElementById('est-fim-ciclo')?.value || '';
+  const _fimSalvo = (_fimInput && _fimInput >= CICLO_NOVO_INICIO) ? _fimInput : CICLO_MAIJUN.fim_previsto; // 2026-06-25
   const _fimDate = new Date(_fimSalvo+'T12:00:00');
   // Contar apenas dias úteis (seg-sex) restantes até o fim do ciclo
   function contarDiasUteisAte(fimDt){
@@ -4274,8 +4270,7 @@ function renderPainelEstrategico(){
       `<div style="display:grid;grid-template-columns:repeat(${l2.length},1fr);gap:10px">${l2.map(cardItem).join('')}</div>`;
   }
     // Alerta no estilo ciclo-box — padrão: Ritmo X/dia · projeção X itens · necessário X/dia · ritmo piorou/melhorou
-    const _iniD = (_cicloAtivo?.inicio||CICLO_MAIJUN.inicio);
-    const cicloInicioD = _iniD >= CICLO_NOVO_INICIO ? _iniD : CICLO_NOVO_INICIO;
+    const cicloInicioD = CICLO_NOVO_INICIO; // '2026-05-26' fixo
     const diasDecorridos = Math.max(1, Math.round((HOJE - new Date(cicloInicioD+'T12:00:00'))/86400000));
     // Projeção = já realizado + (ritmo atual × dias restantes)
     // Projeção = já realizado + (ritmo atual × dias úteis restantes)
