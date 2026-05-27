@@ -9524,11 +9524,15 @@ function bkProcessarArquivo(file){
         <div class="kc"><div class="kn">${analistas.length}</div><div class="kl">Analistas</div></div>
         <div class="kc"><div class="kn">${headers.length}</div><div class="kl">Colunas</div></div>
       `;
-      status.innerHTML = `<span style="color:var(--vd)">✓ Arquivo lido: <strong>${file.name}</strong> — ${data.length} linhas · Processando regras...</span>`;
+      status.innerHTML = `<span style="color:var(--vd)">✓ Arquivo lido: <strong>${file.name}</strong> — ${data.length} linhas · Processando e salvando...</span>`;
       document.getElementById('bk-upload-info').style.display = 'block';
       aaVerificarDados();
-      // Processar automaticamente após upload
-      setTimeout(()=>{ aaProcessar(); }, 300);
+      // Processar regras automaticamente
+      setTimeout(()=>{
+        aaProcessar();
+        // Salvar no Firebase automaticamente após processar
+        setTimeout(()=>bkSalvarFirebase(), 800);
+      }, 300);
     } catch(err){
       status.innerHTML = `<span style="color:var(--vm)">❌ Erro ao ler planilha: ${err.message}</span>`;
     }
@@ -9553,7 +9557,12 @@ async function bkSalvarFirebase(){
     }
     if(idxFluxo < 0) idxFluxo = 30; // TIRAR DO FLUXO = col 31 (índice 30)
     console.log('[BK Save] Coluna Tirar do Fluxo no índice:', idxFluxo);
-    const COLS_USADAS = [...new Set([1,3,4,5,6,7,8,17,19,20,21,22,23,24,25,26,27,28,31,32, idxFluxo])].filter(i=>i>=0);
+    // Colunas confirmadas: 0=ANALISTA, 1=MAPA, 2=Fila, 3=ANALISTA AUTOMATICO,
+    // 4=RC, 5=SEQ, 6=OPORTUNIDADE, 7=ITEM OP, 8=CENTRO, 16=POSICAO_FORNECEDOR,
+    // 17=CNPJ, 18=NOME_FORNECEDOR, 19=Aprovado/Reprovado, 20=Q18, 21=NM_MATERIAL,
+    // 22=TEXTO_BREVE_1, 23=MATERIAL_IDENTICO, 24=FABRICANTE(Forn), 25=FABRICANTE(PB),
+    // 26=PARTNUMBER(Forn), 27=PARTNUMBER(PB), 30=TIRAR DO FLUXO, 32=Lory, 33=Analisar PATEC Finalizado
+    const COLS_USADAS = [...new Set([0,1,2,3,4,5,6,7,8,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34, idxFluxo])].filter(i=>i>=0);
     const rowsObj = _bkDados.rows.map(r => {
       const obj = {};
       COLS_USADAS.forEach(i => { obj['c' + i] = r[i] !== undefined ? String(r[i]) : ''; });
@@ -9614,7 +9623,7 @@ async function bkCarregarFirebase(){
         if(chunkDoc.exists) allRows = allRows.concat(chunkDoc.data().rows || []);
       }
       // Reconverter objetos para array (preservando índices originais das colunas)
-      const maxCol = 33;
+      const maxCol = 34;
       const rowsArr = allRows.map(obj => {
         const arr = new Array(maxCol + 1).fill('');
         Object.keys(obj).forEach(k => {
@@ -9626,19 +9635,12 @@ async function bkCarregarFirebase(){
         return arr;
       });
       // Debug: verificar col 32
-      if(rowsArr.length > 0){
-        const keys0 = Object.keys(allRows[0]||{}).sort();
-        console.log('[BK] Chaves:', keys0.join(','));
-        console.log('[BK] c32 existe?', 'c32' in (allRows[0]||{}), '| valor:', (allRows[0]||{})['c32']);
-        console.log('[BK] arr[32]:', rowsArr[0][32]);
-        // Buscar LIBERAR
-        const comLiberar = allRows.filter(o => String(o.c32||'').includes('LIBERAR'));
-        console.log('[BK] Objetos com LIBERAR em c32:', comLiberar.length);
-      }
-      _bkDados = { headers: hdrs, rows: rowsArr, arquivo: d.arquivo, dt: d.dt, idxFluxo: d.idxFluxo !== undefined ? d.idxFluxo : -1 };
-      console.log('[BK Load] idxFluxo carregado do Firebase:', _bkDados.idxFluxo);
+      _bkDados = { headers: hdrs, rows: rowsArr, arquivo: d.arquivo, dt: d.dt, idxFluxo: d.idxFluxo !== undefined ? d.idxFluxo : 30 };
+      console.log('[BK Load] idxFluxo:', _bkDados.idxFluxo, '| rows:', rowsArr.length);
       bkAtualizarInfoFirebase();
       aaVerificarDados();
+      // Re-renderizar Tirar do Fluxo e Planilha Crítica se estiverem visíveis
+      if(document.getElementById('pc-tbody-fluxo')) pcRenderFluxo();
     }
   } catch(e){ console.warn('bkCarregarFirebase:', e); }
 }
