@@ -12043,6 +12043,63 @@ async function alertasEnviarPorAnalista(){
 }
 
 // ── DISPARAR TODOS OS ALERTAS ──
+// ════════════════════════════════════════════
+// TESTAR E-MAILS (ADM)
+// ════════════════════════════════════════════
+function emailTesteLog(msg){
+  const el = document.getElementById('email-teste-log');
+  if(!el) return;
+  const ts = new Date().toLocaleTimeString('pt-BR');
+  el.textContent = (el.textContent === 'Aguardando...' ? '' : el.textContent) + '[' + ts + '] ' + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+async function emailTesteDisparar(){
+  const btn = document.getElementById('btn-email-teste');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Disparando...'; }
+  const el = document.getElementById('email-teste-log');
+  if(el) el.textContent = '';
+  emailTesteLog('🚀 Iniciando disparo de alertas...');
+  emailTesteLog('🗑 Limpando histórico de enviados...');
+  _alertasEnviados = {};
+  alertaSalvarEnviados();
+  emailTesteLog('✓ Histórico limpo');
+  try{
+    emailTesteLog('📧 Disparando alertas por analista...');
+    await alertasEnviarPorAnalista();
+    emailTesteLog('✓ Alertas disparados com sucesso!');
+    emailTesteLog('📬 Verifique as caixas de entrada dos analistas.');
+  } catch(e){
+    emailTesteLog('❌ Erro: ' + e.message);
+    console.error('emailTesteDisparar:', e);
+  }
+  if(btn){ btn.disabled = false; btn.textContent = '🚀 Disparar Alertas Agora'; }
+}
+
+function emailTesteVerHistorico(){
+  const el = document.getElementById('email-teste-log');
+  if(!el) return;
+  const hist = _alertasEnviados || {};
+  const keys = Object.keys(hist);
+  if(!keys.length){
+    el.textContent = '📭 Histórico vazio — nenhum alerta enviado ainda.';
+    return;
+  }
+  el.textContent = '📋 Histórico de alertas enviados (' + keys.length + ' registros):\n\n';
+  keys.slice(-50).forEach(k => {
+    const dt = hist[k] ? new Date(hist[k]).toLocaleString('pt-BR') : '—';
+    el.textContent += dt + '  →  ' + k + '\n';
+  });
+}
+
+function emailTesteLimparHistorico(){
+  if(!confirm('Limpar todo o histórico de alertas enviados?')) return;
+  _alertasEnviados = {};
+  alertaSalvarEnviados();
+  const el = document.getElementById('email-teste-log');
+  if(el) el.textContent = '✓ Histórico limpo com sucesso.';
+}
+
 async function alertasDisparar(origem){
   console.log('[Alertas] Disparando alertas — origem:', origem);
   await alertasEnviarPorAnalista();
