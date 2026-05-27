@@ -12081,15 +12081,49 @@ function emailTesteVerHistorico(){
   if(!el) return;
   const hist = _alertasEnviados || {};
   const keys = Object.keys(hist);
+
   if(!keys.length){
     el.textContent = '📭 Histórico vazio — nenhum alerta enviado ainda.';
     return;
   }
-  el.textContent = '📋 Histórico de alertas enviados (' + keys.length + ' registros):\n\n';
-  keys.slice(-50).forEach(k => {
-    const dt = hist[k] ? new Date(hist[k]).toLocaleString('pt-BR') : '—';
-    el.textContent += dt + '  →  ' + k + '\n';
-  });
+
+  // Separar por tipo
+  const devKeys  = keys.filter(k => k.startsWith('xgl_dev_alerta_'));
+  const analKeys = keys.filter(k => !k.startsWith('xgl_dev_alerta_'));
+
+  let txt = '📋 HISTÓRICO DE ALERTAS ENVIADOS\n';
+  txt    += '═'.repeat(50) + '\n\n';
+
+  // Devolução XGL
+  txt += '📦 ALERTAS DEVOLUÇÃO XGL — Kaio / Amanda\n';
+  txt += '─'.repeat(45) + '\n';
+  if(!devKeys.length){
+    txt += '  ⚠️  Nenhum alerta de devolução disparado ainda.\n';
+    txt += '  (Só dispara quando um item XGL é finalizado)\n';
+  } else {
+    devKeys.forEach(k => {
+      const dt = hist[k] ? new Date(hist[k]).toLocaleString('pt-BR') : '—';
+      // Extrair RC e item da chave: xgl_dev_alerta_RC|ITEM|OPORT|ITEMOP
+      const partes = k.replace('xgl_dev_alerta_','').split('|');
+      txt += '  ✅ ' + dt + '\n';
+      txt += '     RC: ' + (partes[0]||'—') + ' | Item: ' + (partes[1]||'—') + ' | OP: ' + (partes[2]||'—') + '\n';
+    });
+  }
+
+  txt += '\n📧 ALERTAS ANALISTAS — Lory / Wanessa / Ludy\n';
+  txt += '─'.repeat(45) + '\n';
+  if(!analKeys.length){
+    txt += '  ⚠️  Nenhum alerta de analista enviado.\n';
+  } else {
+    analKeys.slice(-30).forEach(k => {
+      const dt = hist[k] ? new Date(hist[k]).toLocaleString('pt-BR') : '—';
+      txt += '  ✅ ' + dt + '  →  ' + k + '\n';
+    });
+  }
+
+  txt += '\n' + '═'.repeat(50) + '\n';
+  txt += 'Total: ' + keys.length + ' registro(s) · Devolução: ' + devKeys.length + ' · Analistas: ' + analKeys.length;
+  el.textContent = txt;
 }
 
 function emailTesteLimparHistorico(){
