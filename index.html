@@ -6843,8 +6843,9 @@ async function radarOnFile(file){
     const rows=raw.filter(r=>r['RC']&&r['RC']!=='RC').map(r=>({
       analista_auto: String(r['STATUS MAPA ']||r['ANALISTA_AUTOMATICO']||'').trim(),
       rc:            String(r['RC']||'').trim(),
-      seq:           String(r['Item']||r['ITEM']||'').trim(),        // col 15 = Item OP
-      item_rc:       String(r['SEQ']||'').trim(),                     // col 13 = SEQ = Item da RC      num_oport:     String(r['OPORTUNIDADE']||r['NUMERO_OPORTUNIDADE']||'').trim(),
+      seq:           String(r['SEQ']||'').trim(),
+      item_rc:       String(r['Item da RC']||r['ITEM']||r['Item']||'').trim(),
+      num_oport:     String(r['OPORTUNIDADE']||r['NUMERO_OPORTUNIDADE']||'').trim(),
       sla:           Number(r['SLA']||r['SLA LevelBoard']||0),
       fila:          String(r['Fila ( esteira) ']||r['Fila ']||r['Fila']||'').trim(),
       analista:      String(r['Analista PATEC']||r['Analista ']||r['Analista']||'').trim(),
