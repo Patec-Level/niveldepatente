@@ -2907,6 +2907,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- ABA XGL -->
       <div id="gov-tab-xgl" style="display:none">
 
+        <!-- KPIs XGL -->
+        <div class="kgrid" id="xgl-kpis" style="margin-bottom:1rem"></div>
+
         <!-- Botão adicionar novo item -->
         <div style="margin-bottom:.75rem;display:flex;gap:8px;align-items:center">
           <button class="btn btn-p" style="font-size:11px" onclick="xglAbrirModal()">＋ Adicionar item</button>
@@ -11037,6 +11040,34 @@ function xglRender(){
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum item cadastrado.</td></tr>';
     return;
   }
+
+  // ── KPIs XGL ──
+  let xglEmAberto = 0, xglConcluido = 0, xglAtrasado = 0, xglHoje = 0;
+  const hoje = new Date().toISOString().split('T')[0];
+  _xglItens.forEach(r => {
+    const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
+    const m = _xglDados[chave] || {};
+    const finalizado = m.finalizado || '';
+    if(finalizado){
+      xglConcluido++;
+    } else {
+      xglEmAberto++;
+      const statusAtual = m.status || 'AG. TRATAMENTO';
+      const envio = m.envio || '';
+      const prazo = govCalcPrazo(statusAtual, envio);
+      const statusCalc = govCalcStatus(prazo, finalizado);
+      if(statusCalc === 'ATRASADO') xglAtrasado++;
+      if(prazo === hoje) xglHoje++;
+    }
+  });
+  const kpiEl = document.getElementById('xgl-kpis');
+  if(kpiEl) kpiEl.innerHTML = `
+    <div class="kc"><div class="kn" style="color:var(--az)">${_xglItens.length}</div><div class="kl">Total</div></div>
+    <div class="kc"><div class="kn" style="color:var(--am)">${xglEmAberto}</div><div class="kl">Em Aberto</div></div>
+    <div class="kc"><div class="kn" style="color:var(--vd)">${xglConcluido}</div><div class="kl">Concluídos</div></div>
+    <div class="kc"><div class="kn" style="color:var(--vm)">${xglAtrasado}</div><div class="kl">Atrasados</div></div>
+    <div class="kc"><div class="kn" style="color:var(--azm)">${xglHoje}</div><div class="kl">Vencem Hoje</div></div>
+  `;
 
   tbody.innerHTML = _xglItens.map((r, idx) => {
     const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
