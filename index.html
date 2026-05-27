@@ -4203,7 +4203,9 @@ function renderPainelEstrategico(){
 
   // ── Usar pcpData como fonte única de verdade (dados validados) ──
   const pcpPer = pcpData.filter(r=>r.data>=dtDe&&r.data<=dtAte);
-  const dias = pcpPer.map(r=>r.data).sort();
+  // Contar apenas dias com produção real (pelo menos 1 item em qualquer campo)
+  const diasComProd = pcpPer.filter(r=>((r.f1||0)+(r.f2||0)+(r.f6||0)+(r.f3||0)+(r.f4||0)+(r.f5||0))>0);
+  const dias = diasComProd.map(r=>r.data).sort();
   const nDias = dias.length;
 
   // Aviso de Firebase offline (apenas em modo automático)
@@ -4218,12 +4220,12 @@ function renderPainelEstrategico(){
 
   // Analisado = f1 (PATEC Fin/Parada = 1ª Análise + Tratativa + StatusB)
   // Saída = f3+f4+f5+f6 (Pedidos+Devol+Repub+XGL)
-  const totalAnalis = pcpPer.reduce((s,r)=>s+(r.f1||0),0);
-  const totalPed = pcpPer.reduce((s,r)=>s+(r.f3||0),0);
-  const totalDev = pcpPer.reduce((s,r)=>s+(r.f4||0),0);
-  const totalRep = pcpPer.reduce((s,r)=>s+(r.f5||0),0);
-  const totalXgl = pcpPer.reduce((s,r)=>s+(r.f6||0),0);
-  const totalMDG = pcpPer.reduce((s,r)=>s+(r.f2||0),0);
+  const totalAnalis = diasComProd.reduce((s,r)=>s+(r.f1||0),0);
+  const totalPed = diasComProd.reduce((s,r)=>s+(r.f3||0),0);
+  const totalDev = diasComProd.reduce((s,r)=>s+(r.f4||0),0);
+  const totalRep = diasComProd.reduce((s,r)=>s+(r.f5||0),0);
+  const totalXgl = diasComProd.reduce((s,r)=>s+(r.f6||0),0);
+  const totalMDG = diasComProd.reduce((s,r)=>s+(r.f2||0),0);
   const totalSaidas = totalPed+totalDev+totalRep+totalXgl;
   const mediaEquipe = nDias>0?Math.round(totalAnalis/nDias):0;
   const metaDia = getMeta();
@@ -4295,8 +4297,8 @@ function renderPainelEstrategico(){
     // Projeção = já realizado + (ritmo atual × dias úteis restantes)
   const projecao = totalAnalis + Math.round(ritmo * diasRestantes);
     const abaixo = gap < 0;
-    // Variação vs ontem: pegar último e penúltimo dia do PCP
-    const pcpSort2 = pcpPer.slice().sort((a,b)=>a.data.localeCompare(b.data));
+    // Variação vs ontem: pegar último e penúltimo dia do PCP (apenas dias com produção)
+    const pcpSort2 = diasComProd.slice().sort((a,b)=>a.data.localeCompare(b.data));
     const ultDia = pcpSort2[pcpSort2.length-1]?.f1||0;
     const penDia = pcpSort2[pcpSort2.length-2]?.f1||0;
     const vsOntem = pcpSort2.length>1 ? ultDia - penDia : 0;
@@ -4325,8 +4327,8 @@ function renderPainelEstrategico(){
       msgEl.innerHTML='Ritmo <strong>'+ritmo+'/dia</strong> · projeção <strong>'+projecao.toLocaleString('pt-BR')+' itens</strong> (meta: '+cicloMetaTotal.toLocaleString('pt-BR')+') · <strong>'+diasRestantes+' dias úteis</strong> restantes até '+_fimSalvo.split('-').reverse().join('/') + ' · <span style="color:'+vsColor+';font-weight:600">'+vsStr+'</span>';
     }
 
-  // ── Dados para os gráficos usando pcpData (fonte validada) ──
-  const pcpPerSort = pcpPer.slice().sort((a,b)=>a.data.localeCompare(b.data));
+  // ── Dados para os gráficos usando pcpData (fonte validada, apenas dias com produção) ──
+  const pcpPerSort = diasComProd.slice().sort((a,b)=>a.data.localeCompare(b.data));
   const labels = pcpPerSort.map(r=>fmtDt(r.data));
   // Analisado = f1 do PCP (PATEC Fin/Parada = valor validado na planilha)
   const realProd = pcpPerSort.map(r=>r.f1||0);
