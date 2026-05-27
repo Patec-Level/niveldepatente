@@ -3873,15 +3873,13 @@ function renderCardsDia(){
 }
 function estPcpHoje(){
   const sel=document.getElementById('est-pcp-dt');
-  // Buscar último dia com dados PCP
+  // Sempre abrir no último dia com dados (que geralmente é ontem)
   const hoje=HOJE.toISOString().split('T')[0];
-  const temHoje=pcpData.find(r=>r.data===hoje);
-  if(temHoje){ if(sel)sel.value=hoje; }
-  else {
-    const allDates=pcpData.map(r=>r.data).sort();
-    const last=allDates.filter(d=>d<=hoje).slice(-1)[0]||hoje;
-    if(sel)sel.value=last;
-  }
+  const ontem=new Date(HOJE.getTime()-86400000).toISOString().split('T')[0];
+  const allDates=pcpData.map(r=>r.data).sort();
+  // Prioridade: último dia COM dados que seja <= ontem
+  const lastComDados=allDates.filter(d=>d<=ontem&&pcpData.find(r=>r.data===d&&((r.f1||0)+(r.f2||0)+(r.f3||0)+(r.f4||0)+(r.f5||0)+(r.f6||0))>0)).slice(-1)[0];
+  if(sel) sel.value=lastComDados||ontem;
   renderEstPCP();
 }
 
@@ -4160,12 +4158,18 @@ function estSalvarFim(){
   renderPainelEstrategico();
 }
 function estInitFim(){
-  const saved=localStorage.getItem('patec_fim_ciclo')||CICLO_ATUAL.fim;
+  const hoje=HOJE.toISOString().split('T')[0];
+  // Se o localStorage tem data do ciclo antigo (< hoje), limpar e usar novo ciclo
+  const savedRaw=localStorage.getItem('patec_fim_ciclo')||'';
+  if(savedRaw && savedRaw < CICLO_NOVO_INICIO){
+    localStorage.removeItem('patec_fim_ciclo');
+  }
+  const saved=localStorage.getItem('patec_fim_ciclo') || (_cicloAtivo?.fim_previsto||'') || CICLO_MAIJUN.fim_previsto;
   const el=document.getElementById('est-fim-ciclo');
-  if(el&&!el.value) el.value=saved;
+  if(el) el.value=saved;
   const lbl=document.getElementById('est-fim-label');
   const dias=Math.round((new Date(saved+'T12:00:00')-HOJE)/86400000);
-  if(lbl) lbl.textContent=dias>0?dias+' dias restantes':dias===0?'Encerra hoje':'Já encerrado';
+  if(lbl) lbl.textContent=dias>0?dias+' dias úteis restantes':dias===0?'Encerra hoje':'Já encerrado';
 }
 function renderPainelEstrategico(){
   const META_EQUIPE = 90; // 30 Wanessa + 30 Lory + 30 Ludy
