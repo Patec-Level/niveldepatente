@@ -10444,21 +10444,22 @@ function pcGetFluxo(){
   const rows = _bkDados.rows;
   const headers = _bkDados.headers || [];
 
-  // Localizar colunas pelo nome do header
-  const idx = (nomes) => {
+  // Índices confirmados: 0=Analista, 2=Fila, 4=RC, 5=SEQ, 6=OPORTUNIDADE, 7=ITEM OP, 30=TIRAR DO FLUXO
+  const idxByName = (nomes, fallback) => {
     const i = headers.findIndex(h => nomes.some(n => String(h||'').trim().toUpperCase() === n.toUpperCase()));
-    return i >= 0 ? i : -1;
+    return i >= 0 ? i : fallback;
   };
-  const iAnalista  = idx(['ANALISTA','Analista PATEC','Analista']) >= 0 ? idx(['ANALISTA','Analista PATEC','Analista']) : 1;
-  const iRC        = idx(['RC']) >= 0 ? idx(['RC']) : 5;
-  const iSEQ       = idx(['SEQ','ITEM_RC','Item da RC','ITEM RC']) >= 0 ? idx(['SEQ','ITEM_RC','Item da RC','ITEM RC']) : 6;
-  const iOP        = idx(['OPORTUNIDADE','NUMERO_OPORTUNIDADE','NUM_OPORTUNIDADE']) >= 0 ? idx(['OPORTUNIDADE','NUMERO_OPORTUNIDADE','NUM_OPORTUNIDADE']) : 7;
-  const iIOP       = idx(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) >= 0 ? idx(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) : 8;
+  const iAnalista = idxByName(['Analista','ANALISTA'], 0);
+  const iFila     = idxByName(['Fila','FILA'], 2);
+  const iRC       = idxByName(['RC'], 4);
+  const iSEQ      = idxByName(['SEQ'], 5);
+  const iOP       = idxByName(['OPORTUNIDADE'], 6);
+  const iIOP      = idxByName(['ITEM OP','ITEM_OP'], 7);
 
   let idxFluxo = _bkDados.idxFluxo;
   if(idxFluxo === undefined || idxFluxo < 0)
     idxFluxo = headers.findIndex(h => String(h||'').toLowerCase().includes('tirar') || String(h||'').toLowerCase().includes('fluxo'));
-  if(idxFluxo < 0) idxFluxo = 30; // TIRAR DO FLUXO = col 31 (índice 30)
+  if(idxFluxo < 0) idxFluxo = 30;
 
   const liberados = rows.filter(r => String(r[idxFluxo]||'').trim().toUpperCase().includes('LIBERAR'));
   const vistos = new Set();
@@ -10469,14 +10470,12 @@ function pcGetFluxo(){
     return true;
   }).map(r => ({
     analista:    String(r[iAnalista]||'').trim(),
+    fila:        String(r[iFila]||'').trim(),
     rc:          String(r[iRC]||'').trim(),
     seq:         String(r[iSEQ]||'').trim(),
     num_oport:   String(r[iOP]||'').trim(),
     item_rc:     String(r[iIOP]||'').trim(),
-    validade: '',
-    sla:      '',
-    idas:     '',
-    patec_obrig: ''
+    validade: '', sla: '', idas: '', patec_obrig: ''
   }));
 }
 
@@ -10561,28 +10560,24 @@ function pcRenderFluxo(){
   const rows = _bkDados.rows;
   const headers = _bkDados.headers || [];
 
-  // Localizar colunas pelo nome — mesma lógica do pcGetFluxo
-  const idx = (nomes) => {
+  // Índices confirmados: 0=Analista, 2=Fila, 4=RC, 5=SEQ, 6=OPORTUNIDADE, 7=ITEM OP, 30=TIRAR DO FLUXO
+  const idxByName = (nomes, fallback) => {
     const i = headers.findIndex(h => nomes.some(n => String(h||'').trim().toUpperCase() === n.toUpperCase()));
-    return i >= 0 ? i : -1;
+    return i >= 0 ? i : fallback;
   };
-  const iAnalista = idx(['ANALISTA','Analista PATEC','Analista']) >= 0 ? idx(['ANALISTA','Analista PATEC','Analista']) : 1;
-  const iFila     = idx(['FILA','FILA LEVEL BOARD','Fila ( esteira) ','Fila']) >= 0 ? idx(['FILA','FILA LEVEL BOARD','Fila ( esteira) ','Fila']) : 3;
-  const iRC       = idx(['RC']) >= 0 ? idx(['RC']) : 5;
-  const iSEQ      = idx(['SEQ','ITEM_RC','Item da RC','ITEM RC']) >= 0 ? idx(['SEQ','ITEM_RC','Item da RC','ITEM RC']) : 6;
-  const iOP       = idx(['OPORTUNIDADE','NUMERO_OPORTUNIDADE','NUM_OPORTUNIDADE']) >= 0 ? idx(['OPORTUNIDADE','NUMERO_OPORTUNIDADE','NUM_OPORTUNIDADE']) : 7;
-  const iIOP      = idx(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) >= 0 ? idx(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) : 8;
+  const iAnalista = idxByName(['Analista','ANALISTA'], 0);
+  const iFila     = idxByName(['Fila','FILA'], 2);
+  const iRC       = idxByName(['RC'], 4);
+  const iSEQ      = idxByName(['SEQ'], 5);
+  const iOP       = idxByName(['OPORTUNIDADE'], 6);
+  const iIOP      = idxByName(['ITEM OP','ITEM_OP'], 7);
 
-  // Encontrar índice da coluna Tirar do Fluxo
   let idxFluxo = _bkDados.idxFluxo;
   if(idxFluxo === undefined || idxFluxo < 0)
     idxFluxo = headers.findIndex(h => String(h||'').toLowerCase().includes('tirar') || String(h||'').toLowerCase().includes('fluxo'));
   if(idxFluxo < 0) idxFluxo = 30; // TIRAR DO FLUXO = col 31 (índice 30)
 
-  // Filtrar — valor contém 'LIBERAR'
   const liberados = rows.filter(r => String(r[idxFluxo]||'').trim().toUpperCase().includes('LIBERAR'));
-
-  // Deduplicar por RC + SEQ + OP + IOP
   const vistos = new Set();
   const unicos = [];
   liberados.forEach(r => {
