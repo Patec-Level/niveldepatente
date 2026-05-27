@@ -6905,10 +6905,7 @@ async function radarOnFile(file){
         if(raw==='Não'||raw==='NAO'||raw.toLowerCase()==='não'||raw.toLowerCase()==='nao') return 'Não';
         return ''; // #N/A, vazio — não conta nem como Sim nem como Não
       })(),
-      centro:        (()=>{
-        const k=Object.keys(r).find(k=>{ const n=k.trim().toUpperCase(); return n==='CENTRO'||n==='CENTRO COMPRADOR'||n==='CENTRO CUSTO'||n==='CTR'; });
-        return k?String(r[k]||'').trim():'';
-      })(),
+      centro:        String(r['CENTRO']||r['Centro']||r['centro']||'').trim(),
     }));
 
     // Debug: log column names from first row to help identify FAMILIA L OU Q
