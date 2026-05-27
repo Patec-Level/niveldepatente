@@ -3566,9 +3566,20 @@ async function fbCarregarTudo(){
     fbCarregarMapaDiario();
   fbCarregarPCPDiario();
   desfechoCarregarFirebase();
+  // Carregar backlog e re-renderizar Planilha Crítica após chegada dos dados
+  bkCarregarFirebase().then(()=>{
+    aaCarregarResultadoFirebase();
+    if(document.getElementById('p-planilha-critica')?.classList.contains('active')){
+      setTimeout(()=>pcInicializar(), 100);
+    }
+  });
   fbCarregarRadar().then(()=>{ 
     // Registrar backlog AG. TRATAMENTO após radar carregar
     setTimeout(paAtualizarBacklogAuto, 800);
+    // Re-renderizar Planilha Crítica com dados do radar
+    if(document.getElementById('p-planilha-critica')?.classList.contains('active')){
+      setTimeout(()=>pcInicializar(), 100);
+    }
   });
   // Atualizar Painel Estratégico se estiver aberto
   if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
@@ -9639,7 +9650,11 @@ async function bkCarregarFirebase(){
       console.log('[BK Load] idxFluxo:', _bkDados.idxFluxo, '| rows:', rowsArr.length);
       bkAtualizarInfoFirebase();
       aaVerificarDados();
-      // Re-renderizar Tirar do Fluxo e Planilha Crítica se estiverem visíveis
+      // Re-renderizar Planilha Crítica se já estiver aberta
+      if(document.getElementById('p-planilha-critica')?.classList.contains('active')){
+        setTimeout(()=>pcInicializar(), 100);
+      }
+      // Re-renderizar Tirar do Fluxo se tbody já existir
       if(document.getElementById('pc-tbody-fluxo')) pcRenderFluxo();
     }
   } catch(e){ console.warn('bkCarregarFirebase:', e); }
@@ -10002,7 +10017,8 @@ function aaExportar(){
 }
 
 // Carregar dados ao iniciar
-bkCarregarFirebase().then(()=>{ aaCarregarResultadoFirebase(); });
+// Carregar resultado do Analista Automático ao iniciar (backlog já carregado via fbCarregarTudo)
+aaCarregarResultadoFirebase();
 
 
 // ════════════════════════════════════════════
@@ -10131,10 +10147,15 @@ function pcDadosReprovado(){
 }
 
 function pcInicializar(){
-  const base = pcDadosBase();
-  if(!base.length){
-    document.getElementById('pc-sem-dados').style.display = 'block';
-    return;
+  // Se _bkDados ainda não carregou do Firebase, aguardar e tentar novamente
+  if(!_bkDados || !_bkDados.rows || !_bkDados.rows.length){
+    const base = pcDadosBase();
+    if(!base.length && (!_radarDados || !_radarDados.length)){
+      document.getElementById('pc-sem-dados').style.display = 'block';
+      // Tentar novamente em 1.5s (Firebase pode ainda estar carregando)
+      setTimeout(()=>pcInicializar(), 1500);
+      return;
+    }
   }
   document.getElementById('pc-sem-dados').style.display = 'none';
 
