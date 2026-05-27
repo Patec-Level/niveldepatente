@@ -10361,10 +10361,6 @@ function pcBuscarRCDetalhe(rc){
                 ${r.centro?`<span>🏗️ <strong>Centro:</strong> ${r.centro}</span>`:''}
                 ${r.familia&&r.familia!=='—'?`<span>🏷️ <strong>Família:</strong> ${r.familia}</span>`:''}
                 <span>🔁 <strong>Seguimento:</strong> ${r.seguimento||'—'}</span>
-                ${r.familia_lq&&r.familia_lq!=='—'?`<span>🔤 <strong>Família L ou Q:</strong> ${r.familia_lq}</span>`:''}
-              ${r.tipo_familia&&r.tipo_familia!=='—'?`<span>📦 <strong>Tipo Família:</strong> ${r.tipo_familia}</span>`:''}
-                ${r.cat_familia&&r.cat_familia!=='—'?`<span>👨‍👩‍👧 <strong>Categoria Família:</strong> ${r.cat_familia}</span>`:''}
-              </div>
             </td>
           </tr>`;
         }).join('')}
