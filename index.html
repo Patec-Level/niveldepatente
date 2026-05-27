@@ -6843,8 +6843,8 @@ async function radarOnFile(file){
     const rows=raw.filter(r=>r['RC']&&r['RC']!=='RC').map(r=>({
       analista_auto: String(r['STATUS MAPA ']||r['ANALISTA_AUTOMATICO']||'').trim(),
       rc:            String(r['RC']||'').trim(),
-      seq:           String(r['SEQ']||'').trim(),
-      num_oport:     String(r['OPORTUNIDADE']||r['NUMERO_OPORTUNIDADE']||'').trim(),
+      seq:           String(r['Item']||r['ITEM']||'').trim(),        // col 15 = Item OP
+      item_rc:       String(r['SEQ']||'').trim(),                     // col 13 = SEQ = Item da RC      num_oport:     String(r['OPORTUNIDADE']||r['NUMERO_OPORTUNIDADE']||'').trim(),
       sla:           Number(r['SLA']||r['SLA LevelBoard']||0),
       fila:          String(r['Fila ( esteira) ']||r['Fila ']||r['Fila']||'').trim(),
       analista:      String(r['Analista PATEC']||r['Analista ']||r['Analista']||'').trim(),
@@ -6855,7 +6855,6 @@ async function radarOnFile(file){
       validade:      String(r['Validade da \nProposta ']||r['Validade da Proposta ']||r['Validade da Proposta']||Object.entries(r).find(([k])=>k.toLowerCase().includes('validade'))?.[1]||'').trim(),
       finalizou:     r['FINALIZOU']||0,
       idas:          Number(r['Idas ao mercado']||r['IDAS AO MERCADO']||r['Idas']||0),
-      item_rc:       String(r['Item da RC']||r['ITEM']||r['Item']||'').trim(),
       familia:       (()=>{ const v=String(r['Familia']||r['FAMILIA']||'').trim(); return v.endsWith('.0')?v.slice(0,-2):v; })(),
       cat_familia:   String(r['Categoria Familia']||r['Categoria Família']||r['CATEGORIA FAMILIA']||r['CATEGORIA FAMÍLIA']||r['categoria familia']||r['categoria família']||'').trim(),
       tipo_familia:  String(r['TIPO_FAMILIA']||r['Tipo Familia']||r['Tipo Família']||r['tipo familia']||r['tipo família']||'').trim(),
@@ -10156,15 +10155,14 @@ function pcDadosReprovado(){
 }
 
 function pcInicializar(){
-  // Se _bkDados ainda não carregou do Firebase, aguardar e tentar novamente
-  if(!_bkDados || !_bkDados.rows || !_bkDados.rows.length){
-    const base = pcDadosBase();
-    if(!base.length && (!_radarDados || !_radarDados.length)){
-      document.getElementById('pc-sem-dados').style.display = 'block';
-      // Tentar novamente em 1.5s (Firebase pode ainda estar carregando)
-      setTimeout(()=>pcInicializar(), 1500);
-      return;
-    }
+  const base = pcDadosBase();
+
+  // Se radar ainda não carregou, aguardar (mas não bloquear se backlog já tiver)
+  if(!base.length && (!_radarDados || !_radarDados.length)){
+    document.getElementById('pc-sem-dados').style.display = 'block';
+    // Tentar novamente em 1.5s (Firebase pode ainda estar carregando)
+    setTimeout(()=>pcInicializar(), 1500);
+    return;
   }
   document.getElementById('pc-sem-dados').style.display = 'none';
 
@@ -10287,9 +10285,9 @@ function pcRenderTabela(aba, rows, campos, comExtra){
     if(comExtra) cells.push(`<td style="text-align:center">${r.idas||'—'}</td>`);
     cells.push(
       `<td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>`,
-      `<td>${r.seq||'—'}</td>`,
-      `<td>${r.num_oport||'—'}</td>`,
       `<td>${r.item_rc||'—'}</td>`,
+      `<td>${r.num_oport||'—'}</td>`,
+      `<td>${r.seq||'—'}</td>`,
     );
     if(comExtra) cells.push(`<td style="text-align:center;font-weight:600;color:${(r.patec_obrig||'').toLowerCase()==='sim'?'var(--vm)':'var(--tx2)'}">${r.patec_obrig||'—'}</td>`);
     if(comExtra && aba !== 'reprovado') cells.push(`<td style="${corValidade(r.validade)}">${r.validade||'—'}</td>`);
