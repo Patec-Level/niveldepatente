@@ -4196,6 +4196,8 @@ function renderPainelEstrategico(){
   const pcpPer = pcpData.filter(r=>r.data>=dtDe&&r.data<=dtAte);
   const dias = pcpPer.map(r=>r.data).sort();
   const nDias = dias.length;
+  console.log('[DEBUG] dtDe='+dtDe+' dtAte='+dtAte+' pcpPer='+pcpPer.length+' dias='+JSON.stringify(dias)+' totalPCP='+pcpData.length);
+  console.log('[DEBUG] pcpData datas='+pcpData.map(r=>r.data+':'+r.f1).join(', '));
 
   // Analisado = f1 (PATEC Fin/Parada = 1ª Análise + Tratativa + StatusB)
   // Saída = f3+f4+f5+f6 (Pedidos+Devol+Repub+XGL)
