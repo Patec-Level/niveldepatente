@@ -5611,11 +5611,11 @@ async function fbCarregarPCPDiario(){
     console.log('✓ PCP diario Firebase: '+snap.docs.length+' registros');
     // Sempre recalcular todos os dias com produção (fonte verdade = registros em memória)
     pcpRecalcularTudo();
-    // Atualizar painel se aberto
-    if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
+    // Sempre re-renderizar painel estratégico após carregar PCP (independe de aba ativa)
+    setTimeout(()=>{
       renderPainelEstrategico();
       estPcpHoje();
-    }
+    }, 100);
   }catch(e){
     console.warn('Erro PCP diario:',e);
     pcpRecalcularTudo();
@@ -5716,7 +5716,7 @@ async function mapaExcluirDia(dt){
 function filtrarHistMapa(modo, l12Anterior=null, periodoDE=null, periodoATE=null){
   let dados=[];
   // Fonte única: mapaFirebase (dados do Firebase) complementado por dados embutidos
-  const mapaFb = (_mapaFirebase||[]);
+  const mapaFb = (mapaFirebase||[]);
   const mapaEmb = L[3].map((_,i)=>({dia:i+1,dt:DATAS_MAPA[i],dtiso:DATAS_ISO_MAPA[i],l3:L[3][i],l4:L[4][i],l5:L[5][i],l6:L[6][i],l7:L[7][i],l8:L[8][i]}));
   // Merge: Firebase prevalece sobre embutido
   const mapaAll = [...mapaEmb];
