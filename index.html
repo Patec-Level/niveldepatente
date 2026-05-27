@@ -1876,7 +1876,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                   <thead>
                     <tr>
                       <th>RC</th>
-                      <th>Item</th>
+                      <th>Item da RC</th>
+                      <th>Oportunidade</th>
+                      <th>Item OP</th>
                       <th>Analista</th>
                       <th>Posição</th>
                       <th>Mat. Idêntico</th>
@@ -9511,18 +9513,22 @@ function bkProcessarArquivo(file){
       console.log('[BK] Coluna Tirar do Fluxo encontrada no índice:', idxTirarFluxo, '| header:', headers[idxTirarFluxo]);
       _bkDados = { headers, rows: data, arquivo: file.name, dt: new Date().toISOString(), idxFluxo: idxTirarFluxo };
 
-      // KPIs rápidos
-      const analistas = [...new Set(data.map(r => (r[1]||'').toString().trim()).filter(Boolean))];
-      const rcs = [...new Set(data.map(r => (r[5]||'').toString().trim()).filter(Boolean))];
+      // KPIs rápidos — usar header dinâmico para RC e Analista
+      const _iRCkpi = headers.findIndex(h=>String(h||'').trim().toUpperCase()==='RC');
+      const _iAnkpi = headers.findIndex(h=>['ANALISTA','ANALISTA PATEC'].includes(String(h||'').trim().toUpperCase()));
+      const analistas = [...new Set(data.map(r => (r[_iAnkpi>=0?_iAnkpi:1]||'').toString().trim()).filter(Boolean))];
+      const rcs = [...new Set(data.map(r => (r[_iRCkpi>=0?_iRCkpi:5]||'').toString().trim()).filter(Boolean))];
       document.getElementById('bk-upload-kpis').innerHTML = `
         <div class="kc"><div class="kn">${data.length}</div><div class="kl">Linhas</div></div>
         <div class="kc"><div class="kn">${rcs.length}</div><div class="kl">RCs únicas</div></div>
         <div class="kc"><div class="kn">${analistas.length}</div><div class="kl">Analistas</div></div>
         <div class="kc"><div class="kn">${headers.length}</div><div class="kl">Colunas</div></div>
       `;
-      status.innerHTML = `<span style="color:var(--vd)">✓ Arquivo lido: <strong>${file.name}</strong> — ${data.length} linhas</span>`;
+      status.innerHTML = `<span style="color:var(--vd)">✓ Arquivo lido: <strong>${file.name}</strong> — ${data.length} linhas · Processando regras...</span>`;
       document.getElementById('bk-upload-info').style.display = 'block';
       aaVerificarDados();
+      // Processar automaticamente após upload
+      setTimeout(()=>{ aaProcessar(); }, 300);
     } catch(err){
       status.innerHTML = `<span style="color:var(--vm)">❌ Erro ao ler planilha: ${err.message}</span>`;
     }
@@ -9876,18 +9882,19 @@ function aaProcessar(){
   if(!aptas.length){
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--tx2);padding:1rem">Nenhuma RC apta encontrada com os critérios definidos.</td></tr>';
   } else {
-    tbody.innerHTML = aptas.map(a=>`
-      <tr>
-        <td style="font-weight:700;color:var(--az)">${a.rc}</td>
-        <td>${a.item}</td>
-        <td>${a.analista}</td>
-        <td style="max-width:180px;font-size:11px">${a.material}</td>
-        <td style="max-width:180px;font-size:11px">${a.fornecedor}</td>
+    tbody.innerHTML = aptas.map(a=>{
+      const sap = (a.regra||'').includes('SAP') ? ' <span style="background:var(--amc);color:var(--am);font-size:9px;padding:1px 5px;border-radius:4px;font-weight:700">⚠️ SAP</span>' : '';
+      return `<tr>
+        <td style="font-weight:700;color:var(--az)">${a.rc||''}</td>
+        <td>${a.item||''}</td>
+        <td>${a.oport||'—'}</td>
+        <td>${a.itemop||'—'}</td>
+        <td>${a.analista||''}</td>
         <td style="text-align:center">${a.posicao||'—'}</td>
-        <td style="text-align:center;color:var(--vd);font-weight:700">${a.identico}</td>
-        <td style="font-size:11px;color:var(--azm);font-weight:600">${a.regra}</td>
-      </tr>
-    `).join('');
+        <td style="text-align:center;color:var(--vd);font-weight:700">${a.identico||''}</td>
+        <td style="font-size:11px;color:var(--azm);font-weight:600">${a.regra||''}${sap}</td>
+      </tr>`;
+    }).join('');
   }
 
   document.getElementById('aa-resultado').style.display = 'block';
@@ -9904,7 +9911,11 @@ async function aaSalvarFirebase(aptas){
   try {
     const db = getDB(); if(!db) return;
     const payload = {
-      aptas: aptas.map(a=>({rc:a.rc,item:a.item,analista:a.analista,material:a.material,fornecedor:a.fornecedor,posicao:a.posicao,identico:a.identico,regra:a.regra})),
+      aptas: aptas.map(a=>({
+        rc:a.rc, item:a.item, oport:a.oport||'', itemop:a.itemop||'',
+        analista:a.analista, material:a.material, fornecedor:a.fornecedor,
+        posicao:a.posicao, identico:a.identico, regra:a.regra
+      })),
       total: aptas.length,
       rcsUnicas: [...new Set(aptas.map(a=>a.rc))].length,
       dt: new Date().toISOString()
@@ -9928,16 +9939,19 @@ async function aaCarregarResultadoFirebase(){
       if(d.aptas && d.aptas.length){
         const tbody = document.getElementById('aa-tbody');
         if(tbody){
-          tbody.innerHTML = d.aptas.map(a=>`
-            <tr>
-              <td style="font-weight:700;color:var(--az)">${a.rc}</td>
-              <td>${a.item}</td>
-              <td>${a.analista}</td>
+          tbody.innerHTML = d.aptas.map(a=>{
+            const sap = (a.regra||'').includes('SAP') ? ' <span style="background:var(--amc);color:var(--am);font-size:9px;padding:1px 5px;border-radius:4px;font-weight:700">⚠️ SAP</span>' : '';
+            return `<tr>
+              <td style="font-weight:700;color:var(--az)">${a.rc||''}</td>
+              <td>${a.item||''}</td>
+              <td>${a.oport||'—'}</td>
+              <td>${a.itemop||'—'}</td>
+              <td>${a.analista||''}</td>
               <td style="text-align:center">${a.posicao||'—'}</td>
-              <td style="text-align:center;color:var(--vd);font-weight:700">${a.identico}</td>
-              <td style="font-size:11px;color:var(--azm);font-weight:600">${a.regra}</td>
-            </tr>
-          `).join('');
+              <td style="text-align:center;color:var(--vd);font-weight:700">${a.identico||''}</td>
+              <td style="font-size:11px;color:var(--azm);font-weight:600">${a.regra||''}${sap}</td>
+            </tr>`;
+          }).join('');
           const _elRes = document.getElementById('aa-resultado');
           const _elBtn = document.getElementById('aa-btn-exportar');
           const _elKpi = document.getElementById('aa-kpi-aptas');
