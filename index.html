@@ -2274,6 +2274,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- CARDS DE ANÁLISE -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem" id="est-cards-analise"></div>
 
+      <!-- BANNER FIREBASE OFFLINE -->
+      <div id="est-offline-banner" style="display:none;align-items:center;gap:10px;background:#FEF3CD;border:1.5px solid #F4C16A;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem">
+        <span style="font-size:20px;flex-shrink:0">📡</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#8B5E00">Firebase offline — dados não carregados</div>
+          <div style="font-size:11px;color:#8B5E00;margin-top:2px">Os registros do ciclo atual estão no Firebase e não puderam ser carregados. Verifique sua conexão e <a href="javascript:location.reload()" style="color:#8B5E00;text-decoration:underline">recarregue a página</a>.</div>
+        </div>
+      </div>
+
       <!-- ALERTA DO CICLO -->
       <div id="est-alerta-box" class="ciclo-box ciclo-amarelo" style="margin-bottom:1rem;display:none">
         <span style="font-size:22px;flex-shrink:0" id="est-alerta-ico">⚠</span>
@@ -4196,8 +4205,16 @@ function renderPainelEstrategico(){
   const pcpPer = pcpData.filter(r=>r.data>=dtDe&&r.data<=dtAte);
   const dias = pcpPer.map(r=>r.data).sort();
   const nDias = dias.length;
-  console.log('[DEBUG] dtDe='+dtDe+' dtAte='+dtAte+' pcpPer='+pcpPer.length+' dias='+JSON.stringify(dias)+' totalPCP='+pcpData.length);
-  console.log('[DEBUG] pcpData datas='+pcpData.map(r=>r.data+':'+r.f1).join(', '));
+
+  // Aviso de Firebase offline (apenas em modo automático)
+  const offlineBanner = document.getElementById('est-offline-banner');
+  if(offlineBanner){
+    if(_pcpFirebaseOffline && cicloSel !== 'custom'){
+      offlineBanner.style.display='flex';
+    } else {
+      offlineBanner.style.display='none';
+    }
+  }
 
   // Analisado = f1 (PATEC Fin/Parada = 1ª Análise + Tratativa + StatusB)
   // Saída = f3+f4+f5+f6 (Pedidos+Devol+Repub+XGL)
@@ -4411,42 +4428,9 @@ const HISTORICO_INICIAL = [
   {colab:'Ludy',data:'2026-05-13',pres:'Presencial',f:[20,0,0,0,0,0,0,0,0,0]},
   {colab:'Ludy',data:'2026-05-15',pres:'Presencial',f:[16,0,0,0,0,0,0,0,0,0]}
 ]
-const PCP_INICIAL = [
-  {data:'2026-03-26',f1:124,f2:9,f6:1,f3:8,f4:12,f5:9},
-  {data:'2026-03-27',f1:118,f2:7,f6:17,f3:13,f4:6,f5:16},
-  {data:'2026-03-30',f1:128,f2:9,f6:6,f3:13,f4:19,f5:18},
-  {data:'2026-03-31',f1:119,f2:7,f6:4,f3:14,f4:12,f5:8},
-  {data:'2026-04-01',f1:115,f2:5,f6:4,f3:24,f4:13,f5:28},
-  {data:'2026-04-02',f1:104,f2:6,f6:9,f3:5,f4:11,f5:19},
-  {data:'2026-04-06',f1:142,f2:4,f6:20,f3:15,f4:32,f5:15},
-  {data:'2026-04-07',f1:142,f2:3,f6:5,f3:8,f4:49,f5:45},
-  {data:'2026-04-08',f1:103,f2:2,f6:14,f3:9,f4:16,f5:7},
-  {data:'2026-04-09',f1:71,f2:3,f6:1,f3:4,f4:12,f5:14},
-  {data:'2026-04-10',f1:80,f2:5,f6:0,f3:8,f4:17,f5:11},
-  {data:'2026-04-13',f1:47,f2:0,f6:1,f3:4,f4:17,f5:20},
-  {data:'2026-04-14',f1:135,f2:0,f6:1,f3:42,f4:21,f5:25},
-  {data:'2026-04-15',f1:90,f2:2,f6:8,f3:4,f4:17,f5:15},
-  {data:'2026-04-16',f1:86,f2:3,f6:1,f3:6,f4:27,f5:6},
-  {data:'2026-04-17',f1:82,f2:2,f6:8,f3:4,f4:22,f5:1},
-  {data:'2026-04-20',f1:88,f2:2,f6:0,f3:3,f4:18,f5:23},
-  {data:'2026-04-22',f1:96,f2:3,f6:1,f3:4,f4:13,f5:33},
-  {data:'2026-04-23',f1:89,f2:0,f6:0,f3:14,f4:12,f5:27},
-  {data:'2026-04-24',f1:33,f2:0,f6:2,f3:5,f4:16,f5:3},
-  {data:'2026-04-27',f1:79,f2:0,f6:2,f3:29,f4:7,f5:17},
-  {data:'2026-04-28',f1:90,f2:0,f6:1,f3:4,f4:17,f5:22},
-  {data:'2026-04-29',f1:93,f2:1,f6:4,f3:41,f4:27,f5:8},
-  {data:'2026-04-30',f1:46,f2:0,f6:1,f3:1,f4:10,f5:15},
-  {data:'2026-05-04',f1:70,f2:0,f6:3,f3:11,f4:22,f5:22},
-  {data:'2026-05-05',f1:64,f2:1,f6:1,f3:6,f4:11,f5:20},
-  {data:'2026-05-06',f1:131,f2:0,f6:0,f3:19,f4:7,f5:9},
-  {data:'2026-05-07',f1:88,f2:0,f6:0,f3:23,f4:5,f5:26},
-  {data:'2026-05-08',f1:56,f2:2,f6:1,f3:0,f4:8,f5:9},
-  {data:'2026-05-11',f1:68,f2:1,f6:1,f3:8,f4:10,f5:29},
-  {data:'2026-05-12',f1:70,f2:0,f6:1,f3:4,f4:20,f5:41},
-  {data:'2026-05-13',f1:108,f2:1,f6:0,f3:41,f4:19,f5:23},
-  {data:'2026-05-14',f1:65,f2:3,f6:0,f3:3,f4:24,f5:12},
-  {data:'2026-05-15',f1:79,f2:0,f6:1,f3:15,f4:9,f5:25},
-];
+// PCP_INICIAL vazio — dados históricos ficam em ciclos_encerrados no Firebase.
+// pcpData é populado exclusivamente via fbCarregarPCPDiario + pcpRecalcularTudo.
+const PCP_INICIAL = [];
 
 // Senhas dos colaboradores (editáveis pelo ADM via localStorage)
 const SENHAS_DEFAULT = {André:'andre123',Aline:'aline123',Lory:'lory123',Ludy:'ludy123',Wanessa:'wanessa123'};
@@ -5595,38 +5579,46 @@ async function fbCarregarMapaDiario(){
 
 async function fbCarregarPCPDiario(){
   try{
-    const db=getDB();if(!db)return;
-    const snap=await db.collection('pcp_diario').orderBy('data').get();
-    if(snap.docs.length===0){
-      // Mesmo sem Firebase, recalcular tudo da produção em memória
-      pcpRecalcularTudo();
+    const db=getDB();
+    if(!db){
+      // Firebase offline — avisar no painel estratégico
+      console.warn('fbCarregarPCPDiario: Firebase offline, pcpData vazio');
+      _pcpFirebaseOffline = true;
+      setTimeout(()=>{ renderPainelEstrategico(); estPcpHoje(); }, 100);
       return;
     }
-    // Carregar Firebase mas NÃO sobrescrever — apenas adicionar dias que não existem na memória
+    _pcpFirebaseOffline = false;
+    const snap=await db.collection('pcp_diario').orderBy('data').get();
+    if(snap.docs.length===0){
+      pcpRecalcularTudo();
+      setTimeout(()=>{ renderPainelEstrategico(); estPcpHoje(); }, 100);
+      return;
+    }
+    // Carregar Firebase — substitui registros existentes E adiciona novos
     snap.docs.forEach(d=>{
       const reg=d.data();
-      if(!pcpData.find(r=>r.data===reg.data)){
-        pcpData.push(reg);
-      }
+      const idx=pcpData.findIndex(r=>r.data===reg.data);
+      if(idx>=0) pcpData[idx]=reg; // Firebase é fonte de verdade
+      else pcpData.push(reg);
     });
     pcpData.sort((a,b)=>a.data.localeCompare(b.data));
     console.log('✓ PCP diario Firebase: '+snap.docs.length+' registros');
-    // Sempre recalcular todos os dias com produção (fonte verdade = registros em memória)
+    // Recalcular apenas dias com produção em memória (não sobrescreve dias só do Firebase)
     pcpRecalcularTudo();
-    // Sempre re-renderizar painel estratégico após carregar PCP (independe de aba ativa)
-    setTimeout(()=>{
-      renderPainelEstrategico();
-      estPcpHoje();
-    }, 100);
+    setTimeout(()=>{ renderPainelEstrategico(); estPcpHoje(); }, 100);
   }catch(e){
     console.warn('Erro PCP diario:',e);
+    _pcpFirebaseOffline = true;
     pcpRecalcularTudo();
+    setTimeout(()=>{ renderPainelEstrategico(); estPcpHoje(); }, 100);
   }
 }
+let _pcpFirebaseOffline = false;
 
 function pcpRecalcularTudo(){
-  // Recalcular PCP para todos os dias com produção em memória
-  const diasComProd = [...new Set(registros.map(r=>r.data))];
+  // Recalcular PCP apenas para dias com produção em memória do ciclo atual em diante
+  // Datas antigas de ciclos encerrados ficam no Firebase (ciclos_encerrados), não aqui
+  const diasComProd = [...new Set(registros.map(r=>r.data))].filter(d=>d>=CICLO_NOVO_INICIO);
   diasComProd.forEach(dt=>{
     const calc = pcpCalcDia(dt);
     if(!calc) return;
@@ -5636,7 +5628,7 @@ function pcpRecalcularTudo(){
     else pcpData.push(novo);
   });
   pcpData.sort((a,b)=>a.data.localeCompare(b.data));
-  console.log('✓ PCP recalculado da memória: '+diasComProd.length+' dias');
+  console.log('✓ PCP recalculado da memória: '+diasComProd.length+' dias (≥'+CICLO_NOVO_INICIO+')');
 }
 
 function renderAdmMapaHistorico(){
