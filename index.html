@@ -4221,9 +4221,13 @@ function renderPainelEstrategico(){
   const gapCor = gap>=0?'var(--vd)':'var(--vm)';
   const ritmo = nDias>0?Math.round(totalAnalis/nDias):0;
   const cicloInicio = (_cicloAtivo?.inicio||CICLO_MAIJUN.inicio);
-  const cicloMetaTotal = (_cicloAtivo?.meta) || parseInt(localStorage.getItem('patec_meta')||'0') || CICLO_ATUAL.meta_ciclo;
-  // Usar data de encerramento salva pelo usuário ou fallback para CICLO_ATUAL.fim
-  const _fimSalvo = localStorage.getItem('patec_fim_ciclo')||CICLO_ATUAL.fim;
+  // Detectar se ciclo ativo é o antigo (fechado/encerrado) e usar CICLO_MAIJUN
+  const _cicloEhNovo = !_cicloAtivo || _cicloAtivo.id==='maijun2026' || (_cicloAtivo.inicio||'')>='2026-05-26';
+  const cicloMetaTotal = _cicloEhNovo ? CICLO_MAIJUN.meta
+    : ((_cicloAtivo?.meta) || parseInt(localStorage.getItem('patec_meta')||'0') || CICLO_ATUAL.meta_ciclo);
+  // Usar data de encerramento: novo ciclo usa fim_previsto do CICLO_MAIJUN
+  const _fimSalvo = _cicloEhNovo ? CICLO_MAIJUN.fim_previsto
+    : (localStorage.getItem('patec_fim_ciclo')||CICLO_ATUAL.fim);
   const _fimDate = new Date(_fimSalvo+'T12:00:00');
   // Contar apenas dias úteis (seg-sex) restantes até o fim do ciclo
   function contarDiasUteisAte(fimDt){
@@ -7668,7 +7672,9 @@ async function cicloCarregarAtivo(){
     const saved=await fbGet('config','ciclo_ativo');
     const hoje = new Date().toISOString().split('T')[0];
     // Se o ciclo salvo está fechado OU seu fim é anterior a hoje, usar novo ciclo
-    if(saved && (saved.status==='fechado' || (saved.fim && saved.fim < hoje)) && hoje >= CICLO_NOVO_INICIO){
+    const cicloAntigo = saved && (saved.inicio||'') < CICLO_NOVO_INICIO;
+    const cicloFechado = saved && (saved.status==='fechado' || (saved.fim && saved.fim < hoje));
+    if(hoje >= CICLO_NOVO_INICIO && (cicloFechado || cicloAntigo)){
       // Ciclo antigo encerrado — ativar o novo automaticamente
       _cicloAtivo = {...CICLO_MAIJUN};
       // Salvar no Firebase para próximas cargas
