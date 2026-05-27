@@ -2629,7 +2629,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <thead>
                 <tr>
                   <th>RC</th>
-                  <th>Item</th>
+                  <th>Item da RC</th>
+                  <th>Oportunidade</th>
+                  <th>Item OP</th>
                   <th>Analista</th>
                   <th>Posição</th>
                   <th>Mat. Idêntico</th>
@@ -9713,19 +9715,54 @@ function aaProcessar(){
   const rows = _bkDados.rows;
   const headers = _bkDados.headers || [];
 
-  // Lookup dinâmico de colunas pelo nome do header
-  const idxH = (nomes) => {
+  // ── Lookup pelo nome exato do header (case-insensitive, trim) ──
+  const idxH = (...nomes) => {
     const i = headers.findIndex(h => nomes.some(n => String(h||'').trim().toUpperCase() === n.toUpperCase()));
     return i >= 0 ? i : -1;
   };
-  const iRC   = idxH(['RC']) >= 0 ? idxH(['RC']) : 5;
-  const iSEQ  = idxH(['SEQ','ITEM_RC','Item da RC','ITEM RC']) >= 0 ? idxH(['SEQ','ITEM_RC','Item da RC','ITEM RC']) : 6;
-  const iIOP  = idxH(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) >= 0 ? idxH(['ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP','Item']) : 8;
+
+  // Colunas confirmadas pelo usuário:
+  // B=Analista, D=Fila, F=RC, G=SEQ, H=Oportunidade, I=Item OP
+  // E=Analista automático (classificação), R=Posição fornecedor, Y=Material idêntico
+  // Z/AA=Fabricante forn/PB, AB/AC=PN forn/PB, W=NM material
+  const iAnalista  = idxH('Analista','ANALISTA','Analista PATEC');       // col B
+  const iFila      = idxH('Fila','FILA','Fila ( esteira) ','FILA LEVEL BOARD'); // col D
+  const iRC        = idxH('RC');                                           // col F
+  const iSEQ       = idxH('SEQ','ITEM_RC','Item da RC','ITEM RC');        // col G → Item da RC
+  const iOP        = idxH('Oportunidade','OPORTUNIDADE','NUMERO_OPORTUNIDADE','NUM_OPORTUNIDADE'); // col H
+  const iIOP       = idxH('Item OP','ITEM_OP','ITEM_OPORTUNIDADE','ITEM OP'); // col I
+  const iColE      = idxH('Analista automático','ANALISTA AUTOMÁTICO','Analista automatico','ANALISTA AUTOMATICO'); // col E
+  const iColR      = idxH('Posição do fornecedor','POSIÇÃO DO FORNECEDOR','POSICAO DO FORNECEDOR','Posicao do Fornecedor','Posição','Posicao'); // col R
+  const iColY      = idxH('Material idêntico','MATERIAL IDÊNTICO','Material Identico','MATERIAL IDENTICO','Material idêntico '); // col Y
+  const iColZ      = idxH('Fabricante fornecedor','FABRICANTE FORNECEDOR','Fabricante Forn','Fabricante (forn)','Fabricante forn'); // col Z
+  const iColAA     = idxH('Fabricante Petrobras','FABRICANTE PETROBRAS','Fabricante PB','Fabricante (PB)','Fabricante pb');   // col AA
+  const iColAB     = idxH('PN fornecedor','PN FORNECEDOR','Part Number Forn','Part Number (forn)','PN forn');  // col AB
+  const iColAC     = idxH('PN Petrobras','PN PETROBRAS','Part Number PB','Part Number (PB)','PN pb');          // col AC
+  const iColW      = idxH('NM material','NM MATERIAL','NM','Numero Material','Número Material');               // col W
+  const iMaterial  = idxH('Material','MATERIAL','Descrição Material','DESCRIÇÃO MATERIAL');
+  const iFornecedor= idxH('Fornecedor','FORNECEDOR','Nome Fornecedor','NOME FORNECEDOR');
+
+  // Fallbacks posicionais (col A=0, B=1, D=3, E=4, F=5, G=6, H=7, I=8, R=17, W=22, Y=24, Z=25, AA=26, AB=27, AC=28)
+  const iE  = iColE  >= 0 ? iColE  : 4;
+  const iR  = iColR  >= 0 ? iColR  : 17;
+  const iY  = iColY  >= 0 ? iColY  : 24;
+  const iZ  = iColZ  >= 0 ? iColZ  : 25;
+  const iAA = iColAA >= 0 ? iColAA : 26;
+  const iAB = iColAB >= 0 ? iColAB : 27;
+  const iAC = iColAC >= 0 ? iColAC : 28;
+  const iW  = iColW  >= 0 ? iColW  : 22;
+  const iRCf     = iRC       >= 0 ? iRC       : 5;
+  const iSEQf    = iSEQ      >= 0 ? iSEQ      : 6;
+  const iOPf     = iOP       >= 0 ? iOP       : 7;
+  const iIOPf    = iIOP      >= 0 ? iIOP      : 8;
+  const iAnalistaf = iAnalista >= 0 ? iAnalista : 1;
+  const iMaterialf = iMaterial >= 0 ? iMaterial : 23;
+  const iFornecedorf = iFornecedor >= 0 ? iFornecedor : 19;
 
   // Agrupar linhas por RC
   const porRC = {};
   rows.forEach((r, idx) => {
-    const rc = (r[iRC]||'').toString().trim();
+    const rc = (r[iRCf]||'').toString().trim();
     if(!rc) return;
     if(!porRC[rc]) porRC[rc] = [];
     porRC[rc].push({r, idx});
@@ -9734,89 +9771,92 @@ function aaProcessar(){
   const aptas = [];
 
   Object.entries(porRC).forEach(([rc, itens]) => {
-    // Dentro de cada RC, verificar cada linha como candidata
     itens.forEach(({r}) => {
-      const colE  = (r[4]||'').toString().trim();
-      const colY  = (r[24]||'').toString().trim();
-      const colZ  = (r[25]||'').toString().trim();
-      const colAA = (r[26]||'').toString().trim();
-      const colAB = (r[27]||'').toString().trim();
-      const colAC = (r[28]||'').toString().trim();
-      const colW  = (r[22]||'').toString().trim();
-      const colR  = parseInt(r[17])||0; // posição fornecedor
+      const colE  = (r[iE]||'').toString().trim();
+      const colY  = (r[iY]||'').toString().trim();
+      const colZ  = (r[iZ]||'').toString().trim();
+      const colAA = (r[iAA]||'').toString().trim();
+      const colAB = (r[iAB]||'').toString().trim();
+      const colAC = (r[iAC]||'').toString().trim();
+      const colW  = (r[iW]||'').toString().trim();
+      const colR  = parseInt(r[iR])||0;
       const colEup = colE.toUpperCase();
 
-      // Verificar se fornecedores anteriores são todos NÃO ANALISAR
-      const anteriores = itens.filter(x => (parseInt(x.r[17])||0) < colR);
-      const todosNaoAnalisar = anteriores.every(x => aaEhNaoAnalisar(x.r[4]));
+      // ── Regra zero: Col Y = "não" → desconsiderar qualquer regra ──
+      if((colY||'').toString().trim().toLowerCase() === 'não' ||
+         (colY||'').toString().trim().toLowerCase() === 'nao') return;
+
+      // Verificar precedência: todos os fornecedores anteriores devem ser NÃO ANALISAR
+      const anteriores = itens.filter(x => (parseInt(x.r[iR])||0) < colR);
+      const todosNaoAnalisar = anteriores.every(x => aaEhNaoAnalisar(x.r[iE]));
       const ehPrimeiro = colR <= 1 || anteriores.length === 0;
       const precedenciaOK = ehPrimeiro || todosNaoAnalisar;
 
       let regra = null;
 
-      // REGRA 1: Melhor fornecedor apto + material idêntico (col E = 1º MELHOR FORNECEDOR APTO + col Y = sim)
+      // REGRA 1: Col E = "1º MELHOR FORNECEDOR APTO..." + Col Y = "sim"
       if(!regra && colEup.includes('MELHOR FORNECEDOR APTO') && aaEhIdentico(colY)){
         regra = 'Regra 1 — 1º Melhor Fornecedor Apto + Material Idêntico';
       }
 
-      // REGRA 2: Fornecedor anterior é NÃO ANALISAR, mas próximo tem material idêntico
+      // REGRA 2: Fornecedor anterior NÃO ANALISAR + próximo com Y=sim (não é NÃO ANALISAR)
       if(!regra && aaEhIdentico(colY) && precedenciaOK && !aaEhNaoAnalisar(colE)){
-        // verificar se existe anterior com NÃO ANALISAR
         if(!ehPrimeiro && todosNaoAnalisar){
-          regra = 'Regra 2 — Anterior NÃO ANALISAR + próximo com Material Idêntico';
+          regra = 'Regra 2 — Anterior NÃO ANALISAR + Material Idêntico';
         }
       }
 
-      // REGRA 3: NM Filho — desvio de código/fabricante/PN + material idêntico + anteriores NÃO ANALISAR
+      // REGRA 3: NM Filho — Desvio de código/fabricante/PN + Y=sim + anteriores NÃO ANALISAR
       if(!regra && aaEhIdentico(colY) && precedenciaOK){
         const temDesvio = colEup.includes('DESVIO DE CÓDIGO') || colEup.includes('DESVIO CÓDIGO') ||
                           colEup.includes('DESVIO DE FABRICANTE') || colEup.includes('DESVIO FABRICANTE') ||
                           colEup.includes('DESVIO PART') || colEup.includes('DESVIO DE PART');
         if(temDesvio){
-          regra = 'Regra 3 — NM Filho (Desvio de Código/Fabricante/PN) + Material Idêntico ⚠️ Verificar SAP';
+          regra = 'Regra 3 — NM Filho (Desvio) + Material Idêntico ⚠️ Verificar SAP';
         }
       }
 
-      // REGRA 4: Ausência de informação — col Y = sim e (Z+AA vazios OU AB+AC vazios)
+      // REGRA 4: Y=sim + (Z e AA vazios OU AB e AC vazios) + precedência OK
       if(!regra && aaEhIdentico(colY) && precedenciaOK){
         if((!colZ && !colAA) || (!colAB && !colAC)){
-          regra = 'Regra 4 — Material Idêntico + Fabricante/PN sem informação';
+          regra = 'Regra 4 — Material Idêntico + Ausência de informação de Fabricante/PN';
         }
       }
 
-      // REGRA 6: Fabricante (Z) e PN (AB) vazios + col Y = sim
+      // REGRA 5: Fabricante (Z) e PN (AB) vazios + Y=sim + precedência OK
       if(!regra && aaEhIdentico(colY) && precedenciaOK && !colZ && !colAB){
-        regra = 'Regra 6 — Fornecedor sem Fabricante/PN informado + Material Idêntico';
+        regra = 'Regra 5 — Sem Fabricante/PN informado + Material Idêntico';
       }
 
-      // REGRA 7: NM zerado (col W vazio) + col Y = sim
+      // REGRA 6: NM zerado (W vazio) + Y=sim + precedência OK
       if(!regra && aaEhIdentico(colY) && precedenciaOK && !colW){
-        regra = 'Regra 7 — NM Material zerado + Material Idêntico';
+        regra = 'Regra 6 — NM Material zerado + Material Idêntico';
       }
 
-      // REGRA 5: Validação de identidade técnica — fabricante e PN iguais entre fornecedor e Petrobras
-      if(!regra && precedenciaOK){
+      // REGRA 7: Validação técnica — Fabricante E PN iguais entre fornecedor e Petrobras + Y=sim
+      if(!regra && aaEhIdentico(colY) && precedenciaOK){
         const fabIgual = colZ && colAA && colZ.toUpperCase() === colAA.toUpperCase();
         const pnIgual  = colAB && colAC && colAB.toUpperCase() === colAC.toUpperCase();
         if(fabIgual && pnIgual){
-          regra = 'Regra 5 — Fabricante e Part Number idênticos (Fornecedor = Petrobras)';
+          regra = 'Regra 7 — Fabricante e Part Number idênticos (Fornecedor = Petrobras)';
         }
       }
 
       if(regra){
-        // Evitar duplicata de RC+Posição
         const jaExiste = aptas.some(a => a.rc === rc && a.posicao === colR);
         if(!jaExiste){
           aptas.push({
             rc,
-            item:      (r[iSEQ]||'').toString().trim(),  // Item da RC (SEQ)
-            analista:  (r[1]||'').toString().trim(),
-            material:  (r[23]||'').toString().trim(),
-            fornecedor:(r[19]||'').toString().trim(),
-            posicao:   colR,
-            identico:  colY,
+            item:       (r[iSEQf]||'').toString().trim(),   // SEQ = Item da RC
+            oport:      (r[iOPf]||'').toString().trim(),     // Oportunidade
+            itemop:     (r[iIOPf]||'').toString().trim(),    // Item OP
+            analista:   (r[iAnalistaf]||'').toString().trim(),
+            fila:       (r[iFila>=0?iFila:3]||'').toString().trim(),
+            material:   (r[iMaterialf]||'').toString().trim(),
+            fornecedor: (r[iFornecedorf]||'').toString().trim(),
+            posicao:    colR,
+            identico:   colY,
             regra,
-            rowData:   r
           });
         }
       }
@@ -9919,16 +9959,15 @@ function aaExportar(){
   if(!aptas.length){ alert('Nenhum resultado para exportar.'); return; }
 
   const wsData = [
-    ['RC','Item OP','Analista','Material','Fornecedor','Posição Fornecedor','Material Idêntico','Regra Identificada'],
-    ...aptas.map(a=>[a.rc, a.item, a.analista, a.material, a.fornecedor, a.posicao, a.identico, a.regra])
+    ['RC','Item da RC','Oportunidade','Item OP','Analista','Posição Fornecedor','Material Idêntico','Regra Identificada'],
+    ...aptas.map(a=>[a.rc, a.item, a.oport||'', a.itemop||'', a.analista, a.posicao, a.identico, a.regra])
   ];
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  // Largura das colunas
   ws['!cols'] = [
-    {wch:20},{wch:8},{wch:12},{wch:35},{wch:40},{wch:10},{wch:14},{wch:55}
+    {wch:20},{wch:8},{wch:14},{wch:8},{wch:14},{wch:10},{wch:14},{wch:60}
   ];
 
   XLSX.utils.book_append_sheet(wb, ws, 'RCs Aptas - Pedido Direto');
@@ -10023,6 +10062,8 @@ function aaPublicoFiltrar(){
     return `<tr>
       <td style="font-weight:700;color:var(--az)">${a.rc||''}</td>
       <td>${a.item||''}</td>
+      <td>${a.oport||'—'}</td>
+      <td>${a.itemop||'—'}</td>
       <td>${a.analista||''}</td>
       <td style="text-align:center">${a.posicao||'—'}</td>
       <td style="text-align:center;color:var(--vd);font-weight:700">${a.identico||''}</td>
