@@ -3621,6 +3621,15 @@ const CICLO_VALIDACAO = {
 
 // Novo ciclo já contabilizando 26/05 em diante
 const CICLO_NOVO_INICIO = '2026-05-26';
+const CICLO_MAIJUN = {
+  id: 'maijun2026',
+  nome: 'Ciclo Mai/Jun 2026',
+  inicio: '2026-05-26',
+  fim: '',
+  fim_previsto: '2026-06-29',
+  meta: 1800,
+  status: 'ativo',
+};
 
 const META  = 90;
 const DIAS_UTEIS = 22;
@@ -3955,7 +3964,7 @@ function renderEstPCP(){
   const META_DIA_EQUIPE = 90;
 
   // Contar dias que bateu/não bateu a meta (ciclo atual)
-  const dtCicloInicio = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
+  const dtCicloInicio = (_cicloAtivo?.inicio||CICLO_MAIJUN.inicio);
   const diasCiclo = registros.filter(r=>r.data>=dtCicloInicio&&r.pres!=='Folga'&&r.pres!=='Férias');
   const diasUnicos = [...new Set(diasCiclo.map(r=>r.data))];
   let diasMeta=0, diasAbaixo=0;
@@ -4210,7 +4219,7 @@ function renderPainelEstrategico(){
   const gapStr = (gap>=0?'+':'')+gap.toLocaleString('pt-BR');
   const gapCor = gap>=0?'var(--vd)':'var(--vm)';
   const ritmo = nDias>0?Math.round(totalAnalis/nDias):0;
-  const cicloInicio = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
+  const cicloInicio = (_cicloAtivo?.inicio||CICLO_MAIJUN.inicio);
   const cicloMetaTotal = (_cicloAtivo?.meta) || parseInt(localStorage.getItem('patec_meta')||'0') || CICLO_ATUAL.meta_ciclo;
   // Usar data de encerramento salva pelo usuário ou fallback para CICLO_ATUAL.fim
   const _fimSalvo = localStorage.getItem('patec_fim_ciclo')||CICLO_ATUAL.fim;
@@ -4254,7 +4263,7 @@ function renderPainelEstrategico(){
       `<div style="display:grid;grid-template-columns:repeat(${l2.length},1fr);gap:10px">${l2.map(cardItem).join('')}</div>`;
   }
     // Alerta no estilo ciclo-box — padrão: Ritmo X/dia · projeção X itens · necessário X/dia · ritmo piorou/melhorou
-    const cicloInicioD = (_cicloAtivo?.inicio||CICLO_ATUAL.inicio);
+    const cicloInicioD = (_cicloAtivo?.inicio||CICLO_MAIJUN.inicio);
     const diasDecorridos = Math.max(1, Math.round((HOJE - new Date(cicloInicioD+'T12:00:00'))/86400000));
     // Projeção = já realizado + (ritmo atual × dias restantes)
     // Projeção = já realizado + (ritmo atual × dias úteis restantes)
@@ -7637,9 +7646,19 @@ let _cicloAtivo = null;
 async function cicloCarregarAtivo(){
   try{
     const saved=await fbGet('config','ciclo_ativo');
-    _cicloAtivo=saved||{id:CICLO_ATUAL.id,nome:CICLO_ATUAL.nome,inicio:CICLO_ATUAL.inicio,fim:'',fim_previsto:CICLO_ATUAL.fim,meta:CICLO_ATUAL.meta_ciclo,status:'ativo'};
+    const hoje = new Date().toISOString().split('T')[0];
+    // Se o ciclo salvo está fechado OU seu fim é anterior a hoje, usar novo ciclo
+    if(saved && (saved.status==='fechado' || (saved.fim && saved.fim < hoje)) && hoje >= CICLO_NOVO_INICIO){
+      // Ciclo antigo encerrado — ativar o novo automaticamente
+      _cicloAtivo = {...CICLO_MAIJUN};
+      // Salvar no Firebase para próximas cargas
+      try{ await fbSet('config','ciclo_ativo', _cicloAtivo); }catch(e2){}
+      console.log('[Ciclo] Novo ciclo Mai/Jun ativado automaticamente');
+    } else {
+      _cicloAtivo = saved || {...CICLO_MAIJUN};
+    }
   }catch(e){
-    _cicloAtivo={id:CICLO_ATUAL.id,nome:CICLO_ATUAL.nome,inicio:CICLO_ATUAL.inicio,fim:'',meta:CICLO_ATUAL.meta_ciclo};
+    _cicloAtivo = {...CICLO_MAIJUN};
   }
 }
 
@@ -7648,7 +7667,7 @@ function initCicloADM(){
   if(!el('ciclo-nome-ativo'))return;
   const ciclo=_cicloAtivo||CICLO_ATUAL;
   const inicio=ciclo.inicio||CICLO_ATUAL.inicio;
-  const meta=ciclo.meta||CICLO_ATUAL.meta_ciclo;
+  const meta=ciclo.meta||CICLO_MAIJUN.meta;
   const regsA=registros.filter(r=>r.data>=inicio&&r.pres!=='Folga'&&r.pres!=='Férias');
   const dias=[...new Set(regsA.map(r=>r.data))].length;
   const total=regsA.reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0),0);
