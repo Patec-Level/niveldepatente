@@ -2269,6 +2269,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           </div>
           <button class="btn btn-g" onclick="renderPainelEstrategico()" style="align-self:flex-end">🔍 Analisar</button>
         </div>
+
+        <!-- Cards de desfecho dentro do filtro de medição -->
+        <div style="margin-top:1rem;border-top:1px solid var(--brd);padding-top:.875rem">
+          <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:.625rem;text-transform:uppercase;letter-spacing:.5px">RCs finalizadas no ciclo</div>
+          <div id="est-desfecho-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px"></div>
+        </div>
       </div>
 
       <!-- CARDS DE ANÁLISE -->
@@ -3790,7 +3796,7 @@ function go(id, el) {
     renderCardsDia();
     estPcpHoje();
     renderPainelEstrategico();
-    estRenderDevolucoes();
+    estRenderDevolucoes(); estRenderDesfechoCards();
   }
 
 }
@@ -4205,6 +4211,9 @@ function renderPainelEstrategico(){
   const hoje = HOJE.toISOString().split('T')[0];
   const label = document.getElementById('est-hoje-label');
   if(label) label.textContent = fmtDt(hoje);
+
+  // ── Cards de desfecho (Pedido/Devolução/Republicação/XGL) ──
+  estRenderDesfechoCards();
 
   // ── Cards do dia — delegar para renderCardsDia ──
   renderCardsDia();
@@ -11284,11 +11293,34 @@ async function desfechoSalvar(){
 
   // Re-renderizar seção de devoluções no painel estratégico se estiver aberto
   if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
-    estRenderDevolucoes();
+    estRenderDevolucoes(); estRenderDesfechoCards();
   }
 }
 
 let _desfechoCache = {}; // cache em memória dos desfechos
+
+// ── Cards de desfecho no Filtro de Medição ──
+function estRenderDesfechoCards(){
+  const el = document.getElementById('est-desfecho-cards');
+  if(!el) return;
+
+  const todos = Object.values(_desfechoCache);
+  const tipos = [
+    { key:'Pedido',       label:'Pedidos',       emoji:'🛒', cor:'#1A4A8A', bg:'#EBF0FA' },
+    { key:'Devolução',    label:'Devoluções',    emoji:'↩',  cor:'#D94040', bg:'#FDEAEA' },
+    { key:'Republicação', label:'Republicações', emoji:'🔄', cor:'#C07A12', bg:'#FDF3E3' },
+    { key:'XGL',          label:'XGL',           emoji:'📦', cor:'#0E9E6A', bg:'#E6F7F1' },
+  ];
+
+  el.innerHTML = tipos.map(t => {
+    const cnt = todos.filter(d => d.tipo === t.key).length;
+    return `<div style="background:${t.bg};border-radius:8px;padding:.75rem;border:1px solid ${t.cor}22;text-align:center">
+      <div style="font-size:18px;margin-bottom:2px">${t.emoji}</div>
+      <div style="font-size:22px;font-weight:700;color:${cnt>0?t.cor:'var(--tx2)'}">${cnt}</div>
+      <div style="font-size:10px;color:var(--tx2);margin-top:1px">${t.label}</div>
+    </div>`;
+  }).join('');
+}
 
 async function desfechoCarregarFirebase(){
   try{
@@ -11297,7 +11329,7 @@ async function desfechoCarregarFirebase(){
     _desfechoCache = {};
     snap.docs.forEach(d=>{ const data=d.data(); _desfechoCache[data.chave] = data; });
     console.log('✓ Desfechos carregados:', snap.docs.length);
-    estRenderDevolucoes();
+    estRenderDevolucoes(); estRenderDesfechoCards();
   } catch(e){ console.warn('desfechoCarregarFirebase:', e); }
 }
 
