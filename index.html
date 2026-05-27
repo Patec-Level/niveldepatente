@@ -10444,21 +10444,17 @@ function pcGetFluxo(){
   const rows = _bkDados.rows;
   const headers = _bkDados.headers || [];
 
-  // Índices confirmados: 0=Analista, 2=Fila, 4=RC, 5=SEQ, 6=OPORTUNIDADE, 7=ITEM OP, 30=TIRAR DO FLUXO
-  const idxByName = (nomes, fallback) => {
-    const i = headers.findIndex(h => nomes.some(n => String(h||'').trim().toUpperCase() === n.toUpperCase()));
-    return i >= 0 ? i : fallback;
-  };
-  const iAnalista = idxByName(['Analista','ANALISTA'], 0);
-  const iFila     = idxByName(['Fila','FILA'], 2);
-  const iRC       = idxByName(['RC'], 4);
-  const iSEQ      = idxByName(['SEQ'], 5);
-  const iOP       = idxByName(['OPORTUNIDADE'], 6);
-  const iIOP      = idxByName(['ITEM OP','ITEM_OP'], 7);
+  // Índices CONFIRMADOS da planilha (base 0):
+  // 0=ANALISTA, 1=MAPA, 2=Fila, 3=ANALISTA AUTOMATICO, 4=RC, 5=SEQ,
+  // 6=OPORTUNIDADE, 7=ITEM OP, 30=TIRAR DO FLUXO
+  const iAnalista = 0;
+  const iFila     = 2;
+  const iRC       = 4;
+  const iSEQ      = 5;
+  const iOP       = 6;
+  const iIOP      = 7;
 
-  let idxFluxo = _bkDados.idxFluxo;
-  if(idxFluxo === undefined || idxFluxo < 0)
-    idxFluxo = headers.findIndex(h => String(h||'').toLowerCase().includes('tirar') || String(h||'').toLowerCase().includes('fluxo'));
+  let idxFluxo = headers.findIndex(h => String(h||'').toUpperCase().includes('TIRAR'));
   if(idxFluxo < 0) idxFluxo = 30;
 
   const liberados = rows.filter(r => String(r[idxFluxo]||'').trim().toUpperCase().includes('LIBERAR'));
@@ -10469,12 +10465,12 @@ function pcGetFluxo(){
     vistos.add(chave);
     return true;
   }).map(r => ({
-    analista:    String(r[iAnalista]||'').trim(),
-    fila:        String(r[iFila]||'').trim(),
-    rc:          String(r[iRC]||'').trim(),
-    seq:         String(r[iSEQ]||'').trim(),
-    num_oport:   String(r[iOP]||'').trim(),
-    item_rc:     String(r[iIOP]||'').trim(),
+    analista:  String(r[iAnalista]||'').trim(),
+    fila:      String(r[iFila]||'').trim(),
+    rc:        String(r[iRC]||'').trim(),
+    seq:       String(r[iSEQ]||'').trim(),
+    num_oport: String(r[iOP]||'').trim(),
+    item_rc:   String(r[iIOP]||'').trim(),
     validade: '', sla: '', idas: '', patec_obrig: ''
   }));
 }
@@ -10560,22 +10556,16 @@ function pcRenderFluxo(){
   const rows = _bkDados.rows;
   const headers = _bkDados.headers || [];
 
-  // Índices confirmados: 0=Analista, 2=Fila, 4=RC, 5=SEQ, 6=OPORTUNIDADE, 7=ITEM OP, 30=TIRAR DO FLUXO
-  const idxByName = (nomes, fallback) => {
-    const i = headers.findIndex(h => nomes.some(n => String(h||'').trim().toUpperCase() === n.toUpperCase()));
-    return i >= 0 ? i : fallback;
-  };
-  const iAnalista = idxByName(['Analista','ANALISTA'], 0);
-  const iFila     = idxByName(['Fila','FILA'], 2);
-  const iRC       = idxByName(['RC'], 4);
-  const iSEQ      = idxByName(['SEQ'], 5);
-  const iOP       = idxByName(['OPORTUNIDADE'], 6);
-  const iIOP      = idxByName(['ITEM OP','ITEM_OP'], 7);
+  // Índices CONFIRMADOS (base 0): 0=ANALISTA, 2=Fila, 4=RC, 5=SEQ, 6=OPORTUNIDADE, 7=ITEM OP, 30=TIRAR DO FLUXO
+  const iAnalista = 0;
+  const iFila     = 2;
+  const iRC       = 4;
+  const iSEQ      = 5;
+  const iOP       = 6;
+  const iIOP      = 7;
 
-  let idxFluxo = _bkDados.idxFluxo;
-  if(idxFluxo === undefined || idxFluxo < 0)
-    idxFluxo = headers.findIndex(h => String(h||'').toLowerCase().includes('tirar') || String(h||'').toLowerCase().includes('fluxo'));
-  if(idxFluxo < 0) idxFluxo = 30; // TIRAR DO FLUXO = col 31 (índice 30)
+  let idxFluxo = headers.findIndex(h => String(h||'').toUpperCase().includes('TIRAR'));
+  if(idxFluxo < 0) idxFluxo = 30;
 
   const liberados = rows.filter(r => String(r[idxFluxo]||'').trim().toUpperCase().includes('LIBERAR'));
   const vistos = new Set();
