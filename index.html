@@ -370,6 +370,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('governanca',this)">⚖️ Governança</div>
   <div class="sb-it" onclick="go('planilha-critica',this)">🔴 Planilha Crítica</div>
   <div class="sb-it" onclick="go('analista-auto',this)">🤖 Analista Automático</div>
+  <div class="sb-it" onclick="go('nm-eliminado',this)">🔍 Consulta NM Eliminado</div>
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
   <div class="sb-sec">Em breve</div>
@@ -704,6 +705,37 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <!-- ══════════════════════════════════════════════════════
        ADM — ADMINISTRAÇÃO (senha: patec2026)
   ══════════════════════════════════════════════════════ -->
+  <!-- ══════════════════ NM ELIMINADO ══════════════════ -->
+  <div id="p-nm-eliminado" class="page">
+    <div class="cd" style="margin-bottom:1rem">
+      <div class="cd-t">🔍 Consulta de NM Eliminado</div>
+      <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem">
+        Digite o NM filho ou pai para verificar se está eliminado. A regra: NM com <strong>X</strong> na coluna de eliminação (col C = NM Pai eliminado, col E = NM Filho eliminado).
+      </p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="nm-busca-input" placeholder="Digite o NM (ex: 30171388)" 
+          style="width:260px;font-size:14px;padding:8px 14px;border:2px solid var(--brd);border-radius:8px;font-weight:600"
+          oninput="nmConsultar(this.value)"
+          onkeydown="if(event.key==='Enter') nmConsultar(this.value)">
+        <button class="btn btn-p" onclick="nmConsultar(document.getElementById('nm-busca-input').value)">🔍 Consultar</button>
+        <button class="btn btn-s" onclick="document.getElementById('nm-busca-input').value='';document.getElementById('nm-resultado').innerHTML='';document.getElementById('nm-resultado').style.display='none'">✕ Limpar</button>
+      </div>
+      <div id="nm-resultado" style="display:none;margin-top:1.25rem"></div>
+    </div>
+
+    <!-- Upload da planilha (resumido, link para ADM) -->
+    <div class="cd" style="background:var(--cin)">
+      <div style="font-size:12px;color:var(--tx2)">
+        📋 <strong>Base carregada:</strong> <span id="nm-base-info">Nenhuma planilha carregada</span>
+        &nbsp;·&nbsp;
+        <span id="nm-base-total" style="color:var(--az);font-weight:600"></span>
+        &nbsp;·&nbsp;
+        <a href="javascript:go('adm',null);setTimeout(()=>setAdmTab('nm-upload',null),300)" style="color:var(--az);font-size:11px">⬆ Atualizar base (ADM)</a>
+      </div>
+    </div>
+  </div>
+  <!-- ══ fim NM ELIMINADO ══ -->
+
   <div id="p-adm" class="page">
 
     <!-- TELA DE LOGIN ADM -->
@@ -748,7 +780,35 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('analista-auto',this)">📦 Analista Pedido</button>
         <button class="stab" onclick="setAdmTab('analista-completo-adm',this)">🤖 Analista Completo</button>
         <button class="stab" onclick="setAdmTab('email-teste',this)">📧 Testar E-mails</button>
+        <button class="stab" onclick="setAdmTab('nm-upload',this)">🔍 NM Eliminado</button>
         <button class="stab" onclick="setAdmTab('apresentacao',this);admApresentacaoInit()">🖥️ Apresentação</button>
+      </div>
+
+      <!-- ── NM ELIMINADO — UPLOAD ── -->
+      <div id="adm-nm-upload" class="adm-tab">
+        <div class="cd">
+          <div class="cd-t">🔍 Upload — Planilha de NM Eliminados</div>
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem">
+            Faça o upload da planilha (.xlsx) com as colunas:<br>
+            <strong>A = NM_FILHO · B = TEXTO_BREVE · C = ELIMINAÇÃO_NMPAI · D = NM_PAI · E = ELIMINAÇÃO_NMFILHO</strong><br>
+            NMs marcados com <strong>X</strong> nas colunas C ou E serão considerados eliminados.
+          </p>
+          <div style="border:2px dashed var(--brd);border-radius:10px;padding:2rem;text-align:center;cursor:pointer;background:var(--cin)"
+            onclick="document.getElementById('nm-file-input').click()"
+            ondragover="event.preventDefault()" ondrop="nmHandleDrop(event)">
+            <div style="font-size:28px;margin-bottom:.5rem">📄</div>
+            <div style="font-size:13px;font-weight:600">Arraste a planilha aqui</div>
+            <div style="font-size:11px;color:var(--tx2);margin-top:4px">ou clique para selecionar</div>
+            <input type="file" id="nm-file-input" accept=".xlsx,.xls" style="display:none" onchange="nmHandleUpload(this.files[0])">
+          </div>
+          <div id="nm-upload-status" style="margin-top:.75rem;font-size:12px"></div>
+          <div id="nm-upload-kpis" style="display:flex;gap:10px;margin-top:.75rem;flex-wrap:wrap"></div>
+        </div>
+        <div class="cd" style="background:var(--cin)">
+          <div style="font-size:12px;color:var(--tx2)">
+            <strong>Base atual no Firebase:</strong> <span id="nm-firebase-info">Verificando...</span>
+          </div>
+        </div>
       </div>
 
       <!-- ── GESTÃO DE CICLOS ── -->
@@ -3579,6 +3639,7 @@ async function fbCarregarTudo(){
       setTimeout(()=>pcInicializar(), 100);
     }
   });
+  nmCarregarFirebase();
   fbCarregarRadar().then(()=>{ 
     // Registrar backlog AG. TRATAMENTO após radar carregar
     setTimeout(paAtualizarBacklogAuto, 800);
@@ -3788,7 +3849,7 @@ function go(id, el) {
     'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
-    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Automático','planilha-critica':'Planilha Crítica','governanca':'Governança','adm':'Administração',
+    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Automático','planilha-critica':'Planilha Crítica','governanca':'Governança','adm':'Administração','nm-eliminado':'Consulta NM Eliminado',
     };
   document.getElementById('ttl').textContent = titles[id] || id;
   if(id==='pr-bancoferias'){renderFerias();renderBanco();renderBHECards();}
@@ -11421,6 +11482,11 @@ async function desfechoSalvar(){
 
   desfechoFechar();
 
+  // Disparar alerta para Kaio e Amanda se for Devolução
+  if(tipo === 'Devolução'){
+    try{ await alertaDesfechoDevolucao(chave, aba, desfecho); } catch(e){ console.warn('alertaDesfechoDevolucao:', e); }
+  }
+
   // Re-renderizar seção de devoluções no painel estratégico se estiver aberto
   if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
     estRenderDevolucoes(); estRenderDesfechoCards();
@@ -12620,6 +12686,49 @@ async function alertasDisparar(origem){
 }
 
 
+// ── ALERTA DEVOLUÇÃO — disparado pelo modal de desfecho ──
+async function alertaDesfechoDevolucao(chave, aba, desfecho){
+  const keyEnv = 'desfecho_dev_' + chave;
+  if(_alertasEnviados[keyEnv]) return; // já enviado
+
+  // Buscar dados do item para compor a mensagem
+  let rc = chave.split('|')[0] || chave;
+  let analista = '—';
+  // Tentar pegar analista dos dados em memória
+  if(aba === 'MAPA'){
+    const item = (_radarDados||[]).find(r => govChave(r) === chave);
+    if(item){ rc = item.rc; analista = item.analista||'—'; }
+  } else if(aba === 'XGL'){
+    const item = (_xglItens||[]).find(r => xglChave(r.rc,r.item,r.oport,r.itemop) === chave);
+    if(item){ rc = item.rc; analista = item.analista||'—'; }
+  }
+
+  const lista = [
+    'RC: ' + rc,
+    'Analista: ' + analista,
+    'Centro: ' + (desfecho.centro||'—'),
+    'Motivo: ' + (desfecho.motivo||'—'),
+    'Observação: ' + (desfecho.obs||'—'),
+    'Data: ' + new Date().toLocaleDateString('pt-BR'),
+  ].join('\n');
+
+  for(const dest of EQUIPE_DEVOLUCAO){
+    try{
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_DEVOLUCAO, {
+        email_analista: dest.email,
+        analista_nome:  dest.nome,
+        rc,
+        lista_itens:    lista,
+        data:           new Date().toLocaleDateString('pt-BR')
+      });
+      console.log('✓ Alerta devolução enviado para', dest.nome);
+    } catch(e){ console.warn('Erro alerta devolução para', dest.nome, e); }
+  }
+
+  _alertasEnviados[keyEnv] = new Date().toISOString();
+  alertaSalvarEnviados();
+}
+
 // ── ALERTA DEVOLUÇÃO XGL ──
 async function alertaXGLDevolucao(chave){
   // Buscar dados do item
@@ -13752,6 +13861,135 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
   </div>
 </div>
 <!-- ══ fim MODAL DESFECHO ══ -->
+
+<script>
+// ════════════════════════════════════════════
+// NM ELIMINADO — Upload, Firebase, Consulta
+// ════════════════════════════════════════════
+let _nmDados = [];
+
+function nmHandleDrop(e){
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if(f) nmHandleUpload(f);
+}
+
+async function nmHandleUpload(file){
+  if(!file) return;
+  const status = document.getElementById('nm-upload-status');
+  status.innerHTML = '⏳ Lendo arquivo...';
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf,{type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    const dados = [];
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];
+      const nmFilho=String(r[0]||'').trim();
+      if(!nmFilho) continue;
+      dados.push({
+        nmFilho,
+        textoBreve: String(r[1]||'').trim(),
+        elimNmPai:  String(r[2]||'').trim().toUpperCase()==='X',
+        nmPai:      String(r[3]||'').trim(),
+        elimNmFilho:String(r[4]||'').trim().toUpperCase()==='X',
+      });
+    }
+    _nmDados = dados;
+    const totalElim = dados.filter(d=>d.elimNmPai||d.elimNmFilho).length;
+    const kpis = document.getElementById('nm-upload-kpis');
+    if(kpis) kpis.innerHTML=`
+      <div class="kc"><div class="kn" style="color:var(--az)">${dados.length}</div><div class="kl">Total NMs</div></div>
+      <div class="kc"><div class="kn" style="color:var(--vm)">${totalElim}</div><div class="kl">Eliminados</div></div>
+      <div class="kc"><div class="kn" style="color:var(--vd)">${dados.length-totalElim}</div><div class="kl">Ativos</div></div>`;
+    status.innerHTML=`<span style="color:var(--vd)">✓ <strong>${file.name}</strong> — ${dados.length} NMs · Salvando...</span>`;
+    await nmSalvarFirebase(dados, file.name);
+    status.innerHTML=`<span style="color:var(--vd)">✓ Salvo no Firebase: <strong>${file.name}</strong> — ${dados.length} NMs (${totalElim} eliminados)</span>`;
+    nmAtualizarInfo();
+  } catch(e){
+    document.getElementById('nm-upload-status').innerHTML=`<span style="color:var(--vm)">✗ Erro: ${e.message}</span>`;
+  }
+}
+
+async function nmSalvarFirebase(dados, arquivo){
+  try{
+    const db=getDB(); if(!db) return;
+    const chunkSize=500;
+    const chunks=Math.ceil(dados.length/chunkSize);
+    for(let c=0;c<chunks;c++){
+      await db.collection('config').doc(`nm_eliminados_${c}`).set({rows:dados.slice(c*chunkSize,(c+1)*chunkSize)});
+    }
+    await db.collection('config').doc('nm_eliminados_meta').set({arquivo,total:dados.length,chunks,dt:new Date().toISOString()});
+  } catch(e){ console.warn('nmSalvarFirebase:',e); }
+}
+
+async function nmCarregarFirebase(){
+  try{
+    const db=getDB(); if(!db) return;
+    const meta=await db.collection('config').doc('nm_eliminados_meta').get();
+    if(!meta.exists){ nmAtualizarInfo(); return; }
+    const d=meta.data();
+    let todos=[];
+    for(let c=0;c<d.chunks;c++){
+      const chunk=await db.collection('config').doc(`nm_eliminados_${c}`).get();
+      if(chunk.exists) todos=todos.concat(chunk.data().rows||[]);
+    }
+    _nmDados=todos;
+    console.log('✓ NM Eliminados:',todos.length);
+    nmAtualizarInfo();
+  } catch(e){ console.warn('nmCarregarFirebase:',e); }
+}
+
+function nmAtualizarInfo(){
+  const totalElim=_nmDados.filter(d=>d.elimNmPai||d.elimNmFilho).length;
+  const txt=_nmDados.length>0?`${_nmDados.length} NMs · ${totalElim} eliminados`:'Nenhuma planilha carregada';
+  const infoEl=document.getElementById('nm-base-info');
+  const totalEl=document.getElementById('nm-base-total');
+  const fbEl=document.getElementById('nm-firebase-info');
+  if(infoEl) infoEl.textContent=_nmDados.length>0?'Planilha carregada':'Nenhuma planilha carregada';
+  if(totalEl) totalEl.textContent=_nmDados.length>0?txt:'';
+  if(fbEl) fbEl.textContent=txt;
+}
+
+function nmConsultar(valor){
+  const nm=String(valor||'').trim();
+  const el=document.getElementById('nm-resultado');
+  if(!el) return;
+  if(!nm){ el.style.display='none'; el.innerHTML=''; return; }
+  if(!_nmDados.length){
+    el.style.display='block';
+    el.innerHTML=`<div style="padding:1rem;background:var(--amc);border-radius:8px;color:var(--am);font-size:13px">⚠️ Base não carregada. Solicite ao ADM o upload da planilha.</div>`;
+    return;
+  }
+  const resultados=_nmDados.filter(d=>d.nmFilho===nm||d.nmPai===nm);
+  if(!resultados.length){
+    el.style.display='block';
+    el.innerHTML=`<div style="padding:1.25rem;background:var(--vdc);border-radius:10px;border:2px solid var(--vd);display:flex;align-items:center;gap:12px">
+      <span style="font-size:32px">✅</span>
+      <div><div style="font-size:15px;font-weight:700;color:var(--vd)">NM ${nm} — NÃO ENCONTRADO NA LISTA DE ELIMINADOS</div>
+      <div style="font-size:12px;color:var(--tx2);margin-top:4px">Este NM não consta na planilha de eliminação.</div></div></div>`;
+    return;
+  }
+  const isEliminado=resultados.some(d=>(d.nmFilho===nm&&d.elimNmFilho)||(d.nmPai===nm&&d.elimNmPai));
+  el.style.display='block';
+  el.innerHTML=`
+    <div style="padding:1.25rem;background:${isEliminado?'var(--vmc)':'var(--azc)'};border-radius:10px;border:2px solid ${isEliminado?'var(--vm)':'var(--azm)'};display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+      <span style="font-size:32px">${isEliminado?'🚫':'ℹ️'}</span>
+      <div><div style="font-size:15px;font-weight:700;color:${isEliminado?'var(--vm)':'var(--azm)'}">NM ${nm} — ${isEliminado?'ELIMINADO':'CONSTA NA PLANILHA MAS SEM ELIMINAÇÃO'}</div>
+      <div style="font-size:12px;color:var(--tx2);margin-top:4px">${resultados.length} registro(s) encontrado(s)</div></div></div>
+    <div class="tw"><table>
+      <thead><tr><th>NM Filho</th><th>Descrição</th><th>Elim. NM Pai</th><th>NM Pai</th><th>Elim. NM Filho</th></tr></thead>
+      <tbody>${resultados.map(d=>`<tr>
+        <td style="font-weight:700;color:${d.nmFilho===nm?'var(--az)':'var(--tx)'}">${d.nmFilho}</td>
+        <td style="font-size:11px">${d.textoBreve||'—'}</td>
+        <td style="text-align:center;font-weight:700;color:${d.elimNmPai?'var(--vm)':'var(--vd)'}">${d.elimNmPai?'✗ SIM':'✓ NÃO'}</td>
+        <td style="color:${d.nmPai===nm?'var(--az)':'var(--tx)'}">${d.nmPai||'—'}</td>
+        <td style="text-align:center;font-weight:700;color:${d.elimNmFilho?'var(--vm)':'var(--vd)'}">${d.elimNmFilho?'✗ SIM':'✓ NÃO'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+</script>
 
 </body>
 </html>
