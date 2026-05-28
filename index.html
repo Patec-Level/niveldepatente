@@ -12718,6 +12718,8 @@ async function emailReenviarDevolucoes(){
     console.warn('emailReenviarDevolucoes:', e);
   }
 }
+
+async function alertasDisparar(origem){
   console.log('[Alertas] Disparando alertas — origem:', origem);
   await alertasEnviarPorAnalista();
   console.log('[Alertas] Concluído');
