@@ -13436,7 +13436,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
 /* Header */
 .hdr{background:linear-gradient(90deg,#1b5e20 0%,#2e7d32 60%,#388e3c 100%);padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
 .hdr-title{color:#fff;font-size:20px;font-weight:700;letter-spacing:.3px}
-.hdr-title span{font-weight:300}
+.hdr-title span{font-weight:700}
 .hdr-right{text-align:right;color:rgba(255,255,255,.9)}
 .hdr-right .brand{font-size:22px;font-weight:900;letter-spacing:-1px}
 .hdr-right .sub{font-size:10px;opacity:.8;margin-top:1px}
@@ -13504,7 +13504,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
   <!-- HEADER -->
   <div class="hdr">
     <div>
-      <div class="hdr-title">${titulo} <span>${dataFmt}</span></div>
+      <div class="hdr-title">${titulo} em <span>${dataFmt}</span></div>
       <div style="color:rgba(255,255,255,.75);font-size:11px;margin-top:2px">${subtitulo} &nbsp;·&nbsp; Período: ${periodoLabel}</div>
     </div>
     <div class="hdr-right">
@@ -13580,7 +13580,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
         return `
       <!-- DONUT -->
       <div>
-        <div class="sec-title">⏱️ Saúde da Carteira Atual — ${filtroLabel}</div>
+        <div class="sec-title">⏱️ Saúde da Carteira Atual</div>
         <div style="display:flex;align-items:center;gap:16px">
           <canvas id="slide-donut" width="180" height="180"></canvas>
           <script>
