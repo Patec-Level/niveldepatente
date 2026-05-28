@@ -1964,6 +1964,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <button class="btn btn-p" onclick="emailTesteDisparar()" id="btn-email-teste">
               🚀 Disparar Alertas Agora
             </button>
+            <button class="btn btn-p" style="background:var(--vm)" onclick="emailReenviarDevolucoes()">
+              ↩ Reenviar Alertas de Devolução
+            </button>
             <button class="btn btn-s" onclick="emailTesteVerHistorico()">
               📋 Ver Histórico de Enviados
             </button>
@@ -12679,7 +12682,42 @@ function emailTesteLimparHistorico(){
   if(el) el.textContent = '✓ Histórico limpo com sucesso.';
 }
 
-async function alertasDisparar(origem){
+async function emailReenviarDevolucoes(){
+  const el = document.getElementById('email-teste-log');
+  if(el) el.textContent = '⏳ Buscando devoluções no Firebase...\n';
+
+  try{
+    const db = getDB();
+    if(!db){ if(el) el.textContent += '✗ Firebase offline.\n'; return; }
+
+    const snap = await db.collection('desfechos').where('tipo','==','Devolução').get();
+    if(snap.empty){ if(el) el.textContent += '⚠️ Nenhuma devolução encontrada na base.\n'; return; }
+
+    if(el) el.textContent += `📋 ${snap.docs.length} devolução(ões) encontrada(s). Enviando alertas...\n`;
+
+    let enviados = 0;
+    for(const doc of snap.docs){
+      const d = doc.data();
+      const chave = d.chave || doc.id;
+      const keyEnv = 'desfecho_dev_' + chave;
+      // Forçar reenvio limpando o histórico desta chave
+      delete _alertasEnviados[keyEnv];
+
+      await alertaDesfechoDevolucao(chave, d.aba||'MAPA', {
+        centro: d.centro||'—',
+        motivo: d.motivo||'—',
+        obs: d.obs||'—'
+      });
+      enviados++;
+      if(el) el.textContent += `✓ ${enviados}/${snap.docs.length} — RC: ${d.chave?.split('|')[0]||'?'} · ${d.motivo||'—'}\n`;
+    }
+
+    if(el) el.textContent += `\n✅ Concluído: ${enviados} alertas enviados para Kaio e Amanda.`;
+  } catch(e){
+    if(el) el.textContent += '✗ Erro: ' + e.message;
+    console.warn('emailReenviarDevolucoes:', e);
+  }
+}
   console.log('[Alertas] Disparando alertas — origem:', origem);
   await alertasEnviarPorAnalista();
   console.log('[Alertas] Concluído');
@@ -12689,12 +12727,13 @@ async function alertasDisparar(origem){
 // ── ALERTA DEVOLUÇÃO — disparado pelo modal de desfecho ──
 async function alertaDesfechoDevolucao(chave, aba, desfecho){
   const keyEnv = 'desfecho_dev_' + chave;
-  if(_alertasEnviados[keyEnv]) return; // já enviado
+  if(_alertasEnviados[keyEnv]){
+    console.log('[Email] Alerta devolução já enviado para', chave);
+    return;
+  }
 
-  // Buscar dados do item para compor a mensagem
   let rc = chave.split('|')[0] || chave;
   let analista = '—';
-  // Tentar pegar analista dos dados em memória
   if(aba === 'MAPA'){
     const item = (_radarDados||[]).find(r => govChave(r) === chave);
     if(item){ rc = item.rc; analista = item.analista||'—'; }
@@ -12712,6 +12751,7 @@ async function alertaDesfechoDevolucao(chave, aba, desfecho){
     'Data: ' + new Date().toLocaleDateString('pt-BR'),
   ].join('\n');
 
+  let enviou = false;
   for(const dest of EQUIPE_DEVOLUCAO){
     try{
       await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE_DEVOLUCAO, {
@@ -12721,12 +12761,17 @@ async function alertaDesfechoDevolucao(chave, aba, desfecho){
         lista_itens:    lista,
         data:           new Date().toLocaleDateString('pt-BR')
       });
-      console.log('✓ Alerta devolução enviado para', dest.nome);
-    } catch(e){ console.warn('Erro alerta devolução para', dest.nome, e); }
+      console.log('✓ Alerta devolução enviado para', dest.nome, dest.email);
+      enviou = true;
+    } catch(e){
+      console.warn('✗ Erro alerta devolução para', dest.nome, ':', e);
+    }
   }
 
-  _alertasEnviados[keyEnv] = new Date().toISOString();
-  alertaSalvarEnviados();
+  if(enviou){
+    _alertasEnviados[keyEnv] = new Date().toISOString();
+    alertaSalvarEnviados();
+  }
 }
 
 // ── ALERTA DEVOLUÇÃO XGL ──
@@ -13913,15 +13958,24 @@ async function nmHandleUpload(file){
 }
 
 async function nmSalvarFirebase(dados, arquivo){
+  const status = document.getElementById('nm-upload-status');
   try{
-    const db=getDB(); if(!db) return;
+    const db=getDB();
+    if(!db){
+      if(status) status.innerHTML='<span style="color:var(--vm)">✗ Firebase offline — não foi possível salvar.</span>';
+      return;
+    }
     const chunkSize=500;
     const chunks=Math.ceil(dados.length/chunkSize);
     for(let c=0;c<chunks;c++){
       await db.collection('config').doc(`nm_eliminados_${c}`).set({rows:dados.slice(c*chunkSize,(c+1)*chunkSize)});
     }
     await db.collection('config').doc('nm_eliminados_meta').set({arquivo,total:dados.length,chunks,dt:new Date().toISOString()});
-  } catch(e){ console.warn('nmSalvarFirebase:',e); }
+    console.log('✓ NM Eliminados salvos no Firebase:', dados.length);
+  } catch(e){
+    console.warn('nmSalvarFirebase:',e);
+    if(status) status.innerHTML=`<span style="color:var(--vm)">✗ Erro ao salvar: ${e.message}</span>`;
+  }
 }
 
 async function nmCarregarFirebase(){
