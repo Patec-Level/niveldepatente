@@ -2778,7 +2778,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <table>
               <thead><tr>
                 <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th>
-                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th>
               </tr></thead>
               <tbody id="pc-tbody-vencido"></tbody>
             </table>
@@ -2794,7 +2794,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <table>
               <thead><tr>
                 <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
-                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th>
               </tr></thead>
               <tbody id="pc-tbody-reprovado"></tbody>
             </table>
@@ -2808,7 +2808,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <table>
               <thead><tr>
                 <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>SLA</th><th>Idas Mercado</th>
-                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Validade Proposta</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Validade Proposta</th>
               </tr></thead>
               <tbody id="pc-tbody-criticos"></tbody>
             </table>
@@ -2822,7 +2822,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <table>
               <thead><tr>
                 <th>Analista</th><th>Fila Level Board</th>
-                <th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th>
               </tr></thead>
               <tbody id="pc-tbody-fluxo"></tbody>
             </table>
@@ -10292,9 +10292,9 @@ function pcRenderTabela(aba, rows, campos, comExtra){
     if(comExtra) cells.push(`<td style="text-align:center">${r.idas||'—'}</td>`);
     cells.push(
       `<td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>`,
-      `<td>${r.item_rc||'—'}</td>`,
-      `<td>${r.num_oport||'—'}</td>`,
       `<td>${r.seq||'—'}</td>`,
+      `<td>${r.num_oport||'—'}</td>`,
+      `<td>${r.item_rc||'—'}</td>`,
     );
     if(comExtra) cells.push(`<td style="text-align:center;font-weight:600;color:${(r.patec_obrig||'').toLowerCase()==='sim'?'var(--vm)':'var(--tx2)'}">${r.patec_obrig||'—'}</td>`);
     if(comExtra && aba !== 'reprovado') cells.push(`<td style="${corValidade(r.validade)}">${r.validade||'—'}</td>`);
@@ -10370,7 +10370,7 @@ function pcBuscarRCDetalhe(rc){
     <div class="tw" style="max-height:320px">
     <table>
       <thead><tr>
-        <th>ABA</th><th>Analista</th><th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
+        <th>ABA</th><th>Analista</th><th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th>
         <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th><th></th>
       </tr></thead>
       <tbody>
@@ -10516,7 +10516,7 @@ function pcExportar(){
   const vencidos = filtrar(base.filter(r => (r.validade||'').toLowerCase().includes('vencid')));
   const wsV = XLSX.utils.aoa_to_sheet([
     ['Analista','Validade Proposta','SLA','RC','Item','Oportunidade','Item OP'],
-    ...vencidos.map(r=>[r.analista,r.validade,r.sla,r.rc,r.item_rc||r.seq,r.num_oport,r.seq])
+    ...vencidos.map(r=>[r.analista,r.validade,r.sla,r.rc,r.seq,r.num_oport,r.item_rc])
   ]);
   XLSX.utils.book_append_sheet(wb, wsV, 'Vencido');
 
@@ -10524,7 +10524,7 @@ function pcExportar(){
   const reprovados = filtrar((_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='PATEC Finalizado sem fornecedores aprovados'));
   const wsR = XLSX.utils.aoa_to_sheet([
     ['Analista','Validade Proposta','SLA','Idas Mercado','RC','Item','Oportunidade','Item OP','PATEC Obrig.'],
-    ...reprovados.map(r=>[r.analista,r.validade,r.sla,r.idas,r.rc,r.item_rc||r.seq,r.num_oport,r.seq,r.patec_obrig])
+    ...reprovados.map(r=>[r.analista,r.validade,r.sla,r.idas,r.rc,r.seq,r.num_oport,r.item_rc,r.patec_obrig])
   ]);
   XLSX.utils.book_append_sheet(wb, wsR, '100% Reprovado');
 
@@ -10537,7 +10537,7 @@ function pcExportar(){
   }));
   const wsC = XLSX.utils.aoa_to_sheet([
     ['Analista','Validade Proposta','SLA','Idas Mercado','RC','Item','Oportunidade','Item OP','PATEC Obrig.'],
-    ...criticos.map(r=>[r.analista,r.validade,r.sla,r.idas,r.rc,r.item_rc||r.seq,r.num_oport,r.seq,r.patec_obrig])
+    ...criticos.map(r=>[r.analista,r.validade,r.sla,r.idas,r.rc,r.seq,r.num_oport,r.item_rc,r.patec_obrig])
   ]);
   XLSX.utils.book_append_sheet(wb, wsC, 'Itens Criticos');
 
@@ -10790,9 +10790,9 @@ function govRenderMapa(dados){
       <td style="font-size:11px">${r.fila||'—'}</td>
       <td style="text-align:center">${r.sla||'—'}</td>
       <td style="font-weight:700;color:var(--az)">${r.rc||'—'}</td>
-      <td>${r.item_rc||'—'}</td>
-      <td>${r.num_oport||'—'}</td>
       <td>${r.seq||'—'}</td>
+      <td>${r.num_oport||'—'}</td>
+      <td>${r.item_rc||'—'}</td>
       <td style="font-size:11px">${statusAtual||'—'}</td>
       <td style="font-size:11px">${envio?fmtBR(envio):'—'}</td>
       <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo?fmtBR(prazo):'—'}</td>
@@ -11289,7 +11289,7 @@ function govBuscarRC(rc){
     <div class="tw" style="max-height:320px">
     <table>
       <thead><tr>
-        <th>Aba</th><th>Analista</th><th>RC</th><th>Item</th><th>Oportunidade</th><th>Item OP</th>
+        <th>Aba</th><th>Analista</th><th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th>
         <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th><th></th>
       </tr></thead>
       <tbody>
