@@ -14003,41 +14003,39 @@ async function nmCarregarFirebase(){
     const db = getDB();
     if(!db){
       console.warn('nmCarregarFirebase: Firebase não disponível');
-      setTimeout(nmCarregarFirebase, 2000); // retry
+      setTimeout(nmCarregarFirebase, 2000);
       return;
     }
     const meta = await db.collection('config').doc('nm_eliminados_meta').get();
-    if(!meta.exists){
-      console.log('nmCarregarFirebase: nenhuma base salva');
-      nmAtualizarInfo();
-      return;
-    }
+    if(!meta.exists){ console.log('nmCarregarFirebase: nenhuma base salva'); nmAtualizarInfo(); return; }
     const d = meta.data();
     console.log('nmCarregarFirebase: meta encontrada —', d.arquivo, d.total, 'NMs,', d.chunks, 'chunk(s)');
+
     let todos = [];
-    for(let c = 0; c < d.chunks; c++){
-      const chunk = await db.collection('config').doc(`nm_eliminados_${c}`).get();
-      if(chunk.exists){
+    const LOTE = 10; // carregar 10 chunks em paralelo por vez
+    for(let i = 0; i < d.chunks; i += LOTE){
+      const promessas = [];
+      for(let c = i; c < Math.min(i + LOTE, d.chunks); c++){
+        promessas.push(db.collection('config').doc(`nm_eliminados_${c}`).get());
+      }
+      const resultados = await Promise.all(promessas);
+      resultados.forEach(chunk => {
+        if(!chunk.exists) return;
         const rows = chunk.data().rows || [];
-        // Suporte ao formato compacto {a,b,c,d} e formato antigo completo
         const parsed = rows.map(r => {
-          if(r.nmFilho !== undefined) return r; // formato antigo
-          return {
-            nmFilho:     String(r.a||''),
-            nmPai:       String(r.b||''),
-            elimNmPai:   r.c === 1,
-            elimNmFilho: r.d === 1,
-          };
+          if(r.nmFilho !== undefined) return r;
+          return { nmFilho: String(r.a||''), nmPai: String(r.b||''), elimNmPai: r.c===1, elimNmFilho: r.d===1 };
         });
         todos = todos.concat(parsed);
-      }
+      });
     }
+
     _nmDados = todos;
     console.log('✓ NM Eliminados carregados:', todos.length);
     nmAtualizarInfo();
   } catch(e){
     console.warn('nmCarregarFirebase erro:', e);
-    setTimeout(nmCarregarFirebase, 3000); // retry em caso de erro
+    setTimeout(nmCarregarFirebase, 3000);
   }
 }
 
