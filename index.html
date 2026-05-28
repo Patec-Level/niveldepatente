@@ -13964,21 +13964,37 @@ async function nmHandleUpload(file){
 async function nmSalvarFirebase(dados, arquivo){
   const status = document.getElementById('nm-upload-status');
   try{
-    const db=getDB();
+    const db = getDB();
     if(!db){
       if(status) status.innerHTML='<span style="color:var(--vm)">✗ Firebase offline — não foi possível salvar.</span>';
       return;
     }
-    const chunkSize=500;
-    const chunks=Math.ceil(dados.length/chunkSize);
-    for(let c=0;c<chunks;c++){
-      await db.collection('config').doc(`nm_eliminados_${c}`).set({rows:dados.slice(c*chunkSize,(c+1)*chunkSize)});
+    // Chunks maiores para reduzir número de escritas (5000 por chunk)
+    const chunkSize = 5000;
+    const chunks = Math.ceil(dados.length / chunkSize);
+    if(status) status.innerHTML = `<span style="color:var(--am)">⏳ Salvando ${dados.length} NMs em ${chunks} parte(s)...</span>`;
+
+    for(let c = 0; c < chunks; c++){
+      const slice = dados.slice(c * chunkSize, (c + 1) * chunkSize);
+      // Salvar apenas campos essenciais para reduzir tamanho
+      const slimSlice = slice.map(r=>({
+        a: r.nmFilho,
+        b: r.nmPai||'',
+        c: r.elimNmPai ? 1 : 0,
+        d: r.elimNmFilho ? 1 : 0,
+      }));
+      await db.collection('config').doc(`nm_eliminados_${c}`).set({rows: slimSlice});
+      if(status) status.innerHTML = `<span style="color:var(--am)">⏳ Salvando... ${c+1}/${chunks} partes</span>`;
+      // Pequeno delay entre chunks para não sobrecarregar
+      if(c < chunks - 1) await new Promise(r => setTimeout(r, 300));
     }
-    await db.collection('config').doc('nm_eliminados_meta').set({arquivo,total:dados.length,chunks,dt:new Date().toISOString()});
-    console.log('✓ NM Eliminados salvos no Firebase:', dados.length);
+    await db.collection('config').doc('nm_eliminados_meta').set({
+      arquivo, total: dados.length, chunks, dt: new Date().toISOString()
+    });
+    console.log('✓ NM Eliminados salvos no Firebase:', dados.length, 'em', chunks, 'chunks');
   } catch(e){
-    console.warn('nmSalvarFirebase:',e);
-    if(status) status.innerHTML=`<span style="color:var(--vm)">✗ Erro ao salvar: ${e.message}</span>`;
+    console.warn('nmSalvarFirebase:', e);
+    if(status) status.innerHTML = `<span style="color:var(--vm)">✗ Erro ao salvar: ${e.message}</span>`;
   }
 }
 
@@ -14001,7 +14017,20 @@ async function nmCarregarFirebase(){
     let todos = [];
     for(let c = 0; c < d.chunks; c++){
       const chunk = await db.collection('config').doc(`nm_eliminados_${c}`).get();
-      if(chunk.exists) todos = todos.concat(chunk.data().rows || []);
+      if(chunk.exists){
+        const rows = chunk.data().rows || [];
+        // Suporte ao formato compacto {a,b,c,d} e formato antigo completo
+        const parsed = rows.map(r => {
+          if(r.nmFilho !== undefined) return r; // formato antigo
+          return {
+            nmFilho:     String(r.a||''),
+            nmPai:       String(r.b||''),
+            elimNmPai:   r.c === 1,
+            elimNmFilho: r.d === 1,
+          };
+        });
+        todos = todos.concat(parsed);
+      }
     }
     _nmDados = todos;
     console.log('✓ NM Eliminados carregados:', todos.length);
