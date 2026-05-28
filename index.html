@@ -3862,6 +3862,7 @@ function go(id, el) {
   if(id==='analista-auto') setTimeout(aaPublicoCarregar, 100);
   if(id==='planilha-critica') setTimeout(pcInicializar, 100);
   if(id==='governanca') setTimeout(()=>{ govCarregarFirebase().then(()=>govInicializar()); }, 300);
+  if(id==='nm-eliminado') setTimeout(()=>{ if(!_nmDados.length) nmCarregarFirebase(); }, 100);
   // Auto-login em módulos sem senha
   if(id==='adm') setTimeout(()=>{
     const login=document.getElementById('adm-login');
@@ -5544,6 +5545,7 @@ function setAdmTab(id,btn){
   if(id==='radar-adm') setTimeout(radarInitADM,50);
   if(id==='pa-entradas') setTimeout(paEntradaInitADM,50);
   if(id==='analista-upload') setTimeout(()=>{ bkAtualizarInfoFirebase(); },50);
+  if(id==='nm-upload') setTimeout(()=>{ nmCarregarFirebase(); nmAtualizarInfo(); },50);
   if(id==='analista-auto') setTimeout(()=>{ aaVerificarDados(); if(window._aaAptas) aaCarregarResultadoFirebase(); aaSetTab('pedido'); },50);
   
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
