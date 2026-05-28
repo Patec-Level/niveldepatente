@@ -5555,7 +5555,7 @@ function setAdmTab(id,btn){
   if(id==='hist-prod') setTimeout(renderDistribuicao,50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
   document.querySelectorAll('#adm-tabs .stab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   document.querySelectorAll('.adm-tab').forEach(t=>t.style.display='none');
   document.getElementById('adm-'+id).style.display='block';
 }
@@ -13984,30 +13984,48 @@ async function nmSalvarFirebase(dados, arquivo){
 
 async function nmCarregarFirebase(){
   try{
-    const db=getDB(); if(!db) return;
-    const meta=await db.collection('config').doc('nm_eliminados_meta').get();
-    if(!meta.exists){ nmAtualizarInfo(); return; }
-    const d=meta.data();
-    let todos=[];
-    for(let c=0;c<d.chunks;c++){
-      const chunk=await db.collection('config').doc(`nm_eliminados_${c}`).get();
-      if(chunk.exists) todos=todos.concat(chunk.data().rows||[]);
+    const db = getDB();
+    if(!db){
+      console.warn('nmCarregarFirebase: Firebase não disponível');
+      setTimeout(nmCarregarFirebase, 2000); // retry
+      return;
     }
-    _nmDados=todos;
-    console.log('✓ NM Eliminados:',todos.length);
+    const meta = await db.collection('config').doc('nm_eliminados_meta').get();
+    if(!meta.exists){
+      console.log('nmCarregarFirebase: nenhuma base salva');
+      nmAtualizarInfo();
+      return;
+    }
+    const d = meta.data();
+    console.log('nmCarregarFirebase: meta encontrada —', d.arquivo, d.total, 'NMs,', d.chunks, 'chunk(s)');
+    let todos = [];
+    for(let c = 0; c < d.chunks; c++){
+      const chunk = await db.collection('config').doc(`nm_eliminados_${c}`).get();
+      if(chunk.exists) todos = todos.concat(chunk.data().rows || []);
+    }
+    _nmDados = todos;
+    console.log('✓ NM Eliminados carregados:', todos.length);
     nmAtualizarInfo();
-  } catch(e){ console.warn('nmCarregarFirebase:',e); }
+  } catch(e){
+    console.warn('nmCarregarFirebase erro:', e);
+    setTimeout(nmCarregarFirebase, 3000); // retry em caso de erro
+  }
 }
 
 function nmAtualizarInfo(){
-  const totalElim=_nmDados.filter(d=>d.elimNmPai||d.elimNmFilho).length;
-  const txt=_nmDados.length>0?`${_nmDados.length} NMs · ${totalElim} eliminados`:'Nenhuma planilha carregada';
-  const infoEl=document.getElementById('nm-base-info');
-  const totalEl=document.getElementById('nm-base-total');
-  const fbEl=document.getElementById('nm-firebase-info');
-  if(infoEl) infoEl.textContent=_nmDados.length>0?'Planilha carregada':'Nenhuma planilha carregada';
-  if(totalEl) totalEl.textContent=_nmDados.length>0?txt:'';
-  if(fbEl) fbEl.textContent=txt;
+  const totalElim = _nmDados.filter(d=>d.elimNmPai||d.elimNmFilho).length;
+  const txt = _nmDados.length > 0 ? `${_nmDados.length} NMs · ${totalElim} eliminados` : 'Nenhuma planilha carregada';
+  const infoEl  = document.getElementById('nm-base-info');
+  const totalEl = document.getElementById('nm-base-total');
+  const fbEl    = document.getElementById('nm-firebase-info');
+  const kpis    = document.getElementById('nm-upload-kpis');
+  if(infoEl)  infoEl.textContent  = _nmDados.length > 0 ? 'Planilha carregada' : 'Nenhuma planilha carregada';
+  if(totalEl) totalEl.textContent = _nmDados.length > 0 ? txt : '';
+  if(fbEl)    fbEl.textContent    = txt;
+  if(kpis && _nmDados.length > 0) kpis.innerHTML = `
+    <div class="kc"><div class="kn" style="color:var(--az)">${_nmDados.length}</div><div class="kl">Total NMs</div></div>
+    <div class="kc"><div class="kn" style="color:var(--vm)">${totalElim}</div><div class="kl">Eliminados</div></div>
+    <div class="kc"><div class="kn" style="color:var(--vd)">${_nmDados.length - totalElim}</div><div class="kl">Ativos</div></div>`;
 }
 
 function nmConsultar(valor){
