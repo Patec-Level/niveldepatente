@@ -370,7 +370,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('governanca',this)">⚖️ Governança</div>
   <div class="sb-it" onclick="go('planilha-critica',this)">🔴 Planilha Crítica</div>
   <div class="sb-it" onclick="go('analista-auto',this)">🤖 Analista Automático</div>
-  <div class="sb-it" onclick="go('nm-eliminado',this)">🔍 Consulta NM Eliminado</div>
+  <div class="sb-it" onclick="go('consulta-q18',this)">🚫 Consulta Q18</div>
+
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
   <div class="sb-sec">Em breve</div>
@@ -705,36 +706,32 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <!-- ══════════════════════════════════════════════════════
        ADM — ADMINISTRAÇÃO (senha: patec2026)
   ══════════════════════════════════════════════════════ -->
-  <!-- ══════════════════ NM ELIMINADO ══════════════════ -->
-  <div id="p-nm-eliminado" class="page">
+  <!-- ══ CONSULTA Q18 ══ -->
+  <div id="p-consulta-q18" class="page">
     <div class="cd" style="margin-bottom:1rem">
-      <div class="cd-t">🔍 Consulta de NM Eliminado</div>
+      <div class="cd-t">🚫 Consulta Q18 — Fornecedor Impedido</div>
       <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem">
-        Digite o NM filho ou pai para verificar se está eliminado. A regra: NM com <strong>X</strong> na coluna de eliminação (col C = NM Pai eliminado, col E = NM Filho eliminado).
+        Digite o <strong>COD. SAP AJUST</strong> para verificar se o fornecedor está impedido (Q18).
       </p>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input type="text" id="nm-busca-input" placeholder="Digite o NM (ex: 30171388)" 
+        <input type="text" id="q18-busca-input" placeholder="Digite o código SAP (ex: 10000126)"
           style="width:260px;font-size:14px;padding:8px 14px;border:2px solid var(--brd);border-radius:8px;font-weight:600"
-          oninput="nmConsultar(this.value)"
-          onkeydown="if(event.key==='Enter') nmConsultar(this.value)">
-        <button class="btn btn-p" onclick="nmConsultar(document.getElementById('nm-busca-input').value)">🔍 Consultar</button>
-        <button class="btn btn-s" onclick="document.getElementById('nm-busca-input').value='';document.getElementById('nm-resultado').innerHTML='';document.getElementById('nm-resultado').style.display='none'">✕ Limpar</button>
+          oninput="q18Consultar(this.value)"
+          onkeydown="if(event.key==='Enter') q18Consultar(this.value)">
+        <button class="btn btn-p" onclick="q18Consultar(document.getElementById('q18-busca-input').value)">🔍 Consultar</button>
+        <button class="btn btn-s" onclick="document.getElementById('q18-busca-input').value='';q18Consultar('')">✕ Limpar</button>
       </div>
-      <div id="nm-resultado" style="display:none;margin-top:1.25rem"></div>
+      <div id="q18-resultado" style="display:none;margin-top:1.25rem"></div>
     </div>
-
-    <!-- Upload da planilha (resumido, link para ADM) -->
     <div class="cd" style="background:var(--cin)">
       <div style="font-size:12px;color:var(--tx2)">
-        📋 <strong>Base carregada:</strong> <span id="nm-base-info">Nenhuma planilha carregada</span>
+        📋 <strong>Base carregada:</strong> <span id="q18-base-info">Nenhuma planilha carregada</span>
         &nbsp;·&nbsp;
-        <span id="nm-base-total" style="color:var(--az);font-weight:600"></span>
-        &nbsp;·&nbsp;
-        <a href="javascript:go('adm',null);setTimeout(()=>setAdmTab('nm-upload',null),300)" style="color:var(--az);font-size:11px">⬆ Atualizar base (ADM)</a>
+        <a href="javascript:go('adm',null);setTimeout(()=>setAdmTab('q18-upload',null),300)" style="color:var(--az);font-size:11px">⬆ Atualizar base (ADM)</a>
       </div>
     </div>
   </div>
-  <!-- ══ fim NM ELIMINADO ══ -->
+  <!-- ══ fim CONSULTA Q18 ══ -->
 
   <div id="p-adm" class="page">
 
@@ -780,34 +777,33 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('analista-auto',this)">📦 Analista Pedido</button>
         <button class="stab" onclick="setAdmTab('analista-completo-adm',this)">🤖 Analista Completo</button>
         <button class="stab" onclick="setAdmTab('email-teste',this)">📧 Testar E-mails</button>
-        <button class="stab" onclick="setAdmTab('nm-upload',this)">🔍 NM Eliminado</button>
         <button class="stab" onclick="setAdmTab('apresentacao',this);admApresentacaoInit()">🖥️ Apresentação</button>
+        <button class="stab" onclick="setAdmTab('q18-upload',this)">🚫 Q18</button>
       </div>
 
-      <!-- ── NM ELIMINADO — UPLOAD ── -->
-      <div id="adm-nm-upload" class="adm-tab">
+      <!-- ── Q18 — UPLOAD ── -->
+      <div id="adm-q18-upload" class="adm-tab" style="display:none">
         <div class="cd">
-          <div class="cd-t">🔍 Upload — Planilha de NM Eliminados</div>
+          <div class="cd-t">🚫 Upload — Planilha Q18 (Fornecedores Impedidos)</div>
           <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem">
-            Faça o upload da planilha (.xlsx) com as colunas:<br>
-            <strong>A = NM_FILHO · B = TEXTO_BREVE · C = ELIMINAÇÃO_NMPAI · D = NM_PAI · E = ELIMINAÇÃO_NMFILHO</strong><br>
-            NMs marcados com <strong>X</strong> nas colunas C ou E serão considerados eliminados.
+            Faça o upload da planilha (.xlsx):<br>
+            <strong>Coluna A = COD. SAP AJUST · Coluna B = RAZÃO SOCIAL · Coluna C = JUSTIFICATIVA</strong><br>
+            Fornecedores com <strong>"Impedido"</strong> na coluna C serão bloqueados na consulta.
           </p>
           <div style="border:2px dashed var(--brd);border-radius:10px;padding:2rem;text-align:center;cursor:pointer;background:var(--cin)"
-            onclick="document.getElementById('nm-file-input').click()"
-            ondragover="event.preventDefault()" ondrop="nmHandleDrop(event)">
+            onclick="document.getElementById('q18-file-input').click()"
+            ondragover="event.preventDefault()" ondrop="q18HandleDrop(event)">
             <div style="font-size:28px;margin-bottom:.5rem">📄</div>
             <div style="font-size:13px;font-weight:600">Arraste a planilha aqui</div>
             <div style="font-size:11px;color:var(--tx2);margin-top:4px">ou clique para selecionar</div>
-            <input type="file" id="nm-file-input" accept=".xlsx,.xls" style="display:none" onchange="nmHandleUpload(this.files[0])">
+            <input type="file" id="q18-file-input" accept=".xlsx,.xls" style="display:none" onchange="q18HandleUpload(this.files[0])">
           </div>
-          <div id="nm-upload-status" style="margin-top:.75rem;font-size:12px"></div>
-          <div id="nm-upload-kpis" style="display:flex;gap:10px;margin-top:.75rem;flex-wrap:wrap"></div>
+          <div id="q18-upload-status" style="margin-top:.75rem;font-size:12px"></div>
+          <div id="q18-upload-kpis" style="display:flex;gap:10px;margin-top:.75rem;flex-wrap:wrap"></div>
         </div>
         <div class="cd" style="background:var(--cin)">
-          <div style="font-size:12px;color:var(--tx2)">
-            <strong>Base atual no Firebase:</strong> <span id="nm-firebase-info">Verificando...</span>
-          </div>
+          <strong style="font-size:12px">Base atual no Firebase:</strong>
+          <span id="q18-firebase-info" style="font-size:12px;color:var(--tx2)"> Verificando...</span>
         </div>
       </div>
 
@@ -3635,6 +3631,7 @@ async function fbCarregarTudo(){
     fbCarregarMapaDiario();
   fbCarregarPCPDiario();
   desfechoCarregarFirebase();
+  q18CarregarFirebase();
   // Carregar backlog e re-renderizar Planilha Crítica após chegada dos dados
   bkCarregarFirebase().then(()=>{
     aaCarregarResultadoFirebase();
@@ -3642,7 +3639,6 @@ async function fbCarregarTudo(){
       setTimeout(()=>pcInicializar(), 100);
     }
   });
-  nmCarregarFirebase();
   fbCarregarRadar().then(()=>{ 
     // Registrar backlog AG. TRATAMENTO após radar carregar
     setTimeout(paAtualizarBacklogAuto, 800);
@@ -3852,7 +3848,6 @@ function go(id, el) {
     'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
-    'radar':'Radar Estratégico','plano-acao':'Plano de Ação','analista-auto':'Analista Automático','planilha-critica':'Planilha Crítica','governanca':'Governança','adm':'Administração','nm-eliminado':'Consulta NM Eliminado',
     };
   document.getElementById('ttl').textContent = titles[id] || id;
   if(id==='pr-bancoferias'){renderFerias();renderBanco();renderBHECards();}
@@ -3862,7 +3857,7 @@ function go(id, el) {
   if(id==='analista-auto') setTimeout(aaPublicoCarregar, 100);
   if(id==='planilha-critica') setTimeout(pcInicializar, 100);
   if(id==='governanca') setTimeout(()=>{ govCarregarFirebase().then(()=>govInicializar()); }, 300);
-  if(id==='nm-eliminado') setTimeout(()=>{ if(!_nmDados.length) nmCarregarFirebase(); }, 100);
+  if(id==='consulta-q18') setTimeout(()=>{ if(!_q18Impedidos.size) q18CarregarFirebase(); }, 100);
   // Auto-login em módulos sem senha
   if(id==='adm') setTimeout(()=>{
     const login=document.getElementById('adm-login');
@@ -5545,7 +5540,7 @@ function setAdmTab(id,btn){
   if(id==='radar-adm') setTimeout(radarInitADM,50);
   if(id==='pa-entradas') setTimeout(paEntradaInitADM,50);
   if(id==='analista-upload') setTimeout(()=>{ bkAtualizarInfoFirebase(); },50);
-  if(id==='nm-upload') setTimeout(()=>{ nmCarregarFirebase(); nmAtualizarInfo(); },50);
+  if(id==='q18-upload') setTimeout(()=>{ q18CarregarFirebase(); },50);
   if(id==='analista-auto') setTimeout(()=>{ aaVerificarDados(); if(window._aaAptas) aaCarregarResultadoFirebase(); aaSetTab('pedido'); },50);
   
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
@@ -13859,9 +13854,130 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
   window.open(URL.createObjectURL(blob), '_blank');
 }
 
-</script>
+// ════════════════════════════════════════════
+// CONSULTA Q18 — Upload, Firebase, Consulta
+// ════════════════════════════════════════════
+let _q18Impedidos = new Set(); // COD. SAP AJUST impedidos
+let _q18Total = 0;
 
-<!-- ══ MODAL DESFECHO — raiz do documento, visível em qualquer página ══ -->
+function q18HandleDrop(e){
+  e.preventDefault();
+  const f = e.dataTransfer?.files?.[0];
+  if(f) q18HandleUpload(f);
+}
+
+async function q18HandleUpload(file){
+  const status = document.getElementById('q18-upload-status');
+  if(!status) return;
+  status.innerHTML = '⏳ Lendo arquivo...';
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    const impedidos = [];
+    for(let i = 1; i < rows.length; i++){
+      const r = rows[i];
+      const cod  = String(r[0]||'').trim();
+      const just = String(r[2]||'').trim().toLowerCase();
+      if(cod && just === 'impedido') impedidos.push(cod);
+    }
+    _q18Impedidos = new Set(impedidos);
+    _q18Total = rows.length - 1;
+    const kpis = document.getElementById('q18-upload-kpis');
+    if(kpis) kpis.innerHTML = `
+      <div class="kc"><div class="kn" style="color:var(--az)">${_q18Total}</div><div class="kl">Total</div></div>
+      <div class="kc"><div class="kn" style="color:var(--vm)">${impedidos.length}</div><div class="kl">Impedidos</div></div>
+      <div class="kc"><div class="kn" style="color:var(--vd)">${_q18Total - impedidos.length}</div><div class="kl">Aptos</div></div>`;
+    status.innerHTML = `<span style="color:var(--am)">⏳ Salvando no Firebase...</span>`;
+    await q18SalvarFirebase(impedidos, file.name, _q18Total);
+    status.innerHTML = `<span style="color:var(--vd)">✓ Salvo: <strong>${file.name}</strong> — ${impedidos.length} impedidos</span>`;
+    q18AtualizarInfo();
+  } catch(e){
+    if(status) status.innerHTML = `<span style="color:var(--vm)">✗ Erro: ${e.message}</span>`;
+  }
+}
+
+async function q18SalvarFirebase(impedidos, arquivo, total){
+  try{
+    const db = getDB(); if(!db) return;
+    // Salvar em chunks de 5000
+    const CHUNK = 5000;
+    const chunks = Math.ceil(impedidos.length / CHUNK) || 1;
+    for(let c = 0; c < chunks; c++){
+      await db.collection('config').doc(`q18_${c}`).set({
+        ids: impedidos.slice(c * CHUNK, (c+1) * CHUNK)
+      });
+    }
+    await db.collection('config').doc('q18_meta').set({
+      arquivo, total, totalImpedidos: impedidos.length, chunks, dt: new Date().toISOString()
+    });
+    console.log('✓ Q18 salvos:', impedidos.length, 'impedidos');
+  } catch(e){ console.warn('q18SalvarFirebase:', e); }
+}
+
+async function q18CarregarFirebase(){
+  try{
+    const db = getDB(); if(!db){ setTimeout(q18CarregarFirebase, 2000); return; }
+    const meta = await db.collection('config').doc('q18_meta').get();
+    if(!meta.exists){ q18AtualizarInfo(); return; }
+    const d = meta.data();
+    const docs = await Promise.all(
+      Array.from({length: d.chunks||1}, (_,c) => db.collection('config').doc(`q18_${c}`).get())
+    );
+    const ids = docs.flatMap(doc => doc.exists ? doc.data().ids||[] : []);
+    _q18Impedidos = new Set(ids);
+    _q18Total = d.total || 0;
+    console.log('✓ Q18 carregados:', ids.length, 'impedidos');
+    q18AtualizarInfo();
+  } catch(e){ console.warn('q18CarregarFirebase:', e); setTimeout(q18CarregarFirebase, 3000); }
+}
+
+function q18AtualizarInfo(){
+  const temDados = _q18Impedidos.size > 0;
+  const txt = temDados ? `${_q18Total} fornecedores · ${_q18Impedidos.size} impedidos` : 'Nenhuma planilha carregada';
+  const infoEl = document.getElementById('q18-base-info');
+  const fbEl   = document.getElementById('q18-firebase-info');
+  if(infoEl) infoEl.textContent = txt;
+  if(fbEl)   fbEl.textContent   = ' ' + txt;
+}
+
+function q18Consultar(valor){
+  const cod = String(valor||'').trim();
+  const el  = document.getElementById('q18-resultado');
+  if(!el) return;
+  if(!cod){ el.style.display='none'; el.innerHTML=''; return; }
+
+  if(!_q18Impedidos.size && !_q18Total){
+    el.style.display='block';
+    el.innerHTML=`<div style="padding:1rem;background:var(--amc);border-radius:8px;color:var(--am);font-size:13px">⚠️ Base não carregada. Solicite ao ADM o upload da planilha Q18.</div>`;
+    return;
+  }
+
+  const impedido = _q18Impedidos.has(cod);
+  el.style.display='block';
+  if(impedido){
+    el.innerHTML=`
+      <div style="padding:1.25rem;background:var(--vmc);border-radius:10px;border:2px solid var(--vm);display:flex;align-items:center;gap:12px">
+        <span style="font-size:36px">🚫</span>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--vm)">IMPEDIDO — Q18</div>
+          <div style="font-size:13px;color:var(--tx2);margin-top:4px">COD. SAP <strong>${cod}</strong> consta na lista de fornecedores impedidos.</div>
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML=`
+      <div style="padding:1.25rem;background:var(--vdc);border-radius:10px;border:2px solid var(--vd);display:flex;align-items:center;gap:12px">
+        <span style="font-size:36px">✅</span>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--vd)">APTO</div>
+          <div style="font-size:13px;color:var(--tx2);margin-top:4px">COD. SAP <strong>${cod}</strong> não consta na lista de impedidos Q18.</div>
+        </div>
+      </div>`;
+  }
+}
+
+ — raiz do documento, visível em qualquer página ══ -->
 <div id="desfecho-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:12px;width:440px;max-width:95vw;padding:1.5rem;box-shadow:0 8px 32px rgba(13,35,71,.18)">
     <div style="font-weight:700;font-size:15px;margin-bottom:.25rem;color:var(--az)">✅ Desfecho do item</div>
@@ -13913,189 +14029,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
 
 <script>
 // ════════════════════════════════════════════
-// NM ELIMINADO — Upload, Firebase, Consulta
-// ════════════════════════════════════════════
-let _nmDados = [];
-
-function nmHandleDrop(e){
-  e.preventDefault();
-  const f = e.dataTransfer.files[0];
-  if(f) nmHandleUpload(f);
-}
-
-async function nmHandleUpload(file){
-  if(!file) return;
-  const status = document.getElementById('nm-upload-status');
-  status.innerHTML = '⏳ Lendo arquivo...';
-  try{
-    const buf = await file.arrayBuffer();
-    const wb = XLSX.read(buf,{type:'array'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    const dados = [];
-    for(let i=1;i<rows.length;i++){
-      const r=rows[i];
-      const nmFilho=String(r[0]||'').trim();
-      if(!nmFilho) continue;
-      dados.push({
-        nmFilho,
-        textoBreve: String(r[1]||'').trim(),
-        elimNmPai:  String(r[2]||'').trim().toUpperCase()==='X',
-        nmPai:      String(r[3]||'').trim(),
-        elimNmFilho:String(r[4]||'').trim().toUpperCase()==='X',
-      });
-    }
-    _nmDados = dados;
-    const totalElim = dados.filter(d=>d.elimNmPai||d.elimNmFilho).length;
-    const kpis = document.getElementById('nm-upload-kpis');
-    if(kpis) kpis.innerHTML=`
-      <div class="kc"><div class="kn" style="color:var(--az)">${dados.length}</div><div class="kl">Total NMs</div></div>
-      <div class="kc"><div class="kn" style="color:var(--vm)">${totalElim}</div><div class="kl">Eliminados</div></div>
-      <div class="kc"><div class="kn" style="color:var(--vd)">${dados.length-totalElim}</div><div class="kl">Ativos</div></div>`;
-    status.innerHTML=`<span style="color:var(--vd)">✓ <strong>${file.name}</strong> — ${dados.length} NMs · Salvando...</span>`;
-    await nmSalvarFirebase(dados, file.name);
-    status.innerHTML=`<span style="color:var(--vd)">✓ Salvo no Firebase: <strong>${file.name}</strong> — ${dados.length} NMs (${totalElim} eliminados)</span>`;
-    nmAtualizarInfo();
-  } catch(e){
-    document.getElementById('nm-upload-status').innerHTML=`<span style="color:var(--vm)">✗ Erro: ${e.message}</span>`;
-  }
-}
-
-async function nmSalvarFirebase(dados, arquivo){
-  const status = document.getElementById('nm-upload-status');
-  try{
-    const db = getDB();
-    if(!db){
-      if(status) status.innerHTML='<span style="color:var(--vm)">✗ Firebase offline — não foi possível salvar.</span>';
-      return;
-    }
-    // Salvar APENAS os eliminados — reduz dramaticamente o tamanho
-    const apenasEliminados = dados.filter(d => d.elimNmPai || d.elimNmFilho);
-    const chunkSize = 2000;
-    const chunks = Math.ceil(apenasEliminados.length / chunkSize);
-    if(status) status.innerHTML = `<span style="color:var(--am)">⏳ Salvando ${apenasEliminados.length} NMs eliminados em ${chunks} parte(s)...</span>`;
-
-    for(let c = 0; c < chunks; c++){
-      const slice = apenasEliminados.slice(c * chunkSize, (c + 1) * chunkSize);
-      const slimSlice = slice.map(r=>({
-        a: r.nmFilho,
-        b: r.nmPai||'',
-        c: r.elimNmPai ? 1 : 0,
-        d: r.elimNmFilho ? 1 : 0,
-      }));
-      await db.collection('config').doc(`nm_eliminados_${c}`).set({rows: slimSlice});
-      if(status) status.innerHTML = `<span style="color:var(--am)">⏳ Salvando... ${c+1}/${chunks} partes</span>`;
-      if(c < chunks - 1) await new Promise(r => setTimeout(r, 200));
-    }
-    await db.collection('config').doc('nm_eliminados_meta').set({
-      arquivo, total: dados.length, totalElim: apenasEliminados.length, chunks, dt: new Date().toISOString()
-    });
-    console.log('✓ NM Eliminados salvos no Firebase:', apenasEliminados.length, 'eliminados em', chunks, 'chunks');
-  } catch(e){
-    console.warn('nmSalvarFirebase:', e);
-    if(status) status.innerHTML = `<span style="color:var(--vm)">✗ Erro ao salvar: ${e.message}</span>`;
-  }
-}
-
-async function nmCarregarFirebase(){
-  try{
-    const db = getDB();
-    if(!db){
-      console.warn('nmCarregarFirebase: Firebase não disponível');
-      setTimeout(nmCarregarFirebase, 2000);
-      return;
-    }
-    const meta = await db.collection('config').doc('nm_eliminados_meta').get();
-    if(!meta.exists){ console.log('nmCarregarFirebase: nenhuma base salva'); nmAtualizarInfo(); return; }
-    const d = meta.data();
-    console.log('nmCarregarFirebase: meta encontrada —', d.arquivo, d.total, 'NMs,', d.chunks, 'chunk(s)');
-
-    let todos = [];
-    const LOTE = 5; // carregar 5 chunks em paralelo por vez
-    for(let i = 0; i < d.chunks; i += LOTE){
-      const promessas = [];
-      for(let c = i; c < Math.min(i + LOTE, d.chunks); c++){
-        promessas.push(db.collection('config').doc(`nm_eliminados_${c}`).get());
-      }
-      const resultados = await Promise.all(promessas);
-      resultados.forEach(chunk => {
-        if(!chunk.exists) return;
-        const rows = chunk.data().rows || [];
-        const parsed = rows.map(r => {
-          if(r.nmFilho !== undefined) return r;
-          return {
-            nmFilho:     String(r.a||''),
-            nmPai:       String(r.b||''),
-            elimNmPai:   r.c===1 || r.c==='1' || r.c===true,
-            elimNmFilho: r.d===1 || r.d==='1' || r.d===true,
-          };
-        });
-        todos = todos.concat(parsed);
-      });
-    }
-
-    _nmDados = todos;
-    console.log('✓ NM Eliminados carregados:', todos.length);
-    nmAtualizarInfo();
-  } catch(e){
-    console.warn('nmCarregarFirebase erro:', e);
-    setTimeout(nmCarregarFirebase, 3000);
-  }
-}
-
-function nmAtualizarInfo(){
-  const totalElim = _nmDados.filter(d=>d.elimNmPai||d.elimNmFilho).length;
-  const txt = _nmDados.length > 0 ? `${_nmDados.length} NMs · ${totalElim} eliminados` : 'Nenhuma planilha carregada';
-  const infoEl  = document.getElementById('nm-base-info');
-  const totalEl = document.getElementById('nm-base-total');
-  const fbEl    = document.getElementById('nm-firebase-info');
-  const kpis    = document.getElementById('nm-upload-kpis');
-  if(infoEl)  infoEl.textContent  = _nmDados.length > 0 ? 'Planilha carregada' : 'Nenhuma planilha carregada';
-  if(totalEl) totalEl.textContent = _nmDados.length > 0 ? txt : '';
-  if(fbEl)    fbEl.textContent    = txt;
-  if(kpis && _nmDados.length > 0) kpis.innerHTML = `
-    <div class="kc"><div class="kn" style="color:var(--az)">${_nmDados.length}</div><div class="kl">Total NMs</div></div>
-    <div class="kc"><div class="kn" style="color:var(--vm)">${totalElim}</div><div class="kl">Eliminados</div></div>
-    <div class="kc"><div class="kn" style="color:var(--vd)">${_nmDados.length - totalElim}</div><div class="kl">Ativos</div></div>`;
-}
-
-function nmConsultar(valor){
-  const nm=String(valor||'').trim();
-  const el=document.getElementById('nm-resultado');
-  if(!el) return;
-  if(!nm){ el.style.display='none'; el.innerHTML=''; return; }
-  if(!_nmDados.length){
-    el.style.display='block';
-    el.innerHTML=`<div style="padding:1rem;background:var(--amc);border-radius:8px;color:var(--am);font-size:13px">⚠️ Base não carregada. Solicite ao ADM o upload da planilha.</div>`;
-    return;
-  }
-  const resultados=_nmDados.filter(d=>d.nmFilho===nm||d.nmPai===nm);
-  if(!resultados.length){
-    el.style.display='block';
-    el.innerHTML=`<div style="padding:1.25rem;background:var(--vdc);border-radius:10px;border:2px solid var(--vd);display:flex;align-items:center;gap:12px">
-      <span style="font-size:32px">✅</span>
-      <div><div style="font-size:15px;font-weight:700;color:var(--vd)">NM ${nm} — NÃO ENCONTRADO NA LISTA DE ELIMINADOS</div>
-      <div style="font-size:12px;color:var(--tx2);margin-top:4px">Este NM não consta na planilha de eliminação.</div></div></div>`;
-    return;
-  }
-  const isEliminado=resultados.some(d=>(d.nmFilho===nm&&d.elimNmFilho)||(d.nmPai===nm&&d.elimNmPai));
-  el.style.display='block';
-  el.innerHTML=`
-    <div style="padding:1.25rem;background:${isEliminado?'var(--vmc)':'var(--azc)'};border-radius:10px;border:2px solid ${isEliminado?'var(--vm)':'var(--azm)'};display:flex;align-items:center;gap:12px;margin-bottom:1rem">
-      <span style="font-size:32px">${isEliminado?'🚫':'ℹ️'}</span>
-      <div><div style="font-size:15px;font-weight:700;color:${isEliminado?'var(--vm)':'var(--azm)'}">NM ${nm} — ${isEliminado?'ELIMINADO':'CONSTA NA PLANILHA MAS SEM ELIMINAÇÃO'}</div>
-      <div style="font-size:12px;color:var(--tx2);margin-top:4px">${resultados.length} registro(s) encontrado(s)</div></div></div>
-    <div class="tw"><table>
-      <thead><tr><th>NM Filho</th><th>Descrição</th><th>Elim. NM Pai</th><th>NM Pai</th><th>Elim. NM Filho</th></tr></thead>
-      <tbody>${resultados.map(d=>`<tr>
-        <td style="font-weight:700;color:${d.nmFilho===nm?'var(--az)':'var(--tx)'}">${d.nmFilho}</td>
-        <td style="font-size:11px">${d.textoBreve||'—'}</td>
-        <td style="text-align:center;font-weight:700;color:${d.elimNmPai?'var(--vm)':'var(--vd)'}">${d.elimNmPai?'✗ SIM':'✓ NÃO'}</td>
-        <td style="color:${d.nmPai===nm?'var(--az)':'var(--tx)'}">${d.nmPai||'—'}</td>
-        <td style="text-align:center;font-weight:700;color:${d.elimNmFilho?'var(--vm)':'var(--vd)'}">${d.elimNmFilho?'✗ SIM':'✓ NÃO'}</td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
-}
 </script>
 
 </body>
