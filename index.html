@@ -13969,14 +13969,14 @@ async function nmSalvarFirebase(dados, arquivo){
       if(status) status.innerHTML='<span style="color:var(--vm)">✗ Firebase offline — não foi possível salvar.</span>';
       return;
     }
-    // Chunks maiores para reduzir número de escritas (5000 por chunk)
-    const chunkSize = 5000;
-    const chunks = Math.ceil(dados.length / chunkSize);
-    if(status) status.innerHTML = `<span style="color:var(--am)">⏳ Salvando ${dados.length} NMs em ${chunks} parte(s)...</span>`;
+    // Salvar APENAS os eliminados — reduz dramaticamente o tamanho
+    const apenasEliminados = dados.filter(d => d.elimNmPai || d.elimNmFilho);
+    const chunkSize = 2000;
+    const chunks = Math.ceil(apenasEliminados.length / chunkSize);
+    if(status) status.innerHTML = `<span style="color:var(--am)">⏳ Salvando ${apenasEliminados.length} NMs eliminados em ${chunks} parte(s)...</span>`;
 
     for(let c = 0; c < chunks; c++){
-      const slice = dados.slice(c * chunkSize, (c + 1) * chunkSize);
-      // Salvar apenas campos essenciais para reduzir tamanho
+      const slice = apenasEliminados.slice(c * chunkSize, (c + 1) * chunkSize);
       const slimSlice = slice.map(r=>({
         a: r.nmFilho,
         b: r.nmPai||'',
@@ -13985,13 +13985,12 @@ async function nmSalvarFirebase(dados, arquivo){
       }));
       await db.collection('config').doc(`nm_eliminados_${c}`).set({rows: slimSlice});
       if(status) status.innerHTML = `<span style="color:var(--am)">⏳ Salvando... ${c+1}/${chunks} partes</span>`;
-      // Pequeno delay entre chunks para não sobrecarregar
-      if(c < chunks - 1) await new Promise(r => setTimeout(r, 300));
+      if(c < chunks - 1) await new Promise(r => setTimeout(r, 200));
     }
     await db.collection('config').doc('nm_eliminados_meta').set({
-      arquivo, total: dados.length, chunks, dt: new Date().toISOString()
+      arquivo, total: dados.length, totalElim: apenasEliminados.length, chunks, dt: new Date().toISOString()
     });
-    console.log('✓ NM Eliminados salvos no Firebase:', dados.length, 'em', chunks, 'chunks');
+    console.log('✓ NM Eliminados salvos no Firebase:', apenasEliminados.length, 'eliminados em', chunks, 'chunks');
   } catch(e){
     console.warn('nmSalvarFirebase:', e);
     if(status) status.innerHTML = `<span style="color:var(--vm)">✗ Erro ao salvar: ${e.message}</span>`;
@@ -14012,7 +14011,7 @@ async function nmCarregarFirebase(){
     console.log('nmCarregarFirebase: meta encontrada —', d.arquivo, d.total, 'NMs,', d.chunks, 'chunk(s)');
 
     let todos = [];
-    const LOTE = 10; // carregar 10 chunks em paralelo por vez
+    const LOTE = 5; // carregar 5 chunks em paralelo por vez
     for(let i = 0; i < d.chunks; i += LOTE){
       const promessas = [];
       for(let c = i; c < Math.min(i + LOTE, d.chunks); c++){
@@ -14024,7 +14023,12 @@ async function nmCarregarFirebase(){
         const rows = chunk.data().rows || [];
         const parsed = rows.map(r => {
           if(r.nmFilho !== undefined) return r;
-          return { nmFilho: String(r.a||''), nmPai: String(r.b||''), elimNmPai: r.c===1, elimNmFilho: r.d===1 };
+          return {
+            nmFilho:     String(r.a||''),
+            nmPai:       String(r.b||''),
+            elimNmPai:   r.c===1 || r.c==='1' || r.c===true,
+            elimNmFilho: r.d===1 || r.d==='1' || r.d===true,
+          };
         });
         todos = todos.concat(parsed);
       });
