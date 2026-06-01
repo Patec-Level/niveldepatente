@@ -11869,6 +11869,29 @@ function govSincronizarMapa(rows){
 
   if(novos > 0){
     console.log('Gov MAPA: ' + novos + ' itens novos adicionados com AG. TRATAMENTO');
+
+    // ── REGISTRO AUTOMÁTICO DE ENTRADAS NO PLANO DE AÇÃO ──
+    // Apenas o PRIMEIRO upload do dia registra as entradas.
+    // Uploads subsequentes no mesmo dia não alteram a entrada
+    // (o backlog atual é atualizado normalmente, mas a entrada fica travada).
+    (async () => {
+      try {
+        const hoje = new Date().toISOString().split('T')[0];
+        const jaExiste = _paEntradas.find(e => e.dt === hoje);
+        if(jaExiste){
+          // Já houve upload hoje — entrada travada, não altera
+          console.log('PA Entradas: upload já registrado hoje (' + hoje + '), entrada mantida em ' + jaExiste.val + '. Ignorando novo registro.');
+        } else {
+          // Primeiro upload do dia — registrar entrada real
+          _paEntradas.push({ dt: hoje, val: novos });
+          _paEntradas.sort((a,b) => a.dt.localeCompare(b.dt));
+          await paEntradaSalvarFirebase();
+          console.log('✓ PA Entradas: primeiro upload do dia — registrado ' + novos + ' novos itens em ' + hoje);
+        }
+      } catch(e){ console.warn('Erro ao salvar entradas automáticas no PA:', e.message); }
+    })();
+    // ── FIM REGISTRO AUTOMÁTICO ──
+
     // Persistir em lotes de 10 com delay para não sobrecarregar o Firebase
     const LOTE = 10;
     const persistirLote = async (idx) => {
@@ -13504,8 +13527,30 @@ async function admApresentacaoGerar(){
     });
 
     // Entradas acumuladas no período
-    const entradasAcum = totalEntradas;
+    // Prioridade: variação real do L3+L4 do Mapa (mapa_diario Firebase)
+    // Fallback: _paEntradas (lançamento manual)
+    let entradasAcum = totalEntradas; // fallback manual
     const diasDecorridos = diasUteis.length;
+
+    // Calcular entradas reais pelo Mapa — variação positiva do L3 dia a dia
+    // L3 = PATEC Finalizado: sobe quando chegam itens novos, cai quando você analisa
+    if(mapaFirebase && mapaFirebase.length > 1){
+      const _mapaL3 = {};
+      mapaFirebase.forEach(r=>{ if(r.data) _mapaL3[r.data] = r.l3||0; });
+      let _entradasMapa = 0;
+      diasUteis.forEach((d, idx)=>{
+        if(idx === 0) return; // primeiro dia sem referência anterior
+        const dAnt = diasUteis[idx-1];
+        const atual   = _mapaL3[d];
+        const anterior = _mapaL3[dAnt];
+        if(atual !== undefined && anterior !== undefined){
+          const variacao = atual - anterior;
+          if(variacao > 0) _entradasMapa += variacao; // só conta quando L3 subiu
+        }
+      });
+      const _diasComMapa = diasUteis.filter(d => _mapaL3[d] !== undefined).length;
+      if(_diasComMapa >= 2) entradasAcum = _entradasMapa;
+    }
 
     // Projeção SEM novas entradas
     const diasParaZerarSem = metaDiaSim>0 ? Math.ceil(backlogAtual/metaDiaSim) : 999;
