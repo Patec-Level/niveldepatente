@@ -336,6 +336,81 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 .mkt-var-neu{color:var(--tx2);background:var(--cin);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
 </style>
 
+<!-- Estilos tela de login global -->
+<style>
+#patec-login-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(135deg,#0D2347 0%,#1A4A8A 60%,#0E9E6A 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Sans',Arial,sans-serif;
+}
+#patec-login-overlay .login-box{
+  background:#fff;border-radius:18px;padding:2.5rem 2rem;
+  width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3);
+  text-align:center;margin:1rem;
+}
+#patec-login-overlay .login-logo{
+  background:#0D2347;border-radius:12px;padding:1rem 1.5rem;
+  display:inline-block;margin-bottom:1.75rem;
+}
+#patec-login-overlay .login-logo h2{
+  color:#fff;font-size:22px;font-weight:700;letter-spacing:.5px;margin:0;
+}
+#patec-login-overlay .login-logo p{
+  color:rgba(255,255,255,.5);font-size:10px;margin:3px 0 0;letter-spacing:1px;text-transform:uppercase;
+}
+#patec-login-overlay input{
+  width:100%;font-size:14px;padding:11px 14px;
+  border:1.5px solid #DDE3EE;border-radius:9px;
+  margin-bottom:10px;outline:none;transition:border .2s;
+  font-family:inherit;
+}
+#patec-login-overlay input:focus{border-color:#1A4A8A;}
+#patec-login-overlay .btn-entrar{
+  width:100%;background:linear-gradient(90deg,#1A4A8A,#0E9E6A);
+  color:#fff;border:none;border-radius:9px;padding:12px;
+  font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;
+  transition:opacity .2s;font-family:inherit;letter-spacing:.3px;
+}
+#patec-login-overlay .btn-entrar:hover{opacity:.9}
+#patec-login-overlay .login-forgot{
+  font-size:11px;color:#1A4A8A;cursor:pointer;margin-top:1rem;
+  display:inline-block;text-decoration:underline;
+}
+#patec-login-overlay .login-err{
+  font-size:12px;color:#D94040;background:#FDEAEA;
+  border-radius:7px;padding:8px 12px;margin-bottom:10px;display:none;
+}
+#patec-login-overlay .login-ok{
+  font-size:12px;color:#0E9E6A;background:#E6F7F1;
+  border-radius:7px;padding:8px 12px;margin-bottom:10px;display:none;
+}
+#patec-login-overlay .login-loading{
+  font-size:12px;color:#5A6A7E;margin-top:8px;display:none;
+}
+/* Chip home/presencial na topbar */
+.chip-modalidade{
+  font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;
+  cursor:pointer;transition:all .2s;border:1px solid transparent;
+}
+.chip-home{background:rgba(14,158,106,.2);color:#6FEABD;border-color:rgba(14,158,106,.3);}
+.chip-presencial{background:rgba(26,74,138,.3);color:#A8C4F0;border-color:rgba(26,74,138,.4);}
+/* Badge usuário logado na topbar */
+#topbar-user-badge{display:none;align-items:center;gap:8px;margin-left:auto;}
+#topbar-user-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(255,255,255,.2);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;flex-shrink:0;
+}
+/* Snapshot tempo real — pulse indicator */
+.rt-dot{
+  width:7px;height:7px;border-radius:50%;background:#0E9E6A;
+  display:inline-block;animation:rtpulse 2s infinite;flex-shrink:0;
+}
+@keyframes rtpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+</style>
+
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script>
@@ -343,6 +418,26 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 </script>
 </head>
 <body>
+
+<!-- ══ TELA DE LOGIN GLOBAL ══ -->
+<div id="patec-login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <h2>PATEC</h2>
+      <p>Sistema de Gestão de Compras</p>
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-ok" id="login-ok"></div>
+    <input type="email" id="login-email" placeholder="E-mail" autocomplete="email"
+      onkeydown="if(event.key==='Enter')document.getElementById('login-senha').focus()">
+    <input type="password" id="login-senha" placeholder="Senha"
+      onkeydown="if(event.key==='Enter')authFazerLogin()">
+    <button class="btn-entrar" onclick="authFazerLogin()">Conectar-se</button>
+    <div class="login-loading" id="login-loading">⏳ Verificando credenciais...</div>
+    <span class="login-forgot" onclick="authEsqueciSenha()">Esqueci minha senha</span>
+  </div>
+</div>
+<!-- ══ fim LOGIN GLOBAL ══ -->
 <button id="hbg" onclick="document.getElementById('sb').classList.toggle('mob-open')">☰</button>
 <nav id="sb">
   <div class="sb-logo"><h1>PATEC</h1><p>Sistema de Gestão de Compras</p></div>
@@ -398,8 +493,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     </div>
   </div>
 
-  <!-- ── DIREITA: 2 cards (Meta do Projeto + Gap do Projeto) ── -->
+  <!-- ── DIREITA: 2 cards (Meta do Projeto + Gap do Projeto) + badge usuário ── -->
   <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;position:relative;z-index:2">
+    <!-- badge usuário logado -->
+    <div id="topbar-user-badge" style="display:none;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:4px 12px 4px 6px;margin-right:4px">
+      <div id="topbar-user-avatar" style="width:24px;height:24px;border-radius:50%;background:rgba(14,158,106,.35);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">—</div>
+      <span id="topbar-user-nome" style="font-size:11px;font-weight:600;color:#fff">—</span>
+      <span id="topbar-user-chip" class="chip-modalidade chip-presencial" style="display:none"></span>
+      <span class="rt-dot" title="Dados em tempo real"></span>
+      <button onclick="authLogout()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;padding:0 0 0 4px;line-height:1" title="Sair">×</button>
+    </div>
     <!-- DIR 1: META DO PROJETO -->
     <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.13);border-radius:8px;padding:4px 12px;text-align:center;min-width:95px">
       <div style="font-size:7px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.7px;text-transform:uppercase;white-space:nowrap;margin-bottom:1px">META DO PROJETO</div>
@@ -767,6 +870,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- ABAS ADM -->
       <div class="stabs" id="adm-tabs">
         <button class="stab active" onclick="setAdmTab('ciclos',this)">🔄 Gestão de Ciclos</button>
+        <button class="stab" onclick="setAdmTab('usuarios',this)">👥 Usuários</button>
+        <button class="stab" onclick="setAdmTab('rt-producao',this)">📡 Produção Tempo Real</button>
         <button class="stab" onclick="setAdmTab('metas',this)">🎯 Metas e Gap</button>
         <button class="stab" onclick="setAdmTab('meta-gap',this)">📌 Meta & Gap (Topbar)</button>
         <button class="stab" onclick="setAdmTab('senhas',this)">🔑 Senhas</button>
@@ -786,6 +891,80 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('email-teste',this)">📧 Testar E-mails</button>
         <button class="stab" onclick="setAdmTab('apresentacao',this);admApresentacaoInit()">🖥️ Apresentação</button>
         <button class="stab" onclick="setAdmTab('q18-upload',this)">🚫 Q18</button>
+      </div>
+
+      <!-- ── USUÁRIOS ── -->
+      <div id="adm-usuarios" class="adm-tab" style="display:none">
+        <div class="cd">
+          <div class="cd-t">👥 Gerenciar Usuários</div>
+          <div class="al al-b" style="margin-bottom:1rem">ℹ Cadastre os e-mails que terão acesso ao PATEC. O sistema enviará um e-mail com instruções de primeiro acesso. Use <strong>Resetar Senha</strong> quando o colaborador esquecer a senha.</div>
+
+          <!-- Cadastrar novo usuário -->
+          <div style="background:var(--cin);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem;border:1px solid var(--brd)">
+            <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:1rem">➕ Cadastrar novo usuário</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:4px">Nome</div>
+                <input type="text" id="usr-novo-nome" placeholder="Ex: Lory" style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:4px">E-mail</div>
+                <input type="email" id="usr-novo-email" placeholder="email@petrobras.com.br" style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:4px">Senha inicial</div>
+                <input type="text" id="usr-novo-senha" placeholder="Ex: Patec@2026" style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:10px;font-weight:600;color:var(--tx2);margin-bottom:6px">Permissões de acesso</div>
+              <div id="usr-novo-perms" style="display:flex;flex-wrap:wrap;gap:6px">
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="mercado" checked> 🌐 Mercado</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="radar" checked> 📡 Radar</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="plano-acao" checked> 🎯 Plano de Ação</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="pr-estrategico" checked> 📊 Painel Estrat.</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="governanca" checked> ⚖️ Governança</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="planilha-critica" checked> 🔴 Plan. Crítica</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="analista-auto" checked> 🤖 Analista Auto</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="consulta-q18" checked> 🚫 Q18</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="pr-lancar" checked> ✏️ Produção</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid var(--brd)"><input type="checkbox" value="pr-bancoferias" checked> 🗓 Jornada</label>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn btn-p" onclick="usrCadastrar()">✓ Cadastrar usuário</button>
+              <span id="usr-novo-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Usuário cadastrado!</span>
+              <span id="usr-novo-err" style="font-size:11px;color:var(--vm);font-weight:600;display:none"></span>
+            </div>
+          </div>
+
+          <!-- Lista de usuários -->
+          <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.75rem">📋 Usuários cadastrados</div>
+          <div id="usr-lista-loading" style="font-size:11px;color:var(--tx2)">Carregando...</div>
+          <div id="usr-lista"></div>
+        </div>
+      </div>
+
+      <!-- ── PRODUÇÃO TEMPO REAL ── -->
+      <div id="adm-rt-producao" class="adm-tab" style="display:none">
+        <div class="cd">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+            <div class="cd-t" style="margin:0">📡 Produção em Tempo Real <span class="rt-dot" style="margin-left:6px"></span></div>
+            <div style="font-size:11px;color:var(--tx2)" id="rt-ultimo-update">—</div>
+          </div>
+          <!-- KPIs da equipe hoje -->
+          <div id="rt-kpi-equipe" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem"></div>
+          <!-- Cards por colaborador -->
+          <div id="rt-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
+          <!-- Histórico de hoje na tabela -->
+          <div style="margin-top:1.25rem">
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.625rem">Lançamentos do dia</div>
+            <div class="tw"><table>
+              <thead><tr><th>Colaborador</th><th>Modalidade</th><th>Horário</th><th>1ª Trat.</th><th>Em Trat.</th><th>Status B</th><th>Outros</th><th>Total</th><th>Meta</th><th>Status</th></tr></thead>
+              <tbody id="rt-tbody"></tbody>
+            </table></div>
+          </div>
+        </div>
       </div>
 
       <!-- ── Q18 — UPLOAD ── -->
@@ -3428,11 +3607,13 @@ async function loadFirebaseSDK(){
     [
       'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
       'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js',
+      'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js',
     ],
     // CDN 3: versão mais antiga e estável
     [
       'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
       'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
+      'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',
     ],
   ];
 
@@ -3453,6 +3634,11 @@ async function loadFirebaseSDK(){
       if(!ok1) { resolve(false); return; }
       await new Promise(r => setTimeout(r, 200));
       const ok2 = await loadScript(urls[1]);
+      if(!ok2) { resolve(false); return; }
+      if(urls[2]){
+        await new Promise(r => setTimeout(r, 100));
+        await loadScript(urls[2]); // auth — best-effort
+      }
       resolve(ok2 && typeof firebase !== 'undefined');
     });
   }
@@ -5552,13 +5738,13 @@ function setAdmTab(id,btn){
   if(id==='analista-upload') setTimeout(()=>{ bkAtualizarInfoFirebase(); },50);
   if(id==='q18-upload') setTimeout(()=>{ q18CarregarFirebase(); },50);
   if(id==='analista-auto') setTimeout(()=>{ aaVerificarDados(); if(window._aaAptas) aaCarregarResultadoFirebase(); aaSetTab('pedido'); },50);
-  
   if(id==='meta-gap') setTimeout(initMetaGapADM,50);
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
   if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
   if(id==='hist-mapa') setTimeout(renderAdmMapaHistorico,50);
   if(id==='hist-prod') setTimeout(renderDistribuicao,50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
+  if(id==='usuarios') setTimeout(usrCarregarLista, 100);
   document.querySelectorAll('#adm-tabs .stab').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   document.querySelectorAll('.adm-tab').forEach(t=>t.style.display='none');
@@ -14088,6 +14274,538 @@ function q18Consultar(valor){
 
 <script>
 // ════════════════════════════════════════════
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// PATEC AUTH — Firebase Authentication + Perfis + Tempo Real
+// ══════════════════════════════════════════════════════════
+
+// Mapa de permissões: chave sidebar → id da página
+const PERMS_SIDEBAR = {
+  'mercado':        { icon:'🌐', label:'Inteligência de Mercado',  mod:'ESTRATÉGICO' },
+  'radar':          { icon:'📡', label:'Radar Estratégico',        mod:'ESTRATÉGICO' },
+  'plano-acao':     { icon:'🎯', label:'Plano de Ação',            mod:'ESTRATÉGICO' },
+  'pr-estrategico': { icon:'🎯', label:'Painel Estratégico',       mod:'EXECUÇÃO' },
+  'governanca':     { icon:'⚖️', label:'Governança',               mod:'EXECUÇÃO' },
+  'planilha-critica':{ icon:'🔴', label:'Planilha Crítica',        mod:'EXECUÇÃO' },
+  'analista-auto':  { icon:'🤖', label:'Analista Automático',      mod:'EXECUÇÃO' },
+  'consulta-q18':   { icon:'🚫', label:'Consulta Q18',             mod:'EXECUÇÃO' },
+  'pr-lancar':      { icon:'✏️', label:'Gestão de Produção',       mod:'EXECUÇÃO' },
+  'pr-bancoferias': { icon:'🗓', label:'Gestão de Jornada',        mod:'EXECUÇÃO' },
+};
+
+let _authUser = null;       // firebase user object
+let _authPerfil = null;     // { nome, email, perfil:'adm'|'colaborador'|'custom', permissoes:[], colabNome }
+let _rtUnsubscribe = null;  // listener tempo real
+let _rtUnsubProd = null;    // listener produção
+
+// ── Inicializar Auth após Firebase SDK carregado ──
+async function authInit(){
+  try{
+    const ok = await loadFirebaseSDK();
+    if(!ok){ console.warn('Auth: Firebase SDK não carregado'); return; }
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    const auth = firebase.auth();
+    auth.onAuthStateChanged(async user => {
+      if(user){
+        _authUser = user;
+        await authCarregarPerfil(user);
+        authMostrarApp();
+      } else {
+        _authUser = null;
+        _authPerfil = null;
+        authMostrarLogin();
+      }
+    });
+  } catch(e){ console.warn('authInit:', e); }
+}
+
+async function authCarregarPerfil(user){
+  try{
+    const db = getDB(); if(!db) return;
+    const doc = await db.collection('usuarios').doc(user.uid).get();
+    if(doc.exists){
+      _authPerfil = doc.data();
+    } else {
+      // Primeiro acesso ou ADM pelo e-mail
+      const isAdm = user.email === 'andre.mazzali@levegroup.com.br' ||
+                    user.email === 'andreluisj4@gmail.com';
+      _authPerfil = {
+        nome: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        perfil: isAdm ? 'adm' : 'colaborador',
+        permissoes: Object.keys(PERMS_SIDEBAR),
+        colabNome: user.displayName || ''
+      };
+      await db.collection('usuarios').doc(user.uid).set(_authPerfil, {merge:true});
+    }
+    console.log('✓ Perfil carregado:', _authPerfil.perfil, _authPerfil.nome);
+  } catch(e){ console.warn('authCarregarPerfil:', e); }
+}
+
+function authMostrarLogin(){
+  document.getElementById('patec-login-overlay').style.display = 'flex';
+  // Ocultar badge
+  const badge = document.getElementById('topbar-user-badge');
+  if(badge) badge.style.display = 'none';
+}
+
+function authMostrarApp(){
+  document.getElementById('patec-login-overlay').style.display = 'none';
+
+  // Montar sidebar de acordo com permissões
+  authMontarSidebar();
+
+  // Badge na topbar
+  const badge = document.getElementById('topbar-user-badge');
+  if(badge){
+    badge.style.display = 'flex';
+    const av = document.getElementById('topbar-user-avatar');
+    const nm = document.getElementById('topbar-user-nome');
+    if(av) av.textContent = (_authPerfil?.nome||'?')[0].toUpperCase();
+    if(nm) nm.textContent = _authPerfil?.nome || _authUser?.email || '—';
+  }
+
+  // Iniciar listener de produção em tempo real
+  rtIniciarListener();
+
+  // Se colaborador: pré-logar no módulo de produção com o nome dele
+  if(_authPerfil?.perfil !== 'adm' && _authPerfil?.colabNome){
+    const sel = document.getElementById('pr-login-nome');
+    if(sel){
+      sel.value = _authPerfil.colabNome;
+      // Auto-login silencioso
+      colabLogado = _authPerfil.colabNome;
+    }
+  }
+}
+
+function authMontarSidebar(){
+  const isAdm = _authPerfil?.perfil === 'adm';
+  const perms = _authPerfil?.permissoes || [];
+
+  const sb = document.getElementById('sb');
+  if(!sb) return;
+
+  // Recriar itens de navegação
+  // Manter logo e mini-meta fixos, reconstruir apenas os sb-it e sb-mod/sb-sec
+  const itensAtuais = sb.querySelectorAll('.sb-it, .sb-mod, .sb-sec:not(.sb-sec-keep)');
+  itensAtuais.forEach(el => el.remove());
+
+  // Montar por módulo
+  const mods = {};
+  const ordemMods = ['ESTRATÉGICO','EXECUÇÃO'];
+  Object.entries(PERMS_SIDEBAR).forEach(([key, cfg]) => {
+    if(isAdm || perms.includes(key)){
+      if(!mods[cfg.mod]) mods[cfg.mod] = [];
+      mods[cfg.mod].push({key, ...cfg});
+    }
+  });
+
+  let html = '';
+  ordemMods.forEach(mod => {
+    if(!mods[mod]?.length) return;
+    html += `<div class="sb-mod">◈ ${mod}</div>`;
+    mods[mod].forEach(item => {
+      html += `<div class="sb-it" onclick="go('${item.key}',this)">${item.icon} ${item.label}</div>`;
+    });
+  });
+
+  if(isAdm){
+    html += `<div class="sb-sec">ADM</div>`;
+    html += `<div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>`;
+  }
+
+  // Inserir antes do final do sidebar
+  sb.insertAdjacentHTML('beforeend', html);
+}
+
+async function authFazerLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const errEl = document.getElementById('login-err');
+  const okEl  = document.getElementById('login-ok');
+  const loadEl = document.getElementById('login-loading');
+
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  if(!email || !senha){
+    errEl.textContent = 'Preencha e-mail e senha.';
+    errEl.style.display = 'block'; return;
+  }
+
+  loadEl.style.display = 'block';
+  try{
+    const ok = await loadFirebaseSDK();
+    if(!ok) throw new Error('SDK não carregado');
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    await firebase.auth().signInWithEmailAndPassword(email, senha);
+    // onAuthStateChanged vai cuidar do resto
+  } catch(e){
+    loadEl.style.display = 'none';
+    const msgs = {
+      'auth/user-not-found':    'E-mail não cadastrado no sistema.',
+      'auth/wrong-password':    'Senha incorreta. Tente novamente.',
+      'auth/invalid-email':     'E-mail inválido.',
+      'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.',
+      'auth/user-disabled':     'Acesso desativado. Fale com o gestor.',
+      'auth/invalid-credential':'E-mail ou senha incorretos.',
+    };
+    errEl.textContent = msgs[e.code] || ('Erro: ' + e.message);
+    errEl.style.display = 'block';
+  }
+}
+
+async function authEsqueciSenha(){
+  const email = document.getElementById('login-email').value.trim();
+  const errEl = document.getElementById('login-err');
+  const okEl  = document.getElementById('login-ok');
+  errEl.style.display = 'none'; okEl.style.display = 'none';
+
+  if(!email){
+    errEl.textContent = 'Digite seu e-mail antes de clicar em "Esqueci minha senha".';
+    errEl.style.display = 'block'; return;
+  }
+  try{
+    const ok = await loadFirebaseSDK();
+    if(!ok) throw new Error('SDK não carregado');
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    await firebase.auth().sendPasswordResetEmail(email);
+    okEl.textContent = '✓ E-mail de recuperação enviado para ' + email + '. Verifique sua caixa de entrada.';
+    okEl.style.display = 'block';
+  } catch(e){
+    errEl.textContent = 'Não foi possível enviar o e-mail. Verifique o endereço.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function authLogout(){
+  if(_rtUnsubscribe) { _rtUnsubscribe(); _rtUnsubscribe = null; }
+  if(_rtUnsubProd)   { _rtUnsubProd();   _rtUnsubProd = null; }
+  try{ await firebase.auth().signOut(); } catch(e){}
+}
+
+// ── Iniciar na carga ──
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(authInit, 800); });
+
+// ══════════════════════════════════════════════════════
+// GERENCIAR USUÁRIOS — ADM
+// ══════════════════════════════════════════════════════
+
+async function usrCadastrar(){
+  const nome  = document.getElementById('usr-novo-nome').value.trim();
+  const email = document.getElementById('usr-novo-email').value.trim();
+  const senha = document.getElementById('usr-novo-senha').value.trim();
+  const okEl  = document.getElementById('usr-novo-ok');
+  const errEl = document.getElementById('usr-novo-err');
+  okEl.style.display = 'none'; errEl.style.display = 'none';
+
+  if(!nome||!email||!senha){
+    errEl.textContent = 'Preencha nome, e-mail e senha inicial.';
+    errEl.style.display = 'inline'; return;
+  }
+
+  // Coletar permissões marcadas
+  const checks = document.querySelectorAll('#usr-novo-perms input[type=checkbox]:checked');
+  const perms = Array.from(checks).map(c=>c.value);
+
+  // Verificar se é colaborador do PATEC para vincular nome
+  const colabNomes = ['André','Lory','Ludy','Wanessa'];
+  const colabNome = colabNomes.find(n => nome.toLowerCase().includes(n.toLowerCase())) || '';
+
+  try{
+    // Criar usuário no Firebase Auth via REST (Admin SDK não disponível no browser)
+    // Usamos uma Cloud Function ou o próprio Admin via createUser — alternativa: criar via API key
+    // Abordagem: salvar no Firestore e usar email/invite flow
+    const db = getDB(); if(!db) throw new Error('Firebase não conectado');
+
+    // Criar conta via signInWithEmailAndPassword flow (requer Admin SDK)
+    // No browser, usamos a API REST do Identity Toolkit
+    const apiKey = FIREBASE_CONFIG.apiKey;
+    const resp = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password: senha, displayName: nome, returnSecureToken: true })
+    });
+    const data = await resp.json();
+    if(data.error){ throw new Error(data.error.message); }
+
+    const uid = data.localId;
+    const perfil = (email === 'andre.camara.prestserv@petrobras.com.br' || nome.toLowerCase()==='andré') ? 'adm' : 'colaborador';
+
+    // Salvar perfil no Firestore
+    await db.collection('usuarios').doc(uid).set({
+      nome, email, perfil, permissoes: perms, colabNome,
+      criadoEm: new Date().toISOString(), criadoPor: _authUser?.email||'adm'
+    });
+
+    okEl.textContent = `✓ Usuário ${nome} cadastrado!`;
+    okEl.style.display = 'inline';
+    document.getElementById('usr-novo-nome').value = '';
+    document.getElementById('usr-novo-email').value = '';
+    document.getElementById('usr-novo-senha').value = '';
+    usrCarregarLista();
+  } catch(e){
+    const msgs = {
+      'EMAIL_EXISTS': 'E-mail já cadastrado.',
+      'INVALID_EMAIL': 'E-mail inválido.',
+      'WEAK_PASSWORD : Password should be at least 6 characters': 'Senha deve ter ao menos 6 caracteres.',
+    };
+    errEl.textContent = msgs[e.message] || ('Erro: ' + e.message);
+    errEl.style.display = 'inline';
+  }
+}
+
+async function usrCarregarLista(){
+  const listaEl = document.getElementById('usr-lista');
+  const loadEl  = document.getElementById('usr-lista-loading');
+  if(!listaEl) return;
+  if(loadEl) loadEl.style.display = 'block';
+
+  try{
+    const db = getDB(); if(!db) return;
+    const snap = await db.collection('usuarios').get();
+    const users = snap.docs.map(d=>({uid:d.id,...d.data()}));
+
+    if(loadEl) loadEl.style.display = 'none';
+    if(!users.length){ listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum usuário cadastrado.</div>'; return; }
+
+    listaEl.innerHTML = users.map(u=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:.875rem;background:var(--cin);border-radius:9px;border:1px solid var(--brd);margin-bottom:8px;flex-wrap:wrap">
+        <div style="width:36px;height:36px;border-radius:50%;background:${u.perfil==='adm'?'var(--am)':'var(--azm)'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">${(u.nome||'?')[0].toUpperCase()}</div>
+        <div style="flex:1;min-width:160px">
+          <div style="font-size:13px;font-weight:700;color:var(--az)">${u.nome||'—'}</div>
+          <div style="font-size:11px;color:var(--tx2)">${u.email||'—'}</div>
+          <div style="font-size:10px;margin-top:3px">
+            <span class="pl ${u.perfil==='adm'?'pl-w':'pl-az'}" style="font-size:9px">${u.perfil==='adm'?'🔐 ADM':'👤 Colaborador'}</span>
+            ${(u.permissoes||[]).length ? '<span style="color:var(--tx2);margin-left:6px">'+u.permissoes.length+' módulos</span>' : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-s" style="font-size:10px;padding:4px 10px" onclick="usrEditarPerms('${u.uid}','${u.nome}',${JSON.stringify(u.permissoes||[]).replace(/"/g,"'")})">✏️ Permissões</button>
+          <button class="btn btn-s" style="font-size:10px;padding:4px 10px;background:var(--amc);color:var(--am)" onclick="usrResetarSenha('${u.email}','${u.nome}')">🔑 Resetar Senha</button>
+          <button class="btn btn-r" style="font-size:10px;padding:4px 10px" onclick="usrRemover('${u.uid}','${u.nome}')">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e){ console.warn('usrCarregarLista:', e); }
+}
+
+async function usrResetarSenha(email, nome){
+  if(!confirm(`Enviar e-mail de redefinição de senha para ${nome} (${email})?`)) return;
+  try{
+    await firebase.auth().sendPasswordResetEmail(email);
+    alert(`✓ E-mail de redefinição enviado para ${nome} (${email}).`);
+  } catch(e){ alert('Erro ao enviar e-mail: ' + e.message); }
+}
+
+async function usrRemover(uid, nome){
+  if(!confirm(`Remover acesso de ${nome}? O usuário não conseguirá mais entrar.`)) return;
+  try{
+    const db = getDB(); if(!db) return;
+    await db.collection('usuarios').doc(uid).delete();
+    usrCarregarLista();
+  } catch(e){ alert('Erro ao remover: ' + e.message); }
+}
+
+function usrEditarPerms(uid, nome, permsAtual){
+  // Abrir mini-modal inline
+  const mhtml = `
+  <div id="usr-perms-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:5000;display:flex;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:14px;padding:1.5rem;max-width:480px;width:95%;max-height:80vh;overflow-y:auto">
+      <div style="font-size:14px;font-weight:700;color:var(--az);margin-bottom:1rem">✏️ Permissões — ${nome}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem">
+        ${Object.entries(PERMS_SIDEBAR).map(([key,cfg])=>`
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:var(--cin);padding:6px 12px;border-radius:6px;border:1px solid var(--brd)">
+            <input type="checkbox" value="${key}" ${permsAtual.includes(key)?'checked':''}> ${cfg.icon} ${cfg.label}
+          </label>
+        `).join('')}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="usrSalvarPerms('${uid}')">✓ Salvar</button>
+        <button class="btn btn-s" onclick="document.getElementById('usr-perms-modal').remove()">Cancelar</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', mhtml);
+}
+
+async function usrSalvarPerms(uid){
+  const modal = document.getElementById('usr-perms-modal');
+  const checks = modal.querySelectorAll('input[type=checkbox]:checked');
+  const perms = Array.from(checks).map(c=>c.value);
+  try{
+    const db = getDB(); if(!db) return;
+    await db.collection('usuarios').doc(uid).update({ permissoes: perms });
+    modal.remove();
+    usrCarregarLista();
+  } catch(e){ alert('Erro: ' + e.message); }
+}
+
+// ══════════════════════════════════════════════════════
+// PRODUÇÃO EM TEMPO REAL — onSnapshot
+// ══════════════════════════════════════════════════════
+
+const META_ANALISTA_RT = { 'Lory':30, 'Ludy':30, 'Wanessa':30 };
+const META_EQUIPE_RT = 90;
+const COLABS_RT = ['Lory','Ludy','Wanessa'];
+
+function rtIniciarListener(){
+  try{
+    const db = getDB(); if(!db) return;
+    const hoje = new Date().toISOString().split('T')[0];
+
+    // Cancelar listener anterior
+    if(_rtUnsubProd){ _rtUnsubProd(); _rtUnsubProd = null; }
+
+    _rtUnsubProd = db.collection('producao')
+      .where('data','==',hoje)
+      .onSnapshot(snap => {
+        const regs = snap.docs.map(d=>d.data());
+        rtRenderizar(regs, hoje);
+        // Atualizar topbar chip de modalidade do usuário logado
+        if(_authPerfil?.colabNome){
+          const myReg = regs.find(r=>r.colab===_authPerfil.colabNome);
+          if(myReg){ rtAtualizarChipModalidade(myReg.pres); }
+        }
+      }, err => console.warn('RT listener erro:', err));
+
+    console.log('✓ Listener produção tempo real ativado');
+  } catch(e){ console.warn('rtIniciarListener:', e); }
+}
+
+function rtAtualizarChipModalidade(modalidade){
+  const chip = document.getElementById('topbar-user-chip');
+  if(!chip) return;
+  chip.style.display = 'inline-flex';
+  if(modalidade === 'Home Office'){
+    chip.className = 'chip-modalidade chip-home';
+    chip.textContent = '🏠 Home';
+  } else if(modalidade === 'Presencial'){
+    chip.className = 'chip-modalidade chip-presencial';
+    chip.textContent = '🏢 Presencial';
+  } else {
+    chip.style.display = 'none';
+  }
+}
+
+function rtRenderizar(regs, hoje){
+  // Atualizar timestamp
+  const upEl = document.getElementById('rt-ultimo-update');
+  if(upEl) upEl.textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
+
+  // KPIs equipe
+  const kpiEl = document.getElementById('rt-kpi-equipe');
+  const totalEquipe = regs.reduce((s,r)=>{
+    const f = r.f||[];
+    return s + (f[0]||0)+(f[1]||0)+(f[2]||0);
+  }, 0);
+  const presenteCount = regs.filter(r=>r.pres!=='Folga').length;
+  const metaOk = regs.filter(r=>{
+    if(r.pres==='Folga') return false;
+    const meta = META_ANALISTA_RT[r.colab]||30;
+    const f = r.f||[];
+    return (f[0]||0)+(f[1]||0)+(f[2]||0) >= meta;
+  }).length;
+  const pct = META_EQUIPE_RT>0 ? Math.min(100,Math.round(totalEquipe/META_EQUIPE_RT*100)) : 0;
+  if(kpiEl) kpiEl.innerHTML = `
+    <div class="kc ${totalEquipe>=META_EQUIPE_RT?'ok':totalEquipe>=META_EQUIPE_RT*.8?'warn':'bad'}">
+      <div class="kc-l">Total equipe hoje</div>
+      <div class="kc-v">${totalEquipe}</div>
+      <div class="kc-s">${pct}% da meta (${META_EQUIPE_RT})</div>
+    </div>
+    <div class="kc">
+      <div class="kc-l">Presentes / Online</div>
+      <div class="kc-v">${presenteCount}</div>
+      <div class="kc-s">lançamentos hoje</div>
+    </div>
+    <div class="kc ${metaOk===COLABS_RT.length?'ok':metaOk>0?'warn':'bad'}">
+      <div class="kc-l">Bateram a meta</div>
+      <div class="kc-v">${metaOk} / ${COLABS_RT.length}</div>
+      <div class="kc-s">colaboradores</div>
+    </div>
+  `;
+
+  // Cards por colaborador
+  const cardsEl = document.getElementById('rt-cards');
+  if(cardsEl){
+    cardsEl.innerHTML = COLABS_RT.map(colab=>{
+      const r = regs.find(x=>x.colab===colab);
+      const f = r?.f||[];
+      const principal = (f[0]||0)+(f[1]||0)+(f[2]||0);
+      const meta = META_ANALISTA_RT[colab]||30;
+      const pctC = Math.min(100, Math.round(principal/meta*100));
+      const cor = r?.pres==='Folga'?'var(--tx2)':principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--vm)';
+      const modBadge = r?.pres==='Home Office'?'🏠 Home':r?.pres==='Presencial'?'🏢 Presencial':r?.pres==='Folga'?'🌴 Folga':'—';
+      const horario = r?.ts ? new Date(r.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
+      return `
+      <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;border:1px solid var(--brd);border-top:3px solid ${cor};box-shadow:0 1px 6px rgba(13,35,71,.05)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:36px;height:36px;border-radius:50%;background:${cor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${colab[0]}</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--az)">${colab}</div>
+              <div style="font-size:10px;color:var(--tx2)">${modBadge} · ${horario}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:26px;font-weight:700;color:${cor};line-height:1">${principal}</div>
+            <div style="font-size:10px;color:var(--tx2)">meta ${meta}</div>
+          </div>
+        </div>
+        <div style="height:7px;background:#EEE;border-radius:4px;overflow:hidden;margin-bottom:.75rem">
+          <div style="height:100%;width:${pctC}%;background:${cor};border-radius:4px;transition:width .5s"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:10px">
+          <div style="text-align:center;background:var(--azc);border-radius:6px;padding:4px 2px">
+            <div style="font-weight:700;color:var(--azm)">${f[0]||0}</div><div style="color:var(--tx2)">1ª trat.</div>
+          </div>
+          <div style="text-align:center;background:var(--azc);border-radius:6px;padding:4px 2px">
+            <div style="font-weight:700;color:var(--azm)">${f[1]||0}</div><div style="color:var(--tx2)">Em trat.</div>
+          </div>
+          <div style="text-align:center;background:var(--vdc);border-radius:6px;padding:4px 2px">
+            <div style="font-weight:700;color:var(--vd)">${f[2]||0}</div><div style="color:var(--tx2)">Status B</div>
+          </div>
+          <div style="text-align:center;background:var(--amc);border-radius:6px;padding:4px 2px">
+            <div style="font-weight:700;color:var(--am)">${f[11]||0}</div><div style="color:var(--tx2)">Outros</div>
+          </div>
+        </div>
+        ${r?.justif?`<div style="margin-top:.625rem;font-size:10px;background:var(--vmc);color:var(--vm);padding:5px 10px;border-radius:6px">⚠ Justif.: ${r.justif}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  // Tabela
+  const tbody = document.getElementById('rt-tbody');
+  if(tbody){
+    if(!regs.length){
+      tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum lançamento hoje</td></tr>';
+    } else {
+      tbody.innerHTML = regs.map(r=>{
+        const f=r.f||[];
+        const total=(f[0]||0)+(f[1]||0)+(f[2]||0);
+        const meta=META_ANALISTA_RT[r.colab]||30;
+        const ok=r.pres==='Folga'||total>=meta;
+        const horario = r.ts ? new Date(r.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
+        return `<tr>
+          <td style="font-weight:600">${r.colab||'—'}</td>
+          <td>${r.pres||'—'}</td>
+          <td>${horario}</td>
+          <td style="text-align:center">${f[0]||0}</td>
+          <td style="text-align:center">${f[1]||0}</td>
+          <td style="text-align:center">${f[2]||0}</td>
+          <td style="text-align:center">${f[11]||0}</td>
+          <td style="text-align:center;font-weight:700;color:${ok?'var(--vd)':'var(--vm)'}">${total}</td>
+          <td style="text-align:center">${meta}</td>
+          <td style="text-align:center"><span class="pl ${ok?'pl-ok':'pl-b'}" style="font-size:9px">${ok?'✓ Meta':'⚠ Abaixo'}</span></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
 </script>
 
 </body>
