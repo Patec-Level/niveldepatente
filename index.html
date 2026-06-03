@@ -14388,16 +14388,17 @@ function authMostrarApp(){
 }
 
 function authMontarSidebar(){
-  const isAdm = _authPerfil?.perfil === 'adm';
-  const perms = _authPerfil?.permissoes || [];
-
   const sb = document.getElementById('sb');
   if(!sb) return;
 
-  // Recriar itens de navegação
-  // Manter logo e mini-meta fixos, reconstruir apenas os sb-it e sb-mod/sb-sec
-  const itensAtuais = sb.querySelectorAll('.sb-it, .sb-mod, .sb-sec:not(.sb-sec-keep)');
-  itensAtuais.forEach(el => el.remove());
+  // Detectar ADM — dupla verificação: perfil salvo OU e-mail conhecido
+  const emailAtual = _authUser?.email || '';
+  const emailsAdm  = ['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
+  const isAdm = _authPerfil?.perfil === 'adm' || emailsAdm.includes(emailAtual);
+  const perms = _authPerfil?.permissoes || Object.keys(PERMS_SIDEBAR);
+
+  // Remover todos os itens de navegação existentes
+  sb.querySelectorAll('.sb-it, .sb-mod, .sb-sec').forEach(el => el.remove());
 
   // Montar por módulo
   const mods = {};
@@ -14418,19 +14419,14 @@ function authMontarSidebar(){
     });
   });
 
+  // ADM sempre aparece para emails ADM
   if(isAdm){
-    html += `<div class="sb-sec">ADM</div>`;
+    html += `<div class="sb-sec" style="padding:.7rem 1rem .2rem;font-size:9px;font-weight:600;color:rgba(255,255,255,.28);letter-spacing:1.2px;text-transform:uppercase;flex-shrink:0">ADM</div>`;
     html += `<div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>`;
   }
 
-  // Inserir antes do final do sidebar
   sb.insertAdjacentHTML('beforeend', html);
-
-  // Se ADM, garantir que o item de Administração existe (fallback)
-  if(isAdm && !sb.querySelector('[onclick*="go(\'adm\'"]')){
-    sb.insertAdjacentHTML('beforeend',
-      `<div class="sb-sec">ADM</div><div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>`);
-  }
+  console.log('✓ Sidebar montada — isAdm:', isAdm, '— itens:', sb.querySelectorAll('.sb-it').length);
 }
 
 async function authFazerLogin(){
