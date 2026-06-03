@@ -14353,9 +14353,38 @@ async function authCarregarPerfil(user){
 
 function authMostrarLogin(){
   document.getElementById('patec-login-overlay').style.display = 'flex';
-  // Ocultar badge
   const badge = document.getElementById('topbar-user-badge');
   if(badge) badge.style.display = 'none';
+
+  // Adicionar opção de acesso local se Firebase indisponível
+  const box = document.querySelector('#patec-login-overlay .login-box');
+  if(box && !document.getElementById('login-local-bypass')){
+    box.insertAdjacentHTML('beforeend', `
+      <div id="login-local-bypass" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #EEE">
+        <div style="font-size:10px;color:#9AA;margin-bottom:.5rem">Acesso de emergência (Firebase offline)</div>
+        <input type="password" id="login-local-pwd" placeholder="Senha local ADM"
+          style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #DDE3EE;border-radius:8px;margin-bottom:8px;font-family:inherit"
+          onkeydown="if(event.key==='Enter')authLoginLocal()">
+        <button onclick="authLoginLocal()"
+          style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+          Entrar sem internet
+        </button>
+      </div>`);
+  }
+}
+
+function authLoginLocal(){
+  const pwd = document.getElementById('login-local-pwd')?.value || '';
+  if(pwd === '2105' || pwd === 'Patec@2026' || pwd === 'patec2026'){
+    _authUser  = { email: 'andre.mazzali@levegroup.com.br', uid: 'local' };
+    _authPerfil = {
+      nome: 'andre.mazzali', email: 'andre.mazzali@levegroup.com.br',
+      perfil: 'adm', permissoes: Object.keys(PERMS_SIDEBAR), colabNome: 'André'
+    };
+    authMostrarApp();
+  } else {
+    alert('Senha incorreta.');
+  }
 }
 
 function authMostrarApp(){
