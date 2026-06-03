@@ -10930,7 +10930,7 @@ async function govCarregarFirebase(){
     _govDados = {};
     snap.forEach(doc => {
       const d = doc.data();
-      if(d.chave) _govDados[d.chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'' };
+      if(d.chave) _govDados[d.chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
     });
     console.log('Gov MAPA carregado:', Object.keys(_govDados).length, 'registros');
     // Mesclar base embutida (sem sobrescrever dados do Firebase)
@@ -11554,6 +11554,7 @@ function estRenderDevolucoes(){
     'Falta de retorno fornecedor',
     'Falta de retorno cadastro (Thiago)',
     'Preço excessivo',
+    'Proposta vencida',
   ];
 
   const devs = Object.values(_desfechoCache).filter(d => d.tipo === 'Devolução');
@@ -11568,7 +11569,7 @@ function estRenderDevolucoes(){
 
   document.getElementById('est-dev-total-label').textContent = `${totalDevs} devolução${totalDevs!==1?'s':''} registrada${totalDevs!==1?'s':''}`;
 
-  const cores = ['#D94040','#C07A12','#1A4A8A','#0E9E6A','#7C3AED','#EA580C','#0891B2'];
+  const cores = ['#D94040','#C07A12','#1A4A8A','#0E9E6A','#7C3AED','#EA580C','#0891B2','#B45309','#6B21A8'];
   const cardsEl = document.getElementById('est-dev-cards');
   cardsEl.innerHTML = MOTIVOS.map((m,i)=>{
     const cnt = contMotivo[m]||0;
@@ -14066,7 +14067,8 @@ function q18Consultar(valor){
             <option>PATEC cancelado</option>
             <option>Falta de retorno fornecedor</option>
             <option>Falta de retorno cadastro (Thiago)</option>
-                    <option>Preço excessivo</option>
+            <option>Preço excessivo</option>
+            <option>Proposta vencida</option>
           </select>
         </div>
       </div>
