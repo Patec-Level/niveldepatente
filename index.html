@@ -14322,32 +14322,33 @@ async function authInit(){
 }
 
 async function authCarregarPerfil(user){
+  const emailsAdm = ['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
+  const isAdm = emailsAdm.includes(user.email);
+
+  // Definir perfil mínimo imediatamente (sem esperar Firestore)
+  _authPerfil = {
+    nome: user.email.split('@')[0],
+    email: user.email,
+    perfil: isAdm ? 'adm' : 'colaborador',
+    permissoes: Object.keys(PERMS_SIDEBAR),
+    colabNome: ''
+  };
+
+  // Tentar carregar do Firestore (pode falhar se offline/limite)
   try{
     const db = getDB(); if(!db) return;
-    const isAdm = user.email === 'andre.mazzali@levegroup.com.br' ||
-                  user.email === 'andreluisj4@gmail.com';
     const doc = await db.collection('usuarios').doc(user.uid).get();
     if(doc.exists){
-      _authPerfil = doc.data();
-      // Garantir que ADM sempre tem perfil adm
-      if(isAdm && _authPerfil.perfil !== 'adm'){
-        _authPerfil.perfil = 'adm';
-        await db.collection('usuarios').doc(user.uid).update({ perfil: 'adm' });
-      }
+      const d = doc.data();
+      _authPerfil = { ...d, perfil: isAdm ? 'adm' : (d.perfil||'colaborador') };
     } else {
-      _authPerfil = {
-        nome: user.displayName || user.email.split('@')[0],
-        email: user.email,
-        perfil: isAdm ? 'adm' : 'colaborador',
-        permissoes: Object.keys(PERMS_SIDEBAR),
-        colabNome: user.displayName || ''
-      };
       await db.collection('usuarios').doc(user.uid).set(_authPerfil, {merge:true});
     }
-    // Forçar perfil adm por e-mail independente do Firestore
-    if(isAdm) _authPerfil.perfil = 'adm';
-    console.log('✓ Perfil carregado:', _authPerfil.perfil, _authPerfil.nome);
-  } catch(e){ console.warn('authCarregarPerfil:', e); }
+  } catch(e){ console.warn('authCarregarPerfil (Firestore indisponível, usando perfil local):', e.message); }
+
+  // Garantir ADM por e-mail independente do Firestore
+  if(isAdm) _authPerfil.perfil = 'adm';
+  console.log('✓ Perfil carregado:', _authPerfil.perfil, _authPerfil.nome);
 }
 
 function authMostrarLogin(){
