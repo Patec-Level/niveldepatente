@@ -14324,13 +14324,17 @@ async function authInit(){
 async function authCarregarPerfil(user){
   try{
     const db = getDB(); if(!db) return;
+    const isAdm = user.email === 'andre.mazzali@levegroup.com.br' ||
+                  user.email === 'andreluisj4@gmail.com';
     const doc = await db.collection('usuarios').doc(user.uid).get();
     if(doc.exists){
       _authPerfil = doc.data();
+      // Garantir que ADM sempre tem perfil adm
+      if(isAdm && _authPerfil.perfil !== 'adm'){
+        _authPerfil.perfil = 'adm';
+        await db.collection('usuarios').doc(user.uid).update({ perfil: 'adm' });
+      }
     } else {
-      // Primeiro acesso ou ADM pelo e-mail
-      const isAdm = user.email === 'andre.mazzali@levegroup.com.br' ||
-                    user.email === 'andreluisj4@gmail.com';
       _authPerfil = {
         nome: user.displayName || user.email.split('@')[0],
         email: user.email,
@@ -14340,6 +14344,8 @@ async function authCarregarPerfil(user){
       };
       await db.collection('usuarios').doc(user.uid).set(_authPerfil, {merge:true});
     }
+    // Forçar perfil adm por e-mail independente do Firestore
+    if(isAdm) _authPerfil.perfil = 'adm';
     console.log('✓ Perfil carregado:', _authPerfil.perfil, _authPerfil.nome);
   } catch(e){ console.warn('authCarregarPerfil:', e); }
 }
@@ -14419,6 +14425,12 @@ function authMontarSidebar(){
 
   // Inserir antes do final do sidebar
   sb.insertAdjacentHTML('beforeend', html);
+
+  // Se ADM, garantir que o item de Administração existe (fallback)
+  if(isAdm && !sb.querySelector('[onclick*="go(\'adm\'"]')){
+    sb.insertAdjacentHTML('beforeend',
+      `<div class="sb-sec">ADM</div><div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>`);
+  }
 }
 
 async function authFazerLogin(){
