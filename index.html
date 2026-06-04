@@ -15309,15 +15309,19 @@ async function usrCarregarLista(){
   const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
-  if(loadEl) loadEl.style.display = 'block';
+  if(loadEl){ loadEl.style.display = 'block'; loadEl.textContent = 'Carregando...'; }
 
   try{
-    const db = getDB(); if(!db) return;
+    const db = getDB();
+    if(!db){
+      if(loadEl){ loadEl.style.display='block'; loadEl.innerHTML='<span style="color:var(--vm)">⚠ Firebase offline. <button class="btn btn-s" style="font-size:10px" onclick="usrCarregarLista()">↺ Tentar novamente</button></span>'; }
+      return;
+    }
     const snap = await db.collection('usuarios').get();
     const users = snap.docs.map(d=>({uid:d.id,...d.data()}));
 
     if(loadEl) loadEl.style.display = 'none';
-    if(!users.length){ listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum usuário cadastrado.</div>'; return; }
+    if(!users.length){ listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum usuário cadastrado ainda. Use o formulário acima para adicionar.</div>'; return; }
 
     listaEl.innerHTML = users.map(u=>`
       <div style="display:flex;align-items:center;gap:10px;padding:.875rem;background:var(--cin);border-radius:9px;border:1px solid var(--brd);margin-bottom:8px;flex-wrap:wrap">
@@ -15337,7 +15341,10 @@ async function usrCarregarLista(){
         </div>
       </div>
     `).join('');
-  } catch(e){ console.warn('usrCarregarLista:', e); }
+  } catch(e){
+    console.warn('usrCarregarLista:', e);
+    if(loadEl){ loadEl.style.display='block'; loadEl.innerHTML=`<span style="color:var(--vm)">⚠ Erro: ${e.message} <button class="btn btn-s" style="font-size:10px;margin-left:8px" onclick="usrCarregarLista()">↺ Tentar novamente</button></span>`; }
+  }
 }
 
 async function usrResetarSenha(email, nome){
