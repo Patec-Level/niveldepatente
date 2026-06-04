@@ -3849,17 +3849,14 @@ async function loadFirebaseSDK(){
 
   function loadScriptPair(urls) {
     return new Promise(async (resolve) => {
-      // Carregar app primeiro
       const ok1 = await loadScript(urls[0]);
       if(!ok1) { resolve(false); return; }
       await new Promise(r => setTimeout(r, 200));
-      // Carregar auth ANTES do firestore — auth é crítico para login
-      if(urls[2]){
-        await loadScript(urls[2]);
-        await new Promise(r => setTimeout(r, 100));
-      }
-      // Carregar firestore por último
       const ok2 = await loadScript(urls[1]);
+      if(!ok2) { resolve(false); return; }
+      await new Promise(r => setTimeout(r, 150));
+      if(urls[2]) await loadScript(urls[2]);
+      await new Promise(r => setTimeout(r, 150));
       resolve(typeof firebase !== 'undefined');
     });
   }
@@ -14694,8 +14691,20 @@ async function authInit(){
     auth.onAuthStateChanged(async user => {
       if(user){
         _authUser = user;
-        await authCarregarPerfil(user);
+        // Definir perfil mínimo imediatamente — não esperar Firestore
+        const emailsAdm = ['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
+        const isAdm = emailsAdm.includes(user.email);
+        _authPerfil = {
+          nome: user.email.split('@')[0],
+          email: user.email,
+          perfil: isAdm ? 'adm' : 'colaborador',
+          permissoes: Object.keys(PERMS_SIDEBAR),
+          colabNome: isAdm ? 'André' : ''
+        };
+        // Mostrar app imediatamente
         authMostrarApp();
+        // Carregar perfil completo em background
+        authCarregarPerfil(user).catch(e => console.warn('Perfil background:', e));
       } else {
         _authUser = null;
         _authPerfil = null;
