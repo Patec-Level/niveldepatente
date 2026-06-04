@@ -3849,16 +3849,18 @@ async function loadFirebaseSDK(){
 
   function loadScriptPair(urls) {
     return new Promise(async (resolve) => {
+      // Carregar app primeiro
       const ok1 = await loadScript(urls[0]);
       if(!ok1) { resolve(false); return; }
       await new Promise(r => setTimeout(r, 200));
-      const ok2 = await loadScript(urls[1]);
-      if(!ok2) { resolve(false); return; }
+      // Carregar auth ANTES do firestore — auth é crítico para login
       if(urls[2]){
+        await loadScript(urls[2]);
         await new Promise(r => setTimeout(r, 100));
-        await loadScript(urls[2]); // auth — best-effort
       }
-      resolve(ok2 && typeof firebase !== 'undefined');
+      // Carregar firestore por último
+      const ok2 = await loadScript(urls[1]);
+      resolve(typeof firebase !== 'undefined');
     });
   }
 
@@ -14851,7 +14853,10 @@ async function authFazerLogin(){
     const ok = await loadFirebaseSDK();
     if(!ok) throw new Error('SDK não carregado');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    await firebase.auth().signInWithEmailAndPassword(email, senha);
+    // Timeout de 10 segundos para não travar
+    const loginPromise = firebase.auth().signInWithEmailAndPassword(email, senha);
+    const timeoutPromise = new Promise((_,rej) => setTimeout(()=>rej({code:'timeout',message:'Tempo esgotado. Verifique sua conexão.'}), 10000));
+    await Promise.race([loginPromise, timeoutPromise]);
   } catch(e){
     loadEl.style.display = 'none';
     const msgs = {
@@ -14861,6 +14866,7 @@ async function authFazerLogin(){
       'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.',
       'auth/user-disabled':     'Acesso desativado. Fale com o gestor.',
       'auth/invalid-credential':'E-mail ou senha incorretos.',
+      'timeout':                'Tempo esgotado. Use o acesso de emergência (senha 2105).',
     };
     errEl.textContent = msgs[e.code] || ('Erro: ' + e.message);
     errEl.style.display = 'block';
