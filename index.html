@@ -14853,11 +14853,15 @@ async function authFazerLogin(){
     const ok = await loadFirebaseSDK();
     if(!ok) throw new Error('SDK não carregado');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    // Timeout de 10 segundos para não travar
+    console.log('Auth state antes do login:', firebase.auth().currentUser);
+    console.log('Tentando login com:', email);
+    // Timeout de 15 segundos
     const loginPromise = firebase.auth().signInWithEmailAndPassword(email, senha);
-    const timeoutPromise = new Promise((_,rej) => setTimeout(()=>rej({code:'timeout',message:'Tempo esgotado. Verifique sua conexão.'}), 10000));
-    await Promise.race([loginPromise, timeoutPromise]);
+    const timeoutPromise = new Promise((_,rej) => setTimeout(()=>rej({code:'timeout',message:'Tempo esgotado. Use o acesso de emergência (senha 2105).'}), 15000));
+    const result = await Promise.race([loginPromise, timeoutPromise]);
+    console.log('Login OK:', result?.user?.email);
   } catch(e){
+    console.error('Login erro completo:', e);
     loadEl.style.display = 'none';
     const msgs = {
       'auth/user-not-found':    'E-mail não cadastrado no sistema.',
