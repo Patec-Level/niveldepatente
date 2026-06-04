@@ -438,7 +438,30 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       onkeydown="if(event.key==='Enter')document.getElementById('login-senha').focus()">
     <input type="password" id="login-senha" placeholder="Senha"
       onkeydown="if(event.key==='Enter')authFazerLogin()">
-    <button class="btn-entrar" onclick="authFazerLogin()">Conectar-se</button>
+    <button class="btn-entrar" onclick="(async function(){
+      var email=document.getElementById('login-email').value.trim();
+      var senha=document.getElementById('login-senha').value;
+      var errEl=document.getElementById('login-err');
+      var loadEl=document.getElementById('login-loading');
+      errEl.style.display='none';
+      if(!email||!senha){errEl.textContent='Preencha e-mail e senha.';errEl.style.display='block';return;}
+      loadEl.style.display='block';
+      try{
+        if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
+          errEl.textContent='Firebase não carregado. Aguarde e tente novamente.';
+          errEl.style.display='block';loadEl.style.display='none';return;
+        }
+        console.log('LOGIN: tentando com',email);
+        var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
+        console.log('LOGIN OK:',result.user.email);
+      }catch(e){
+        console.error('LOGIN ERRO:',e.code,e.message);
+        loadEl.style.display='none';
+        var msgs={'auth/user-not-found':'E-mail não cadastrado.','auth/wrong-password':'Senha incorreta.','auth/invalid-credential':'E-mail ou senha incorretos.','auth/too-many-requests':'Muitas tentativas. Aguarde.'};
+        errEl.textContent=msgs[e.code]||('Erro: '+e.message);
+        errEl.style.display='block';
+      }
+    })()">Conectar-se</button>
     <div class="login-loading" id="login-loading">⏳ Verificando credenciais...</div>
     <span class="login-forgot" onclick="authEsqueciSenha()">Esqueci minha senha</span>
     <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #EEE">
