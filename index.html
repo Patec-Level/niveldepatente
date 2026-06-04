@@ -14320,7 +14320,7 @@ async function admApresentacaoGerar(){
         </div>
         <div class="sim-card">
           <div class="sim-label">Backlog Atual (${dtFimPA.split('-').reverse().join('/')})</div>
-          <div class="sim-val">${backlogAtual.toLocaleString('pt-BR')}</div><div style="margin-top:6px">${_badgeHTML}</div>
+          <div class="sim-val">${backlogAtual.toLocaleString('pt-BR')}</div>
         </div>
         <div class="sim-card">
           <div class="sim-label">Meta diária simulada</div>
@@ -14335,6 +14335,10 @@ async function admApresentacaoGerar(){
           <div class="sim-label">📅 Conclusão COM entradas (média ${mediaEntrada}/dia)</div>
           <div class="sim-val">${dtZerarCom}</div>
           <div class="sim-sub">${saldoLiq>0?'Saldo líquido: '+saldoLiq+'/dia':'Entradas > Saídas'}</div>
+        </div>
+        <div class="sim-card" style="background:${_diff>5?'#FDEAEA':_diff<-5?'#E6F7F1':'#E8F0FB'};border-color:${_diff>5?'#ef9a9a':_diff<-5?'#a5d6a7':'#90caf9'}">
+          <div class="sim-label">Status do Backlog</div>
+          <div style="margin-top:6px">${_badgeHTML}</div>
         </div>
       </div>`;
   }
@@ -16262,4 +16266,3 @@ if(_goOrig){
 
 // Adicionar Fechamento do Dia ao PERMS_SIDEBAR e navegação
 PERMS_SIDEBAR['fechamento-dia'] = { icon:'🔒', label:'Fechamento do Dia', mod:'EXECUÇÃO' };
-              
