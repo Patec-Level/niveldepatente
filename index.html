@@ -442,6 +442,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     <button class="btn-entrar" onclick="authFazerLogin()">Conectar-se</button>
     <div class="login-loading" id="login-loading">⏳ Verificando credenciais...</div>
     <span class="login-forgot" onclick="authEsqueciSenha()">Esqueci minha senha</span>
+    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #EEE">
+      <div style="font-size:10px;color:#9AA;margin-bottom:.5rem;text-align:center">Acesso de emergência (Firebase offline)</div>
+      <input type="password" id="login-local-pwd" placeholder="Senha local ADM"
+        style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #DDE3EE;border-radius:8px;margin-bottom:8px;font-family:inherit"
+        onkeydown="if(event.key==='Enter')authLoginLocal()">
+      <button onclick="authLoginLocal()"
+        style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+        Entrar sem internet
+      </button>
+    </div>
   </div>
 </div>
 <!-- ══ fim LOGIN GLOBAL ══ -->
