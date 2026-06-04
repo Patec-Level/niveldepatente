@@ -14305,22 +14305,11 @@ async function admApresentacaoGerar(){
     const _pct  = backlogBase > 0 ? Math.abs(Math.round(_diff/backlogBase*100)) : 0;
     let _badgeHTML = '';
     if(Math.abs(_diff) <= 5){
-      _badgeHTML = `<div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:#E8F0FB;border-radius:20px;padding:4px 14px">
-        <span style="font-size:16px">➡</span>
-        <span style="font-size:13px;font-weight:700;color:#1A4A8A">BACKLOG ESTÁVEL</span>
-      </div>`;
+      _badgeHTML = `<div style="display:inline-flex;align-items:center;gap:5px;margin-top:6px;background:#E8F0FB;border-radius:20px;padding:3px 12px"><span>➡</span><span style="font-size:12px;font-weight:700;color:#1A4A8A">BACKLOG ESTÁVEL</span></div>`;
     } else if(_diff > 0){
-      _badgeHTML = `<div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:#FDEAEA;border-radius:20px;padding:4px 14px">
-        <span style="font-size:16px">🔺</span>
-        <span style="font-size:13px;font-weight:700;color:#C62828">BACKLOG CRESCENDO</span>
-      </div>
-      <div style="font-size:11px;color:#C62828;margin-top:4px">+${_diff} itens (+${_pct}%) vs início</div>`;
+      _badgeHTML = `<div style="display:inline-flex;align-items:center;gap:5px;margin-top:6px;background:#FDEAEA;border-radius:20px;padding:3px 12px"><span>🔺</span><span style="font-size:12px;font-weight:700;color:#C62828">BACKLOG CRESCENDO</span></div><div style="font-size:10px;color:#C62828;margin-top:3px">+${_diff} itens (+${_pct}%) vs início</div>`;
     } else {
-      _badgeHTML = `<div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:#E6F7F1;border-radius:20px;padding:4px 14px">
-        <span style="font-size:16px">🔽</span>
-        <span style="font-size:13px;font-weight:700;color:#0E9E6A">BACKLOG REDUZINDO</span>
-      </div>
-      <div style="font-size:11px;color:#0E9E6A;margin-top:4px">${_diff} itens (${_pct}%) vs início</div>`;
+      _badgeHTML = `<div style="display:inline-flex;align-items:center;gap:5px;margin-top:6px;background:#E6F7F1;border-radius:20px;padding:3px 12px"><span>🔽</span><span style="font-size:12px;font-weight:700;color:#0E9E6A">BACKLOG REDUZINDO</span></div><div style="font-size:10px;color:#0E9E6A;margin-top:3px">${_diff} itens (${_pct}%) vs início</div>`;
     }
 
     simLinhas = `
@@ -14329,10 +14318,9 @@ async function admApresentacaoGerar(){
           <div class="sim-label">Backlog Inicial (${dtIni?dtIni.split('-').reverse().join('/'):'—'})</div>
           <div class="sim-val">${backlogBase.toLocaleString('pt-BR')}</div>
         </div>
-        <div class="sim-card" style="position:relative;overflow:hidden">
+        <div class="sim-card">
           <div class="sim-label">Backlog Atual (${dtFimPA.split('-').reverse().join('/')})</div>
-          <div class="sim-val">${backlogAtual.toLocaleString('pt-BR')}</div>
-          ${_badgeHTML}
+          <div class="sim-val">${backlogAtual.toLocaleString('pt-BR')}</div><div style="margin-top:6px">${_badgeHTML}</div>
         </div>
         <div class="sim-card">
           <div class="sim-label">Meta diária simulada</div>
@@ -16274,3 +16262,4 @@ if(_goOrig){
 
 // Adicionar Fechamento do Dia ao PERMS_SIDEBAR e navegação
 PERMS_SIDEBAR['fechamento-dia'] = { icon:'🔒', label:'Fechamento do Dia', mod:'EXECUÇÃO' };
+              
