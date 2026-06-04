@@ -468,6 +468,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('consulta-q18',this)">🚫 Consulta Q18</div>
 
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
+  <div class="sb-it" onclick="go('fechamento-dia',this)">🔒 Fechamento do Dia</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
   <div class="sb-sec">Em breve</div>
 
@@ -2997,6 +2998,54 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="btn btn-s" style="font-size:11px" onclick="pcLimparFiltros()">✕ Limpar</button>
       </div>
 
+      <!-- ── PAINEL DE PRODUÇÃO DO DIA (Planilha Crítica) ── -->
+      <div class="cd" id="pc-prod-painel" style="margin-bottom:1rem;border-top:3px solid var(--vm)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.875rem">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;font-weight:700;color:var(--az)">📊 Registrar ação na RC</span>
+            <span class="rt-dot" title="Tempo real"></span>
+          </div>
+          <div style="font-size:11px;color:var(--tx2)" id="pc-prod-colab-info">Faça login para registrar produção</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:.75rem">
+          <button onclick="prodAbrirModal('pc','primeira_analise')"
+            style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
+            onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+            onmouseout="this.style.background='var(--azc)';this.style.color=''">
+            <div style="font-size:18px;margin-bottom:3px">🔍</div>
+            <div style="font-size:11px;font-weight:700;color:var(--azm)">1ª Análise</div>
+          </button>
+          <button onclick="prodAbrirModal('pc','em_tratativa')"
+            style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
+            onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+            onmouseout="this.style.background='var(--azc)';this.style.color=''">
+            <div style="font-size:18px;margin-bottom:3px">⚙️</div>
+            <div style="font-size:11px;font-weight:700;color:var(--azm)">Em Tratativa</div>
+          </button>
+          <button onclick="prodAbrirModal('pc','status_b')"
+            style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
+            onmouseover="this.style.background='var(--vd)';this.style.color='#fff'"
+            onmouseout="this.style.background='var(--vdc)';this.style.color=''">
+            <div style="font-size:18px;margin-bottom:3px">✅</div>
+            <div style="font-size:11px;font-weight:700;color:var(--vd)">Status B</div>
+          </button>
+          <button onclick="prodAbrirModal('pc','outros')"
+            style="background:var(--amc);border:1.5px solid var(--am);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
+            onmouseover="this.style.background='var(--am)';this.style.color='#fff'"
+            onmouseout="this.style.background='var(--amc)';this.style.color=''">
+            <div style="font-size:18px;margin-bottom:3px">📋</div>
+            <div style="font-size:11px;font-weight:700;color:var(--am)">Outros</div>
+          </button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:start">
+          <div id="pc-prod-kpis" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
+          <div>
+            <div style="font-size:10px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Evolução vs Meta (últimos 7 dias)</div>
+            <canvas id="pc-prod-chart" height="70"></canvas>
+          </div>
+        </div>
+      </div>
+
       <!-- Resultado busca RC detalhado -->
       <div id="pc-busca-resultado" style="display:none;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:10px 14px;margin-bottom:1rem"></div>
 
@@ -3106,6 +3155,56 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <button class="btn btn-s" style="font-size:11px" onclick="govLimparBusca()">✕ Limpar</button>
         </div>
         <div id="gov-busca-resultado" style="margin-top:.75rem;display:none"></div>
+      </div>
+
+      <!-- ── PAINEL DE PRODUÇÃO DO DIA (Governança) ── -->
+      <div class="cd" id="gov-prod-painel" style="margin-bottom:1rem;border-top:3px solid var(--vd)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.875rem">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;font-weight:700;color:var(--az)">📊 Registrar ação na RC</span>
+            <span class="rt-dot" title="Tempo real"></span>
+          </div>
+          <div style="font-size:11px;color:var(--tx2)" id="gov-prod-colab-info">Faça login para registrar produção</div>
+        </div>
+        <!-- Botões de ação -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:.75rem" id="gov-prod-btns">
+          <button onclick="prodAbrirModal('gov','primeira_analise')"
+            style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
+            onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+            onmouseout="this.style.background='var(--azc)';this.style.color=''">
+            <div style="font-size:18px;margin-bottom:3px">🔍</div>
+            <div style="font-size:11px;font-weight:700;color:var(--azm)">1ª Análise</div>
+          </button>
+          <button onclick="prodAbrirModal('gov','em_tratativa')"
+            style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
+            onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+            onmouseout="this.style.background='var(--azc)';this.style.color=''">
+            <div style="font-size:18px;margin-bottom:3px">⚙️</div>
+            <div style="font-size:11px;font-weight:700;color:var(--azm)">Em Tratativa</div>
+          </button>
+          <button onclick="prodAbrirModal('gov','status_b')"
+            style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
+            onmouseover="this.style.background='var(--vd)';this.style.color='#fff'"
+            onmouseout="this.style.background='var(--vdc)';this.style.color=''">
+            <div style="font-size:18px;margin-bottom:3px">✅</div>
+            <div style="font-size:11px;font-weight:700;color:var(--vd)">Status B</div>
+          </button>
+          <button onclick="prodAbrirModal('gov','outros')"
+            style="background:var(--amc);border:1.5px solid var(--am);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
+            onmouseover="this.style.background='var(--am)';this.style.color='#fff'"
+            onmouseout="this.style.background='var(--amc)';this.style.color=''">
+            <div style="font-size:18px;margin-bottom:3px">📋</div>
+            <div style="font-size:11px;font-weight:700;color:var(--am)">Outros</div>
+          </button>
+        </div>
+        <!-- Mini resumo + gráfico do dia -->
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:start" id="gov-prod-resumo-wrap">
+          <div id="gov-prod-kpis" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
+          <div>
+            <div style="font-size:10px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Evolução vs Meta (últimos 7 dias)</div>
+            <canvas id="gov-prod-chart" height="70"></canvas>
+          </div>
+        </div>
       </div>
 
       <!-- Abas -->
@@ -3501,6 +3600,97 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     <!-- ══════════════════════════════════════════
          OPERAÇÃO — BANCO DE HORAS E FÉRIAS
     ══════════════════════════════════════════ -->
+    <!-- ══ FECHAMENTO DO DIA ══ -->
+    <div id="p-fechamento-dia" class="page">
+      <div class="cd" style="border-top:3px solid var(--az);margin-bottom:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div>
+            <div class="cd-t" style="margin:0">🔒 Fechamento do Dia</div>
+            <div style="font-size:11px;color:var(--tx2);margin-top:3px">Finalize sua medição ao encerrar o expediente</div>
+          </div>
+          <div style="font-size:12px;color:var(--tx2)" id="fdia-data-label">—</div>
+        </div>
+      </div>
+
+      <!-- Login check -->
+      <div id="fdia-sem-login" class="cd" style="text-align:center;padding:2rem;display:none">
+        <div style="font-size:36px;margin-bottom:12px">🔐</div>
+        <div style="font-size:14px;font-weight:700;color:var(--az);margin-bottom:8px">Identificação necessária</div>
+        <div style="font-size:12px;color:var(--tx2)">Faça login na plataforma para acessar o fechamento do dia.</div>
+      </div>
+
+      <!-- Painel principal -->
+      <div id="fdia-painel">
+        <!-- Card do colaborador -->
+        <div class="cd" style="margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="width:48px;height:48px;border-radius:50%;background:var(--azm);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700" id="fdia-avatar">?</div>
+            <div style="flex:1">
+              <div style="font-size:16px;font-weight:700;color:var(--az)" id="fdia-nome">—</div>
+              <div style="font-size:11px;color:var(--tx2)" id="fdia-modalidade">—</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:2px">Total do dia</div>
+              <div style="font-size:32px;font-weight:700;line-height:1" id="fdia-total" style="color:var(--az)">—</div>
+              <div style="font-size:11px;color:var(--tx2)">de <span id="fdia-meta">30</span> meta</div>
+            </div>
+          </div>
+          <!-- Barra de progresso -->
+          <div style="margin-top:1rem">
+            <div style="height:10px;background:#EEE;border-radius:5px;overflow:hidden">
+              <div id="fdia-barra" style="height:100%;border-radius:5px;transition:width .5s;background:var(--vm);width:0%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx2);margin-top:3px">
+              <span id="fdia-pct">0%</span>
+              <span id="fdia-status-label">Abaixo da meta</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown do dia -->
+        <div class="cd" style="margin-bottom:1rem">
+          <div class="cd-t">📋 Composição do dia</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px" id="fdia-breakdown"></div>
+        </div>
+
+        <!-- Gráfico evolução -->
+        <div class="cd" style="margin-bottom:1rem">
+          <div class="cd-t">📈 Evolução dos últimos 7 dias</div>
+          <canvas id="fdia-chart" height="80"></canvas>
+        </div>
+
+        <!-- Justificativa (aparece se abaixo da meta) -->
+        <div id="fdia-justif-box" class="cd" style="display:none;border:1.5px solid var(--am);background:var(--amc);margin-bottom:1rem">
+          <div class="al al-a" style="margin-bottom:.75rem">⚠ Produção abaixo da meta. Informe o motivo para finalizar.</div>
+          <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:6px">Motivo</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.75rem" id="fdia-motivos-grid">
+            <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Reuniões/alinhamentos')">🤝 Reuniões / Alinhamentos</button>
+            <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Volume reduzido de itens')">📉 Volume reduzido de itens</button>
+            <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Itens complexos')">🔍 Itens complexos</button>
+            <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Suporte a outros times')">🤲 Suporte a outros times</button>
+            <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Problemas de sistema')">💻 Problemas de sistema</button>
+            <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Outro')">📝 Outro</button>
+          </div>
+          <input type="text" id="fdia-justif-detalhe" placeholder="Detalhe (opcional)..."
+            style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
+        </div>
+
+        <!-- Já finalizado -->
+        <div id="fdia-ja-fechado" class="cd" style="display:none;background:var(--vdc);border:1.5px solid var(--vd);margin-bottom:1rem;text-align:center;padding:1.5rem">
+          <div style="font-size:32px;margin-bottom:8px">✅</div>
+          <div style="font-size:15px;font-weight:700;color:var(--vd)">Dia finalizado!</div>
+          <div style="font-size:12px;color:#3B6D11;margin-top:4px" id="fdia-fechado-info">—</div>
+        </div>
+
+        <!-- Botão finalizar -->
+        <div id="fdia-btn-wrap" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-p" onclick="fdiaSalvar()" style="font-size:14px;padding:10px 28px;background:var(--vd)">🔒 Finalizar meu dia</button>
+          <span id="fdia-ok" style="font-size:12px;color:var(--vd);font-weight:600;display:none">✓ Fechamento registrado!</span>
+        </div>
+      </div>
+    </div>
+    <!-- ══ fim FECHAMENTO DO DIA ══ -->
+
     <div id="p-pr-bancoferias" class="page">
       <div class="stabs">
         <button class="stab active" onclick="setBFTab('ferias',this)">🌴 Férias</button>
@@ -4041,6 +4231,7 @@ function go(id, el) {
     'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
     'pr-lancar':'Gestão de Produção','pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
+    'fechamento-dia':'Fechamento do Dia',
     };
   document.getElementById('ttl').textContent = titles[id] || id;
   if(id==='pr-bancoferias'){renderFerias();renderBanco();renderBHECards();}
@@ -14221,6 +14412,106 @@ function q18Consultar(valor){
 
 </script>
 
+<!-- ══ MODAL AÇÃO RC ══ -->
+<div id="modal-acao-rc" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:4000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:1.75rem;max-width:480px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--az)" id="acao-modal-titulo">Confirmar ação</div>
+        <div style="font-size:11px;color:var(--tx2);margin-top:2px" id="acao-modal-subtitulo">Selecione o status de tratamento</div>
+      </div>
+      <button onclick="prodFecharModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--tx2)">×</button>
+    </div>
+
+    <!-- Tipo selecionado -->
+    <div id="acao-tipo-badge" style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:1.25rem;background:var(--azc);color:var(--azm)">—</div>
+
+    <!-- ESTÁGIO 1: Status Tratamento -->
+    <div id="acao-estagio-1">
+      <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">↓ Status de Tratamento — para onde foi?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem">
+        <button class="acao-sel-btn" onclick="acaoSelecionarTratamento(this,'Fornecedor')"
+          style="background:var(--cin);border:1.5px solid var(--brd);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;transition:all .18s">
+          <div style="font-size:20px;margin-bottom:4px">🏭</div>
+          <div style="font-size:12px;font-weight:600;color:var(--tx)">Fornecedor</div>
+        </button>
+        <button class="acao-sel-btn" onclick="acaoSelecionarTratamento(this,'Requisitante')"
+          style="background:var(--cin);border:1.5px solid var(--brd);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;transition:all .18s">
+          <div style="font-size:20px;margin-bottom:4px">👤</div>
+          <div style="font-size:12px;font-weight:600;color:var(--tx)">Requisitante</div>
+        </button>
+        <button class="acao-sel-btn" onclick="acaoSelecionarTratamento(this,'MDG')"
+          style="background:var(--cin);border:1.5px solid var(--brd);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;transition:all .18s">
+          <div style="font-size:20px;margin-bottom:4px">🗂</div>
+          <div style="font-size:12px;font-weight:600;color:var(--tx)">MDG</div>
+        </button>
+        <button class="acao-sel-btn" onclick="acaoSelecionarTratamento(this,'Validação Thiago')"
+          style="background:var(--cin);border:1.5px solid var(--brd);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;transition:all .18s">
+          <div style="font-size:20px;margin-bottom:4px">✔️</div>
+          <div style="font-size:12px;font-weight:600;color:var(--tx)">Validação Thiago</div>
+        </button>
+        <button class="acao-sel-btn" onclick="acaoSelecionarTratamento(this,'Concluído')"
+          style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;grid-column:span 2;transition:all .18s">
+          <div style="font-size:20px;margin-bottom:4px">🏁</div>
+          <div style="font-size:12px;font-weight:700;color:var(--vd)">Concluído — ir para conclusão ›</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ESTÁGIO 2: Conclusão (aparece só se Concluído) -->
+    <div id="acao-estagio-2" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+        <button onclick="acaoVoltarEstagio1()" style="background:none;border:none;font-size:12px;color:var(--azm);cursor:pointer;font-weight:600">‹ Voltar</button>
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px">↓ Tipo de conclusão</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem">
+        <button class="acao-sel-btn" onclick="acaoSelecionarConclusao(this,'XGL')"
+          style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;transition:all .18s">
+          <div style="font-size:20px;margin-bottom:4px">📦</div>
+          <div style="font-size:12px;font-weight:600;color:var(--vd)">XGL</div>
+        </button>
+        <button class="acao-sel-btn" onclick="acaoSelecionarConclusao(this,'Pedido')"
+          style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;transition:all .18s">
+          <div style="font-size:20px;margin-bottom:4px">🛒</div>
+          <div style="font-size:12px;font-weight:600;color:var(--vd)">Pedido</div>
+        </button>
+        <button class="acao-sel-btn" onclick="acaoSelecionarConclusao(this,'Republicação')"
+          style="background:var(--amc);border:1.5px solid var(--am);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;transition:all .18s">
+          <div style="font-size:20px;margin-bottom:4px">🔄</div>
+          <div style="font-size:12px;font-weight:600;color:var(--am)">Republicação</div>
+        </button>
+        <button class="acao-sel-btn" onclick="acaoSelecionarConclusao(this,'Devolução')"
+          style="background:var(--vmc);border:1.5px solid var(--vm);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;transition:all .18s">
+          <div style="font-size:20px;margin-bottom:4px">↩</div>
+          <div style="font-size:12px;font-weight:600;color:var(--vm)">Devolução</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Seleção atual -->
+    <div id="acao-selecao-atual" style="display:none;background:var(--vdc);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:12px;color:#3B6D11;font-weight:600">
+      ✓ <span id="acao-selecao-texto">—</span>
+    </div>
+
+    <!-- Observação -->
+    <div style="margin-bottom:1rem">
+      <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">Observação (opcional)</div>
+      <input type="text" id="acao-obs" placeholder="Ex: Aguardando retorno do fornecedor..."
+        style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
+    </div>
+
+    <div id="acao-erro" style="display:none;font-size:11px;color:var(--vm);background:var(--vmc);padding:7px 12px;border-radius:7px;margin-bottom:.75rem"></div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="prodFecharModal()" style="background:var(--cin);color:var(--tx);border:1.5px solid var(--brd);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px">Cancelar</button>
+      <button onclick="prodConfirmarAcao()" style="background:var(--vd);color:#fff;border:none;padding:8px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">✓ Confirmar</button>
+    </div>
+  </div>
+</div>
+<!-- ══ fim MODAL AÇÃO RC ══ -->
+
 <!-- ══ MODAL DESFECHO — raiz do documento, visível em qualquer página ══ -->
 <div id="desfecho-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:12px;width:440px;max-width:95vw;padding:1.5rem;box-shadow:0 8px 32px rgba(13,35,71,.18)">
@@ -14844,7 +15135,448 @@ function rtRenderizar(regs, hoje){
   }
 }
 
-</script>
+// ══════════════════════════════════════════════════════
+// SISTEMA DE PRODUÇÃO — AÇÃO NA RC (Gov + Planilha Crítica)
+// ══════════════════════════════════════════════════════
 
-</body>
-</html>
+/* CSS inline para botões */
+document.head.insertAdjacentHTML('beforeend', `<style>
+.acao-sel-btn:hover{ filter:brightness(.94); transform:scale(.98); }
+.acao-sel-btn.selecionado{ outline:3px solid var(--vd); }
+.fdia-motivo-btn{
+  background:var(--cin);border:1.5px solid var(--brd);border-radius:9px;
+  padding:.75rem;cursor:pointer;font-size:12px;font-weight:600;color:var(--tx);
+  transition:all .18s;text-align:center;
+}
+.fdia-motivo-btn:hover{ background:var(--azc);border-color:var(--azm);color:var(--azm); }
+.fdia-motivo-btn.selecionado{ background:var(--azm);color:#fff;border-color:var(--azm); }
+</style>`);
+
+let _prodCtx = { origem: null, tipo: null, tratamento: null, conclusao: null };
+let _prodChartGov = null;
+let _prodChartPc  = null;
+let _fdiaChart    = null;
+
+const PROD_TIPO_LABELS = {
+  'primeira_analise': { label:'1ª Análise', emoji:'🔍', cor:'var(--azm)' },
+  'em_tratativa':     { label:'Em Tratativa', emoji:'⚙️', cor:'var(--azm)' },
+  'status_b':         { label:'Status B', emoji:'✅', cor:'var(--vd)' },
+  'outros':           { label:'Outros', emoji:'📋', cor:'var(--am)' },
+};
+
+function prodAbrirModal(origem, tipo){
+  // Verificar se está logado
+  const colab = _authPerfil?.colabNome || _authPerfil?.nome || colabLogado;
+  if(!colab || _authPerfil?.perfil === 'adm'){
+    if(!colabLogado){ alert('Identifique-se primeiro (faça login).'); return; }
+  }
+  _prodCtx = { origem, tipo, tratamento: null, conclusao: null };
+  const cfg = PROD_TIPO_LABELS[tipo];
+
+  // Resetar modal
+  document.getElementById('acao-modal-titulo').textContent = 'Confirmar ação — ' + cfg.label;
+  document.getElementById('acao-modal-subtitulo').textContent = 'Selecione o status de tratamento';
+  document.getElementById('acao-tipo-badge').innerHTML = cfg.emoji + ' ' + cfg.label;
+  document.getElementById('acao-tipo-badge').style.cssText = `display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:1.25rem;background:var(--azc);color:${cfg.cor}`;
+  document.getElementById('acao-estagio-1').style.display = 'block';
+  document.getElementById('acao-estagio-2').style.display = 'none';
+  document.getElementById('acao-selecao-atual').style.display = 'none';
+  document.getElementById('acao-obs').value = '';
+  document.getElementById('acao-erro').style.display = 'none';
+  document.querySelectorAll('.acao-sel-btn').forEach(b=>b.classList.remove('selecionado'));
+  document.getElementById('modal-acao-rc').style.display = 'flex';
+}
+
+function prodFecharModal(){
+  document.getElementById('modal-acao-rc').style.display = 'none';
+  _prodCtx = { origem:null, tipo:null, tratamento:null, conclusao:null };
+}
+
+function acaoSelecionarTratamento(btn, tratamento){
+  document.querySelectorAll('#acao-estagio-1 .acao-sel-btn').forEach(b=>b.classList.remove('selecionado'));
+  btn.classList.add('selecionado');
+  _prodCtx.tratamento = tratamento;
+  _prodCtx.conclusao  = null;
+
+  if(tratamento === 'Concluído'){
+    // Avançar para estágio 2
+    document.getElementById('acao-estagio-1').style.display = 'none';
+    document.getElementById('acao-estagio-2').style.display = 'block';
+    document.getElementById('acao-modal-subtitulo').textContent = 'Selecione o tipo de conclusão';
+    document.getElementById('acao-selecao-atual').style.display = 'none';
+  } else {
+    document.getElementById('acao-selecao-atual').style.display = 'block';
+    document.getElementById('acao-selecao-texto').textContent = 'Status: ' + tratamento;
+  }
+}
+
+function acaoSelecionarConclusao(btn, conclusao){
+  document.querySelectorAll('#acao-estagio-2 .acao-sel-btn').forEach(b=>b.classList.remove('selecionado'));
+  btn.classList.add('selecionado');
+  _prodCtx.conclusao = conclusao;
+  document.getElementById('acao-selecao-atual').style.display = 'block';
+  document.getElementById('acao-selecao-texto').textContent = 'Concluído → ' + conclusao;
+}
+
+function acaoVoltarEstagio1(){
+  _prodCtx.conclusao = null;
+  document.getElementById('acao-estagio-2').style.display = 'none';
+  document.getElementById('acao-estagio-1').style.display = 'block';
+  document.getElementById('acao-modal-subtitulo').textContent = 'Selecione o status de tratamento';
+  document.getElementById('acao-selecao-atual').style.display = 'none';
+}
+
+async function prodConfirmarAcao(){
+  const errEl = document.getElementById('acao-erro');
+  errEl.style.display = 'none';
+
+  if(!_prodCtx.tratamento){
+    errEl.textContent = 'Selecione o status de tratamento.';
+    errEl.style.display = 'block'; return;
+  }
+  if(_prodCtx.tratamento === 'Concluído' && !_prodCtx.conclusao){
+    errEl.textContent = 'Selecione o tipo de conclusão.';
+    errEl.style.display = 'block'; return;
+  }
+
+  const colab = _authPerfil?.colabNome || colabLogado || _authPerfil?.nome;
+  if(!colab){ errEl.textContent='Colaborador não identificado.'; errEl.style.display='block'; return; }
+
+  const hoje = new Date().toISOString().split('T')[0];
+  const obs   = document.getElementById('acao-obs').value.trim();
+  const registro = {
+    colab,
+    data: hoje,
+    tipo: _prodCtx.tipo,
+    tratamento: _prodCtx.tratamento,
+    conclusao: _prodCtx.conclusao || '',
+    obs,
+    origem: _prodCtx.origem,
+    ts: new Date().toISOString()
+  };
+
+  // Salvar no Firebase
+  try{
+    const db = getDB();
+    if(db){
+      await db.collection('producao_acoes').add(registro);
+      console.log('✓ Ação registrada:', registro.tipo, registro.tratamento);
+    }
+  } catch(e){ console.warn('prodConfirmarAcao save:', e); }
+
+  // Atualizar cache local e re-renderizar painéis
+  if(!window._prodAcoesHoje) window._prodAcoesHoje = [];
+  window._prodAcoesHoje.push(registro);
+
+  prodFecharModal();
+  prodRenderizarPaineis(colab);
+
+  // Feedback visual rápido
+  const origemEl = document.getElementById(_prodCtx.origem === 'gov' ? 'gov-prod-painel' : 'pc-prod-painel');
+  if(origemEl){
+    origemEl.style.outline = '2px solid var(--vd)';
+    setTimeout(()=>origemEl.style.outline='', 1500);
+  }
+}
+
+async function prodCarregarHoje(colab){
+  const hoje = new Date().toISOString().split('T')[0];
+  try{
+    const db = getDB(); if(!db) return [];
+    const snap = await db.collection('producao_acoes')
+      .where('colab','==',colab)
+      .where('data','==',hoje)
+      .get();
+    window._prodAcoesHoje = snap.docs.map(d=>d.data());
+    return window._prodAcoesHoje;
+  } catch(e){
+    console.warn('prodCarregarHoje:', e);
+    return window._prodAcoesHoje || [];
+  }
+}
+
+async function prodCarregarHistorico(colab, dias=7){
+  try{
+    const db = getDB(); if(!db) return {};
+    const datas = [];
+    for(let i=dias-1;i>=0;i--){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      datas.push(d.toISOString().split('T')[0]);
+    }
+    const snap = await db.collection('producao_acoes')
+      .where('colab','==',colab)
+      .where('data','>=',datas[0])
+      .get();
+    const hist = {};
+    datas.forEach(d=>hist[d]=0);
+    snap.docs.forEach(doc=>{
+      const r=doc.data();
+      // Só conta tipos que vão para meta (não "outros")
+      const contaMeta = ['primeira_analise','em_tratativa','status_b'].includes(r.tipo);
+      if(contaMeta && hist[r.data]!==undefined) hist[r.data]++;
+    });
+    return hist;
+  } catch(e){ return {}; }
+}
+
+function prodContarHoje(acoes){
+  const cnt = { primeira_analise:0, em_tratativa:0, status_b:0, outros:0, total:0, meta:0 };
+  (acoes||[]).forEach(r=>{
+    if(cnt[r.tipo]!==undefined) cnt[r.tipo]++;
+    cnt.total++;
+  });
+  cnt.meta = cnt.primeira_analise + cnt.em_tratativa + cnt.status_b;
+  return cnt;
+}
+
+function prodRenderizarPaineis(colab){
+  const acoes = window._prodAcoesHoje || [];
+  const cnt   = prodContarHoje(acoes);
+  const metaVal = META_ANALISTA_RT[colab] || 30;
+  const pct = Math.min(100, Math.round(cnt.meta / metaVal * 100));
+  const cor = cnt.meta >= metaVal ? 'var(--vd)' : cnt.meta >= metaVal*.8 ? 'var(--am)' : 'var(--vm)';
+
+  const kpiHTML = `
+    <div style="background:var(--azc);border-radius:7px;padding:.5rem .625rem;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:var(--azm)">${cnt.primeira_analise}</div>
+      <div style="font-size:9px;color:var(--tx2)">1ª Análise</div>
+    </div>
+    <div style="background:var(--azc);border-radius:7px;padding:.5rem .625rem;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:var(--azm)">${cnt.em_tratativa}</div>
+      <div style="font-size:9px;color:var(--tx2)">Em Trat.</div>
+    </div>
+    <div style="background:var(--vdc);border-radius:7px;padding:.5rem .625rem;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:var(--vd)">${cnt.status_b}</div>
+      <div style="font-size:9px;color:var(--tx2)">Status B</div>
+    </div>
+    <div style="background:var(--amc);border-radius:7px;padding:.5rem .625rem;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:var(--am)">${cnt.outros}</div>
+      <div style="font-size:9px;color:var(--tx2)">Outros</div>
+    </div>
+    <div style="background:${cnt.meta>=metaVal?'var(--vdc)':cnt.meta>=metaVal*.8?'var(--amc)':'var(--vmc)'};border-radius:7px;padding:.5rem .625rem;text-align:center;grid-column:span 2">
+      <div style="font-size:22px;font-weight:700;color:${cor}">${cnt.meta} / ${metaVal}</div>
+      <div style="font-size:9px;color:var(--tx2)">${pct}% da meta</div>
+    </div>
+  `;
+
+  const infoHTML = `👤 ${colab} · ${cnt.meta} itens · ${pct}% da meta`;
+
+  ['gov','pc'].forEach(origem => {
+    const kpiEl  = document.getElementById(`${origem}-prod-kpis`);
+    const infoEl = document.getElementById(`${origem}-prod-colab-info`);
+    if(kpiEl)  kpiEl.innerHTML  = kpiHTML;
+    if(infoEl) infoEl.textContent = infoHTML;
+  });
+
+  // Renderizar gráfico (gov)
+  prodRenderGrafico('gov-prod-chart', '_prodChartGov', colab);
+  prodRenderGrafico('pc-prod-chart',  '_prodChartPc',  colab);
+}
+
+async function prodRenderGrafico(canvasId, chartVar, colab){
+  const hist = await prodCarregarHistorico(colab, 7);
+  const labels = Object.keys(hist).map(d => d.slice(5).split('-').reverse().join('/'));
+  const vals   = Object.values(hist);
+  const metaVal= META_ANALISTA_RT[colab]||30;
+  const ctx    = document.getElementById(canvasId);
+  if(!ctx) return;
+  if(window[chartVar]) window[chartVar].destroy();
+  window[chartVar] = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        { label:'Produção', data:vals, backgroundColor: vals.map(v=>v>=metaVal?'rgba(14,158,106,.7)':v>=metaVal*.8?'rgba(192,122,18,.7)':'rgba(217,64,64,.6)'), borderRadius:4 },
+        { label:'Meta', data:Array(7).fill(metaVal), type:'line', borderColor:'rgba(13,35,71,.4)', borderWidth:1.5, borderDash:[4,3], pointRadius:0 }
+      ]
+    },
+    options:{ plugins:{legend:{display:false},datalabels:{display:false}}, scales:{ y:{min:0,grid:{color:'#f0f0f0'},ticks:{font:{size:9}}}, x:{grid:{display:false},ticks:{font:{size:9}}} } }
+  });
+}
+
+// Inicializar painéis quando Governança/PC abrem
+async function prodInicializarPainel(){
+  const colab = _authPerfil?.colabNome || colabLogado;
+  if(!colab) return;
+  await prodCarregarHoje(colab);
+  prodRenderizarPaineis(colab);
+}
+
+// ══════════════════════════════════════════════════════
+// FECHAMENTO DO DIA
+// ══════════════════════════════════════════════════════
+
+let _fdiaMotivo = '';
+
+function fdiaSelectMotivo(btn, motivo){
+  document.querySelectorAll('.fdia-motivo-btn').forEach(b=>b.classList.remove('selecionado'));
+  btn.classList.add('selecionado');
+  _fdiaMotivo = motivo;
+}
+
+async function fdiaInicializar(){
+  const hoje = new Date();
+  const label = hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const el = document.getElementById('fdia-data-label');
+  if(el) el.textContent = label;
+
+  const colab = _authPerfil?.colabNome || colabLogado;
+  const semLogin = document.getElementById('fdia-sem-login');
+  const painel   = document.getElementById('fdia-painel');
+
+  if(!colab){
+    if(semLogin) semLogin.style.display = 'block';
+    if(painel)   painel.style.display   = 'none';
+    return;
+  }
+  if(semLogin) semLogin.style.display = 'none';
+  if(painel)   painel.style.display   = 'block';
+
+  // Avatar e nome
+  const av = document.getElementById('fdia-avatar');
+  const nm = document.getElementById('fdia-nome');
+  const mo = document.getElementById('fdia-modalidade');
+  if(av) av.textContent = colab[0].toUpperCase();
+  if(nm) nm.textContent = colab;
+
+  const metaVal = META_ANALISTA_RT[colab] || 30;
+  const metaEl  = document.getElementById('fdia-meta');
+  if(metaEl) metaEl.textContent = metaVal;
+
+  // Carregar ações do dia
+  await prodCarregarHoje(colab);
+  const acoes = window._prodAcoesHoje || [];
+  const cnt   = prodContarHoje(acoes);
+  const pct   = Math.min(100, Math.round(cnt.meta / metaVal * 100));
+  const cor   = cnt.meta >= metaVal ? 'var(--vd)' : cnt.meta >= metaVal*.8 ? 'var(--am)' : 'var(--vm)';
+
+  const totalEl  = document.getElementById('fdia-total');
+  const barraEl  = document.getElementById('fdia-barra');
+  const pctEl    = document.getElementById('fdia-pct');
+  const statusEl = document.getElementById('fdia-status-label');
+  if(totalEl){ totalEl.textContent = cnt.meta; totalEl.style.color = cor; }
+  if(barraEl){ barraEl.style.width = pct+'%'; barraEl.style.background = cor; }
+  if(pctEl)   pctEl.textContent = pct+'%';
+  if(statusEl) statusEl.textContent = cnt.meta >= metaVal ? '✅ Meta atingida!' : cnt.meta >= metaVal*.8 ? '⚡ Quase lá!' : '⚠ Abaixo da meta';
+
+  // Modalidade
+  const regs = (typeof registros !== 'undefined' ? registros : []);
+  const hoje2 = new Date().toISOString().split('T')[0];
+  const regHoje = regs.find(r=>r.colab===colab&&r.data===hoje2);
+  if(mo) mo.textContent = regHoje?.pres || '—';
+
+  // Breakdown
+  const bdEl = document.getElementById('fdia-breakdown');
+  if(bdEl) bdEl.innerHTML = `
+    <div style="background:var(--azc);border-radius:8px;padding:.625rem;text-align:center">
+      <div style="font-size:20px;font-weight:700;color:var(--azm)">${cnt.primeira_analise}</div>
+      <div style="font-size:10px;color:var(--tx2)">1ª Análise</div>
+    </div>
+    <div style="background:var(--azc);border-radius:8px;padding:.625rem;text-align:center">
+      <div style="font-size:20px;font-weight:700;color:var(--azm)">${cnt.em_tratativa}</div>
+      <div style="font-size:10px;color:var(--tx2)">Em Tratativa</div>
+    </div>
+    <div style="background:var(--vdc);border-radius:8px;padding:.625rem;text-align:center">
+      <div style="font-size:20px;font-weight:700;color:var(--vd)">${cnt.status_b}</div>
+      <div style="font-size:10px;color:var(--tx2)">Status B</div>
+    </div>
+    <div style="background:var(--amc);border-radius:8px;padding:.625rem;text-align:center">
+      <div style="font-size:20px;font-weight:700;color:var(--am)">${cnt.outros}</div>
+      <div style="font-size:10px;color:var(--tx2)">Outros</div>
+    </div>
+  `;
+
+  // Justificativa
+  const justBox = document.getElementById('fdia-justif-box');
+  if(justBox) justBox.style.display = cnt.meta < metaVal ? 'block' : 'none';
+
+  // Verificar se já fechou hoje
+  try{
+    const db = getDB();
+    if(db){
+      const snap = await db.collection('fechamento_dia')
+        .where('colab','==',colab).where('data','==',hoje2).get();
+      if(!snap.empty){
+        const fechado = snap.docs[0].data();
+        document.getElementById('fdia-ja-fechado').style.display = 'block';
+        document.getElementById('fdia-btn-wrap').style.display   = 'none';
+        document.getElementById('fdia-justif-box').style.display = 'none';
+        document.getElementById('fdia-fechado-info').textContent =
+          `Fechado às ${new Date(fechado.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · ${cnt.meta} itens · ${pct}% da meta`;
+        return;
+      }
+    }
+  } catch(e){ console.warn('fdiaInicializar check:', e); }
+
+  document.getElementById('fdia-ja-fechado').style.display = 'none';
+  document.getElementById('fdia-btn-wrap').style.display   = 'flex';
+
+  // Gráfico
+  const hist = await prodCarregarHistorico(colab, 7);
+  const labels = Object.keys(hist).map(d=>d.slice(5).split('-').reverse().join('/'));
+  const vals   = Object.values(hist);
+  const cFdia  = document.getElementById('fdia-chart');
+  if(cFdia){
+    if(_fdiaChart) _fdiaChart.destroy();
+    _fdiaChart = new Chart(cFdia, {
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          { label:'Produção', data:vals, backgroundColor:vals.map(v=>v>=metaVal?'rgba(14,158,106,.7)':v>=metaVal*.8?'rgba(192,122,18,.7)':'rgba(217,64,64,.6)'), borderRadius:5 },
+          { label:'Meta', data:Array(7).fill(metaVal), type:'line', borderColor:'rgba(13,35,71,.5)', borderWidth:1.5, borderDash:[4,3], pointRadius:0 }
+        ]
+      },
+      options:{ plugins:{legend:{display:false},datalabels:{display:false}}, scales:{ y:{min:0,grid:{color:'#f0f0f0'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} } }
+    });
+  }
+}
+
+async function fdiaSalvar(){
+  const colab   = _authPerfil?.colabNome || colabLogado;
+  const metaVal = META_ANALISTA_RT[colab]||30;
+  const acoes   = window._prodAcoesHoje||[];
+  const cnt     = prodContarHoje(acoes);
+  const hoje    = new Date().toISOString().split('T')[0];
+
+  if(cnt.meta < metaVal && !_fdiaMotivo){
+    alert('Selecione o motivo por não ter atingido a meta antes de finalizar.');
+    return;
+  }
+
+  const detalhe = document.getElementById('fdia-justif-detalhe')?.value?.trim()||'';
+  const reg = {
+    colab, data: hoje, total: cnt.meta, meta: metaVal,
+    pct: Math.round(cnt.meta/metaVal*100),
+    metaAtingida: cnt.meta >= metaVal,
+    motivo: _fdiaMotivo || '',
+    detalhe, ts: new Date().toISOString(),
+    breakdown: { primeira_analise: cnt.primeira_analise, em_tratativa: cnt.em_tratativa, status_b: cnt.status_b, outros: cnt.outros }
+  };
+
+  try{
+    const db = getDB();
+    if(db) await db.collection('fechamento_dia').add(reg);
+  } catch(e){ console.warn('fdiaSalvar:', e); }
+
+  document.getElementById('fdia-ja-fechado').style.display = 'block';
+  document.getElementById('fdia-btn-wrap').style.display   = 'none';
+  document.getElementById('fdia-justif-box').style.display = 'none';
+  document.getElementById('fdia-fechado-info').textContent =
+    `Fechado agora · ${cnt.meta} itens · ${Math.round(cnt.meta/metaVal*100)}% da meta`;
+  document.getElementById('fdia-ok').style.display = 'inline';
+  setTimeout(()=>{ const el=document.getElementById('fdia-ok'); if(el)el.style.display='none'; }, 3000);
+}
+
+// Hook no go() para inicializar painéis
+const _goOrig = typeof go === 'function' ? go : null;
+if(_goOrig){
+  window.go = function(id, el){
+    _goOrig(id, el);
+    if(id === 'governanca' || id === 'planilha-critica') setTimeout(prodInicializarPainel, 500);
+    if(id === 'fechamento-dia') setTimeout(fdiaInicializar, 200);
+  };
+}
+
+// Adicionar Fechamento do Dia ao PERMS_SIDEBAR e navegação
+PERMS_SIDEBAR['fechamento-dia'] = { icon:'🔒', label:'Fechamento do Dia', mod:'EXECUÇÃO' };
