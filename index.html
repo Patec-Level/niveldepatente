@@ -3015,65 +3015,49 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- KPIs gerais -->
       <div class="kgrid" id="pc-kpis" style="margin-bottom:1rem"></div>
 
-      <!-- Filtros -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
-        <select id="pc-filtro-analista" onchange="pcFiltrar()" style="font-size:12px;padding:5px 10px;min-width:160px">
-          <option value="">Todos os analistas</option>
-        </select>
-        <input type="text" id="pc-busca" placeholder="🔍 Buscar RC, oportunidade..." oninput="pcBuscaSincronizada(this.value)" style="font-size:12px;padding:5px 10px;min-width:220px">
-        <button class="btn btn-s" style="font-size:11px" onclick="pcLimparFiltros()">✕ Limpar</button>
-      </div>
-
-      <!-- ── PAINEL DE PRODUÇÃO DO DIA (Planilha Crítica) ── -->
-      <div class="cd" id="pc-prod-painel" style="margin-bottom:1rem;border-top:3px solid var(--vm)">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.875rem">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:13px;font-weight:700;color:var(--az)">📊 Registrar ação na RC</span>
-            <span class="rt-dot" title="Tempo real"></span>
+      <!-- Filtros + Botões de Ação (mesmo card) -->
+      <div class="cd" style="margin-bottom:1rem;padding:.875rem 1rem">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.875rem">
+          <select id="pc-filtro-analista" onchange="pcFiltrar()" style="font-size:12px;padding:5px 10px;min-width:140px">
+            <option value="">Todos os analistas</option>
+          </select>
+          <input type="text" id="pc-busca" placeholder="🔍 Buscar RC..." oninput="pcBuscaSincronizada(this.value)" style="font-size:12px;padding:5px 10px;min-width:180px;flex:1;max-width:280px">
+          <button class="btn btn-s" style="font-size:11px" onclick="pcLimparFiltros()">✕ Limpar</button>
+          <!-- Botões de ação -->
+          <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
+            <button onclick="prodAbrirModal('pc','primeira_analise')"
+              style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);white-space:nowrap"
+              onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+              onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">🔍 1ª Análise</button>
+            <button onclick="prodAbrirModal('pc','em_tratativa')"
+              style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);white-space:nowrap"
+              onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+              onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">⚙️ Em Tratativa</button>
+            <button onclick="prodAbrirModal('pc','status_b')"
+              style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--vd);white-space:nowrap"
+              onmouseover="this.style.background='var(--vd)';this.style.color='#fff'"
+              onmouseout="this.style.background='var(--vdc)';this.style.color='var(--vd)'">✅ Status B</button>
+            <button onclick="prodAbrirModal('pc','outros')"
+              style="background:var(--amc);border:1.5px solid var(--am);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--am);white-space:nowrap"
+              onmouseover="this.style.background='var(--am)';this.style.color='#fff'"
+              onmouseout="this.style.background='var(--amc)';this.style.color='var(--am)'">📋 Outros</button>
           </div>
-          <div style="font-size:11px;color:var(--tx2)" id="pc-prod-colab-info">Faça login para registrar produção</div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:.75rem">
-          <button onclick="prodAbrirModal('pc','primeira_analise')"
-            style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
-            onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
-            onmouseout="this.style.background='var(--azc)';this.style.color=''">
-            <div style="font-size:18px;margin-bottom:3px">🔍</div>
-            <div style="font-size:11px;font-weight:700;color:var(--azm)">1ª Análise</div>
-          </button>
-          <button onclick="prodAbrirModal('pc','em_tratativa')"
-            style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
-            onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
-            onmouseout="this.style.background='var(--azc)';this.style.color=''">
-            <div style="font-size:18px;margin-bottom:3px">⚙️</div>
-            <div style="font-size:11px;font-weight:700;color:var(--azm)">Em Tratativa</div>
-          </button>
-          <button onclick="prodAbrirModal('pc','status_b')"
-            style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
-            onmouseover="this.style.background='var(--vd)';this.style.color='#fff'"
-            onmouseout="this.style.background='var(--vdc)';this.style.color=''">
-            <div style="font-size:18px;margin-bottom:3px">✅</div>
-            <div style="font-size:11px;font-weight:700;color:var(--vd)">Status B</div>
-          </button>
-          <button onclick="prodAbrirModal('pc','outros')"
-            style="background:var(--amc);border:1.5px solid var(--am);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
-            onmouseover="this.style.background='var(--am)';this.style.color='#fff'"
-            onmouseout="this.style.background='var(--amc)';this.style.color=''">
-            <div style="font-size:18px;margin-bottom:3px">📋</div>
-            <div style="font-size:11px;font-weight:700;color:var(--am)">Outros</div>
-          </button>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:start">
-          <div id="pc-prod-kpis" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
-          <div>
-            <div style="font-size:10px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Evolução vs Meta (últimos 7 dias)</div>
-            <canvas id="pc-prod-chart" height="70"></canvas>
-          </div>
+        <!-- Mini KPIs do dia -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--brd);padding-top:.625rem">
+          <span style="font-size:10px;color:var(--tx2);font-weight:600">Hoje:</span>
+          <span id="pc-kpi-1a" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">🔍 0</span>
+          <span id="pc-kpi-trat" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">⚙️ 0</span>
+          <span id="pc-kpi-sb" style="font-size:11px;font-weight:700;color:var(--vd);background:var(--vdc);padding:2px 10px;border-radius:20px">✅ 0</span>
+          <span id="pc-kpi-outros" style="font-size:11px;font-weight:700;color:var(--am);background:var(--amc);padding:2px 10px;border-radius:20px">📋 0</span>
+          <span id="pc-kpi-total" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:var(--cin);color:var(--tx2)">Total: 0 / 30</span>
+          <span class="rt-dot" style="margin-left:4px" title="Tempo real"></span>
         </div>
       </div>
 
       <!-- Resultado busca RC detalhado -->
       <div id="pc-busca-resultado" style="display:none;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:10px 14px;margin-bottom:1rem"></div>
+      <div id="pc-prod-painel" style="display:none"></div>
 
       <!-- Abas -->
       <div class="stabs" id="pc-tabs" style="margin-bottom:1rem">
@@ -3172,66 +3156,57 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- Filtro de RC global -->
-      <div class="cd" style="margin-bottom:1rem;padding:.75rem 1rem">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <!-- Filtro de RC + Botões de Ação (mesmo card) -->
+      <div class="cd" style="margin-bottom:1rem;padding:.875rem 1rem">
+        <!-- Linha do filtro -->
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:.875rem">
           <span style="font-size:12px;font-weight:600;color:var(--az)">🔍 Buscar RC</span>
           <input type="text" id="gov-busca-rc" placeholder="Digite o número da RC..." oninput="govBuscarRC(this.value)"
             style="font-size:12px;padding:5px 10px;flex:1;min-width:200px;max-width:320px">
           <button class="btn btn-s" style="font-size:11px" onclick="govLimparBusca()">✕ Limpar</button>
+          <!-- Botões de ação no mesmo nível -->
+          <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
+            <button onclick="prodAbrirModal('gov','primeira_analise')"
+              style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);display:flex;align-items:center;gap:5px;white-space:nowrap"
+              onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+              onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">
+              🔍 1ª Análise
+            </button>
+            <button onclick="prodAbrirModal('gov','em_tratativa')"
+              style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);display:flex;align-items:center;gap:5px;white-space:nowrap"
+              onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+              onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">
+              ⚙️ Em Tratativa
+            </button>
+            <button onclick="prodAbrirModal('gov','status_b')"
+              style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--vd);display:flex;align-items:center;gap:5px;white-space:nowrap"
+              onmouseover="this.style.background='var(--vd)';this.style.color='#fff'"
+              onmouseout="this.style.background='var(--vdc)';this.style.color='var(--vd)'">
+              ✅ Status B
+            </button>
+            <button onclick="prodAbrirModal('gov','outros')"
+              style="background:var(--amc);border:1.5px solid var(--am);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--am);display:flex;align-items:center;gap:5px;white-space:nowrap"
+              onmouseover="this.style.background='var(--am)';this.style.color='#fff'"
+              onmouseout="this.style.background='var(--amc)';this.style.color='var(--am)'">
+              📋 Outros
+            </button>
+          </div>
         </div>
-        <div id="gov-busca-resultado" style="margin-top:.75rem;display:none"></div>
+        <div id="gov-busca-resultado" style="display:none"></div>
+        <!-- Mini KPIs do dia -->
+        <div id="gov-prod-kpis-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--brd);padding-top:.625rem;margin-top:.25rem">
+          <span style="font-size:10px;color:var(--tx2);font-weight:600">Hoje:</span>
+          <span id="gov-kpi-1a" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">🔍 0</span>
+          <span id="gov-kpi-trat" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">⚙️ 0</span>
+          <span id="gov-kpi-sb" style="font-size:11px;font-weight:700;color:var(--vd);background:var(--vdc);padding:2px 10px;border-radius:20px">✅ 0</span>
+          <span id="gov-kpi-outros" style="font-size:11px;font-weight:700;color:var(--am);background:var(--amc);padding:2px 10px;border-radius:20px">📋 0</span>
+          <span id="gov-kpi-total" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:var(--cin);color:var(--tx2)">Total: 0 / 30</span>
+          <span class="rt-dot" style="margin-left:4px" title="Tempo real"></span>
+        </div>
       </div>
 
-      <!-- ── PAINEL DE PRODUÇÃO DO DIA (Governança) ── -->
-      <div class="cd" id="gov-prod-painel" style="margin-bottom:1rem;border-top:3px solid var(--vd)">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.875rem">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:13px;font-weight:700;color:var(--az)">📊 Registrar ação na RC</span>
-            <span class="rt-dot" title="Tempo real"></span>
-          </div>
-          <div style="font-size:11px;color:var(--tx2)" id="gov-prod-colab-info">Faça login para registrar produção</div>
-        </div>
-        <!-- Botões de ação -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:.75rem" id="gov-prod-btns">
-          <button onclick="prodAbrirModal('gov','primeira_analise')"
-            style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
-            onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
-            onmouseout="this.style.background='var(--azc)';this.style.color=''">
-            <div style="font-size:18px;margin-bottom:3px">🔍</div>
-            <div style="font-size:11px;font-weight:700;color:var(--azm)">1ª Análise</div>
-          </button>
-          <button onclick="prodAbrirModal('gov','em_tratativa')"
-            style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
-            onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
-            onmouseout="this.style.background='var(--azc)';this.style.color=''">
-            <div style="font-size:18px;margin-bottom:3px">⚙️</div>
-            <div style="font-size:11px;font-weight:700;color:var(--azm)">Em Tratativa</div>
-          </button>
-          <button onclick="prodAbrirModal('gov','status_b')"
-            style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
-            onmouseover="this.style.background='var(--vd)';this.style.color='#fff'"
-            onmouseout="this.style.background='var(--vdc)';this.style.color=''">
-            <div style="font-size:18px;margin-bottom:3px">✅</div>
-            <div style="font-size:11px;font-weight:700;color:var(--vd)">Status B</div>
-          </button>
-          <button onclick="prodAbrirModal('gov','outros')"
-            style="background:var(--amc);border:1.5px solid var(--am);border-radius:9px;padding:.75rem .5rem;cursor:pointer;text-align:center;transition:all .2s"
-            onmouseover="this.style.background='var(--am)';this.style.color='#fff'"
-            onmouseout="this.style.background='var(--amc)';this.style.color=''">
-            <div style="font-size:18px;margin-bottom:3px">📋</div>
-            <div style="font-size:11px;font-weight:700;color:var(--am)">Outros</div>
-          </button>
-        </div>
-        <!-- Mini resumo + gráfico do dia -->
-        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:start" id="gov-prod-resumo-wrap">
-          <div id="gov-prod-kpis" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
-          <div>
-            <div style="font-size:10px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Evolução vs Meta (últimos 7 dias)</div>
-            <canvas id="gov-prod-chart" height="70"></canvas>
-          </div>
-        </div>
-      </div>
+      <!-- Painel gráfico separado (colapsável) -->
+      <div id="gov-prod-painel" style="display:none"></div>
 
       <!-- Abas -->
       <div class="stabs" style="margin-bottom:1rem">
@@ -15367,37 +15342,20 @@ function prodRenderizarPaineis(colab){
   const metaVal = META_ANALISTA_RT[colab] || 30;
   const pct = Math.min(100, Math.round(cnt.meta / metaVal * 100));
   const cor = cnt.meta >= metaVal ? 'var(--vd)' : cnt.meta >= metaVal*.8 ? 'var(--am)' : 'var(--vm)';
+  const totalLabel = `Total: ${cnt.meta} / ${metaVal}`;
 
-  const kpiHTML = `
-    <div style="background:var(--azc);border-radius:7px;padding:.5rem .625rem;text-align:center">
-      <div style="font-size:18px;font-weight:700;color:var(--azm)">${cnt.primeira_analise}</div>
-      <div style="font-size:9px;color:var(--tx2)">1ª Análise</div>
-    </div>
-    <div style="background:var(--azc);border-radius:7px;padding:.5rem .625rem;text-align:center">
-      <div style="font-size:18px;font-weight:700;color:var(--azm)">${cnt.em_tratativa}</div>
-      <div style="font-size:9px;color:var(--tx2)">Em Trat.</div>
-    </div>
-    <div style="background:var(--vdc);border-radius:7px;padding:.5rem .625rem;text-align:center">
-      <div style="font-size:18px;font-weight:700;color:var(--vd)">${cnt.status_b}</div>
-      <div style="font-size:9px;color:var(--tx2)">Status B</div>
-    </div>
-    <div style="background:var(--amc);border-radius:7px;padding:.5rem .625rem;text-align:center">
-      <div style="font-size:18px;font-weight:700;color:var(--am)">${cnt.outros}</div>
-      <div style="font-size:9px;color:var(--tx2)">Outros</div>
-    </div>
-    <div style="background:${cnt.meta>=metaVal?'var(--vdc)':cnt.meta>=metaVal*.8?'var(--amc)':'var(--vmc)'};border-radius:7px;padding:.5rem .625rem;text-align:center;grid-column:span 2">
-      <div style="font-size:22px;font-weight:700;color:${cor}">${cnt.meta} / ${metaVal}</div>
-      <div style="font-size:9px;color:var(--tx2)">${pct}% da meta</div>
-    </div>
-  `;
-
-  const infoHTML = `👤 ${colab} · ${cnt.meta} itens · ${pct}% da meta`;
-
+  // Atualizar badges compactos em Gov e PC
   ['gov','pc'].forEach(origem => {
-    const kpiEl  = document.getElementById(`${origem}-prod-kpis`);
-    const infoEl = document.getElementById(`${origem}-prod-colab-info`);
-    if(kpiEl)  kpiEl.innerHTML  = kpiHTML;
-    if(infoEl) infoEl.textContent = infoHTML;
+    const s = id => document.getElementById(`${origem}-kpi-${id}`);
+    if(s('1a'))     s('1a').textContent     = `🔍 ${cnt.primeira_analise}`;
+    if(s('trat'))   s('trat').textContent   = `⚙️ ${cnt.em_tratativa}`;
+    if(s('sb'))     s('sb').textContent     = `✅ ${cnt.status_b}`;
+    if(s('outros')) s('outros').textContent = `📋 ${cnt.outros}`;
+    if(s('total')){
+      s('total').textContent = totalLabel;
+      s('total').style.background = cnt.meta>=metaVal?'var(--vdc)':cnt.meta>=metaVal*.8?'var(--amc)':'var(--vmc)';
+      s('total').style.color = cor;
+    }
   });
 
   // Renderizar gráfico (gov)
