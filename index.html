@@ -1742,7 +1742,26 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- ── HISTÓRICO DA PRODUÇÃO ── -->
       <div id="adm-hist-prod" class="adm-tab" style="display:none">
-        <div class="cd">
+
+        <!-- ── FECHAMENTOS DO DIA (Firebase) ── -->
+        <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vd)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem">
+            <div class="cd-t" style="margin:0">🔒 Fechamentos do Dia <span class="rt-dot" style="margin-left:6px"></span></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="date" id="fech-filtro-data" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--brd);border-radius:7px"
+                onchange="fechCarregarHistorico()">
+              <button class="btn btn-s" style="font-size:11px" onclick="fechCarregarHistorico()">↺ Atualizar</button>
+            </div>
+          </div>
+          <div id="fech-loading" style="font-size:12px;color:var(--tx2)">Carregando...</div>
+          <div id="fech-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:1rem"></div>
+          <div class="tw" id="fech-tabela-wrap" style="display:none">
+            <table>
+              <thead><tr><th>Data</th><th>Colaborador</th><th>1ª Análise</th><th>Em Trat.</th><th>Status B</th><th>Outros</th><th>Total</th><th>Meta</th><th>%</th><th>Status</th><th>Motivo</th></tr></thead>
+              <tbody id="fech-tbody"></tbody>
+            </table>
+          </div>
+        </div>
           <div class="cd-t">📊 Histórico da Produção — filtros</div>
           <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
             <div class="field-wrap" style="min-width:150px">
@@ -5947,6 +5966,14 @@ function setAdmTab(id,btn){
   if(id==='hist-prod') setTimeout(renderDistribuicao,50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
   if(id==='usuarios') setTimeout(usrCarregarLista, 100);
+  if(id==='hist-prod'){
+    setTimeout(renderDistribuicao, 50);
+    // Setar data de hoje e carregar fechamentos
+    const hoje = new Date().toISOString().split('T')[0];
+    const fEl = document.getElementById('fech-filtro-data');
+    if(fEl && !fEl.value) fEl.value = hoje;
+    setTimeout(fechCarregarHistorico, 200);
+  }
   document.querySelectorAll('#adm-tabs .stab').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   document.querySelectorAll('.adm-tab').forEach(t=>t.style.display='none');
@@ -6828,18 +6855,72 @@ async function salvarBancoAdm(){
 // ── Funções PCP ──
 function pcpCalcDia(dt){
   // f: pf0=1aAnalise,pf1=Tratativa,pf2=StatusB,pf3=Forn,pf4=Req,pf5=MDG,pf6=ValThiago,pf7=XGL,pf8=Repub,pf9=Pedidos,pf10=Devol,pf11=Outros
-  const regs=registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias');
-  if(!regs.length) return null;
-  const soma=(idx)=>regs.reduce((s,r)=>s+(r.f[idx]||0),0);
-  return {
-    f1: soma(0)+soma(1)+soma(2), // PATEC Fin./Parada
-    f2: soma(5),                  // MDG
-    f6: soma(7),                  // XGL
-    f3: soma(9),                  // RCs Pedidos
-    f4: soma(10),                 // RCs Devoluções
-    f5: soma(8),                  // RCs Republicação
-    colabs: [...new Set(regs.map(r=>r.colab))].join(', ')
+  const regs = registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias');
+  const soma = (idx) => regs.reduce((s,r)=>s+(r.f[idx]||0),0);
+
+  const f1_antigo = soma(0)+soma(1)+soma(2);
+  const f2_antigo = soma(5);
+  const f6_antigo = soma(7);
+  const f3_antigo = soma(9);
+  const f4_antigo = soma(10);
+  const f5_antigo = soma(8);
+
+  // Se data não está no cache → buscar do Firebase em background
+  if(!window._prodAcoesCache) window._prodAcoesCache = {};
+  if(window._prodAcoesCache[dt] === undefined){
+    window._prodAcoesCache[dt] = []; // marcar como "buscando"
+    pcpCarregarAcoesDia(dt);         // busca async, vai recalcular ao completar
+  }
+
+  const acoes = window._prodAcoesCache[dt] || [];
+  const contAcao = (tipo) => acoes.filter(a=>a.tipo===tipo).length;
+  const contComp = (comp) => acoes.filter(a=>a.tratamento===comp||a.conclusao===comp).length;
+
+  const f1_novo = contAcao('primeira_analise') + contAcao('em_tratativa') + contAcao('status_b');
+  const f2_novo = contComp('MDG');
+  const f6_novo = contComp('XGL');
+  const f3_novo = contComp('Pedido');
+  const f4_novo = contComp('Devolução');
+  const f5_novo = contComp('Republicação');
+
+  const resultado = {
+    f1: Math.max(f1_antigo, f1_novo),
+    f2: Math.max(f2_antigo, f2_novo),
+    f6: Math.max(f6_antigo, f6_novo),
+    f3: Math.max(f3_antigo, f3_novo),
+    f4: Math.max(f4_antigo, f4_novo),
+    f5: Math.max(f5_antigo, f5_novo),
+    colabs: [...new Set([
+      ...regs.map(r=>r.colab),
+      ...acoes.map(a=>a.colab)
+    ])].filter(Boolean).join(', ')
   };
+
+  if(!resultado.f1&&!resultado.f2&&!resultado.f6&&!resultado.f3&&!resultado.f4&&!resultado.f5) return null;
+  return resultado;
+}
+
+// Cache de ações por data para o PCP
+if(!window._prodAcoesCache) window._prodAcoesCache = {};
+
+async function pcpCarregarAcoesDia(dt){
+  try{
+    const db = getDB(); if(!db) return;
+    const snap = await db.collection('producao_acoes').where('data','==',dt).get();
+    if(!window._prodAcoesCache) window._prodAcoesCache = {};
+    window._prodAcoesCache[dt] = snap.docs.map(d=>d.data());
+    // Recalcular PCP do dia
+    pcpAtualizarRegistroDia(dt);
+    // Re-renderizar Painel Estratégico se estiver aberto
+    if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
+      try{ renderPainelEstrategico(); } catch(e){}
+    }
+    // Re-renderizar análise PCP se estiver aberta
+    if(document.getElementById('adm-pcp-adm')?.style.display !== 'none'){
+      pcpFiltroAnalise();
+    }
+    console.log('✓ PCP atualizado:', dt, '—', window._prodAcoesCache[dt].length, 'ações');
+  } catch(e){ console.warn('pcpCarregarAcoesDia:', e); }
 }
 function pcpFiltroAnalise(){
   const dt=document.getElementById('adm-pcp-filtro-dt')?.value;
@@ -14837,7 +14918,29 @@ window._authLogoutReal      = authLogout;
 window._authLoginLocalReal  = authLoginLocal;
 
 // ── Iniciar na carga ──
-document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(authInit, 800); });
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(authInit, 800);
+  // Carregar ações recentes para alimentar PCP
+  setTimeout(async ()=>{
+    try{
+      const db = getDB(); if(!db) return;
+      const hoje = new Date().toISOString().split('T')[0];
+      const h7 = new Date(); h7.setDate(h7.getDate()-7);
+      const de7 = h7.toISOString().split('T')[0];
+      const snap = await db.collection('producao_acoes')
+        .where('data','>=',de7).get();
+      if(!window._prodAcoesCache) window._prodAcoesCache = {};
+      snap.docs.forEach(d=>{
+        const a = d.data();
+        if(!window._prodAcoesCache[a.data]) window._prodAcoesCache[a.data] = [];
+        window._prodAcoesCache[a.data].push(a);
+      });
+      // Recalcular PCP dos últimos 7 dias
+      Object.keys(window._prodAcoesCache).forEach(dt => pcpAtualizarRegistroDia(dt));
+      console.log('✓ Cache producao_acoes carregado:', snap.docs.length, 'ações');
+    } catch(e){ console.warn('Cache producao_acoes:', e); }
+  }, 3000);
+});
 
 // ══════════════════════════════════════════════════════
 // GERENCIAR USUÁRIOS — ADM
@@ -15206,6 +15309,122 @@ function rtRenderizarMonitoramento(acoes, hoje){
 // Manter compatibilidade
 function rtRenderizar(regs, hoje){ rtRenderizarMonitoramento([], hoje); }
 
+// ── Histórico de Fechamentos do Dia ──
+async function fechCarregarHistorico(){
+  const loadEl  = document.getElementById('fech-loading');
+  const gridEl  = document.getElementById('fech-grid');
+  const tabelaWrap = document.getElementById('fech-tabela-wrap');
+  const tbody   = document.getElementById('fech-tbody');
+  if(!gridEl) return;
+
+  const dataFiltro = document.getElementById('fech-filtro-data')?.value ||
+                     new Date().toISOString().split('T')[0];
+
+  if(loadEl) loadEl.style.display = 'block';
+
+  try{
+    const db = getDB(); if(!db){ if(loadEl) loadEl.textContent='Firebase offline.'; return; }
+    const snap = await db.collection('fechamento_dia')
+      .where('data','==',dataFiltro).get();
+
+    if(loadEl) loadEl.style.display = 'none';
+
+    const regs = snap.docs.map(d=>d.data());
+
+    // Cards por colaborador
+    const porColab = {};
+    COLABS_RT.forEach(c => porColab[c] = null);
+    regs.forEach(r => { if(porColab[r.colab]!==undefined) porColab[r.colab] = r; });
+
+    gridEl.innerHTML = COLABS_RT.map(colab => {
+      const r = porColab[colab];
+      const semMeta = COLABS_SEM_META_RT.includes(colab);
+      const meta = META_ANALISTA_RT[colab]||30;
+
+      if(!r) return `
+        <div style="background:var(--cin);border-radius:10px;padding:1rem;border:1.5px dashed var(--brd);opacity:.6">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--brd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">${colab[0]}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--tx2)">${colab}</div>
+          </div>
+          <div style="font-size:11px;color:var(--tx2)">Não finalizou o dia</div>
+        </div>`;
+
+      const bd = r.breakdown||{};
+      const total = r.total||0;
+      const pct = semMeta ? null : Math.round(total/meta*100);
+      const cor = semMeta ? 'var(--azm)' : total>=meta?'var(--vd)':total>=meta*.8?'var(--am)':'var(--vm)';
+      const hr = r.ts ? new Date(r.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
+
+      return `
+        <div style="background:#fff;border-radius:10px;padding:1rem;border:1px solid var(--brd);border-top:3px solid ${cor}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:32px;height:32px;border-radius:50%;background:${cor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">${colab[0]}</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--az)">${colab}</div>
+                <div style="font-size:10px;color:var(--tx2)">Fechou às ${hr}</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:24px;font-weight:700;color:${cor};line-height:1">${total}</div>
+              <div style="font-size:10px;color:var(--tx2)">${semMeta?'Líder':pct+'% da meta'}</div>
+            </div>
+          </div>
+          ${!semMeta?`<div style="height:5px;background:#EEE;border-radius:3px;overflow:hidden;margin-bottom:.625rem">
+            <div style="height:100%;width:${Math.min(100,pct)}%;background:${cor};border-radius:3px"></div>
+          </div>`:''}
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:10px">
+            <div style="text-align:center;background:var(--azc);border-radius:5px;padding:3px">
+              <div style="font-weight:700;color:var(--azm)">${bd.primeira_analise||0}</div><div style="color:var(--tx2)">1ª Anál.</div>
+            </div>
+            <div style="text-align:center;background:var(--azc);border-radius:5px;padding:3px">
+              <div style="font-weight:700;color:var(--azm)">${bd.em_tratativa||0}</div><div style="color:var(--tx2)">Em Trat.</div>
+            </div>
+            <div style="text-align:center;background:var(--vdc);border-radius:5px;padding:3px">
+              <div style="font-weight:700;color:var(--vd)">${bd.status_b||0}</div><div style="color:var(--tx2)">Status B</div>
+            </div>
+            <div style="text-align:center;background:var(--amc);border-radius:5px;padding:3px">
+              <div style="font-weight:700;color:var(--am)">${bd.outros||0}</div><div style="color:var(--tx2)">Outros</div>
+            </div>
+          </div>
+          ${r.motivo?`<div style="margin-top:.5rem;font-size:10px;background:var(--amc);color:var(--am);padding:4px 8px;border-radius:5px">⚠ ${r.motivo}${r.detalhe?' — '+r.detalhe:''}</div>`:''}
+        </div>`;
+    }).join('');
+
+    // Tabela com todos os registros
+    if(regs.length){
+      tabelaWrap.style.display = 'block';
+      tbody.innerHTML = regs.sort((a,b)=>a.colab>b.colab?1:-1).map(r=>{
+        const semMeta = COLABS_SEM_META_RT.includes(r.colab);
+        const meta = META_ANALISTA_RT[r.colab]||30;
+        const bd = r.breakdown||{};
+        const total = r.total||0;
+        const pct = semMeta ? '—' : Math.round(total/meta*100)+'%';
+        const ok = semMeta || total>=meta;
+        return `<tr>
+          <td>${r.data||'—'}</td>
+          <td style="font-weight:600">${r.colab||'—'}</td>
+          <td style="text-align:center">${bd.primeira_analise||0}</td>
+          <td style="text-align:center">${bd.em_tratativa||0}</td>
+          <td style="text-align:center">${bd.status_b||0}</td>
+          <td style="text-align:center">${bd.outros||0}</td>
+          <td style="text-align:center;font-weight:700;color:${ok?'var(--vd)':'var(--vm)'}">${total}</td>
+          <td style="text-align:center">${semMeta?'—':meta}</td>
+          <td style="text-align:center">${pct}</td>
+          <td style="text-align:center"><span class="pl ${ok?'pl-ok':'pl-b'}" style="font-size:9px">${ok?'✅ Meta':'⚠ Abaixo'}</span></td>
+          <td style="font-size:11px;color:var(--tx2)">${r.motivo||'—'}${r.detalhe?' — '+r.detalhe:''}</td>
+        </tr>`;
+      }).join('');
+    } else {
+      tabelaWrap.style.display = 'none';
+    }
+
+  } catch(e){
+    if(loadEl){ loadEl.style.display='block'; loadEl.textContent='Erro ao carregar: '+e.message; }
+  }
+}
+
 function rtAbrirComposicao(colab, acoesJson){
   const modal = document.getElementById('rt-comp-modal');
   const titulo = document.getElementById('rt-comp-titulo');
@@ -15393,6 +15612,12 @@ async function prodConfirmarAcao(){
 
   prodFecharModal();
   prodRenderizarPaineis(colab);
+
+  // Atualizar cache PCP e recalcular
+  if(!window._prodAcoesCache) window._prodAcoesCache = {};
+  if(!window._prodAcoesCache[hoje]) window._prodAcoesCache[hoje] = [];
+  window._prodAcoesCache[hoje].push(registro);
+  pcpAtualizarRegistroDia(hoje);
 
   // Feedback visual rápido
   const origemEl = document.getElementById(_prodCtx.origem === 'gov' ? 'gov-prod-painel' : 'pc-prod-painel');
