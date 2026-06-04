@@ -4128,25 +4128,17 @@ async function fbCarregarTudo(){
   renderBanco();
   renderBHECards();
   console.log('✓ Firebase: todos os dados carregados e renderizados');
-    fbCarregarMapaDiario();
+  fbCarregarMapaDiario();
   fbCarregarPCPDiario();
-  desfechoCarregarFirebase();
-  // Q18 carrega sob demanda (quando usuário abre a consulta)
-  // Carregar backlog e re-renderizar Planilha Crítica após chegada dos dados
-  bkCarregarFirebase().then(()=>{
-    aaCarregarResultadoFirebase();
-    if(document.getElementById('p-planilha-critica')?.classList.contains('active')){
-      setTimeout(()=>pcInicializar(), 100);
-    }
-  });
-  fbCarregarRadar().then(()=>{ 
-    // Registrar backlog AG. TRATAMENTO após radar carregar
-    setTimeout(paAtualizarBacklogAuto, 800);
-    // Re-renderizar Planilha Crítica com dados do radar
-    if(document.getElementById('p-planilha-critica')?.classList.contains('active')){
-      setTimeout(()=>pcInicializar(), 100);
-    }
-  });
+
+  // ── LAZY LOAD — só carrega quando a tela for aberta ──
+  // Radar    → carrega ao abrir Radar Estratégico
+  // Backlog  → carrega ao abrir Governança / Planilha Crítica / Analista Auto
+  // Gov      → carrega ao abrir Governança
+  // Desfecho → carrega ao abrir Governança / Planilha Crítica
+  // Q18      → carrega ao abrir Consulta Q18
+  // BHE      → carrega ao abrir Gestão de Jornada
+  console.log('ℹ Radar, Backlog, Gov, Desfechos → lazy load (carregam ao abrir cada tela)');
   // Atualizar Painel Estratégico se estiver aberto
   if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
     renderCardsDia();
@@ -4353,33 +4345,65 @@ function go(id, el) {
   document.getElementById('ttl').textContent = titles[id] || id;
   if(id==='pr-bancoferias'){ renderFerias(); renderBanco(); setTimeout(()=>{ fbCarregarBHE().then(()=>{ bheArquivarVencidos(); renderBHECards(); }); }, 100); }
   document.getElementById('sb').classList.remove('mob-open');
-  // Carregar Inteligência de Mercado quando aba é aberta
   if(id==='vg-mercado') mktCarregarTudo();
-  if(id==='analista-auto') setTimeout(aaPublicoCarregar, 100);
-  if(id==='planilha-critica') setTimeout(pcInicializar, 100);
-  if(id==='governanca') setTimeout(()=>{ govCarregarFirebase().then(()=>govInicializar()); }, 300);
+  if(id==='analista-auto') setTimeout(()=>{
+    aaPublicoCarregar();
+    // Lazy: carregar backlog e AA se não tiver cache
+    if(!_bkDados?.rows?.length) bkCarregarFirebase().then(()=>{ aaCarregarResultadoFirebase(); aaVerificarDados(); });
+    else aaCarregarResultadoFirebase();
+  }, 100);
+  if(id==='planilha-critica') setTimeout(()=>{
+    // Lazy: carregar backlog, radar, desfechos se não tiver cache
+    const promises = [];
+    if(!_bkDados?.rows?.length) promises.push(bkCarregarFirebase());
+    if(!_radarDados?.length)    promises.push(fbCarregarRadar().then(()=>{ setTimeout(paAtualizarBacklogAuto,800); }));
+    if(!Object.keys(_desfechoCache||{}).length) promises.push(desfechoCarregarFirebase());
+    Promise.all(promises).then(()=>pcInicializar());
+    if(promises.length===0) pcInicializar();
+  }, 100);
+  if(id==='governanca') setTimeout(()=>{
+    const promises = [];
+    if(!Object.keys(_govDados||{}).length)        promises.push(govCarregarFirebase());
+    if(!_radarDados?.length)                       promises.push(fbCarregarRadar());
+    if(!Object.keys(_desfechoCache||{}).length)    promises.push(desfechoCarregarFirebase());
+    Promise.all(promises).then(()=>govInicializar());
+    if(promises.length===0) govInicializar();
+  }, 300);
+  if(id==='radar') setTimeout(()=>{
+    if(!_radarDados?.length){
+      fbCarregarRadar().then(()=>{ try{ renderRadarOperacional(); }catch(e){} });
+    } else {
+      try{ renderRadarOperacional(); }catch(e){ console.error('[Radar] ERRO render:', e); }
+    }
+  }, 100);
+  if(id==='plano-acao') setTimeout(()=>{
+    if(!_radarDados?.length){
+      fbCarregarRadar().then(()=>{ setTimeout(paAtualizarBacklogAuto,500); renderPlanoAcao(); });
+    } else {
+      renderPlanoAcao();
+    }
+  }, 100);
   if(id==='consulta-q18') setTimeout(()=>{ if(!_q18Impedidos.size) q18CarregarFirebase(); }, 100);
-  // Auto-login em módulos sem senha
   if(id==='adm') setTimeout(()=>{
     const login=document.getElementById('adm-login');
     if(login&&login.style.display!=='none') admLogin();
   },50);
   if(id==='adm') setTimeout(paEntradaInitADM, 100);
-  // Triggers de render
-  if (id==='vg-validade') renderValidade();
-  if (id==='pr-equipe') { renderEquipe(); }
-  if (id==='radar') { if(_radarDados.length) { try{ renderRadarOperacional(); }catch(e){ console.error('[Radar] ERRO render:', e); } } }
-  if (id==='plano-acao') { renderPlanoAcao(); }
-  if (id==='pr-estrategico') { renderRadarSaude(_radarFiltroStatus?_radarDados.filter(r=>r.analista_auto===_radarFiltroStatus):_radarDados); }
-  if (id==='pr-estrategico') {
+  if(id==='pr-estrategico') setTimeout(()=>{
+    // Lazy: carregar desfechos se não tiver cache
+    if(!Object.keys(_desfechoCache||{}).length) desfechoCarregarFirebase().then(()=>{ estRenderDevolucoes(); estRenderDesfechoCards(); });
     const sel=document.getElementById('est-dia-sel');
     if(sel&&!sel.value) sel.value=HOJE.toISOString().split('T')[0];
     estInitFim();
     renderCardsDia();
     estPcpHoje();
     renderPainelEstrategico();
-    estRenderDevolucoes(); estRenderDesfechoCards();
-  }
+    estRenderDevolucoes();
+    estRenderDesfechoCards();
+    renderRadarSaude(_radarFiltroStatus?_radarDados.filter(r=>r.analista_auto===_radarFiltroStatus):_radarDados);
+  }, 100);
+  if (id==='vg-validade') renderValidade();
+  if (id==='pr-equipe') { renderEquipe(); }
 
 }
 
