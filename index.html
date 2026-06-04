@@ -985,9 +985,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div id="rt-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
           <!-- Histórico de hoje na tabela -->
           <div style="margin-top:1.25rem">
-            <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.625rem">Lançamentos do dia</div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.625rem">Ações registradas hoje — mais recentes primeiro</div>
             <div class="tw"><table>
-              <thead><tr><th>Colaborador</th><th>Modalidade</th><th>Horário</th><th>1ª Trat.</th><th>Em Trat.</th><th>Status B</th><th>Outros</th><th>Total</th><th>Meta</th><th>Status</th></tr></thead>
+              <thead><tr><th>Colaborador</th><th>Horário</th><th>Tipo</th><th>Composição</th><th>Conta Meta?</th><th>Obs.</th></tr></thead>
               <tbody id="rt-tbody"></tbody>
             </table></div>
           </div>
@@ -14997,22 +14997,23 @@ function rtIniciarListener(){
     const db = getDB(); if(!db) return;
     const hoje = new Date().toISOString().split('T')[0];
 
-    // Cancelar listener anterior
     if(_rtUnsubProd){ _rtUnsubProd(); _rtUnsubProd = null; }
 
-    _rtUnsubProd = db.collection('producao')
+    // Listener na nova collection producao_acoes
+    _rtUnsubProd = db.collection('producao_acoes')
       .where('data','==',hoje)
       .onSnapshot(snap => {
-        const regs = snap.docs.map(d=>d.data());
-        rtRenderizar(regs, hoje);
-        // Atualizar topbar chip de modalidade do usuário logado
+        const acoes = snap.docs.map(d=>d.data());
+        rtRenderizarMonitoramento(acoes, hoje);
+        // Atualizar badges do colaborador logado
         if(_authPerfil?.colabNome){
-          const myReg = regs.find(r=>r.colab===_authPerfil.colabNome);
-          if(myReg){ rtAtualizarChipModalidade(myReg.pres); }
+          const minhas = acoes.filter(a=>a.colab===_authPerfil.colabNome);
+          window._prodAcoesHoje = minhas;
+          prodRenderizarPaineis(_authPerfil.colabNome);
         }
       }, err => console.warn('RT listener erro:', err));
 
-    console.log('✓ Listener produção tempo real ativado');
+    console.log('✓ Listener producao_acoes ativado');
   } catch(e){ console.warn('rtIniciarListener:', e); }
 }
 
@@ -15031,40 +15032,57 @@ function rtAtualizarChipModalidade(modalidade){
   }
 }
 
-function rtRenderizar(regs, hoje){
-  // Atualizar timestamp
+function rtRenderizarMonitoramento(acoes, hoje){
+  // Timestamp
   const upEl = document.getElementById('rt-ultimo-update');
   if(upEl) upEl.textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
 
+  // Agrupar ações por colaborador
+  const porColab = {};
+  COLABS_RT.forEach(c => porColab[c] = { primeira_analise:0, em_tratativa:0, status_b:0, outros:0, total:0, ultimaAcao:null, acoes:[] });
+
+  acoes.forEach(a => {
+    if(!porColab[a.colab]) return;
+    const p = porColab[a.colab];
+    if(p[a.tipo] !== undefined) p[a.tipo]++;
+    p.total++;
+    if(!p.ultimaAcao || a.ts > p.ultimaAcao) p.ultimaAcao = a.ts;
+    p.acoes.push(a);
+  });
+
   // KPIs equipe
   const kpiEl = document.getElementById('rt-kpi-equipe');
-  const totalEquipe = regs.reduce((s,r)=>{
-    const f = r.f||[];
-    return s + (f[0]||0)+(f[1]||0)+(f[2]||0);
-  }, 0);
-  const presenteCount = regs.filter(r=>r.pres!=='Folga').length;
-  const metaOk = regs.filter(r=>{
-    if(r.pres==='Folga') return false;
-    const meta = META_ANALISTA_RT[r.colab]||30;
-    const f = r.f||[];
-    return (f[0]||0)+(f[1]||0)+(f[2]||0) >= meta;
+  const totalEquipe = COLABS_RT.filter(c=>!COLABS_SEM_META_RT.includes(c))
+    .reduce((s,c)=> s + (porColab[c]?.primeira_analise||0) + (porColab[c]?.em_tratativa||0) + (porColab[c]?.status_b||0), 0);
+  const pctEq = META_EQUIPE_RT>0 ? Math.min(100,Math.round(totalEquipe/META_EQUIPE_RT*100)) : 0;
+  const comMeta = COLABS_RT.filter(c=>!COLABS_SEM_META_RT.includes(c));
+  const bateramMeta = comMeta.filter(c=>{
+    const meta = META_ANALISTA_RT[c]||30;
+    const p = porColab[c];
+    return (p.primeira_analise+p.em_tratativa+p.status_b) >= meta;
   }).length;
-  const pct = META_EQUIPE_RT>0 ? Math.min(100,Math.round(totalEquipe/META_EQUIPE_RT*100)) : 0;
+  const ativos = COLABS_RT.filter(c=>porColab[c].total>0).length;
+
   if(kpiEl) kpiEl.innerHTML = `
     <div class="kc ${totalEquipe>=META_EQUIPE_RT?'ok':totalEquipe>=META_EQUIPE_RT*.8?'warn':'bad'}">
-      <div class="kc-l">Total equipe hoje</div>
+      <div class="kc-l">Resultado equipe hoje</div>
       <div class="kc-v">${totalEquipe}</div>
-      <div class="kc-s">${pct}% da meta (${META_EQUIPE_RT})</div>
+      <div class="kc-s">${pctEq}% da meta (${META_EQUIPE_RT})</div>
     </div>
     <div class="kc">
-      <div class="kc-l">Presentes / Online</div>
-      <div class="kc-v">${presenteCount}</div>
-      <div class="kc-s">lançamentos hoje</div>
+      <div class="kc-l">Colaboradores ativos</div>
+      <div class="kc-v">${ativos}</div>
+      <div class="kc-s">com ação registrada hoje</div>
     </div>
-    <div class="kc ${metaOk===COLABS_RT.length?'ok':metaOk>0?'warn':'bad'}">
+    <div class="kc ${bateramMeta===comMeta.length?'ok':bateramMeta>0?'warn':'bad'}">
       <div class="kc-l">Bateram a meta</div>
-      <div class="kc-v">${metaOk} / ${COLABS_RT.length}</div>
-      <div class="kc-s">colaboradores</div>
+      <div class="kc-v">${bateramMeta} / ${comMeta.length}</div>
+      <div class="kc-s">analistas</div>
+    </div>
+    <div class="kc">
+      <div class="kc-l">Total de ações hoje</div>
+      <div class="kc-v">${acoes.length}</div>
+      <div class="kc-s">registros acumulados</div>
     </div>
   `;
 
@@ -15072,80 +15090,87 @@ function rtRenderizar(regs, hoje){
   const cardsEl = document.getElementById('rt-cards');
   if(cardsEl){
     cardsEl.innerHTML = COLABS_RT.map(colab=>{
-      const r = regs.find(x=>x.colab===colab);
-      const f = r?.f||[];
-      const principal = (f[0]||0)+(f[1]||0)+(f[2]||0);
+      const p = porColab[colab];
       const semMeta = COLABS_SEM_META_RT.includes(colab);
       const meta = META_ANALISTA_RT[colab]||30;
-      const pctC = semMeta ? 100 : Math.min(100, Math.round(principal/meta*100));
-      const cor = semMeta ? 'var(--azm)' : r?.pres==='Folga'?'var(--tx2)':principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--vm)';
-      const modBadge = r?.pres==='Home Office'?'🏠 Home':r?.pres==='Presencial'?'🏢 Presencial':r?.pres==='Folga'?'🌴 Folga':'—';
-      const horario = r?.ts ? new Date(r.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
+      const resultado = p.primeira_analise + p.em_tratativa + p.status_b;
+      const pctC = semMeta ? 100 : Math.min(100, Math.round(resultado/meta*100));
+      const cor = semMeta ? 'var(--azm)' : resultado>=meta?'var(--vd)':resultado>=meta*.8?'var(--am)':resultado>0?'var(--vm)':'var(--brd)';
+      const ativo = p.total > 0;
+      const horario = p.ultimaAcao ? new Date(p.ultimaAcao).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : null;
+
+      // Última ação
+      const ultimaAcao = p.acoes.length ? p.acoes.sort((a,b)=>b.ts>a.ts?1:-1)[0] : null;
+      const ultimaLabel = ultimaAcao
+        ? `${PROD_TIPO_LABELS[ultimaAcao.tipo]?.emoji||'•'} ${PROD_TIPO_LABELS[ultimaAcao.tipo]?.label||ultimaAcao.tipo} → ${ultimaAcao.tratamento||''}`
+        : null;
+
       return `
-      <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;border:1px solid var(--brd);border-top:3px solid ${cor};box-shadow:0 1px 6px rgba(13,35,71,.05)">
+      <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;border:1px solid var(--brd);border-top:3px solid ${cor};box-shadow:0 1px 6px rgba(13,35,71,.05);position:relative">
+        ${ativo?`<span class="rt-dot" style="position:absolute;top:12px;right:12px" title="Ativo hoje"></span>`:''}
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem">
           <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:36px;height:36px;border-radius:50%;background:${cor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${colab[0]}</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:${ativo?cor:'var(--brd)'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">${colab[0]}</div>
             <div>
-              <div style="font-size:13px;font-weight:700;color:var(--az)">${colab}</div>
-              <div style="font-size:10px;color:var(--tx2)">${modBadge} · ${horario}</div>
+              <div style="font-size:13px;font-weight:700;color:var(--az)">${colab} ${semMeta?'<span style="font-size:9px;background:var(--azc);color:var(--azm);padding:1px 7px;border-radius:10px;font-weight:600">👑 Líder</span>':''}</div>
+              <div style="font-size:10px;color:var(--tx2)">${ativo ? `Última ação: ${horario}` : 'Sem ações hoje'}</div>
             </div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:26px;font-weight:700;color:${cor};line-height:1">${principal}</div>
-            <div style="font-size:10px;color:var(--tx2)">${semMeta ? '👑 Líder' : 'meta '+meta}</div>
+            <div style="font-size:28px;font-weight:700;color:${ativo?cor:'var(--tx2)'};line-height:1">${resultado}</div>
+            <div style="font-size:10px;color:var(--tx2)">${semMeta?`${p.total} ações`:`meta ${meta}`}</div>
           </div>
         </div>
-        <div style="height:7px;background:#EEE;border-radius:4px;overflow:hidden;margin-bottom:.75rem">
-          <div style="height:100%;width:${pctC}%;background:${cor};border-radius:4px;transition:width .5s"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:10px">
+        ${!semMeta?`
+        <div style="height:6px;background:#EEE;border-radius:3px;overflow:hidden;margin-bottom:.75rem">
+          <div style="height:100%;width:${pctC}%;background:${cor};border-radius:3px;transition:width .6s"></div>
+        </div>`:''}
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px;margin-bottom:${ultimaLabel?'.625rem':'0'}">
           <div style="text-align:center;background:var(--azc);border-radius:6px;padding:4px 2px">
-            <div style="font-weight:700;color:var(--azm)">${f[0]||0}</div><div style="color:var(--tx2)">1ª trat.</div>
+            <div style="font-weight:700;color:var(--azm)">${p.primeira_analise}</div><div style="color:var(--tx2)">1ª Anál.</div>
           </div>
           <div style="text-align:center;background:var(--azc);border-radius:6px;padding:4px 2px">
-            <div style="font-weight:700;color:var(--azm)">${f[1]||0}</div><div style="color:var(--tx2)">Em trat.</div>
+            <div style="font-weight:700;color:var(--azm)">${p.em_tratativa}</div><div style="color:var(--tx2)">Em Trat.</div>
           </div>
           <div style="text-align:center;background:var(--vdc);border-radius:6px;padding:4px 2px">
-            <div style="font-weight:700;color:var(--vd)">${f[2]||0}</div><div style="color:var(--tx2)">Status B</div>
+            <div style="font-weight:700;color:var(--vd)">${p.status_b}</div><div style="color:var(--tx2)">Status B</div>
           </div>
           <div style="text-align:center;background:var(--amc);border-radius:6px;padding:4px 2px">
-            <div style="font-weight:700;color:var(--am)">${f[11]||0}</div><div style="color:var(--tx2)">Outros</div>
+            <div style="font-weight:700;color:var(--am)">${p.outros}</div><div style="color:var(--tx2)">Outros</div>
           </div>
         </div>
-        ${r?.justif?`<div style="margin-top:.625rem;font-size:10px;background:var(--vmc);color:var(--vm);padding:5px 10px;border-radius:6px">⚠ Justif.: ${r.justif}</div>`:''}
+        ${ultimaLabel?`<div style="font-size:10px;background:var(--cin);border-radius:6px;padding:4px 10px;color:var(--tx2)">⏱ Última: ${ultimaLabel}</div>`:''}
       </div>`;
     }).join('');
   }
 
-  // Tabela
+  // Tabela de ações individuais
   const tbody = document.getElementById('rt-tbody');
   if(tbody){
-    if(!regs.length){
-      tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum lançamento hoje</td></tr>';
+    if(!acoes.length){
+      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhuma ação registrada hoje</td></tr>';
     } else {
-      tbody.innerHTML = regs.map(r=>{
-        const f=r.f||[];
-        const total=(f[0]||0)+(f[1]||0)+(f[2]||0);
-        const meta=META_ANALISTA_RT[r.colab]||30;
-        const ok=r.pres==='Folga'||total>=meta;
-        const horario = r.ts ? new Date(r.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
+      const sorted = [...acoes].sort((a,b)=>b.ts>a.ts?1:-1);
+      tbody.innerHTML = sorted.map(a=>{
+        const cfg = PROD_TIPO_LABELS[a.tipo]||{emoji:'•',label:a.tipo,cor:'var(--tx2)'};
+        const horario = a.ts ? new Date(a.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
+        const contaMeta = ['primeira_analise','em_tratativa','status_b'].includes(a.tipo);
         return `<tr>
-          <td style="font-weight:600">${r.colab||'—'}</td>
-          <td>${r.pres||'—'}</td>
+          <td style="font-weight:600">${a.colab||'—'}</td>
           <td>${horario}</td>
-          <td style="text-align:center">${f[0]||0}</td>
-          <td style="text-align:center">${f[1]||0}</td>
-          <td style="text-align:center">${f[2]||0}</td>
-          <td style="text-align:center">${f[11]||0}</td>
-          <td style="text-align:center;font-weight:700;color:${ok?'var(--vd)':'var(--vm)'}">${total}</td>
-          <td style="text-align:center">${meta}</td>
-          <td style="text-align:center"><span class="pl ${ok?'pl-ok':'pl-b'}" style="font-size:9px">${ok?'✓ Meta':'⚠ Abaixo'}</span></td>
+          <td><span style="font-size:10px;background:var(--azc);color:var(--azm);padding:2px 8px;border-radius:10px;font-weight:600">${cfg.emoji} ${cfg.label}</span></td>
+          <td>${a.tratamento||'—'}${a.conclusao?' → '+a.conclusao:''}</td>
+          <td style="text-align:center"><span class="pl ${contaMeta?'pl-ok':'pl-w'}" style="font-size:9px">${contaMeta?'✓ Meta':'Aux.'}</span></td>
+          <td style="font-size:11px;color:var(--tx2)">${a.obs||'—'}</td>
         </tr>`;
       }).join('');
     }
   }
 }
+
+// Manter compatibilidade
+function rtRenderizar(regs, hoje){ rtRenderizarMonitoramento([], hoje); }
+
 
 // ══════════════════════════════════════════════════════
 // SISTEMA DE PRODUÇÃO — AÇÃO NA RC (Gov + Planilha Crítica)
