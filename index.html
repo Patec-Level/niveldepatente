@@ -14859,18 +14859,28 @@ async function authFazerLogin(){
 
   loadEl.style.display = 'block';
   try{
+    // Garantir SDK carregado
     const ok = await loadFirebaseSDK();
     if(!ok) throw new Error('SDK não carregado');
+
+    // Garantir app inicializado
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    console.log('Auth state antes do login:', firebase.auth().currentUser);
-    console.log('Tentando login com:', email);
-    // Timeout de 15 segundos
+
+    // Garantir auth disponível
+    if(typeof firebase.auth !== 'function'){
+      throw new Error('Firebase Auth não disponível. Recarregue a página.');
+    }
+
+    console.log('Tentando login:', email, '| apps:', firebase.apps.length, '| auth ok:', !!firebase.auth);
+
     const loginPromise = firebase.auth().signInWithEmailAndPassword(email, senha);
-    const timeoutPromise = new Promise((_,rej) => setTimeout(()=>rej({code:'timeout',message:'Tempo esgotado. Use o acesso de emergência (senha 2105).'}), 15000));
+    const timeoutPromise = new Promise((_,rej) =>
+      setTimeout(()=>rej({code:'timeout',message:'Tempo esgotado. Use o acesso de emergência (senha 2105).'}), 15000)
+    );
     const result = await Promise.race([loginPromise, timeoutPromise]);
     console.log('Login OK:', result?.user?.email);
   } catch(e){
-    console.error('Login erro completo:', e);
+    console.error('Login erro:', e.code, e.message);
     loadEl.style.display = 'none';
     const msgs = {
       'auth/user-not-found':    'E-mail não cadastrado no sistema.',
@@ -14881,11 +14891,10 @@ async function authFazerLogin(){
       'auth/invalid-credential':'E-mail ou senha incorretos.',
       'timeout':                'Tempo esgotado. Use o acesso de emergência (senha 2105).',
     };
-    errEl.textContent = msgs[e.code] || ('Erro: ' + e.message);
+    errEl.textContent = msgs[e.code] || ('Erro: ' + (e.message||JSON.stringify(e)));
     errEl.style.display = 'block';
   }
 }
-// Registrar alias imediatamente
 window._authFazerLoginReal = authFazerLogin;
 
 async function authEsqueciSenha(){
