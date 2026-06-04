@@ -454,6 +454,24 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         console.log('LOGIN: tentando com',email);
         var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
         console.log('LOGIN OK:',result.user.email);
+        // Forçar exibição do app se onAuthStateChanged não disparar
+        setTimeout(()=>{
+          if(document.getElementById('patec-login-overlay').style.display!=='none'){
+            window._authUser = result.user;
+            if(!window._authPerfil){
+              const emailsAdm=['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
+              window._authPerfil={
+                nome:result.user.email.split('@')[0],
+                email:result.user.email,
+                perfil:emailsAdm.includes(result.user.email)?'adm':'colaborador',
+                permissoes:Object.keys(window.PERMS_SIDEBAR||{}),
+                colabNome:emailsAdm.includes(result.user.email)?'André':''
+              };
+            }
+            if(typeof authMostrarApp==='function') authMostrarApp();
+            else document.getElementById('patec-login-overlay').style.display='none';
+          }
+        }, 2000);
       }catch(e){
         console.error('LOGIN ERRO:',e.code,e.message);
         loadEl.style.display='none';
