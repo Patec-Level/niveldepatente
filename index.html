@@ -458,16 +458,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         setTimeout(()=>{
           if(document.getElementById('patec-login-overlay').style.display!=='none'){
             window._authUser = result.user;
-            if(!window._authPerfil){
-              const emailsAdm=['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
-              window._authPerfil={
-                nome:result.user.email.split('@')[0],
-                email:result.user.email,
-                perfil:emailsAdm.includes(result.user.email)?'adm':'colaborador',
-                permissoes:Object.keys(window.PERMS_SIDEBAR||{}),
-                colabNome:emailsAdm.includes(result.user.email)?'André':''
-              };
-            }
+            const emailsAdm=['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
+            const perfil = {
+              nome: emailsAdm.includes(result.user.email) ? 'André' : result.user.email.split('@')[0],
+              email: result.user.email,
+              perfil: emailsAdm.includes(result.user.email) ? 'adm' : 'colaborador',
+              permissoes: Object.keys(window.PERMS_SIDEBAR||{}),
+              colabNome: emailsAdm.includes(result.user.email) ? 'André' : ''
+            };
+            window._authPerfil = perfil;
+            // Atribuir às variáveis do módulo auth
+            if(typeof authSetPerfil==='function') authSetPerfil(result.user, perfil);
             if(typeof authMostrarApp==='function') authMostrarApp();
             else document.getElementById('patec-login-overlay').style.display='none';
           }
@@ -492,8 +493,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         onclick="(function(){
           var pwd=document.getElementById('login-local-pwd').value;
           if(pwd==='2105'||pwd==='Patec@2026'||pwd==='patec2026'){
-            window._authUser={email:'andre.mazzali@levegroup.com.br',uid:'local'};
-            window._authPerfil={nome:'andre.mazzali',email:'andre.mazzali@levegroup.com.br',perfil:'adm',permissoes:Object.keys(window.PERMS_SIDEBAR||{}),colabNome:'André'};
+            var u={email:'andre.mazzali@levegroup.com.br',uid:'local'};
+            var p={nome:'André',email:'andre.mazzali@levegroup.com.br',perfil:'adm',permissoes:Object.keys(window.PERMS_SIDEBAR||{}),colabNome:'André'};
+            window._authUser=u; window._authPerfil=p;
+            if(typeof authSetPerfil==='function') authSetPerfil(u,p);
             if(window.authMostrarApp) window.authMostrarApp();
             else document.getElementById('patec-login-overlay').style.display='none';
           } else { alert('Senha incorreta. Use: 2105'); }
@@ -14876,10 +14879,21 @@ const PERMS_SIDEBAR = {
   'pr-bancoferias': { icon:'🗓', label:'Gestão de Jornada',        mod:'EXECUÇÃO' },
 };
 
-let _authUser = null;       // firebase user object
-let _authPerfil = null;     // { nome, email, perfil:'adm'|'colaborador'|'custom', permissoes:[], colabNome }
-let _rtUnsubscribe = null;  // listener tempo real
-let _rtUnsubProd = null;    // listener produção
+// Variáveis globais de auth
+let _authUser   = null;
+let _authPerfil = null;
+let _rtUnsubscribe = null;
+let _rtUnsubProd   = null;
+
+// Permite que código externo (botão inline) atribua às variáveis locais deste módulo
+function authSetPerfil(user, perfil){
+  _authUser   = user;
+  _authPerfil = perfil;
+  colabLogado = perfil?.colabNome || '';
+}
+let _prodChartGov = null;
+let _prodChartPc  = null;
+let _fdiaChart    = null;
 
 // ── Inicializar Auth após Firebase SDK carregado ──
 async function authInit(){
