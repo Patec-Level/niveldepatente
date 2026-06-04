@@ -9760,16 +9760,16 @@ function renderCascata(){
     if(tendencia.estavel) return `<div style="font-size:10px;font-weight:700;color:var(--tx2);margin-top:4px">➡ Estável</div>`;
     const cor  = tendencia.crescendo ? 'var(--vm)' : 'var(--vd)';
     const ico  = tendencia.crescendo ? '▲' : '▼';
-    const txt  = tendencia.crescendo ? 'Crescendo' : 'Caindo';
+    const txt  = tendencia.crescendo ? 'Aumentando' : 'Diminuindo';
     const med  = Math.abs(tendencia.mediaDiaria);
-    return `<div style="font-size:10px;font-weight:700;color:${cor};margin-top:4px">${ico} ${txt}</div>
+    return `<div style="font-size:11px;font-weight:700;color:${cor};margin-top:4px">${ico} ${txt}</div>
             <div style="font-size:9px;color:var(--tx2)">~${med}/dia líquido</div>`;
   })() : '';
 
   const kpiEl = document.getElementById('pa-kpis');
   if(kpiEl) kpiEl.innerHTML=[
-    {label:`Backlog Inicial (${fmtDt(linhas[0]?.data||'')})`, val:backlogBase, cor:'var(--az)', bg:'var(--azc)', extra: tendHTML},
-    {label:`Backlog Atual (${fmtDt(new Date().toISOString().split('T')[0])})`, val:backlogAtual, cor:backlogAtual<=backlogBase?'var(--vd)':'var(--vm)', bg:backlogAtual<=backlogBase?'var(--vdc)':'var(--vmc)'},
+    {label:`Backlog Inicial (${fmtDt(linhas[0]?.data||'')})`, val:backlogBase, cor:'var(--az)', bg:'var(--azc)', extra:''},
+    {label:`Backlog Atual (${fmtDt(new Date().toISOString().split('T')[0])})`, val:backlogAtual, cor:backlogAtual<=backlogBase?'var(--vd)':'var(--vm)', bg:backlogAtual<=backlogBase?'var(--vdc)':'var(--vmc)', extra: tendHTML},
     {label:'Total Saídas',    val:totalSaidas,    cor:'var(--vd)', bg:'var(--vdc)'},
     {label:'Total Entradas',  val:totalEntrada||0, cor:'var(--am)', bg:'var(--amc)'},
     {label:'Redução líquida', val:(reducao>=0?'−':'+')+Math.abs(reducao), cor:reducao>=0?'var(--vd)':'var(--vm)', bg:reducao>=0?'var(--vdc)':'var(--vmc)'},
@@ -14305,9 +14305,30 @@ async function admApresentacaoGerar(){
           <div class="sim-label">Backlog Inicial (${dtIni?dtIni.split('-').reverse().join('/'):'—'})</div>
           <div class="sim-val">${backlogBase.toLocaleString('pt-BR')}</div>
         </div>
-        <div class="sim-card">
+        <div class="sim-card" style="position:relative;overflow:hidden">
           <div class="sim-label">Backlog Atual (${dtFimPA.split('-').reverse().join('/')})</div>
           <div class="sim-val">${backlogAtual.toLocaleString('pt-BR')}</div>
+          ${(() => {
+            const diff = backlogAtual - backlogBase;
+            const pct  = backlogBase > 0 ? Math.abs(Math.round(diff/backlogBase*100)) : 0;
+            if(Math.abs(diff) <= 5) return `
+              <div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:#E8F0FB;border-radius:20px;padding:4px 14px">
+                <span style="font-size:16px">➡</span>
+                <span style="font-size:13px;font-weight:700;color:#1A4A8A">BACKLOG ESTÁVEL</span>
+              </div>`;
+            if(diff > 0) return `
+              <div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:#FDEAEA;border-radius:20px;padding:4px 14px">
+                <span style="font-size:16px">🔺</span>
+                <span style="font-size:13px;font-weight:700;color:#C62828">BACKLOG CRESCENDO</span>
+              </div>
+              <div style="font-size:11px;color:#C62828;margin-top:4px">+${diff} itens (+${pct}%) vs início do período</div>`;
+            return `
+              <div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:#E6F7F1;border-radius:20px;padding:4px 14px">
+                <span style="font-size:16px">🔽</span>
+                <span style="font-size:13px;font-weight:700;color:#0E9E6A">BACKLOG REDUZINDO</span>
+              </div>
+              <div style="font-size:11px;color:#0E9E6A;margin-top:4px">${diff} itens (${pct}%) vs início do período</div>`;
+          })()}
         </div>
         <div class="sim-card">
           <div class="sim-label">Meta diária simulada</div>
