@@ -14639,7 +14639,10 @@ async function authCarregarPerfil(user){
   } catch(e){ console.warn('authCarregarPerfil (Firestore indisponível, usando perfil local):', e.message); }
 
   // Garantir ADM por e-mail independente do Firestore
-  if(isAdm) _authPerfil.perfil = 'adm';
+  if(isAdm){
+    _authPerfil.perfil = 'adm';
+    if(!_authPerfil.colabNome) _authPerfil.colabNome = 'André';
+  }
   console.log('✓ Perfil carregado:', _authPerfil.perfil, _authPerfil.nome);
 }
 
@@ -14808,9 +14811,9 @@ function authLoginLocal(){
   if(pwd === '2105' || pwd === 'Patec@2026' || pwd === 'patec2026'){
     _authUser  = { email: 'andre.mazzali@levegroup.com.br', uid: 'local' };
     _authPerfil = {
-      nome: 'andre.mazzali', email: 'andre.mazzali@levegroup.com.br',
-      perfil: 'adm', permissoes: Object.keys(PERMS_SIDEBAR), colabNome: 'André'
-    };
+        nome: 'andre.mazzali', email: 'andre.mazzali@levegroup.com.br',
+        perfil: 'adm', permissoes: Object.keys(PERMS_SIDEBAR), colabNome: 'André'
+      };
     authMostrarApp();
   } else {
     alert('Senha incorreta.');
@@ -14984,9 +14987,10 @@ async function usrSalvarPerms(uid){
 // PRODUÇÃO EM TEMPO REAL — onSnapshot
 // ══════════════════════════════════════════════════════
 
-const META_ANALISTA_RT = { 'Lory':30, 'Ludy':30, 'Wanessa':30 };
-const META_EQUIPE_RT = 90;
-const COLABS_RT = ['Lory','Ludy','Wanessa'];
+const META_ANALISTA_RT = { 'Lory':30, 'Ludy':30, 'Wanessa':30 }; // André não tem meta individual
+const META_EQUIPE_RT = 90; // meta das 3 analistas
+const COLABS_RT = ['André','Lory','Ludy','Wanessa'];
+const COLABS_SEM_META_RT = ['André']; // contribui para equipe mas sem meta diária individual
 
 function rtIniciarListener(){
   try{
@@ -15071,9 +15075,10 @@ function rtRenderizar(regs, hoje){
       const r = regs.find(x=>x.colab===colab);
       const f = r?.f||[];
       const principal = (f[0]||0)+(f[1]||0)+(f[2]||0);
+      const semMeta = COLABS_SEM_META_RT.includes(colab);
       const meta = META_ANALISTA_RT[colab]||30;
-      const pctC = Math.min(100, Math.round(principal/meta*100));
-      const cor = r?.pres==='Folga'?'var(--tx2)':principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--vm)';
+      const pctC = semMeta ? 100 : Math.min(100, Math.round(principal/meta*100));
+      const cor = semMeta ? 'var(--azm)' : r?.pres==='Folga'?'var(--tx2)':principal>=meta?'var(--vd)':principal>=meta*.8?'var(--am)':'var(--vm)';
       const modBadge = r?.pres==='Home Office'?'🏠 Home':r?.pres==='Presencial'?'🏢 Presencial':r?.pres==='Folga'?'🌴 Folga':'—';
       const horario = r?.ts ? new Date(r.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
       return `
@@ -15088,7 +15093,7 @@ function rtRenderizar(regs, hoje){
           </div>
           <div style="text-align:right">
             <div style="font-size:26px;font-weight:700;color:${cor};line-height:1">${principal}</div>
-            <div style="font-size:10px;color:var(--tx2)">meta ${meta}</div>
+            <div style="font-size:10px;color:var(--tx2)">${semMeta ? '👑 Líder' : 'meta '+meta}</div>
           </div>
         </div>
         <div style="height:7px;background:#EEE;border-radius:4px;overflow:hidden;margin-bottom:.75rem">
@@ -15336,13 +15341,22 @@ function prodContarHoje(acoes){
   return cnt;
 }
 
+function prodGetMeta(colab){
+  return META_ANALISTA_RT[colab] || 0; // 0 = sem meta individual
+}
+
+function prodTemMeta(colab){
+  return !COLABS_SEM_META_RT.includes(colab);
+}
+
 function prodRenderizarPaineis(colab){
   const acoes = window._prodAcoesHoje || [];
   const cnt   = prodContarHoje(acoes);
-  const metaVal = META_ANALISTA_RT[colab] || 30;
-  const pct = Math.min(100, Math.round(cnt.meta / metaVal * 100));
-  const cor = cnt.meta >= metaVal ? 'var(--vd)' : cnt.meta >= metaVal*.8 ? 'var(--am)' : 'var(--vm)';
-  const totalLabel = `Total: ${cnt.meta} / ${metaVal}`;
+  const metaVal = META_ANALISTA_RT[colab] || 0;
+  const semMeta = COLABS_SEM_META_RT.includes(colab);
+  const pct = metaVal > 0 ? Math.min(100, Math.round(cnt.meta / metaVal * 100)) : 100;
+  const cor = semMeta ? 'var(--azm)' : cnt.meta >= metaVal ? 'var(--vd)' : cnt.meta >= metaVal*.8 ? 'var(--am)' : 'var(--vm)';
+  const totalLabel = semMeta ? `Líder: ${cnt.meta} itens` : `Total: ${cnt.meta} / ${metaVal}`;
 
   // Atualizar badges compactos em Gov e PC
   ['gov','pc'].forEach(origem => {
@@ -15353,7 +15367,7 @@ function prodRenderizarPaineis(colab){
     if(s('outros')) s('outros').textContent = `📋 ${cnt.outros}`;
     if(s('total')){
       s('total').textContent = totalLabel;
-      s('total').style.background = cnt.meta>=metaVal?'var(--vdc)':cnt.meta>=metaVal*.8?'var(--amc)':'var(--vmc)';
+      s('total').style.background = semMeta ? 'var(--azc)' : cnt.meta>=metaVal?'var(--vdc)':cnt.meta>=metaVal*.8?'var(--amc)':'var(--vmc)';
       s('total').style.color = cor;
     }
   });
@@ -15529,7 +15543,7 @@ async function fdiaSalvar(){
   const cnt     = prodContarHoje(acoes);
   const hoje    = new Date().toISOString().split('T')[0];
 
-  if(cnt.meta < metaVal && !_fdiaMotivo){
+  if(cnt.meta < metaVal && metaVal > 0 && !_fdiaMotivo){
     alert('Selecione o motivo por não ter atingido a meta antes de finalizar.');
     return;
   }
