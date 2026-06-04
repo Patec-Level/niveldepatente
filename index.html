@@ -3911,15 +3911,23 @@ async function loadFirebaseSDK(){
 
   function loadScriptPair(urls) {
     return new Promise(async (resolve) => {
+      // 1. App
       const ok1 = await loadScript(urls[0]);
       if(!ok1) { resolve(false); return; }
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 300));
+      // 2. Firestore
       const ok2 = await loadScript(urls[1]);
       if(!ok2) { resolve(false); return; }
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 300));
+      // 3. Auth
       if(urls[2]) await loadScript(urls[2]);
-      await new Promise(r => setTimeout(r, 150));
-      resolve(typeof firebase !== 'undefined');
+      await new Promise(r => setTimeout(r, 200));
+      // Verificar que tudo carregou
+      const ok = typeof firebase !== 'undefined' &&
+                 typeof firebase.firestore === 'function' &&
+                 typeof firebase.auth === 'function';
+      if(!ok) console.warn('Firebase incompleto — firestore:', typeof firebase?.firestore, 'auth:', typeof firebase?.auth);
+      resolve(ok);
     });
   }
 
