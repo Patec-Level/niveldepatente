@@ -13,6 +13,26 @@
 function authFazerLogin(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); else { var t=document.getElementById('login-loading'); if(t)t.style.display='block'; setTimeout(function(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); },1500); } }
 function authEsqueciSenha(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); else setTimeout(function(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); },1500); }
 function authLogout(){ if(typeof window._authLogoutReal==='function') window._authLogoutReal(); }
+
+// Estado global de autenticação — acessível antes do módulo auth carregar
+window._authUser   = null;
+window._authPerfil = null;
+window.colabLogado = '';
+
+// authSetPerfil — sincroniza estado global com módulo auth
+function authSetPerfil(user, perfil){
+  window._authUser   = user;
+  window._authPerfil = perfil;
+  window.colabLogado = perfil?.colabNome || '';
+  // Sincronizar com variáveis locais do módulo auth quando disponíveis
+  if(typeof window._authSyncLocal === 'function') window._authSyncLocal(user, perfil);
+}
+
+// authMostrarApp proxy — chama a real quando disponível
+function authMostrarApp(){
+  if(typeof window._authMostrarAppReal === 'function') window._authMostrarAppReal();
+  else setTimeout(authMostrarApp, 200);
+}
 </script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
@@ -14880,17 +14900,53 @@ const PERMS_SIDEBAR = {
 };
 
 // Variáveis globais de auth
-let _authUser   = null;
-let _authPerfil = null;
+let _authUser   = window._authUser   || null;
+let _authPerfil = window._authPerfil || null;
 let _rtUnsubscribe = null;
 let _rtUnsubProd   = null;
 
-// Permite que código externo (botão inline) atribua às variáveis locais deste módulo
 function authSetPerfil(user, perfil){
   _authUser   = user;
   _authPerfil = perfil;
+  window._authUser   = user;
+  window._authPerfil = perfil;
   colabLogado = perfil?.colabNome || '';
+  window.colabLogado = colabLogado;
 }
+
+// Registrar sync local para o proxy do topo
+window._authSyncLocal = authSetPerfil;
+
+// Registrar authMostrarApp real
+window._authMostrarAppReal = function(){
+  // Sincronizar do window caso tenha sido setado pelo botão inline
+  if(window._authUser   && !_authUser)   _authUser   = window._authUser;
+  if(window._authPerfil && !_authPerfil) _authPerfil = window._authPerfil;
+  if(window.colabLogado && !colabLogado)  colabLogado = window.colabLogado;
+
+  document.getElementById('patec-login-overlay').style.display = 'none';
+  authMontarSidebar();
+
+  // Badge
+  const badge = document.getElementById('topbar-user-badge');
+  if(badge){
+    badge.style.display = 'flex';
+    const nome = _authPerfil?.colabNome || _authPerfil?.nome || _authUser?.email?.split('@')[0] || '—';
+    const av = document.getElementById('topbar-user-avatar');
+    const nm = document.getElementById('topbar-user-nome');
+    if(av) av.textContent = nome[0].toUpperCase();
+    if(nm) nm.textContent = nome;
+  }
+
+  rtIniciarListener();
+
+  const colab = _authPerfil?.colabNome || colabLogado;
+  if(colab){
+    colabLogado = colab;
+    window.colabLogado = colab;
+    prodCarregarHoje(colab).then(()=>prodRenderizarPaineis(colab)).catch(()=>{});
+  }
+};
 let _prodChartGov = null;
 let _prodChartPc  = null;
 let _fdiaChart    = null;
@@ -14985,38 +15041,7 @@ function authMostrarLogin(){
 
 
 function authMostrarApp(){
-  document.getElementById('patec-login-overlay').style.display = 'none';
-
-  // Garantir que _authPerfil e _authUser estão sincronizados com window
-  if(!_authPerfil && window._authPerfil) _authPerfil = window._authPerfil;
-  if(!_authUser && window._authUser) _authUser = window._authUser;
-
-  // Montar sidebar
-  authMontarSidebar();
-
-  // Badge na topbar
-  const badge = document.getElementById('topbar-user-badge');
-  if(badge){
-    badge.style.display = 'flex';
-    const av = document.getElementById('topbar-user-avatar');
-    const nm = document.getElementById('topbar-user-nome');
-    const nome = _authPerfil?.colabNome || _authPerfil?.nome || _authUser?.email?.split('@')[0] || '—';
-    if(av) av.textContent = nome[0].toUpperCase();
-    if(nm) nm.textContent = nome;
-  }
-
-  // Iniciar listener RT
-  rtIniciarListener();
-
-  // Pré-logar colaborador no módulo de produção
-  const colab = _authPerfil?.colabNome;
-  if(colab){
-    colabLogado = colab;
-    const sel = document.getElementById('pr-login-nome');
-    if(sel) sel.value = colab;
-    // Carregar ações do dia
-    prodCarregarHoje(colab).then(()=>prodRenderizarPaineis(colab));
-  }
+  if(typeof window._authMostrarAppReal === 'function') window._authMostrarAppReal();
 }
 
 function authMontarSidebar(){
@@ -15743,10 +15768,6 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 </style>`);
 
 let _prodCtx = { origem: null, tipo: null, tratamento: null, conclusao: null };
-let _prodChartGov = null;
-let _prodChartPc  = null;
-let _fdiaChart    = null;
-
 const PROD_TIPO_LABELS = {
   'primeira_analise': { label:'1ª Análise', emoji:'🔍', cor:'var(--azm)' },
   'em_tratativa':     { label:'Em Tratativa', emoji:'⚙️', cor:'var(--azm)' },
