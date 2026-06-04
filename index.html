@@ -9799,43 +9799,25 @@ function renderCascata(){
   linhas.forEach(l=>{
     const dia = fmtDptBR(l.data);
 
-    // Coluna de saída (sempre presente mesmo que 0)
+    // Coluna de saída
     labels.push(dia);
-    if(l.saidas>0){
-      // Barra verde vai de backlogFim até backlogInicio (saídas reais)
-      floatData.push([l.backlogFim < l.backlogInicio - l.saidas
-        ? l.backlogFim  // se ancorado no radar, usar valor real
-        : l.backlogInicio - l.saidas, l.backlogInicio]);
+    if(l.saidas > 0 || l.backlogFim < l.backlogInicio){
+      // Barra verde vai do backlogFim até o backlogInicio (tudo que saiu, incluindo ancoragem radar)
+      floatData.push([l.backlogFim, l.backlogInicio]);
       floatCor.push('rgba(46,125,50,0.85)');
     } else {
       floatData.push(null);
       floatCor.push('transparent');
     }
-    // Linha pontilhada usa backlogFim real (pode ser ancorado no radar)
-    linhaData.push(l.backlogFim < (l.backlogInicio - l.saidas + l.entrada)
-      ? l.backlogFim
-      : l.backlogInicio - l.saidas);
+    linhaData.push(l.backlogFim);
     linhaLabels.push(dia);
 
-    // Coluna de entrada (só se houver e backlogFim não for ancorado)
-    if(l.entrada>0 && l.backlogFim >= l.backlogInicio - l.saidas){
+    // Coluna de entrada — só mostra se houver entradas E backlogFim >= backlogInicio - saidas
+    if(l.entrada > 0 && l.backlogFim > (l.backlogInicio - l.saidas)){
       labels.push('');
       const base = l.backlogInicio - l.saidas;
-      floatData.push([base, base + l.entrada]);
+      floatData.push([base, l.backlogFim]);
       floatCor.push('rgba(211,47,47,0.80)');
-      linhaData.push(l.backlogFim);
-      linhaLabels.push(dia+' ent.');
-    } else if(l.entrada>0 && l.backlogFim < l.backlogInicio - l.saidas){
-      // Backlog ancorado no radar — mostrar diferença como saída extra (verde)
-      labels.push('');
-      const base = l.backlogInicio - l.saidas;
-      if(l.entrada > 0){
-        floatData.push([base, base + l.entrada]);
-        floatCor.push('rgba(211,47,47,0.80)');
-      } else {
-        floatData.push(null);
-        floatCor.push('transparent');
-      }
       linhaData.push(l.backlogFim);
       linhaLabels.push(dia+' ent.');
     }
