@@ -987,9 +987,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div style="margin-top:1.25rem">
             <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.625rem">Ações registradas hoje — mais recentes primeiro</div>
             <div class="tw"><table>
-              <thead><tr><th>Colaborador</th><th>Horário</th><th>Tipo</th><th>Composição</th><th>Conta Meta?</th><th>Obs.</th></tr></thead>
+              <thead><tr><th>Colaborador</th><th>Horário</th><th>1ª Trat.</th><th>Em Trat.</th><th>Status B</th><th>Outros</th><th>Total</th><th style="text-align:center">Detalhes</th></tr></thead>
               <tbody id="rt-tbody"></tbody>
             </table></div>
+          </div>
+          <!-- Mini modal composição -->
+          <div id="rt-comp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:6000;align-items:center;justify-content:center">
+            <div style="background:#fff;border-radius:14px;padding:1.5rem;max-width:420px;width:92%;box-shadow:0 16px 48px rgba(0,0,0,.2)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+                <div style="font-size:14px;font-weight:700;color:var(--az)" id="rt-comp-titulo">Composição</div>
+                <button onclick="document.getElementById('rt-comp-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--tx2)">×</button>
+              </div>
+              <div id="rt-comp-body"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -15144,24 +15154,49 @@ function rtRenderizarMonitoramento(acoes, hoje){
     }).join('');
   }
 
-  // Tabela de ações individuais
+  // Tabela agrupada por colaborador
   const tbody = document.getElementById('rt-tbody');
   if(tbody){
     if(!acoes.length){
-      tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhuma ação registrada hoje</td></tr>';
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhuma ação registrada hoje</td></tr>';
     } else {
-      const sorted = [...acoes].sort((a,b)=>b.ts>a.ts?1:-1);
-      tbody.innerHTML = sorted.map(a=>{
-        const cfg = PROD_TIPO_LABELS[a.tipo]||{emoji:'•',label:a.tipo,cor:'var(--tx2)'};
-        const horario = a.ts ? new Date(a.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
-        const contaMeta = ['primeira_analise','em_tratativa','status_b'].includes(a.tipo);
+      // Agrupar e montar linha por colaborador
+      tbody.innerHTML = COLABS_RT.map(colab => {
+        const p = porColab[colab];
+        if(p.total === 0) return `<tr style="opacity:.45">
+          <td style="font-weight:600">${colab}</td>
+          <td style="color:var(--tx2)">—</td>
+          <td style="text-align:center;color:var(--tx2)">0</td>
+          <td style="text-align:center;color:var(--tx2)">0</td>
+          <td style="text-align:center;color:var(--tx2)">0</td>
+          <td style="text-align:center;color:var(--tx2)">0</td>
+          <td style="text-align:center;color:var(--tx2)">0</td>
+          <td style="text-align:center;color:var(--tx2)">—</td>
+        </tr>`;
+
+        const semMeta = COLABS_SEM_META_RT.includes(colab);
+        const meta = META_ANALISTA_RT[colab]||30;
+        const resultado = p.primeira_analise + p.em_tratativa + p.status_b;
+        const ok = semMeta || resultado >= meta;
+        const horario = p.ultimaAcao ? new Date(p.ultimaAcao).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
+        const cor = ok ? 'var(--vd)' : resultado >= meta*.8 ? 'var(--am)' : 'var(--vm)';
+
+        // Serializar ações para o botão de detalhe
+        const acoesJson = JSON.stringify(p.acoes).replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+
         return `<tr>
-          <td style="font-weight:600">${a.colab||'—'}</td>
-          <td>${horario}</td>
-          <td><span style="font-size:10px;background:var(--azc);color:var(--azm);padding:2px 8px;border-radius:10px;font-weight:600">${cfg.emoji} ${cfg.label}</span></td>
-          <td>${a.tratamento||'—'}${a.conclusao?' → '+a.conclusao:''}</td>
-          <td style="text-align:center"><span class="pl ${contaMeta?'pl-ok':'pl-w'}" style="font-size:9px">${contaMeta?'✓ Meta':'Aux.'}</span></td>
-          <td style="font-size:11px;color:var(--tx2)">${a.obs||'—'}</td>
+          <td style="font-weight:700;color:var(--az)">${colab}${semMeta?' 👑':''}</td>
+          <td style="font-size:11px;color:var(--tx2)">${horario}</td>
+          <td style="text-align:center;font-weight:700;color:var(--azm)">${p.primeira_analise}</td>
+          <td style="text-align:center;font-weight:700;color:var(--azm)">${p.em_tratativa}</td>
+          <td style="text-align:center;font-weight:700;color:var(--vd)">${p.status_b}</td>
+          <td style="text-align:center;font-weight:700;color:var(--am)">${p.outros}</td>
+          <td style="text-align:center;font-size:15px;font-weight:700;color:${cor}">${resultado}</td>
+          <td style="text-align:center">
+            <button onclick="rtAbrirComposicao('${colab}','${acoesJson}')"
+              style="background:var(--azc);border:1px solid var(--azm);border-radius:7px;padding:4px 12px;cursor:pointer;font-size:12px;color:var(--azm);font-weight:600"
+              title="Ver composição detalhada">🔍</button>
+          </td>
         </tr>`;
       }).join('');
     }
@@ -15170,6 +15205,57 @@ function rtRenderizarMonitoramento(acoes, hoje){
 
 // Manter compatibilidade
 function rtRenderizar(regs, hoje){ rtRenderizarMonitoramento([], hoje); }
+
+function rtAbrirComposicao(colab, acoesJson){
+  const modal = document.getElementById('rt-comp-modal');
+  const titulo = document.getElementById('rt-comp-titulo');
+  const body   = document.getElementById('rt-comp-body');
+  if(!modal) return;
+
+  let acoes = [];
+  try{ acoes = JSON.parse(acoesJson.replace(/&quot;/g,'"').replace(/&#39;/g,"'")); } catch(e){}
+
+  titulo.textContent = `Composição — ${colab}`;
+
+  // Contar por tratamento e conclusão
+  const contTrat = {}, contConc = {};
+  acoes.forEach(a => {
+    if(a.tratamento){ contTrat[a.tratamento] = (contTrat[a.tratamento]||0)+1; }
+    if(a.conclusao){  contConc[a.conclusao]  = (contConc[a.conclusao]||0)+1; }
+  });
+
+  const sorted = [...acoes].sort((a,b)=>b.ts>a.ts?1:-1);
+
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem">
+      ${Object.entries(contTrat).map(([k,v])=>`
+        <div style="background:var(--cin);border-radius:8px;padding:.625rem 1rem;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:600;color:var(--tx)">${k}</span>
+          <span style="font-size:18px;font-weight:700;color:var(--azm)">${v}</span>
+        </div>`).join('')}
+      ${Object.entries(contConc).map(([k,v])=>`
+        <div style="background:var(--vdc);border-radius:8px;padding:.625rem 1rem;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:600;color:var(--tx)">${k}</span>
+          <span style="font-size:18px;font-weight:700;color:var(--vd)">${v}</span>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">Linha do tempo</div>
+    <div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:5px">
+      ${sorted.map(a=>{
+        const cfg = PROD_TIPO_LABELS[a.tipo]||{emoji:'•',label:a.tipo};
+        const hr  = a.ts ? new Date(a.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--cin);border-radius:7px;font-size:11px">
+          <span style="color:var(--tx2);font-weight:600;min-width:36px">${hr}</span>
+          <span style="background:var(--azc);color:var(--azm);padding:1px 8px;border-radius:10px;font-weight:700;font-size:10px">${cfg.emoji} ${cfg.label}</span>
+          <span style="color:var(--tx)">${a.tratamento||''}${a.conclusao?' → <strong>'+a.conclusao+'</strong>':''}</span>
+          ${a.obs?`<span style="color:var(--tx2);font-size:10px;margin-left:auto">${a.obs}</span>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+}
 
 
 // ══════════════════════════════════════════════════════
