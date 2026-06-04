@@ -446,9 +446,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div style="font-size:10px;color:#9AA;margin-bottom:.5rem;text-align:center">Acesso de emergência (Firebase offline)</div>
       <input type="password" id="login-local-pwd" placeholder="Senha local ADM"
         style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #DDE3EE;border-radius:8px;margin-bottom:8px;font-family:inherit"
-        onkeydown="if(event.key==='Enter')authLoginLocal()">
-      <button onclick="authLoginLocal()"
-        style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+        onkeydown="if(event.key==='Enter')document.getElementById('btn-local-entrar').click()">
+      <button id="btn-local-entrar"
+        style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit"
+        onclick="(function(){
+          var pwd=document.getElementById('login-local-pwd').value;
+          if(pwd==='2105'||pwd==='Patec@2026'||pwd==='patec2026'){
+            window._authUser={email:'andre.mazzali@levegroup.com.br',uid:'local'};
+            window._authPerfil={nome:'andre.mazzali',email:'andre.mazzali@levegroup.com.br',perfil:'adm',permissoes:Object.keys(window.PERMS_SIDEBAR||{}),colabNome:'André'};
+            if(window.authMostrarApp) window.authMostrarApp();
+            else document.getElementById('patec-login-overlay').style.display='none';
+          } else { alert('Senha incorreta. Use: 2105'); }
+        })()">
         Entrar sem internet
       </button>
     </div>
