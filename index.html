@@ -9739,17 +9739,44 @@ function renderCascata(){
   const totalSaidas  = linhas.reduce((s,l)=>s+l.saidas,0);
   const totalEntrada = linhas.reduce((s,l)=>s+l.entrada,0);
   const reducao = backlogBase - backlogAtual;
-  _backlogAtualGlobal = backlogAtual; // salva para uso no ADM
+  _backlogAtualGlobal = backlogAtual;
+
+  // Tendência: comparar primeiro e último dia do período
+  const tendencia = (() => {
+    if(linhas.length < 2) return null;
+    const primeiro = linhas[0];
+    const ultimo   = linhas[linhas.length-1];
+    const varTotal = ultimo.backlogFim - primeiro.backlogInicio;
+    // Média diária de variação líquida
+    const mediaDiaria = Math.round(varTotal / linhas.length);
+    // Tendência por saldo líquido (entradas - saídas)
+    const saldoLiq = totalEntrada - totalSaidas;
+    const crescendo = saldoLiq > 0;
+    const estavel   = saldoLiq === 0;
+    return { saldoLiq, crescendo, estavel, mediaDiaria };
+  })();
+
+  const tendHTML = tendencia ? (() => {
+    if(tendencia.estavel) return `<div style="font-size:10px;font-weight:700;color:var(--tx2);margin-top:4px">➡ Estável</div>`;
+    const cor  = tendencia.crescendo ? 'var(--vm)' : 'var(--vd)';
+    const ico  = tendencia.crescendo ? '▲' : '▼';
+    const txt  = tendencia.crescendo ? 'Crescendo' : 'Caindo';
+    const med  = Math.abs(tendencia.mediaDiaria);
+    return `<div style="font-size:10px;font-weight:700;color:${cor};margin-top:4px">${ico} ${txt}</div>
+            <div style="font-size:9px;color:var(--tx2)">~${med}/dia líquido</div>`;
+  })() : '';
+
   const kpiEl = document.getElementById('pa-kpis');
   if(kpiEl) kpiEl.innerHTML=[
-    {label:'Backlog Inicial', val:backlogBase,   cor:'var(--az)', bg:'var(--azc)'},
-    {label:'Backlog Atual',   val:backlogAtual,  cor:backlogAtual<=backlogBase?'var(--vd)':'var(--vm)', bg:backlogAtual<=backlogBase?'var(--vdc)':'var(--vmc)'},
-    {label:'Total Saídas',    val:totalSaidas,   cor:'var(--vd)', bg:'var(--vdc)'},
-    {label:'Total Entradas',  val:totalEntrada||0,cor:'var(--am)',bg:'var(--amc)'},
+    {label:`Backlog Inicial (${fmtDt(linhas[0]?.data||'')})`, val:backlogBase, cor:'var(--az)', bg:'var(--azc)', extra: tendHTML},
+    {label:`Backlog Atual (${fmtDt(new Date().toISOString().split('T')[0])})`, val:backlogAtual, cor:backlogAtual<=backlogBase?'var(--vd)':'var(--vm)', bg:backlogAtual<=backlogBase?'var(--vdc)':'var(--vmc)'},
+    {label:'Total Saídas',    val:totalSaidas,    cor:'var(--vd)', bg:'var(--vdc)'},
+    {label:'Total Entradas',  val:totalEntrada||0, cor:'var(--am)', bg:'var(--amc)'},
     {label:'Redução líquida', val:(reducao>=0?'−':'+')+Math.abs(reducao), cor:reducao>=0?'var(--vd)':'var(--vm)', bg:reducao>=0?'var(--vdc)':'var(--vmc)'},
   ].map(c=>`<div style="background:${c.bg};border-radius:10px;padding:.875rem;text-align:center;border:1px solid rgba(0,0,0,.06)">
     <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px">${c.label}</div>
     <div style="font-size:22px;font-weight:700;color:${c.cor};line-height:1">${c.val}</div>
+    ${c.extra||''}
   </div>`).join('');
 
   // Projeção
