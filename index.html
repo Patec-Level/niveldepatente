@@ -14973,7 +14973,11 @@ function authMostrarLogin(){
 function authMostrarApp(){
   document.getElementById('patec-login-overlay').style.display = 'none';
 
-  // Montar sidebar de acordo com permissões
+  // Garantir que _authPerfil e _authUser estão sincronizados com window
+  if(!_authPerfil && window._authPerfil) _authPerfil = window._authPerfil;
+  if(!_authUser && window._authUser) _authUser = window._authUser;
+
+  // Montar sidebar
   authMontarSidebar();
 
   // Badge na topbar
@@ -14982,21 +14986,22 @@ function authMostrarApp(){
     badge.style.display = 'flex';
     const av = document.getElementById('topbar-user-avatar');
     const nm = document.getElementById('topbar-user-nome');
-    if(av) av.textContent = (_authPerfil?.nome||'?')[0].toUpperCase();
-    if(nm) nm.textContent = _authPerfil?.nome || _authUser?.email || '—';
+    const nome = _authPerfil?.colabNome || _authPerfil?.nome || _authUser?.email?.split('@')[0] || '—';
+    if(av) av.textContent = nome[0].toUpperCase();
+    if(nm) nm.textContent = nome;
   }
 
-  // Iniciar listener de produção em tempo real
+  // Iniciar listener RT
   rtIniciarListener();
 
-  // Se colaborador: pré-logar no módulo de produção com o nome dele
-  if(_authPerfil?.perfil !== 'adm' && _authPerfil?.colabNome){
+  // Pré-logar colaborador no módulo de produção
+  const colab = _authPerfil?.colabNome;
+  if(colab){
+    colabLogado = colab;
     const sel = document.getElementById('pr-login-nome');
-    if(sel){
-      sel.value = _authPerfil.colabNome;
-      // Auto-login silencioso
-      colabLogado = _authPerfil.colabNome;
-    }
+    if(sel) sel.value = colab;
+    // Carregar ações do dia
+    prodCarregarHoje(colab).then(()=>prodRenderizarPaineis(colab));
   }
 }
 
@@ -15736,11 +15741,14 @@ const PROD_TIPO_LABELS = {
 };
 
 function prodAbrirModal(origem, tipo){
-  // Verificar se está logado
-  const colab = _authPerfil?.colabNome || _authPerfil?.nome || colabLogado;
-  if(!colab || _authPerfil?.perfil === 'adm'){
-    if(!colabLogado){ alert('Identifique-se primeiro (faça login).'); return; }
+  // Identificar colaborador — ADM = André
+  const colab = _authPerfil?.colabNome || colabLogado || (_authPerfil?.perfil==='adm' ? 'André' : null);
+  if(!colab){
+    alert('Faça login para registrar produção.');
+    return;
   }
+  // Garantir colabLogado sincronizado
+  if(!colabLogado && colab) colabLogado = colab;
   _prodCtx = { origem, tipo, tratamento: null, conclusao: null };
   const cfg = PROD_TIPO_LABELS[tipo];
 
