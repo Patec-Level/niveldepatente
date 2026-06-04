@@ -8,6 +8,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Firebase SDK carregado dinamicamente via JS -->
+<script>
+// Proxies antecipados — garantem que os botões funcionam antes do script principal carregar
+function authFazerLogin(){ if(window._authFazerLoginReal) window._authFazerLoginReal(); else setTimeout(authFazerLogin,200); }
+function authEsqueciSenha(){ if(window._authEsqueciSenhaReal) window._authEsqueciSenhaReal(); else setTimeout(authEsqueciSenha,200); }
+function authLoginLocal(){ if(window._authLoginLocalReal) window._authLoginLocalReal(); else setTimeout(authLoginLocal,200); }
+function authLogout(){ if(window._authLogoutReal) window._authLogoutReal(); else setTimeout(authLogout,200); }
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
@@ -14664,19 +14671,6 @@ function authMostrarLogin(){
   }
 }
 
-function authLoginLocal(){
-  const pwd = document.getElementById('login-local-pwd')?.value || '';
-  if(pwd === '2105' || pwd === 'Patec@2026' || pwd === 'patec2026'){
-    _authUser  = { email: 'andre.mazzali@levegroup.com.br', uid: 'local' };
-    _authPerfil = {
-      nome: 'andre.mazzali', email: 'andre.mazzali@levegroup.com.br',
-      perfil: 'adm', permissoes: Object.keys(PERMS_SIDEBAR), colabNome: 'André'
-    };
-    authMostrarApp();
-  } else {
-    alert('Senha incorreta.');
-  }
-}
 
 function authMostrarApp(){
   document.getElementById('patec-login-overlay').style.display = 'none';
@@ -14771,7 +14765,6 @@ async function authFazerLogin(){
     if(!ok) throw new Error('SDK não carregado');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     await firebase.auth().signInWithEmailAndPassword(email, senha);
-    // onAuthStateChanged vai cuidar do resto
   } catch(e){
     loadEl.style.display = 'none';
     const msgs = {
@@ -14815,6 +14808,26 @@ async function authLogout(){
   if(_rtUnsubProd)   { _rtUnsubProd();   _rtUnsubProd = null; }
   try{ await firebase.auth().signOut(); } catch(e){}
 }
+
+function authLoginLocal(){
+  const pwd = document.getElementById('login-local-pwd')?.value || '';
+  if(pwd === '2105' || pwd === 'Patec@2026' || pwd === 'patec2026'){
+    _authUser  = { email: 'andre.mazzali@levegroup.com.br', uid: 'local' };
+    _authPerfil = {
+      nome: 'andre.mazzali', email: 'andre.mazzali@levegroup.com.br',
+      perfil: 'adm', permissoes: Object.keys(PERMS_SIDEBAR), colabNome: 'André'
+    };
+    authMostrarApp();
+  } else {
+    alert('Senha incorreta.');
+  }
+}
+
+// Registrar aliases para os proxies do topo
+window._authFazerLoginReal  = authFazerLogin;
+window._authEsqueciSenhaReal= authEsqueciSenha;
+window._authLogoutReal      = authLogout;
+window._authLoginLocalReal  = authLoginLocal;
 
 // ── Iniciar na carga ──
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(authInit, 800); });
