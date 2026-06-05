@@ -7504,6 +7504,7 @@ async function fbCarregarRadar(){
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'[]');
         if(cached.length > 0){
           _radarDados = cached;
+          if(!_radarTs) _radarTs = localStorage.getItem('patec_radar_upload_ts');
           console.log('Radar (cache): '+_radarDados.length+' registros');
           const pg=document.getElementById('p-radar');
           if(pg&&pg.classList.contains('active')) renderRadarOperacional();
@@ -7518,7 +7519,8 @@ async function fbCarregarRadar(){
     const meta=await db.collection('config').doc('radar_dados').get();
     if(!meta.exists) return;
     const d=meta.data();
-    _radarTs=d.ts||null;
+    _radarTs = d.ts || d.updated_at || localStorage.getItem('patec_radar_upload_ts') || new Date().toISOString();
+    localStorage.setItem('patec_radar_upload_ts', _radarTs);
     const nChunks = d.nChunks||0;
 
     if(nChunks > 0){
@@ -7627,6 +7629,9 @@ async function radarOnFile(file){
     }
     _radarDados=rows;
     _radarTs=new Date().toISOString();
+    localStorage.setItem('patec_radar_upload_ts', _radarTs);
+    localStorage.setItem('patec_radar_upload_nome', file.name);
+    if(lbl) lbl.textContent = file.name + ' — ' + new Date(_radarTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_radarTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     // Atualizar MAPA: fila + novos itens (sem sobrescrever Status/Envio/Finalizado)
     govSincronizarMapa(rows);
     radarRenderPreview(rows);
@@ -8018,9 +8023,11 @@ function _renderRadarCore(){
   // Status calculado depois — placeholder
   let saude='',saudeIco='',saudeCor='';
   if(icoEl) icoEl.textContent='⏳';
-  if(attEl&&_radarTs){
-    const d=new Date(_radarTs);
-    attEl.textContent='Última atualização: '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+d.toLocaleDateString('pt-BR');
+  const _tsR = _radarTs || localStorage.getItem('patec_radar_upload_ts');
+  const _nomeR = localStorage.getItem('patec_radar_upload_nome');
+  if(attEl && _tsR){
+    const d = new Date(_tsR);
+    attEl.textContent = '📋 ' + (_nomeR ? _nomeR + ' · ' : '') + d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   }
 
   // ── CARDS conforme filtro ──
@@ -11019,7 +11026,12 @@ function pcInicializar(){
 
   // Atualização
   const elDt = document.getElementById('pc-ultima-att');
-  if(elDt && _radarTs) elDt.textContent = 'Base: ' + new Date(_radarTs).toLocaleString('pt-BR');
+  const _tsP = _radarTs || localStorage.getItem('patec_radar_upload_ts');
+  const _nomeP = localStorage.getItem('patec_radar_upload_nome');
+  if(elDt && _tsP){
+    const d = new Date(_tsP);
+    elDt.textContent = '📋 ' + (_nomeP ? _nomeP + ' · ' : '') + d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
 
   pcFiltrar();
 }
@@ -11558,7 +11570,13 @@ async function govInicializar(){
   `;
 
   // Atualização
-  if(_radarTs) document.getElementById('gov-ultima-att').textContent = 'Base: ' + new Date(_radarTs).toLocaleString('pt-BR');
+  const _govEl = document.getElementById('gov-ultima-att');
+  const _tsG = _radarTs || localStorage.getItem('patec_radar_upload_ts');
+  const _nomeG = localStorage.getItem('patec_radar_upload_nome');
+  if(_govEl && _tsG){
+    const d = new Date(_tsG);
+    _govEl.textContent = '📋 ' + (_nomeG ? _nomeG + ' · ' : '') + d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
 
   govRenderMapa(dados);
 }
@@ -11799,8 +11817,11 @@ function xglOnFile(input){
         const k = xglChave(r.rc, r.item, r.oport, r.itemop);
         if(!vistos.has(k)){ _xglItens.push(r); vistos.add(k); adicionados++; }
       });
+      const _xglTs = new Date().toISOString();
+      localStorage.setItem('patec_xgl_upload_ts', _xglTs);
+      localStorage.setItem('patec_xgl_upload_nome', file.name);
       document.getElementById('xgl-upload-info').textContent =
-        '✓ ' + file.name + ' — ' + adicionados + ' novos itens adicionados (total: ' + _xglItens.length + ')';
+        '✓ ' + file.name + ' — ' + adicionados + ' novos (total: ' + _xglItens.length + ') — ' + new Date(_xglTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_xglTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
       xglSalvarItensFirebase();
       xglRender();
     } catch(err){
@@ -13690,7 +13711,11 @@ async function aaCompletoSalvar(){
       total: rows.length,
       chunks: Math.ceil(rows.length/CHUNK)
     });
-    document.getElementById('aa-completo-upload-info').textContent = '✅ Salvo com sucesso! ' + rows.length + ' registros publicados.';
+    const _aaTs = new Date().toISOString();
+    localStorage.setItem('patec_aa_upload_ts', _aaTs);
+    localStorage.setItem('patec_aa_upload_nome', (input?.files?.[0]?.name||''));
+    const _aaEl = document.getElementById('aa-completo-upload-info');
+    if(_aaEl) _aaEl.textContent = '✅ ' + rows.length + ' registros — ' + new Date(_aaTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_aaTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   } catch(err){
     alert('Erro ao salvar: ' + err.message);
   }
@@ -13701,6 +13726,12 @@ let _aacFiltrado = []; // dados após filtro
 
 async function aaCompletoCarregar(){
   const elAtt = document.getElementById('aac-ultima-att');
+  const _tsAa = localStorage.getItem('patec_aa_upload_ts');
+  const _nomeAa = localStorage.getItem('patec_aa_upload_nome');
+  if(elAtt && _tsAa){
+    const d = new Date(_tsAa);
+    elAtt.textContent = '📋 ' + (_nomeAa ? _nomeAa + ' · ' : '') + d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
   const elSem = document.getElementById('aac-sem-dados');
   const elWrap = document.getElementById('aac-tabela-wrap');
   if(elAtt) elAtt.textContent = '⏳ Carregando...';
@@ -14752,7 +14783,10 @@ async function q18HandleUpload(file){
       <div class="kc"><div class="kn" style="color:var(--vd)">${_q18Total - impedidos.length}</div><div class="kl">Aptos</div></div>`;
     status.innerHTML = `<span style="color:var(--am)">⏳ Salvando no Firebase...</span>`;
     await q18SalvarFirebase(impedidos, file.name, _q18Total);
-    status.innerHTML = `<span style="color:var(--vd)">✓ Salvo: <strong>${file.name}</strong> — ${impedidos.length} impedidos</span>`;
+    const _q18Ts = new Date().toISOString();
+    localStorage.setItem('patec_q18_upload_ts', _q18Ts);
+    localStorage.setItem('patec_q18_upload_nome', file.name);
+    status.innerHTML = `<span style="color:var(--vd)">✓ <strong>${file.name}</strong> — ${impedidos.length} impedidos — ${new Date(_q18Ts).toLocaleDateString('pt-BR')} às ${new Date(_q18Ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>`;
     q18AtualizarInfo();
   } catch(e){
     if(status) status.innerHTML = `<span style="color:var(--vm)">✗ Erro: ${e.message}</span>`;
