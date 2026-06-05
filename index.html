@@ -472,17 +472,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       if(!email||!senha){errEl.textContent='Preencha e-mail e senha.';errEl.style.display='block';return;}
       loadEl.style.display='block';
       try{
-        // Aguardar SDK carregar se ainda não estiver pronto
         if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
-          errEl.textContent='Carregando Firebase...';
-          errEl.style.display='block';
-          var sdkOk = await loadFirebaseSDK();
-          if(!sdkOk||typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
-            errEl.textContent='Firebase não carregado. Verifique sua conexão e tente novamente.';
-            errEl.style.display='block';loadEl.style.display='none';return;
-          }
+          errEl.textContent='Carregando...';errEl.style.display='block';
+          const sdkOk=await loadFirebaseSDK();
+          if(!sdkOk){errEl.textContent='Erro de conexão. Verifique sua internet.';loadEl.style.display='none';return;}
           errEl.style.display='none';
         }
+        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
         console.log('LOGIN: tentando com',email);
         var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
         console.log('LOGIN OK:',result.user.email);
@@ -3996,6 +3992,14 @@ async function loadFirebaseSDK(){
     const ok = await loadScriptPair(cdnSet);
     if(ok) {
       _fbLoaded=true;_fbLoading=false;
+      // Inicializar o app imediatamente após SDK carregar
+      try{
+        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        if(!window._db && typeof firebase.firestore==='function'){
+          window._db = firebase.firestore();
+          _db = window._db;
+        }
+      }catch(e){ console.warn('Firebase init pós-SDK:', e); }
       console.log('✓ Firebase SDK carregado');
       return true;
     }
@@ -8840,7 +8844,7 @@ function _renderResultadoColab(c){
   };
   if(!ciclos_historico.find(c=>c.id===_s.id)){
     ciclos_historico.unshift(_s);
-    window._pendingSnapshotMarAbr = _s; // salvar após login
+    window._pendingSnapshotMarAbr = _s;
   }
 })();
 
@@ -9690,7 +9694,7 @@ const MAPA_ABR2026 = {
 initMetaGap();
 
 
-// Firebase carregado após login em authMostrarAppReal
+// Firebase carregado após login
 
 // ════════════════════════════════════════════
 // PLANO DE AÇÃO
@@ -10870,7 +10874,7 @@ function aaExportar(){
   XLSX.writeFile(wb, `Analista_Automatico_${dt}.xlsx`);
 }
 
-// aaCarregarResultadoFirebase chamado após login
+// aaCarregarResultadoFirebase após login
 
 
 // ════════════════════════════════════════════
@@ -10977,7 +10981,7 @@ function aaPublicoAtualizar(){
   aaPublicoCarregar();
 }
 
-// aaPublicoCarregar chamado após login
+// aaPublicoCarregar após login
 
 
 // ════════════════════════════════════════════
@@ -11787,7 +11791,7 @@ async function govExportar(){
   XLSX.writeFile(wb, 'Governanca_PATEC_' + dt + '.xlsx');
 }
 
-// govCarregarFirebase chamado após login
+// govCarregarFirebase após login
 
 
 // ════════════════════════════════════════════
@@ -12000,7 +12004,7 @@ async function xglSalvarLinha(chave, idx){
   } catch(e){ alert('Erro ao salvar: '+e.message); }
 }
 
-// xglCarregarFirebase chamado após login
+// xglCarregarFirebase após login
 
 
 // ════════════════════════════════════════════
@@ -15104,15 +15108,12 @@ window._authMostrarAppReal = function(){
 
   rtIniciarListener();
 
-  // Todos os carregamentos Firebase centralizados aqui — só executa uma vez após login
   if(!window._fbCarregadoUmaVez){
     window._fbCarregadoUmaVez = true;
     if(window._pendingSnapshotMarAbr){
       const _s = window._pendingSnapshotMarAbr;
       window._pendingSnapshotMarAbr = null;
-      fbSet('ciclos_encerrados', _s.id, _s)
-        .then(()=>console.log('Snapshot Mar/Abr salvo'))
-        .catch(e=>console.warn('Snapshot Mar/Abr:', e));
+      fbSet('ciclos_encerrados', _s.id, _s).catch(e=>console.warn('Snapshot:', e));
     }
     paEntradaCarregarFirebase();
     aaPublicoCarregar();
