@@ -8833,8 +8833,7 @@ function _renderResultadoColab(c){
   };
   if(!ciclos_historico.find(c=>c.id===_s.id)){
     ciclos_historico.unshift(_s);
-    // Salvar snapshot só após autenticação
-    window._pendingSnapshotMarAbr = _s;
+    window._pendingSnapshotMarAbr = _s; // salvar após login
   }
 })();
 
@@ -9340,8 +9339,7 @@ function gerarHTMLAtualizado(){
   }catch(e){}
 })();
 
-// Carregar valores salvos na topbar ao iniciar
-initMetaGap();
+// initMetaGap chamado após login
 
 
 // ════ BANCO HE — por período/mês ════
@@ -10865,9 +10863,7 @@ function aaExportar(){
   XLSX.writeFile(wb, `Analista_Automatico_${dt}.xlsx`);
 }
 
-// Carregar dados ao iniciar
-// Carregar resultado do Analista Automático ao iniciar (backlog já carregado via fbCarregarTudo)
-aaCarregarResultadoFirebase();
+// aaCarregarResultadoFirebase chamado após login
 
 
 // ════════════════════════════════════════════
@@ -10974,7 +10970,7 @@ function aaPublicoAtualizar(){
   aaPublicoCarregar();
 }
 
-// aaPublicoCarregar chamado após login (ver authMostrarAppReal)
+// aaPublicoCarregar chamado após login
 
 
 // ════════════════════════════════════════════
@@ -11784,8 +11780,7 @@ async function govExportar(){
   XLSX.writeFile(wb, 'Governanca_PATEC_' + dt + '.xlsx');
 }
 
-// Carregar ao iniciar
-govCarregarFirebase();
+// govCarregarFirebase chamado após login
 
 
 // ════════════════════════════════════════════
@@ -11998,9 +11993,7 @@ async function xglSalvarLinha(chave, idx){
   } catch(e){ alert('Erro ao salvar: '+e.message); }
 }
 
-// Carregar Firebase primeiro — ele tem prioridade total
-// Base embutida só serve como fallback se Firebase estiver vazio
-xglCarregarFirebase();
+// xglCarregarFirebase chamado após login
 
 
 // ════════════════════════════════════════════
@@ -15104,10 +15097,10 @@ window._authMostrarAppReal = function(){
 
   rtIniciarListener();
 
-  // Todos os carregamentos Firebase centralizados aqui, só uma vez após login
+  // Todos os carregamentos Firebase centralizados aqui — só executa uma vez após login
   if(!window._fbCarregadoUmaVez){
     window._fbCarregadoUmaVez = true;
-    // Snapshot Mar/Abr pendente
+    // Snapshot Mar/Abr pendente (foi adiado para após autenticação)
     if(window._pendingSnapshotMarAbr){
       const _s = window._pendingSnapshotMarAbr;
       window._pendingSnapshotMarAbr = null;
@@ -15115,11 +15108,15 @@ window._authMostrarAppReal = function(){
         .then(()=>console.log('Snapshot Mar/Abr salvo'))
         .catch(e=>console.warn('Snapshot Mar/Abr:', e));
     }
-    // Dados gerais
+    // Carregamentos que dependem de autenticação
     paEntradaCarregarFirebase();
     aaPublicoCarregar();
+    govCarregarFirebase();
+    xglCarregarFirebase();
+    initMetaGap();
     fbCarregarTudo().then(()=>{
       initMetaGap();
+      aaCarregarResultadoFirebase();
       const pg = document.getElementById('p-radar');
       if(pg && pg.classList.contains('active')) renderRadarOperacional();
       setTimeout(()=>alertasDisparar('auto-load'), 4000);
@@ -15429,7 +15426,6 @@ async function usrCadastrar(){
   errEl.textContent = '⏳ Conectando ao Firebase...';
   errEl.style.display = 'inline';
 
-  // Garantir Firebase carregado
   await loadFirebaseSDK();
   if(!firebase.apps.length) try{ firebase.initializeApp(FIREBASE_CONFIG); }catch(e){}
   let db = window._db || getDB();
