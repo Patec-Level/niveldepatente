@@ -488,7 +488,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           }
         } catch(e){ console.warn('Firestore init após login:', e); }
         var emailsAdm=['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
-        var isAdm=emailsAdm.includes(result.user.email);
+        var isAdm=emailsAdm.includes((result.user.email||'').toLowerCase());
         var perfil={
           nome:isAdm?'André':result.user.email.split('@')[0],
           email:result.user.email, perfil:isAdm?'adm':'colaborador',
@@ -15163,7 +15163,7 @@ async function authInit(){
         _authUser = user;
         // Definir perfil mínimo imediatamente — não esperar Firestore
         const emailsAdm = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
-        const isAdm = emailsAdm.includes(user.email);
+        const isAdm = emailsAdm.includes((user.email||'').toLowerCase());
         _authPerfil = {
           nome: user.email.split('@')[0],
           email: user.email,
@@ -15186,7 +15186,7 @@ async function authInit(){
 
 async function authCarregarPerfil(user){
   const emailsAdm = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
-  const isAdm = emailsAdm.includes(user.email);
+  const isAdm = emailsAdm.includes((user.email||'').toLowerCase());
 
   // Definir perfil mínimo imediatamente (sem esperar Firestore)
   _authPerfil = {
@@ -15236,7 +15236,7 @@ function authMontarSidebar(){
   if(!sb) return;
 
   // ADM: verificação exclusivamente pelo e-mail — não pelo campo perfil
-  const emailAtual = (_authUser?.email || '').toLowerCase();
+  const emailAtual = (_authUser?.email || '').toLowerCase().trim();
   const emailsAdm  = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
   const isAdm = emailsAdm.includes(emailAtual);
   const perms = _authPerfil?.permissoes || Object.keys(PERMS_SIDEBAR);
