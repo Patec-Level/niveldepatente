@@ -1076,7 +1076,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <!-- Lista de usuários -->
           <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.75rem">📋 Usuários cadastrados</div>
           <div id="usr-lista-loading" style="font-size:11px;color:var(--tx2)">
-            Carregando... <button class="btn btn-s" style="font-size:10px;margin-left:8px" onclick="window._db ? usrCarregarLista() : location.reload()">↺ Atualizar</button>
+            <button class="btn btn-s" style="font-size:10px" onclick="usrCarregarLista()">↺ Atualizar lista</button>
           </div>
           <div id="usr-lista"></div>
         </div>
@@ -3992,7 +3992,6 @@ async function loadFirebaseSDK(){
     const ok = await loadScriptPair(cdnSet);
     if(ok) {
       _fbLoaded=true;_fbLoading=false;
-      // Inicializar o app imediatamente após SDK carregar
       try{
         if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
         if(!window._db && typeof firebase.firestore==='function'){
@@ -9350,7 +9349,7 @@ function gerarHTMLAtualizado(){
   }catch(e){}
 })();
 
-// initMetaGap chamado após login
+// initMetaGap após login
 
 
 // ════ BANCO HE — por período/mês ════
@@ -15493,20 +15492,22 @@ async function usrCarregarLista(){
   const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
-  if(loadEl) loadEl.innerHTML = 'Carregando...';
+  if(loadEl){ loadEl.style.display='block'; loadEl.innerHTML = '⏳ Buscando usuários...'; }
 
   try{
-    console.log('usrCarregarLista: iniciando...');
+    // Garantir Firebase inicializado
+    if(typeof firebase==='undefined'){ throw new Error('Firebase SDK não carregado'); }
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     const db = window._db || firebase.firestore();
-    console.log('usrCarregarLista: db ok, buscando...');
+    if(!window._db) window._db = db;
+    console.log('usrCarregarLista: buscando coleção usuarios...');
     const snap = await db.collection('usuarios').get();
-    console.log('usrCarregarLista: snap ok, docs:', snap.docs.length);
+    console.log('usrCarregarLista: encontrados', snap.docs.length, 'usuários');
     const users = snap.docs.map(d=>({uid:d.id,...d.data()}));
 
     if(loadEl){ loadEl.style.display = 'none'; loadEl.innerHTML=''; }
     listaEl.style.display = 'block';
-    if(!users.length){ listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum usuário cadastrado ainda.</div>'; return; }
+    if(!users.length){ listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2);padding:12px 0">Nenhum usuário cadastrado ainda. Use o formulário acima para cadastrar.</div>'; return; }
 
     listaEl.innerHTML = users.map(u=>`
       <div style="display:flex;align-items:center;gap:10px;padding:.875rem;background:var(--cin);border-radius:9px;border:1px solid var(--brd);margin-bottom:8px;flex-wrap:wrap">
