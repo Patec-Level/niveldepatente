@@ -472,9 +472,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       if(!email||!senha){errEl.textContent='Preencha e-mail e senha.';errEl.style.display='block';return;}
       loadEl.style.display='block';
       try{
+        // Aguardar SDK carregar se ainda não estiver pronto
         if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
-          errEl.textContent='Firebase não carregado. Aguarde e tente novamente.';
-          errEl.style.display='block';loadEl.style.display='none';return;
+          errEl.textContent='Carregando Firebase...';
+          errEl.style.display='block';
+          var sdkOk = await loadFirebaseSDK();
+          if(!sdkOk||typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
+            errEl.textContent='Firebase não carregado. Verifique sua conexão e tente novamente.';
+            errEl.style.display='block';loadEl.style.display='none';return;
+          }
+          errEl.style.display='none';
         }
         console.log('LOGIN: tentando com',email);
         var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
@@ -15100,7 +15107,6 @@ window._authMostrarAppReal = function(){
   // Todos os carregamentos Firebase centralizados aqui — só executa uma vez após login
   if(!window._fbCarregadoUmaVez){
     window._fbCarregadoUmaVez = true;
-    // Snapshot Mar/Abr pendente (foi adiado para após autenticação)
     if(window._pendingSnapshotMarAbr){
       const _s = window._pendingSnapshotMarAbr;
       window._pendingSnapshotMarAbr = null;
@@ -15108,7 +15114,6 @@ window._authMostrarAppReal = function(){
         .then(()=>console.log('Snapshot Mar/Abr salvo'))
         .catch(e=>console.warn('Snapshot Mar/Abr:', e));
     }
-    // Carregamentos que dependem de autenticação
     paEntradaCarregarFirebase();
     aaPublicoCarregar();
     govCarregarFirebase();
