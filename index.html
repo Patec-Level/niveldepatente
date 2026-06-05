@@ -13,8 +13,8 @@
 function authFazerLogin(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); else { var t=document.getElementById('login-loading'); if(t)t.style.display='block'; setTimeout(function(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); },1500); } }
 function authEsqueciSenha(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); else setTimeout(function(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); },1500); }
 function authLogout(){ if(typeof window._authLogoutReal==='function') window._authLogoutReal(); }
-function usrCarregarLista(){ _usrCarregarListaImpl && _usrCarregarListaImpl(); }
-function usrCadastrar(){ _usrCadastrarImpl && _usrCadastrarImpl(); }
+function usrCarregarLista(){ if(window.usrCarregarListaImpl) window.usrCarregarListaImpl(); }
+function usrCadastrar(){ if(window.usrCadastrarImpl) window.usrCadastrarImpl(); }
 function usrResetarSenha(e,n){ if(typeof window._usrResetarSenhaReal==='function') window._usrResetarSenhaReal(e,n); }
 function usrRemover(u,n){ if(typeof window._usrRemoverReal==='function') window._usrRemoverReal(u,n); }
 function usrEditarPerms(u,n,p){ if(typeof window._usrEditarPermsReal==='function') window._usrEditarPermsReal(u,n,p); }
@@ -15410,7 +15410,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 // GERENCIAR USUÁRIOS — ADM
 // ══════════════════════════════════════════════════════
 
-async function _usrCadastrarImpl(){
+async function usrCadastrarImpl(){
   const nome  = document.getElementById('usr-novo-nome').value.trim();
   const email = document.getElementById('usr-novo-email').value.trim();
   const senha = document.getElementById('usr-novo-senha').value.trim();
@@ -15476,7 +15476,7 @@ async function _usrCadastrarImpl(){
   }
 }
 
-async function _usrCarregarListaImpl(){
+async function usrCarregarListaImpl(){
   const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
@@ -15518,7 +15518,8 @@ async function _usrCarregarListaImpl(){
 }
 
 // Registrar todas as funções de usuário imediatamente
-// proxies de usuário removidos — funções chamadas diretamente
+window.usrCadastrarImpl = usrCadastrarImpl;
+window.usrCarregarListaImpl = usrCarregarListaImpl;
 
 async function usrResetarSenha(email, nome){
   window._usrResetarSenhaReal = usrResetarSenha;
