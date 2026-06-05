@@ -13,8 +13,7 @@
 function authFazerLogin(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); else { var t=document.getElementById('login-loading'); if(t)t.style.display='block'; setTimeout(function(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); },1500); } }
 function authEsqueciSenha(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); else setTimeout(function(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); },1500); }
 function authLogout(){ if(typeof window._authLogoutReal==='function') window._authLogoutReal(); }
-function usrCarregarLista(){ if(window.usrCarregarListaImpl) window.usrCarregarListaImpl(); }
-function usrCadastrar(){ if(window.usrCadastrarImpl) window.usrCadastrarImpl(); }
+// usrCarregarLista e usrCadastrar definidas abaixo no script
 function usrResetarSenha(e,n){ if(typeof window._usrResetarSenhaReal==='function') window._usrResetarSenhaReal(e,n); }
 function usrRemover(u,n){ if(typeof window._usrRemoverReal==='function') window._usrRemoverReal(u,n); }
 function usrEditarPerms(u,n,p){ if(typeof window._usrEditarPermsReal==='function') window._usrEditarPermsReal(u,n,p); }
@@ -15410,7 +15409,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 // GERENCIAR USUÁRIOS — ADM
 // ══════════════════════════════════════════════════════
 
-async function usrCadastrarImpl(){
+async function usrCadastrar(){
+  console.log('[USR] usrCadastrar chamada');
   const nome  = document.getElementById('usr-novo-nome').value.trim();
   const email = document.getElementById('usr-novo-email').value.trim();
   const senha = document.getElementById('usr-novo-senha').value.trim();
@@ -15439,6 +15439,7 @@ async function usrCadastrarImpl(){
     const colabNome  = colabNomes.find(n => nome.toLowerCase().includes(n.toLowerCase())) || '';
 
     // Criar usuário via Identity Toolkit (não desloga o ADM)
+    console.log('[USR] Chamando Identity Toolkit para:', email);
     const apiKey = FIREBASE_CONFIG.apiKey;
     const resp = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + apiKey, {
       method: 'POST',
@@ -15476,7 +15477,8 @@ async function usrCadastrarImpl(){
   }
 }
 
-async function usrCarregarListaImpl(){
+async function usrCarregarLista(){
+  console.log('[USR] usrCarregarLista chamada');
   const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
@@ -15518,8 +15520,7 @@ async function usrCarregarListaImpl(){
 }
 
 // Registrar todas as funções de usuário imediatamente
-window.usrCadastrarImpl = usrCadastrarImpl;
-window.usrCarregarListaImpl = usrCarregarListaImpl;
+
 
 async function usrResetarSenha(email, nome){
   window._usrResetarSenhaReal = usrResetarSenha;
@@ -16396,3 +16397,4 @@ if(_goOrig){
 
 // Adicionar Fechamento do Dia ao PERMS_SIDEBAR e navegação
 PERMS_SIDEBAR['fechamento-dia'] = { icon:'🔒', label:'Fechamento do Dia', mod:'EXECUÇÃO' };
+  
