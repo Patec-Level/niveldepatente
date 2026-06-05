@@ -7546,11 +7546,22 @@ async function fbCarregarRadar(){
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'[]');
         if(cached.length > 0){
           _radarDados = cached;
+          // Restaurar _radarTs do localStorage se disponível
+          if(!_radarTs) _radarTs = localStorage.getItem('patec_radar_upload_ts');
           console.log('Radar (cache): '+_radarDados.length+' registros');
           const pg=document.getElementById('p-radar');
           if(pg&&pg.classList.contains('active')) renderRadarOperacional();
           const pgGov=document.getElementById('p-governanca');
           if(pgGov&&pgGov.classList.contains('active')) govInicializar();
+          // Atualizar timestamps imediatamente
+          const _tsNow = _radarTs;
+          if(_tsNow){
+            const _nomeR = localStorage.getItem('patec_radar_upload_nome');
+            const _fmt = (ts) => { const d=new Date(ts); return '📋 '+(_nomeR?_nomeR+' · ':'')+d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+            const _rEl=document.getElementById('radar-ultima-att'); if(_rEl) _rEl.textContent=_fmt(_tsNow);
+            const _gEl=document.getElementById('gov-ultima-att'); if(_gEl) _gEl.textContent=_fmt(_tsNow);
+            const _pEl=document.getElementById('pc-ultima-att'); if(_pEl) _pEl.textContent=_fmt(_tsNow);
+          }
           return;
         }
       } catch(e){}
@@ -7560,7 +7571,9 @@ async function fbCarregarRadar(){
     const meta=await db.collection('config').doc('radar_dados').get();
     if(!meta.exists) return;
     const d=meta.data();
-    _radarTs=d.ts||null;
+    _radarTs = d.ts || d.updated_at || null;
+    // Se não tem ts no Firebase, usar o momento do carregamento como fallback
+    if(!_radarTs && d.n > 0) _radarTs = new Date().toISOString();
     if(_radarTs) localStorage.setItem('patec_radar_upload_ts', _radarTs);
     const nChunks = d.nChunks||0;
 
