@@ -1076,7 +1076,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <!-- Lista de usuários -->
           <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.75rem">📋 Usuários cadastrados</div>
           <div id="usr-lista-loading" style="font-size:11px;color:var(--tx2)">
-            <button class="btn btn-s" style="font-size:10px" onclick="usrCarregarLista()">↺ Atualizar lista</button>
+            Carregando... <button class="btn btn-s" style="font-size:10px;margin-left:8px" onclick="window._db ? usrCarregarLista() : location.reload()">↺ Atualizar</button>
           </div>
           <div id="usr-lista"></div>
         </div>
@@ -3994,11 +3994,8 @@ async function loadFirebaseSDK(){
       _fbLoaded=true;_fbLoading=false;
       try{
         if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-        if(!window._db && typeof firebase.firestore==='function'){
-          window._db = firebase.firestore();
-          _db = window._db;
-        }
-      }catch(e){ console.warn('Firebase init pós-SDK:', e); }
+        if(!window._db && typeof firebase.firestore==='function'){ window._db=firebase.firestore(); _db=window._db; }
+      }catch(e){}
       console.log('✓ Firebase SDK carregado');
       return true;
     }
@@ -15110,9 +15107,8 @@ window._authMostrarAppReal = function(){
   if(!window._fbCarregadoUmaVez){
     window._fbCarregadoUmaVez = true;
     if(window._pendingSnapshotMarAbr){
-      const _s = window._pendingSnapshotMarAbr;
-      window._pendingSnapshotMarAbr = null;
-      fbSet('ciclos_encerrados', _s.id, _s).catch(e=>console.warn('Snapshot:', e));
+      const _s=window._pendingSnapshotMarAbr; window._pendingSnapshotMarAbr=null;
+      fbSet('ciclos_encerrados',_s.id,_s).catch(e=>console.warn('Snapshot:',e));
     }
     paEntradaCarregarFirebase();
     aaPublicoCarregar();
@@ -15122,10 +15118,10 @@ window._authMostrarAppReal = function(){
     fbCarregarTudo().then(()=>{
       initMetaGap();
       aaCarregarResultadoFirebase();
-      const pg = document.getElementById('p-radar');
-      if(pg && pg.classList.contains('active')) renderRadarOperacional();
-      setTimeout(()=>alertasDisparar('auto-load'), 4000);
-    }).catch(e=>console.warn('fbCarregarTudo:', e));
+      const pg=document.getElementById('p-radar');
+      if(pg&&pg.classList.contains('active')) renderRadarOperacional();
+      setTimeout(()=>alertasDisparar('auto-load'),4000);
+    }).catch(e=>console.warn('fbCarregarTudo:',e));
   }
 
   const colab = _authPerfil?.colabNome || colabLogado;
@@ -15428,33 +15424,24 @@ async function usrCadastrar(){
     errEl.style.display = 'inline'; return;
   }
 
-  errEl.textContent = '⏳ Conectando ao Firebase...';
+  errEl.textContent = '⏳ Cadastrando usuário...';
   errEl.style.display = 'inline';
 
-  await loadFirebaseSDK();
-  if(!firebase.apps.length) try{ firebase.initializeApp(FIREBASE_CONFIG); }catch(e){}
-  let db = window._db || getDB();
-  if(!db){
-    for(let i=0;i<10;i++){
-      await new Promise(r=>setTimeout(r,500));
-      db = window._db || getDB();
-      if(db) break;
-    }
-  }
-  if(!db){
-    errEl.textContent = 'Firebase não disponível. Recarregue a página e tente novamente.';
-    errEl.style.display = 'inline'; return;
-  }
-  errEl.style.display = 'none';
-
-  const checks = document.querySelectorAll('#usr-novo-perms input[type=checkbox]:checked');
-  const perms = Array.from(checks).map(c=>c.value);
-  const colabNomes = ['André','Lory','Ludy','Wanessa'];
-  const colabNome = colabNomes.find(n => nome.toLowerCase().includes(n.toLowerCase())) || '';
-
   try{
+    // Garantir Firebase pronto
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    const db = window._db || firebase.firestore();
+    if(!window._db) window._db = db;
+
+    // Ler permissões marcadas
+    const checks = document.querySelectorAll('#usr-novo-perms input[type=checkbox]:checked');
+    const perms  = Array.from(checks).map(c => c.value);
+    const colabNomes = ['André','Lory','Ludy','Wanessa'];
+    const colabNome  = colabNomes.find(n => nome.toLowerCase().includes(n.toLowerCase())) || '';
+
+    // Criar usuário via Identity Toolkit (não desloga o ADM)
     const apiKey = FIREBASE_CONFIG.apiKey;
-    const resp = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+    const resp = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + apiKey, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email, password: senha, displayName: nome, returnSecureToken: true })
@@ -15462,25 +15449,28 @@ async function usrCadastrar(){
     const data = await resp.json();
     if(data.error){ throw new Error(data.error.message); }
 
-    const uid = data.localId;
+    const uid    = data.localId;
     const perfil = nome.toLowerCase()==='andré' ? 'adm' : 'colaborador';
 
+    // Salvar perfil no Firestore
     await db.collection('usuarios').doc(uid).set({
       nome, email, perfil, permissoes: perms, colabNome,
-      criadoEm: new Date().toISOString(), criadoPor: window._authUser?.email||'adm'
+      criadoEm: new Date().toISOString(), criadoPor: window._authUser?.email || 'adm'
     });
 
-    okEl.textContent = `✓ Usuário ${nome} cadastrado com sucesso!`;
+    okEl.textContent = '✓ Usuário ' + nome + ' cadastrado com sucesso!';
     okEl.style.display = 'inline';
-    document.getElementById('usr-novo-nome').value = '';
+    errEl.style.display = 'none';
+    document.getElementById('usr-novo-nome').value  = '';
     document.getElementById('usr-novo-email').value = '';
     document.getElementById('usr-novo-senha').value = '';
     setTimeout(()=>usrCarregarLista(), 500);
+
   } catch(e){
     const msgs = {
       'EMAIL_EXISTS': 'E-mail já cadastrado.',
       'INVALID_EMAIL': 'E-mail inválido.',
-      'WEAK_PASSWORD : Password should be at least 6 characters': 'Senha deve ter ao menos 6 caracteres.',
+      'WEAK_PASSWORD : Password should be at least 6 characters': 'Senha fraca — mínimo 6 caracteres.',
     };
     errEl.textContent = msgs[e.message] || ('Erro: ' + e.message);
     errEl.style.display = 'inline';
@@ -15492,22 +15482,18 @@ async function usrCarregarLista(){
   const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
-  if(loadEl){ loadEl.style.display='block'; loadEl.innerHTML = '⏳ Buscando usuários...'; }
+  if(loadEl){ loadEl.style.display='block'; loadEl.innerHTML='⏳ Buscando...'; }
 
   try{
-    // Garantir Firebase inicializado
-    if(typeof firebase==='undefined'){ throw new Error('Firebase SDK não carregado'); }
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     const db = window._db || firebase.firestore();
     if(!window._db) window._db = db;
-    console.log('usrCarregarLista: buscando coleção usuarios...');
     const snap = await db.collection('usuarios').get();
-    console.log('usrCarregarLista: encontrados', snap.docs.length, 'usuários');
     const users = snap.docs.map(d=>({uid:d.id,...d.data()}));
 
-    if(loadEl){ loadEl.style.display = 'none'; loadEl.innerHTML=''; }
+    if(loadEl){ loadEl.style.display='none'; loadEl.innerHTML=''; }
     listaEl.style.display = 'block';
-    if(!users.length){ listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2);padding:12px 0">Nenhum usuário cadastrado ainda. Use o formulário acima para cadastrar.</div>'; return; }
+    if(!users.length){ listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2);padding:10px 0">Nenhum usuário cadastrado ainda.</div>'; return; }
 
     listaEl.innerHTML = users.map(u=>`
       <div style="display:flex;align-items:center;gap:10px;padding:.875rem;background:var(--cin);border-radius:9px;border:1px solid var(--brd);margin-bottom:8px;flex-wrap:wrap">
