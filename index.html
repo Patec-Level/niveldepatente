@@ -3994,11 +3994,28 @@ function getDB(){
     try{
       if(typeof firebase === 'undefined') return null;
       if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      if(typeof firebase.firestore !== 'function') return null;
       _db = firebase.firestore();
       console.log('✓ Firebase conectado:', FIREBASE_CONFIG.projectId);
     } catch(e){ console.error('Firebase erro:',e.message); }
   }
   return _db;
+}
+
+async function getDBAsync(){
+  if(_db) return _db;
+  // Aguardar SDK carregar
+  if(!_fbLoaded){
+    const ok = await loadFirebaseSDK();
+    if(!ok) return null;
+  }
+  // Tentar até 5 segundos
+  for(let i=0;i<10;i++){
+    const db = getDB();
+    if(db) return db;
+    await new Promise(r=>setTimeout(r,500));
+  }
+  return null;
 }
 
 async function fbSet(col, docId, dados){
@@ -15337,6 +15354,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 async function usrCadastrar(){
   window._usrCadastrarReal = usrCadastrar;
+  const nome  = document.getElementById('usr-novo-nome').value.trim();
   const email = document.getElementById('usr-novo-email').value.trim();
   const senha = document.getElementById('usr-novo-senha').value.trim();
   const okEl  = document.getElementById('usr-novo-ok');
@@ -15348,22 +15366,37 @@ async function usrCadastrar(){
     errEl.style.display = 'inline'; return;
   }
 
-  // Coletar permissões marcadas
-  const checks = document.querySelectorAll('#usr-novo-perms input[type=checkbox]:checked');
-  const perms = Array.from(checks).map(c=>c.value);
+  errEl.textContent = '⏳ Conectando ao Firebase...';
+  errEl.style.display = 'inline';
 
-  // Verificar se é colaborador do PATEC para vincular nome
+  // Garantir Firebase carregado
+  await loadFirebaseSDK();
+  if(!firebase.apps.length) try{ firebase.initializeApp(FIREBASE_CONFIG); }catch(e){}
+  // Aguardar Firestore ficar disponível
+  let db = getDB();
+  if(!db){
+    for(let i=0;i<10;i++){
+      await new Promise(r=>setTimeout(r,500));
+      db = getDB();
+      if(db) break;
+    }
+  }
+  if(!db){
+    errEl.textContent = 'Firebase não disponível. Recarregue a página e tente novamente.';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  const db = await getDBAsync();
+  if(!db){
+    errEl.textContent = 'Firebase não disponível. Recarregue a página.';
+    errEl.style.display = 'inline'; return;
+  }
+  const perms = Array.from(checks).map(c=>c.value);
   const colabNomes = ['André','Lory','Ludy','Wanessa'];
   const colabNome = colabNomes.find(n => nome.toLowerCase().includes(n.toLowerCase())) || '';
 
   try{
-    // Criar usuário no Firebase Auth via REST (Admin SDK não disponível no browser)
-    // Usamos uma Cloud Function ou o próprio Admin via createUser — alternativa: criar via API key
-    // Abordagem: salvar no Firestore e usar email/invite flow
-    const db = getDB(); if(!db) throw new Error('Firebase não conectado');
-
-    // Criar conta via signInWithEmailAndPassword flow (requer Admin SDK)
-    // No browser, usamos a API REST do Identity Toolkit
     const apiKey = FIREBASE_CONFIG.apiKey;
     const resp = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
       method: 'POST',
@@ -15374,20 +15407,19 @@ async function usrCadastrar(){
     if(data.error){ throw new Error(data.error.message); }
 
     const uid = data.localId;
-    const perfil = (email === 'andre.camara.prestserv@petrobras.com.br' || nome.toLowerCase()==='andré') ? 'adm' : 'colaborador';
+    const perfil = nome.toLowerCase()==='andré' ? 'adm' : 'colaborador';
 
-    // Salvar perfil no Firestore
     await db.collection('usuarios').doc(uid).set({
       nome, email, perfil, permissoes: perms, colabNome,
-      criadoEm: new Date().toISOString(), criadoPor: _authUser?.email||'adm'
+      criadoEm: new Date().toISOString(), criadoPor: window._authUser?.email||'adm'
     });
 
-    okEl.textContent = `✓ Usuário ${nome} cadastrado!`;
+    okEl.textContent = `✓ Usuário ${nome} cadastrado com sucesso!`;
     okEl.style.display = 'inline';
     document.getElementById('usr-novo-nome').value = '';
     document.getElementById('usr-novo-email').value = '';
     document.getElementById('usr-novo-senha').value = '';
-    usrCarregarLista();
+    setTimeout(()=>usrCarregarLista(), 500);
   } catch(e){
     const msgs = {
       'EMAIL_EXISTS': 'E-mail já cadastrado.',
