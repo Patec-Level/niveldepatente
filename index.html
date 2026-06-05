@@ -575,42 +575,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     })()">Conectar-se</button>
     <div class="login-loading" id="login-loading">⏳ Verificando credenciais...</div>
     <span class="login-forgot" onclick="authEsqueciSenha()">Esqueci minha senha</span>
-    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #EEE">
-      <div style="font-size:10px;color:#9AA;margin-bottom:.5rem;text-align:center">Acesso de emergência (Firebase offline)</div>
-      <input type="password" id="login-local-pwd" placeholder="Senha local ADM"
-        style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #DDE3EE;border-radius:8px;margin-bottom:8px;font-family:inherit"
-        onkeydown="if(event.key==='Enter')document.getElementById('btn-local-entrar').click()">
-      <button id="btn-local-entrar"
-        style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit"
-        onclick="(function(){
-          var pwd=document.getElementById('login-local-pwd').value;
-          if(pwd==='2105'||pwd==='Patec@2026'||pwd==='patec2026'){
-            var u={email:'andre.mazzali@levegroup.com.br',uid:'local'};
-            var p={nome:'André',email:'andre.mazzali@levegroup.com.br',perfil:'adm',permissoes:Object.keys(window.PERMS_SIDEBAR||{}),colabNome:'André'};
-            window._authUser=u; window._authPerfil=p; window.colabLogado='André';
-            if(typeof authSetPerfil==='function') authSetPerfil(u,p);
-            // Fechar overlay diretamente — sem depender de Firebase
-            document.getElementById('patec-login-overlay').style.display='none';
-            // Badge topbar
-            var badge=document.getElementById('topbar-user-badge');
-            if(badge){ badge.style.display='flex'; }
-            var av=document.getElementById('topbar-user-avatar');
-            var nm=document.getElementById('topbar-user-nome');
-            if(av) av.textContent='A';
-            if(nm) nm.textContent='André';
-            // Montar sidebar após scripts carregarem
-            var tentativas=0;
-            var tentar=function(){
-              tentativas++;
-              if(typeof authMontarSidebar==='function'){ authMontarSidebar(); }
-              else if(tentativas<20){ setTimeout(tentar,300); }
-            };
-            setTimeout(tentar,300);
-          } else { alert('Senha incorreta. Use: 2105'); }
-        })()">
-        Entrar sem internet
-      </button>
-    </div>
+
   </div>
 </div>
 <!-- ══ fim LOGIN GLOBAL ══ -->
@@ -646,8 +611,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('fechamento-dia',this)">🔒 Fechamento do Dia</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
-  <div class="sb-sec">Em breve</div>
-
   <div class="sb-sec" id="sb-adm-sec" style="display:none">ADM</div>
   <div class="sb-it" id="sb-adm-it" onclick="go('adm',this)" style="display:none">🔐 Administração</div>
 </nav>
@@ -7264,7 +7227,10 @@ function admLoadFile(f){
     window._admMapaRows=rows;
     document.getElementById('adm-uz').classList.add('done');
     document.getElementById('adm-uico').textContent='✅';
-    document.getElementById('adm-ubadge').textContent=f.name+' — '+rows.length+' linhas';
+    const _bkTs = new Date().toISOString();
+    localStorage.setItem('patec_bk_upload_ts', _bkTs);
+    localStorage.setItem('patec_bk_upload_nome', f.name);
+    document.getElementById('adm-ubadge').textContent=f.name+' — '+rows.length+' linhas — ' + new Date(_bkTs).toLocaleDateString('pt-BR') + ' ' + new Date(_bkTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('adm-bcruz').disabled=false;
   };r.readAsBinaryString(f);
 }
@@ -7712,6 +7678,10 @@ async function radarOnFile(file){
     setTimeout(()=>alertasDisparar('radar_upload'), 2000);
     if(progEl) progEl.style.display='none';
     document.getElementById('radar-upload-preview').style.display='block';
+    // Salvar timestamp do upload
+    localStorage.setItem('patec_radar_upload_ts', _radarTs);
+    localStorage.setItem('patec_radar_upload_nome', file.name);
+    if(lbl) lbl.textContent = file.name + ' — ' + new Date(_radarTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_radarTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     // Auto-salvar no Firebase imediatamente
     if(msgEl) msgEl.textContent='Salvando no Firebase...';
     if(progEl) progEl.style.display='block';
@@ -8094,9 +8064,13 @@ function _renderRadarCore(){
   // Status calculado depois — placeholder
   let saude='',saudeIco='',saudeCor='';
   if(icoEl) icoEl.textContent='⏳';
-  if(attEl&&_radarTs){
-    const d=new Date(_radarTs);
-    attEl.textContent='Última atualização: '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+d.toLocaleDateString('pt-BR');
+  if(attEl){
+    const ts = _radarTs || localStorage.getItem('patec_radar_upload_ts');
+    const nome = localStorage.getItem('patec_radar_upload_nome');
+    if(ts){
+      const d=new Date(ts);
+      attEl.textContent='📋 '+(nome?nome+' · ':'')+d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    }
   }
 
   // ── CARDS conforme filtro ──
@@ -10943,7 +10917,10 @@ async function aaPublicoCarregar(){
       // Data última atualização
       const elDt = document.getElementById('aa-pub-ultima-atualizacao');
       if(elDt && d.dt){
-        elDt.textContent = 'Último processamento: ' + new Date(d.dt).toLocaleString('pt-BR');
+        const _q18TsLocal = localStorage.getItem('patec_q18_upload_ts');
+        const _q18NomeLocal = localStorage.getItem('patec_q18_upload_nome');
+        const _q18TsUsar = _q18TsLocal || d.dt;
+        elDt.textContent = '📋 ' + (_q18NomeLocal ? _q18NomeLocal + ' · ' : '') + new Date(_q18TsUsar).toLocaleDateString('pt-BR') + ' às ' + new Date(_q18TsUsar).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
       }
 
       aaPublicoPopularFiltros();
@@ -11095,6 +11072,11 @@ function pcInicializar(){
 
   // Atualização
   const elDt = document.getElementById('pc-ultima-att');
+  const _pcBkTs = localStorage.getItem('patec_bk_upload_ts');
+  const _pcBkNome = localStorage.getItem('patec_bk_upload_nome');
+  if(elDt && _pcBkTs){
+    elDt.textContent = '📋 ' + (_pcBkNome ? _pcBkNome + ' · ' : '') + new Date(_pcBkTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_pcBkTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
   if(elDt && _radarTs) elDt.textContent = 'Base: ' + new Date(_radarTs).toLocaleString('pt-BR');
 
   pcFiltrar();
@@ -11634,7 +11616,12 @@ async function govInicializar(){
   `;
 
   // Atualização
-  if(_radarTs) document.getElementById('gov-ultima-att').textContent = 'Base: ' + new Date(_radarTs).toLocaleString('pt-BR');
+  const _govAttEl = document.getElementById('gov-ultima-att');
+  if(_govAttEl){
+    const ts = _radarTs || localStorage.getItem('patec_radar_upload_ts');
+    const nome = localStorage.getItem('patec_radar_upload_nome');
+    if(ts) _govAttEl.textContent = '📋 ' + (nome ? nome + ' · ' : '') + new Date(ts).toLocaleDateString('pt-BR') + ' às ' + new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
 
   govRenderMapa(dados);
 }
@@ -11874,8 +11861,11 @@ function xglOnFile(input){
         const k = xglChave(r.rc, r.item, r.oport, r.itemop);
         if(!vistos.has(k)){ _xglItens.push(r); vistos.add(k); adicionados++; }
       });
+      const _xglTs = new Date().toISOString();
+      localStorage.setItem('patec_xgl_upload_ts', _xglTs);
+      localStorage.setItem('patec_xgl_upload_nome', file.name);
       document.getElementById('xgl-upload-info').textContent =
-        '✓ ' + file.name + ' — ' + adicionados + ' novos itens adicionados (total: ' + _xglItens.length + ')';
+        '✓ ' + file.name + ' — ' + adicionados + ' novos itens (total: ' + _xglItens.length + ') — ' + new Date(_xglTs).toLocaleDateString('pt-BR') + ' ' + new Date(_xglTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
       xglSalvarItensFirebase();
       xglRender();
     } catch(err){
@@ -13763,7 +13753,10 @@ async function aaCompletoSalvar(){
       total: rows.length,
       chunks: Math.ceil(rows.length/CHUNK)
     });
-    document.getElementById('aa-completo-upload-info').textContent = '✅ Salvo com sucesso! ' + rows.length + ' registros publicados.';
+    const _aaTs = new Date().toISOString();
+    localStorage.setItem('patec_aa_upload_ts', _aaTs);
+    localStorage.setItem('patec_aa_upload_nome', (input.files[0]?.name||''));
+    document.getElementById('aa-completo-upload-info').textContent = '✅ ' + rows.length + ' registros publicados — ' + new Date(_aaTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_aaTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   } catch(err){
     alert('Erro ao salvar: ' + err.message);
   }
@@ -13774,6 +13767,11 @@ let _aacFiltrado = []; // dados após filtro
 
 async function aaCompletoCarregar(){
   const elAtt = document.getElementById('aac-ultima-att');
+  const _aacTs = localStorage.getItem('patec_aa_upload_ts');
+  const _aacNome = localStorage.getItem('patec_aa_upload_nome');
+  if(elAtt && _aacTs){
+    elAtt.textContent = '📋 ' + (_aacNome ? _aacNome + ' · ' : '') + new Date(_aacTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_aacTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }
   const elSem = document.getElementById('aac-sem-dados');
   const elWrap = document.getElementById('aac-tabela-wrap');
   if(elAtt) elAtt.textContent = '⏳ Carregando...';
@@ -14825,7 +14823,10 @@ async function q18HandleUpload(file){
       <div class="kc"><div class="kn" style="color:var(--vd)">${_q18Total - impedidos.length}</div><div class="kl">Aptos</div></div>`;
     status.innerHTML = `<span style="color:var(--am)">⏳ Salvando no Firebase...</span>`;
     await q18SalvarFirebase(impedidos, file.name, _q18Total);
-    status.innerHTML = `<span style="color:var(--vd)">✓ Salvo: <strong>${file.name}</strong> — ${impedidos.length} impedidos</span>`;
+    const _q18Ts = new Date().toISOString();
+    localStorage.setItem('patec_q18_upload_ts', _q18Ts);
+    localStorage.setItem('patec_q18_upload_nome', file.name);
+    status.innerHTML = `<span style="color:var(--vd)">✓ Salvo: <strong>${file.name}</strong> — ${impedidos.length} impedidos — ${new Date(_q18Ts).toLocaleDateString('pt-BR')} ${new Date(_q18Ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>`;
     q18AtualizarInfo();
   } catch(e){
     if(status) status.innerHTML = `<span style="color:var(--vm)">✗ Erro: ${e.message}</span>`;
@@ -15270,19 +15271,6 @@ function authMostrarLogin(){
 
   // Adicionar opção de acesso local se Firebase indisponível
   const box = document.querySelector('#patec-login-overlay .login-box');
-  if(box && !document.getElementById('login-local-bypass')){
-    box.insertAdjacentHTML('beforeend', `
-      <div id="login-local-bypass" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #EEE">
-        <div style="font-size:10px;color:#9AA;margin-bottom:.5rem">Acesso de emergência (Firebase offline)</div>
-        <input type="password" id="login-local-pwd" placeholder="Senha local ADM"
-          style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #DDE3EE;border-radius:8px;margin-bottom:8px;font-family:inherit"
-          onkeydown="if(event.key==='Enter')authLoginLocal()">
-        <button onclick="authLoginLocal()"
-          style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
-          Entrar sem internet
-        </button>
-      </div>`);
-  }
 }
 
 
@@ -15414,20 +15402,6 @@ async function authLogout(){
   if(_rtUnsubscribe) { _rtUnsubscribe(); _rtUnsubscribe = null; }
   if(_rtUnsubProd)   { _rtUnsubProd();   _rtUnsubProd = null; }
   try{ await firebase.auth().signOut(); } catch(e){}
-}
-
-function authLoginLocal(){
-  const pwd = document.getElementById('login-local-pwd')?.value || '';
-  if(pwd === '2105' || pwd === 'Patec@2026' || pwd === 'patec2026'){
-    _authUser  = { email: 'andre.mazzali@levegroup.com.br', uid: 'local' };
-    _authPerfil = {
-        nome: 'andre.mazzali', email: 'andre.mazzali@levegroup.com.br',
-        perfil: 'adm', permissoes: Object.keys(PERMS_SIDEBAR), colabNome: 'André'
-      };
-    authMostrarApp();
-  } else {
-    alert('Senha incorreta.');
-  }
 }
 
 // Registrar aliases para os proxies do topo
