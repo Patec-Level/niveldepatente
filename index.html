@@ -11786,8 +11786,7 @@ async function govExportar(){
   XLSX.writeFile(wb, 'Governanca_PATEC_' + dt + '.xlsx');
 }
 
-// Carregar ao iniciar
-govCarregarFirebase();
+// govCarregarFirebase chamado após login
 
 
 // ════════════════════════════════════════════
@@ -12000,9 +11999,7 @@ async function xglSalvarLinha(chave, idx){
   } catch(e){ alert('Erro ao salvar: '+e.message); }
 }
 
-// Carregar Firebase primeiro — ele tem prioridade total
-// Base embutida só serve como fallback se Firebase estiver vazio
-xglCarregarFirebase();
+// xglCarregarFirebase chamado após login
 
 
 // ════════════════════════════════════════════
@@ -15120,6 +15117,8 @@ window._authMostrarAppReal = function(){
     // Dados gerais
     paEntradaCarregarFirebase();
     aaPublicoCarregar();
+    govCarregarFirebase();
+    xglCarregarFirebase();
     fbCarregarTudo().then(()=>{
       initMetaGap();
       const pg = document.getElementById('p-radar');
