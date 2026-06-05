@@ -473,16 +473,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       loadEl.style.display='block';
       try{
         if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
-          errEl.textContent='Carregando Firebase...';
-          errEl.style.display='block';
-          var sdkOk = await loadFirebaseSDK();
-          if(!sdkOk||typeof firebase==='undefined'){
-            errEl.textContent='Erro de conexão. Verifique sua internet e tente novamente.';
-            loadEl.style.display='none';return;
-          }
-          errEl.style.display='none';
+          errEl.textContent='Firebase não carregado. Aguarde e tente novamente.';
+          errEl.style.display='block';loadEl.style.display='none';return;
         }
-        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
         console.log('LOGIN: tentando com',email);
         var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
         console.log('LOGIN OK:',result.user.email);
@@ -494,77 +487,39 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             console.log('✓ Firestore inicializado após login');
           }
         } catch(e){ console.warn('Firestore init após login:', e); }
-        var emailsAdm=['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
+        var emailsAdm=['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
         var isAdm=emailsAdm.includes(result.user.email);
-        // Perfil inicial — será enriquecido com dados do Firestore
-        var colabMap={
-          'loreanny.couto@levelgroup.com.br':'Lory',
-          'ludimila.reis@levelgroup.com.br':'Ludy',
-          'wanessa.oliveira@levelgroup.com.br':'Wanessa'
-        };
-        var colabNomeDetect = colabMap[result.user.email] || (isAdm?'André':'');
         var perfil={
-          nome:isAdm?'André':(colabNomeDetect||result.user.email.split('@')[0]),
+          nome:isAdm?'André':result.user.email.split('@')[0],
           email:result.user.email, perfil:isAdm?'adm':'colaborador',
           permissoes:Object.keys(window.PERMS_SIDEBAR||{}),
-          colabNome:colabNomeDetect
+          colabNome:isAdm?'André':''
         };
         // Salvar estado global
         window._authUser=result.user; window._authPerfil=perfil;
         window.colabLogado=perfil.colabNome;
         if(typeof authSetPerfil==='function') authSetPerfil(result.user,perfil);
-        // Buscar perfil completo do Firestore em background
-        if(window._db||getDB()){
-          try{
-            var dbP=window._db||getDB();
-            dbP.collection('usuarios').doc(result.user.uid).get().then(function(doc){
-              if(doc.exists){
-                var u=doc.data();
-                perfil.colabNome=u.colabNome||colabNomeDetect;
-                perfil.permissoes=u.permissoes||perfil.permissoes;
-                perfil.nome=u.nome||perfil.nome;
-                window._authPerfil=perfil;
-                window.colabLogado=perfil.colabNome;
-                if(typeof authSetPerfil==='function') authSetPerfil(result.user,perfil);
-                if(typeof authMontarSidebar==='function') try{authMontarSidebar();}catch(e){}
-              }
-            }).catch(function(){});
-          }catch(e){}
-        }
-        // Abrir app diretamente
-        var overlay = document.getElementById('patec-login-overlay');
-        if(overlay) overlay.style.display = 'none';
-        // Badge
-        var badge = document.getElementById('topbar-user-badge');
-        if(badge){
-          badge.style.display = 'flex';
-          var av = document.getElementById('topbar-user-avatar');
-          var nm = document.getElementById('topbar-user-nome');
-          if(av) av.textContent = perfil.nome[0].toUpperCase();
-          if(nm) nm.textContent = perfil.nome;
-        }
-        if(typeof colabLogado !== 'undefined') colabLogado = perfil.colabNome;
-        try{ if(typeof authMontarSidebar==='function') authMontarSidebar(); }catch(e){}
-        try{ if(typeof rtIniciarListener==='function') rtIniciarListener(); }catch(e){}
-        // Carregar dados Firebase
-        if(!window._fbCarregadoUmaVez){
-          window._fbCarregadoUmaVez = true;
-          try{ paEntradaCarregarFirebase(); }catch(e){}
-          try{ govCarregarFirebase(); }catch(e){}
-          try{ xglCarregarFirebase(); }catch(e){}
-          try{ initMetaGap(); }catch(e){}
-          fbCarregarTudo().then(function(){
-            try{ initMetaGap(); }catch(e){}
-            try{ aaCarregarResultadoFirebase(); }catch(e){}
-            try{ cicloCarregarAtivo().then(function(){ renderPainelEstrategico(); }); }catch(e){}
-            var pg = document.getElementById('p-radar');
-            if(pg && pg.classList.contains('active')) try{ renderRadarOperacional(); }catch(e){}
-            setTimeout(function(){ try{ alertasDisparar('auto-load'); }catch(e){}; }, 4000);
-          }).catch(function(e){ console.warn('fbCarregarTudo:', e); });
-        }
-        if(perfil.colabNome){
-          try{ prodCarregarHoje(perfil.colabNome).then(function(){ prodRenderizarPaineis(perfil.colabNome); }).catch(function(){}); }catch(e){}
-        }
+        // Abrir app diretamente sem depender de funções externas
+        setTimeout(function(){
+          // 1. Fechar tela de login
+          document.getElementById('patec-login-overlay').style.display='none';
+          // 2. Badge topbar
+          var badge=document.getElementById('topbar-user-badge');
+          if(badge){
+            badge.style.display='flex';
+            var av=document.getElementById('topbar-user-avatar');
+            var nm=document.getElementById('topbar-user-nome');
+            if(av) av.textContent=perfil.nome[0].toUpperCase();
+            if(nm) nm.textContent=perfil.nome;
+          }
+          // 3. colabLogado
+          if(typeof colabLogado!=='undefined') colabLogado=perfil.colabNome;
+          // 4. Montar sidebar e inicializar app
+          if(typeof authMontarSidebar==='function') authMontarSidebar();
+          if(typeof rtIniciarListener==='function') rtIniciarListener();
+          if(typeof prodCarregarHoje==='function' && perfil.colabNome)
+            prodCarregarHoje(perfil.colabNome).then(function(){ if(typeof prodRenderizarPaineis==='function') prodRenderizarPaineis(perfil.colabNome); }).catch(function(){});
+        }, 300);
       }catch(e){
         console.error('LOGIN ERRO:',e.code,e.message);
         loadEl.style.display='none';
@@ -575,7 +530,42 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     })()">Conectar-se</button>
     <div class="login-loading" id="login-loading">⏳ Verificando credenciais...</div>
     <span class="login-forgot" onclick="authEsqueciSenha()">Esqueci minha senha</span>
-
+    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #EEE">
+      <div style="font-size:10px;color:#9AA;margin-bottom:.5rem;text-align:center">Acesso de emergência (Firebase offline)</div>
+      <input type="password" id="login-local-pwd" placeholder="Senha local ADM"
+        style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #DDE3EE;border-radius:8px;margin-bottom:8px;font-family:inherit"
+        onkeydown="if(event.key==='Enter')document.getElementById('btn-local-entrar').click()">
+      <button id="btn-local-entrar"
+        style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit"
+        onclick="(function(){
+          var pwd=document.getElementById('login-local-pwd').value;
+          if(pwd==='2105'||pwd==='Patec@2026'||pwd==='patec2026'){
+            var u={email:'andre.mazzali@levelgroup.com.br',uid:'local'};
+            var p={nome:'André',email:'andre.mazzali@levelgroup.com.br',perfil:'adm',permissoes:Object.keys(window.PERMS_SIDEBAR||{}),colabNome:'André'};
+            window._authUser=u; window._authPerfil=p; window.colabLogado='André';
+            if(typeof authSetPerfil==='function') authSetPerfil(u,p);
+            // Fechar overlay diretamente — sem depender de Firebase
+            document.getElementById('patec-login-overlay').style.display='none';
+            // Badge topbar
+            var badge=document.getElementById('topbar-user-badge');
+            if(badge){ badge.style.display='flex'; }
+            var av=document.getElementById('topbar-user-avatar');
+            var nm=document.getElementById('topbar-user-nome');
+            if(av) av.textContent='A';
+            if(nm) nm.textContent='André';
+            // Montar sidebar após scripts carregarem
+            var tentativas=0;
+            var tentar=function(){
+              tentativas++;
+              if(typeof authMontarSidebar==='function'){ authMontarSidebar(); }
+              else if(tentativas<20){ setTimeout(tentar,300); }
+            };
+            setTimeout(tentar,300);
+          } else { alert('Senha incorreta. Use: 2105'); }
+        })()">
+        Entrar sem internet
+      </button>
+    </div>
   </div>
 </div>
 <!-- ══ fim LOGIN GLOBAL ══ -->
@@ -611,8 +601,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('fechamento-dia',this)">🔒 Fechamento do Dia</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
-  <div class="sb-sec" id="sb-adm-sec" style="display:none">ADM</div>
-  <div class="sb-it" id="sb-adm-it" onclick="go('adm',this)" style="display:none">🔐 Administração</div>
+  <div class="sb-sec">Em breve</div>
+
+  <div class="sb-sec">ADM</div>
+  <div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>
 </nav>
 <main id="mn">
 <div class="topbar">
@@ -3997,10 +3989,6 @@ async function loadFirebaseSDK(){
     const ok = await loadScriptPair(cdnSet);
     if(ok) {
       _fbLoaded=true;_fbLoading=false;
-      try{
-        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-        if(!window._db && typeof firebase.firestore==='function'){ window._db=firebase.firestore(); _db=window._db; }
-      }catch(e){}
       console.log('✓ Firebase SDK carregado');
       return true;
     }
@@ -4145,9 +4133,9 @@ async function fbCarregarTudo(){
     console.log('✓ Topbar carregada do Firebase');
   }
 
-  // Produção — todo o histórico (ciclos anteriores + atual)
+  // Produção — apenas ciclo atual
   const prods = await db.collection('producao')
-    .where('data','>=', '2026-03-01').get();
+    .where('data','>=', CICLO_NOVO_INICIO).get();
   const prodsArr = prods.docs ? prods.docs.map(d=>d.data()) : await fbGetAll('producao');
   if(prodsArr.length > 0){
     registros = prodsArr.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
@@ -4214,13 +4202,11 @@ async function fbCarregarTudo(){
   // Q18      → carrega ao abrir Consulta Q18
   // BHE      → carrega ao abrir Gestão de Jornada
   console.log('ℹ Radar, Backlog, Gov, Desfechos → lazy load (carregam ao abrir cada tela)');
-  // Carregar ciclo ativo e atualizar painéis
-  await cicloCarregarAtivo();
-  // Atualizar Painel Estratégico e Ciclo de Medição
-  renderPainelEstrategico();
+  // Atualizar Painel Estratégico se estiver aberto
   if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
     renderCardsDia();
     estPcpHoje();
+    renderPainelEstrategico();
   }
 }
 
@@ -6332,9 +6318,9 @@ function mapaAtualizarGlobais(){
 async function fbCarregarMapaDiario(){
   try{
     const db=getDB();if(!db)return;
-    // Histórico completo desde março
+    // Apenas ciclo atual — histórico de ciclos encerrados fica em ciclos_encerrados
     const snap=await db.collection('mapa_diario')
-      .where('data','>=','2026-03-01')
+      .where('data','>=',CICLO_NOVO_INICIO)
       .orderBy('data').get();
     mapaFirebase=snap.docs.map(d=>d.data());
     mapaAtualizarGlobais();
@@ -6353,9 +6339,9 @@ async function fbCarregarPCPDiario(){
       return;
     }
     _pcpFirebaseOffline = false;
-    // Histórico completo desde março
+    // Carregar apenas do ciclo atual em diante (não recarrega histórico todo)
     const snap=await db.collection('pcp_diario')
-      .where('data','>=','2026-03-01')
+      .where('data','>=', CICLO_NOVO_INICIO)
       .orderBy('data').get();
     if(snap.docs.length===0){
       pcpRecalcularTudo();
@@ -7227,10 +7213,7 @@ function admLoadFile(f){
     window._admMapaRows=rows;
     document.getElementById('adm-uz').classList.add('done');
     document.getElementById('adm-uico').textContent='✅';
-    const _bkTs = new Date().toISOString();
-    localStorage.setItem('patec_bk_upload_ts', _bkTs);
-    localStorage.setItem('patec_bk_upload_nome', f.name);
-    document.getElementById('adm-ubadge').textContent=f.name+' — '+rows.length+' linhas — ' + new Date(_bkTs).toLocaleDateString('pt-BR') + ' ' + new Date(_bkTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('adm-ubadge').textContent=f.name+' — '+rows.length+' linhas';
     document.getElementById('adm-bcruz').disabled=false;
   };r.readAsBinaryString(f);
 }
@@ -7546,22 +7529,11 @@ async function fbCarregarRadar(){
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'[]');
         if(cached.length > 0){
           _radarDados = cached;
-          // Restaurar _radarTs do localStorage se disponível
-          if(!_radarTs) _radarTs = localStorage.getItem('patec_radar_upload_ts');
           console.log('Radar (cache): '+_radarDados.length+' registros');
           const pg=document.getElementById('p-radar');
           if(pg&&pg.classList.contains('active')) renderRadarOperacional();
           const pgGov=document.getElementById('p-governanca');
           if(pgGov&&pgGov.classList.contains('active')) govInicializar();
-          // Atualizar timestamps imediatamente
-          const _tsNow = _radarTs;
-          if(_tsNow){
-            const _nomeR = localStorage.getItem('patec_radar_upload_nome');
-            const _fmt = (ts) => { const d=new Date(ts); return '📋 '+(_nomeR?_nomeR+' · ':'')+d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
-            const _rEl=document.getElementById('radar-ultima-att'); if(_rEl) _rEl.textContent=_fmt(_tsNow);
-            const _gEl=document.getElementById('gov-ultima-att'); if(_gEl) _gEl.textContent=_fmt(_tsNow);
-            const _pEl=document.getElementById('pc-ultima-att'); if(_pEl) _pEl.textContent=_fmt(_tsNow);
-          }
           return;
         }
       } catch(e){}
@@ -7571,8 +7543,7 @@ async function fbCarregarRadar(){
     const meta=await db.collection('config').doc('radar_dados').get();
     if(!meta.exists) return;
     const d=meta.data();
-    _radarTs = d.ts || d.updated_at || localStorage.getItem('patec_radar_upload_ts') || new Date().toISOString();
-    localStorage.setItem('patec_radar_upload_ts', _radarTs);
+    _radarTs=d.ts||null;
     const nChunks = d.nChunks||0;
 
     if(nChunks > 0){
@@ -7594,8 +7565,6 @@ async function fbCarregarRadar(){
     try{
       localStorage.setItem(CACHE_KEY, JSON.stringify(_radarDados));
       localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
-      // Salvar timestamp do upload junto com o cache
-      if(_radarTs) localStorage.setItem('patec_radar_upload_ts', _radarTs);
     } catch(e){ console.warn('Radar cache save:', e); }
 
     console.log('Radar: '+_radarDados.length+' registros ('+(nChunks||1)+' chunk(s))');
@@ -7692,10 +7661,6 @@ async function radarOnFile(file){
     setTimeout(()=>alertasDisparar('radar_upload'), 2000);
     if(progEl) progEl.style.display='none';
     document.getElementById('radar-upload-preview').style.display='block';
-    // Salvar timestamp do upload
-    localStorage.setItem('patec_radar_upload_ts', _radarTs);
-    localStorage.setItem('patec_radar_upload_nome', file.name);
-    if(lbl) lbl.textContent = file.name + ' — ' + new Date(_radarTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_radarTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     // Auto-salvar no Firebase imediatamente
     if(msgEl) msgEl.textContent='Salvando no Firebase...';
     if(progEl) progEl.style.display='block';
@@ -8055,8 +8020,6 @@ function renderRadarOperacional(){
   try { _renderRadarCore(); } catch(e){ console.error('[Radar] ERRO INTERNO:', e.message, e.stack); }
 }
 function _renderRadarCore(){
-  // Garantir _radarTs sempre disponível
-  if(!_radarTs) _radarTs = localStorage.getItem('patec_radar_upload_ts');
   const todosRows=_radarDados;
   const r=radarGetRegras();
 
@@ -8080,13 +8043,9 @@ function _renderRadarCore(){
   // Status calculado depois — placeholder
   let saude='',saudeIco='',saudeCor='';
   if(icoEl) icoEl.textContent='⏳';
-  if(attEl){
-    const ts = _radarTs || localStorage.getItem('patec_radar_upload_ts');
-    const nome = localStorage.getItem('patec_radar_upload_nome');
-    if(ts){
-      const d=new Date(ts);
-      attEl.textContent='📋 '+(nome?nome+' · ':'')+d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    }
+  if(attEl&&_radarTs){
+    const d=new Date(_radarTs);
+    attEl.textContent='Última atualização: '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · '+d.toLocaleDateString('pt-BR');
   }
 
   // ── CARDS conforme filtro ──
@@ -10933,10 +10892,7 @@ async function aaPublicoCarregar(){
       // Data última atualização
       const elDt = document.getElementById('aa-pub-ultima-atualizacao');
       if(elDt && d.dt){
-        const _q18TsLocal = localStorage.getItem('patec_q18_upload_ts');
-        const _q18NomeLocal = localStorage.getItem('patec_q18_upload_nome');
-        const _q18TsUsar = _q18TsLocal || d.dt;
-        elDt.textContent = '📋 ' + (_q18NomeLocal ? _q18NomeLocal + ' · ' : '') + new Date(_q18TsUsar).toLocaleDateString('pt-BR') + ' às ' + new Date(_q18TsUsar).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        elDt.textContent = 'Último processamento: ' + new Date(d.dt).toLocaleString('pt-BR');
       }
 
       aaPublicoPopularFiltros();
@@ -11088,14 +11044,7 @@ function pcInicializar(){
 
   // Atualização
   const elDt = document.getElementById('pc-ultima-att');
-  const _pcBkTs = localStorage.getItem('patec_bk_upload_ts');
-  const _pcBkNome = localStorage.getItem('patec_bk_upload_nome');
-  const _tsPc = _radarTs || localStorage.getItem('patec_radar_upload_ts') || _pcBkTs;
-  const _nomePc = localStorage.getItem('patec_radar_upload_nome') || _pcBkNome;
-  if(elDt && _tsPc){
-    const d = new Date(_tsPc);
-    elDt.textContent = '📋 ' + (_nomePc ? _nomePc + ' · ' : '') + d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  }
+  if(elDt && _radarTs) elDt.textContent = 'Base: ' + new Date(_radarTs).toLocaleString('pt-BR');
 
   pcFiltrar();
 }
@@ -11594,7 +11543,6 @@ function govSetTab(aba, btn){
 }
 
 async function govInicializar(){
-  if(!_radarTs) _radarTs = localStorage.getItem('patec_radar_upload_ts');
   // Se radar ainda não carregou, aguardar
   if(!_radarDados || !_radarDados.length){
     await fbCarregarRadar();
@@ -11635,12 +11583,7 @@ async function govInicializar(){
   `;
 
   // Atualização
-  const _govAttEl = document.getElementById('gov-ultima-att');
-  if(_govAttEl){
-    const ts = _radarTs || localStorage.getItem('patec_radar_upload_ts');
-    const nome = localStorage.getItem('patec_radar_upload_nome');
-    if(ts) _govAttEl.textContent = '📋 ' + (nome ? nome + ' · ' : '') + new Date(ts).toLocaleDateString('pt-BR') + ' às ' + new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  }
+  if(_radarTs) document.getElementById('gov-ultima-att').textContent = 'Base: ' + new Date(_radarTs).toLocaleString('pt-BR');
 
   govRenderMapa(dados);
 }
@@ -11841,7 +11784,8 @@ async function govExportar(){
   XLSX.writeFile(wb, 'Governanca_PATEC_' + dt + '.xlsx');
 }
 
-// govCarregarFirebase chamado após login
+// Carregar ao iniciar
+govCarregarFirebase();
 
 
 // ════════════════════════════════════════════
@@ -11880,11 +11824,8 @@ function xglOnFile(input){
         const k = xglChave(r.rc, r.item, r.oport, r.itemop);
         if(!vistos.has(k)){ _xglItens.push(r); vistos.add(k); adicionados++; }
       });
-      const _xglTs = new Date().toISOString();
-      localStorage.setItem('patec_xgl_upload_ts', _xglTs);
-      localStorage.setItem('patec_xgl_upload_nome', file.name);
       document.getElementById('xgl-upload-info').textContent =
-        '✓ ' + file.name + ' — ' + adicionados + ' novos itens (total: ' + _xglItens.length + ') — ' + new Date(_xglTs).toLocaleDateString('pt-BR') + ' ' + new Date(_xglTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        '✓ ' + file.name + ' — ' + adicionados + ' novos itens adicionados (total: ' + _xglItens.length + ')';
       xglSalvarItensFirebase();
       xglRender();
     } catch(err){
@@ -12057,7 +11998,9 @@ async function xglSalvarLinha(chave, idx){
   } catch(e){ alert('Erro ao salvar: '+e.message); }
 }
 
-// xglCarregarFirebase chamado após login
+// Carregar Firebase primeiro — ele tem prioridade total
+// Base embutida só serve como fallback se Firebase estiver vazio
+xglCarregarFirebase();
 
 
 // ════════════════════════════════════════════
@@ -13772,10 +13715,7 @@ async function aaCompletoSalvar(){
       total: rows.length,
       chunks: Math.ceil(rows.length/CHUNK)
     });
-    const _aaTs = new Date().toISOString();
-    localStorage.setItem('patec_aa_upload_ts', _aaTs);
-    localStorage.setItem('patec_aa_upload_nome', (input.files[0]?.name||''));
-    document.getElementById('aa-completo-upload-info').textContent = '✅ ' + rows.length + ' registros publicados — ' + new Date(_aaTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_aaTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('aa-completo-upload-info').textContent = '✅ Salvo com sucesso! ' + rows.length + ' registros publicados.';
   } catch(err){
     alert('Erro ao salvar: ' + err.message);
   }
@@ -13786,11 +13726,6 @@ let _aacFiltrado = []; // dados após filtro
 
 async function aaCompletoCarregar(){
   const elAtt = document.getElementById('aac-ultima-att');
-  const _aacTs = localStorage.getItem('patec_aa_upload_ts');
-  const _aacNome = localStorage.getItem('patec_aa_upload_nome');
-  if(elAtt && _aacTs){
-    elAtt.textContent = '📋 ' + (_aacNome ? _aacNome + ' · ' : '') + new Date(_aacTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_aacTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  }
   const elSem = document.getElementById('aac-sem-dados');
   const elWrap = document.getElementById('aac-tabela-wrap');
   if(elAtt) elAtt.textContent = '⏳ Carregando...';
@@ -14842,10 +14777,7 @@ async function q18HandleUpload(file){
       <div class="kc"><div class="kn" style="color:var(--vd)">${_q18Total - impedidos.length}</div><div class="kl">Aptos</div></div>`;
     status.innerHTML = `<span style="color:var(--am)">⏳ Salvando no Firebase...</span>`;
     await q18SalvarFirebase(impedidos, file.name, _q18Total);
-    const _q18Ts = new Date().toISOString();
-    localStorage.setItem('patec_q18_upload_ts', _q18Ts);
-    localStorage.setItem('patec_q18_upload_nome', file.name);
-    status.innerHTML = `<span style="color:var(--vd)">✓ Salvo: <strong>${file.name}</strong> — ${impedidos.length} impedidos — ${new Date(_q18Ts).toLocaleDateString('pt-BR')} ${new Date(_q18Ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>`;
+    status.innerHTML = `<span style="color:var(--vd)">✓ Salvo: <strong>${file.name}</strong> — ${impedidos.length} impedidos</span>`;
     q18AtualizarInfo();
   } catch(e){
     if(status) status.innerHTML = `<span style="color:var(--vm)">✗ Erro: ${e.message}</span>`;
@@ -15156,11 +15088,8 @@ window._authMostrarAppReal = function(){
   if(window._authPerfil && !_authPerfil) _authPerfil = window._authPerfil;
   if(window.colabLogado && !colabLogado)  colabLogado = window.colabLogado;
 
-  // Fechar overlay — garantido primeiro
-  const overlay = document.getElementById('patec-login-overlay');
-  if(overlay) overlay.style.display = 'none';
-  // Montar sidebar com proteção
-  try{ authMontarSidebar(); }catch(e){ console.warn('sidebar:', e); }
+  document.getElementById('patec-login-overlay').style.display = 'none';
+  authMontarSidebar();
 
   // Badge
   const badge = document.getElementById('topbar-user-badge');
@@ -15189,8 +15118,6 @@ window._authMostrarAppReal = function(){
     // Dados gerais
     paEntradaCarregarFirebase();
     aaPublicoCarregar();
-    govCarregarFirebase();
-    xglCarregarFirebase();
     fbCarregarTudo().then(()=>{
       initMetaGap();
       const pg = document.getElementById('p-radar');
@@ -15228,7 +15155,7 @@ async function authInit(){
       if(user){
         _authUser = user;
         // Definir perfil mínimo imediatamente — não esperar Firestore
-        const emailsAdm = ['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
+        const emailsAdm = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
         const isAdm = emailsAdm.includes(user.email);
         _authPerfil = {
           nome: user.email.split('@')[0],
@@ -15251,7 +15178,7 @@ async function authInit(){
 }
 
 async function authCarregarPerfil(user){
-  const emailsAdm = ['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
+  const emailsAdm = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
   const isAdm = emailsAdm.includes(user.email);
 
   // Definir perfil mínimo imediatamente (sem esperar Firestore)
@@ -15290,6 +15217,19 @@ function authMostrarLogin(){
 
   // Adicionar opção de acesso local se Firebase indisponível
   const box = document.querySelector('#patec-login-overlay .login-box');
+  if(box && !document.getElementById('login-local-bypass')){
+    box.insertAdjacentHTML('beforeend', `
+      <div id="login-local-bypass" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #EEE">
+        <div style="font-size:10px;color:#9AA;margin-bottom:.5rem">Acesso de emergência (Firebase offline)</div>
+        <input type="password" id="login-local-pwd" placeholder="Senha local ADM"
+          style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #DDE3EE;border-radius:8px;margin-bottom:8px;font-family:inherit"
+          onkeydown="if(event.key==='Enter')authLoginLocal()">
+        <button onclick="authLoginLocal()"
+          style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+          Entrar sem internet
+        </button>
+      </div>`);
+  }
 }
 
 
@@ -15303,7 +15243,7 @@ function authMontarSidebar(){
 
   // Detectar ADM — dupla verificação: perfil salvo OU e-mail conhecido
   const emailAtual = _authUser?.email || '';
-  const emailsAdm  = ['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
+  const emailsAdm  = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
   const isAdm = _authPerfil?.perfil === 'adm' || emailsAdm.includes(emailAtual);
   const perms = _authPerfil?.permissoes || Object.keys(PERMS_SIDEBAR);
 
@@ -15421,6 +15361,20 @@ async function authLogout(){
   if(_rtUnsubscribe) { _rtUnsubscribe(); _rtUnsubscribe = null; }
   if(_rtUnsubProd)   { _rtUnsubProd();   _rtUnsubProd = null; }
   try{ await firebase.auth().signOut(); } catch(e){}
+}
+
+function authLoginLocal(){
+  const pwd = document.getElementById('login-local-pwd')?.value || '';
+  if(pwd === '2105' || pwd === 'Patec@2026' || pwd === 'patec2026'){
+    _authUser  = { email: 'andre.mazzali@levelgroup.com.br', uid: 'local' };
+    _authPerfil = {
+        nome: 'andre.mazzali', email: 'andre.mazzali@levelgroup.com.br',
+        perfil: 'adm', permissoes: Object.keys(PERMS_SIDEBAR), colabNome: 'André'
+      };
+    authMostrarApp();
+  } else {
+    alert('Senha incorreta.');
+  }
 }
 
 // Registrar aliases para os proxies do topo
