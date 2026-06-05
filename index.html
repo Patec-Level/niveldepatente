@@ -4112,6 +4112,11 @@ async function fbCarregarTudo(){
   const db = getDB();
   if(!db){ console.error('Firebase: getDB retornou null após SDK load'); return; }
   window._db = db; // Registrar globalmente para acesso em qualquer contexto
+  // Notificar módulos que aguardam o Firebase
+  window._fbPronto = true;
+  if(typeof usrCarregarLista === 'function' && document.getElementById('adm-usuarios')?.style.display === 'block'){
+    setTimeout(usrCarregarLista, 500);
+  }
 
   // Topbar
   const topbar = await fbGet('config','topbar');
@@ -15471,10 +15476,9 @@ async function usrCarregarLista(){
   const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
-  if(loadEl){ loadEl.style.display = 'block'; loadEl.innerHTML = 'Carregando... <button class="btn btn-s" style="font-size:10px;margin-left:8px" onclick="usrCarregarLista()">↺</button>'; }
+  if(loadEl) loadEl.innerHTML = 'Carregando...';
 
   try{
-    // Usar firebase.firestore() diretamente - mais confiável
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     const db = firebase.firestore();
     const snap = await db.collection('usuarios').get();
