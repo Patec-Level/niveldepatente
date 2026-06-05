@@ -496,16 +496,41 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         } catch(e){ console.warn('Firestore init após login:', e); }
         var emailsAdm=['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
         var isAdm=emailsAdm.includes(result.user.email);
+        // Perfil inicial — será enriquecido com dados do Firestore
+        var colabMap={
+          'loreanny.couto@levelgroup.com.br':'Lory',
+          'ludimila.reis@levelgroup.com.br':'Ludy',
+          'wanessa.oliveira@levelgroup.com.br':'Wanessa'
+        };
+        var colabNomeDetect = colabMap[result.user.email] || (isAdm?'André':'');
         var perfil={
-          nome:isAdm?'André':result.user.email.split('@')[0],
+          nome:isAdm?'André':(colabNomeDetect||result.user.email.split('@')[0]),
           email:result.user.email, perfil:isAdm?'adm':'colaborador',
           permissoes:Object.keys(window.PERMS_SIDEBAR||{}),
-          colabNome:isAdm?'André':''
+          colabNome:colabNomeDetect
         };
         // Salvar estado global
         window._authUser=result.user; window._authPerfil=perfil;
         window.colabLogado=perfil.colabNome;
         if(typeof authSetPerfil==='function') authSetPerfil(result.user,perfil);
+        // Buscar perfil completo do Firestore em background
+        if(window._db||getDB()){
+          try{
+            var dbP=window._db||getDB();
+            dbP.collection('usuarios').doc(result.user.uid).get().then(function(doc){
+              if(doc.exists){
+                var u=doc.data();
+                perfil.colabNome=u.colabNome||colabNomeDetect;
+                perfil.permissoes=u.permissoes||perfil.permissoes;
+                perfil.nome=u.nome||perfil.nome;
+                window._authPerfil=perfil;
+                window.colabLogado=perfil.colabNome;
+                if(typeof authSetPerfil==='function') authSetPerfil(result.user,perfil);
+                if(typeof authMontarSidebar==='function') try{authMontarSidebar();}catch(e){}
+              }
+            }).catch(function(){});
+          }catch(e){}
+        }
         // Abrir app diretamente
         var overlay = document.getElementById('patec-login-overlay');
         if(overlay) overlay.style.display = 'none';
@@ -623,8 +648,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
   <div class="sb-sec">Em breve</div>
 
-  <div class="sb-sec">ADM</div>
-  <div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>
+  <div class="sb-sec" id="sb-adm-sec" style="display:none">ADM</div>
+  <div class="sb-it" id="sb-adm-it" onclick="go('adm',this)" style="display:none">🔐 Administração</div>
 </nav>
 <main id="mn">
 <div class="topbar">
