@@ -9684,9 +9684,9 @@ const MAPA_ABR2026 = {
 initMetaGap();
 
 
-// Carregar Firebase e aplicar na topbar
+// Carregar Firebase e aplicar na topbar — chamado após login em authMostrarAppReal
 paEntradaCarregarFirebase();
-fbCarregarTudo().then(()=>{ initMetaGap(); const pg=document.getElementById('p-radar'); if(pg&&pg.classList.contains('active')) renderRadarOperacional(); setTimeout(()=>alertasDisparar('auto-load'), 4000); });
+// fbCarregarTudo() agora é chamado dentro de authMostrarAppReal após login bem-sucedido
 
 // ════════════════════════════════════════════
 // PLANO DE AÇÃO
@@ -15106,6 +15106,17 @@ window._authMostrarAppReal = function(){
 
   rtIniciarListener();
 
+  // Carregar dados Firebase (só uma vez após login)
+  if(!window._fbCarregadoUmaVez){
+    window._fbCarregadoUmaVez = true;
+    fbCarregarTudo().then(()=>{
+      initMetaGap();
+      const pg = document.getElementById('p-radar');
+      if(pg && pg.classList.contains('active')) renderRadarOperacional();
+      setTimeout(()=>alertasDisparar('auto-load'), 4000);
+    }).catch(e=>console.warn('fbCarregarTudo:', e));
+  }
+
   const colab = _authPerfil?.colabNome || colabLogado;
   if(colab){
     colabLogado = colab;
@@ -15413,25 +15424,21 @@ async function usrCadastrar(){
   await loadFirebaseSDK();
   if(!firebase.apps.length) try{ firebase.initializeApp(FIREBASE_CONFIG); }catch(e){}
   // Aguardar Firestore ficar disponível
-  let db = getDB();
+  let db = window._db || getDB();
   if(!db){
     for(let i=0;i<10;i++){
       await new Promise(r=>setTimeout(r,500));
-      db = getDB();
+      db = window._db || getDB();
       if(db) break;
     }
   }
   if(!db){
     errEl.textContent = 'Firebase não disponível. Recarregue a página e tente novamente.';
-    return;
+    errEl.style.display = 'inline'; return;
   }
   errEl.style.display = 'none';
 
-  const db = window._db || getDB();
-  if(!db){
-    errEl.textContent = 'Firebase não disponível. Recarregue a página.';
-    errEl.style.display = 'inline'; return;
-  }
+  const checks = document.querySelectorAll('#usr-novo-perms input[type=checkbox]:checked');
   const perms = Array.from(checks).map(c=>c.value);
   const colabNomes = ['André','Lory','Ludy','Wanessa'];
   const colabNome = colabNomes.find(n => nome.toLowerCase().includes(n.toLowerCase())) || '';
@@ -15481,7 +15488,7 @@ async function usrCarregarLista(){
   try{
     console.log('usrCarregarLista: iniciando...');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    const db = firebase.firestore();
+    const db = window._db || firebase.firestore();
     console.log('usrCarregarLista: db ok, buscando...');
     const snap = await db.collection('usuarios').get();
     console.log('usrCarregarLista: snap ok, docs:', snap.docs.length);
