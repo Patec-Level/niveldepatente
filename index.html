@@ -15479,13 +15479,17 @@ async function usrCarregarLista(){
   if(loadEl) loadEl.innerHTML = 'Carregando...';
 
   try{
+    console.log('usrCarregarLista: iniciando...');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     const db = firebase.firestore();
+    console.log('usrCarregarLista: db ok, buscando...');
     const snap = await db.collection('usuarios').get();
+    console.log('usrCarregarLista: snap ok, docs:', snap.docs.length);
     const users = snap.docs.map(d=>({uid:d.id,...d.data()}));
 
-    if(loadEl) loadEl.style.display = 'none';
-    if(!users.length){ listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum usuário cadastrado ainda. Use o formulário acima para adicionar.</div>'; return; }
+    if(loadEl){ loadEl.style.display = 'none'; loadEl.innerHTML=''; }
+    listaEl.style.display = 'block';
+    if(!users.length){ listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum usuário cadastrado ainda.</div>'; return; }
 
     listaEl.innerHTML = users.map(u=>`
       <div style="display:flex;align-items:center;gap:10px;padding:.875rem;background:var(--cin);border-radius:9px;border:1px solid var(--brd);margin-bottom:8px;flex-wrap:wrap">
