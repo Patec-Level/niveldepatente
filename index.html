@@ -4144,9 +4144,9 @@ async function fbCarregarTudo(){
     console.log('✓ Topbar carregada do Firebase');
   }
 
-  // Produção — apenas ciclo atual
+  // Produção — todo o histórico (ciclos anteriores + atual)
   const prods = await db.collection('producao')
-    .where('data','>=', CICLO_NOVO_INICIO).get();
+    .where('data','>=', '2026-03-01').get();
   const prodsArr = prods.docs ? prods.docs.map(d=>d.data()) : await fbGetAll('producao');
   if(prodsArr.length > 0){
     registros = prodsArr.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
@@ -6331,9 +6331,9 @@ function mapaAtualizarGlobais(){
 async function fbCarregarMapaDiario(){
   try{
     const db=getDB();if(!db)return;
-    // Apenas ciclo atual — histórico de ciclos encerrados fica em ciclos_encerrados
+    // Histórico completo desde março
     const snap=await db.collection('mapa_diario')
-      .where('data','>=',CICLO_NOVO_INICIO)
+      .where('data','>=','2026-03-01')
       .orderBy('data').get();
     mapaFirebase=snap.docs.map(d=>d.data());
     mapaAtualizarGlobais();
@@ -6352,9 +6352,9 @@ async function fbCarregarPCPDiario(){
       return;
     }
     _pcpFirebaseOffline = false;
-    // Carregar apenas do ciclo atual em diante (não recarrega histórico todo)
+    // Histórico completo desde março
     const snap=await db.collection('pcp_diario')
-      .where('data','>=', CICLO_NOVO_INICIO)
+      .where('data','>=','2026-03-01')
       .orderBy('data').get();
     if(snap.docs.length===0){
       pcpRecalcularTudo();
