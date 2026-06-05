@@ -534,10 +534,25 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           if(pwd==='2105'||pwd==='Patec@2026'||pwd==='patec2026'){
             var u={email:'andre.mazzali@levegroup.com.br',uid:'local'};
             var p={nome:'André',email:'andre.mazzali@levegroup.com.br',perfil:'adm',permissoes:Object.keys(window.PERMS_SIDEBAR||{}),colabNome:'André'};
-            window._authUser=u; window._authPerfil=p;
+            window._authUser=u; window._authPerfil=p; window.colabLogado='André';
             if(typeof authSetPerfil==='function') authSetPerfil(u,p);
-            if(window.authMostrarApp) window.authMostrarApp();
-            else document.getElementById('patec-login-overlay').style.display='none';
+            // Fechar overlay diretamente — sem depender de Firebase
+            document.getElementById('patec-login-overlay').style.display='none';
+            // Badge topbar
+            var badge=document.getElementById('topbar-user-badge');
+            if(badge){ badge.style.display='flex'; }
+            var av=document.getElementById('topbar-user-avatar');
+            var nm=document.getElementById('topbar-user-nome');
+            if(av) av.textContent='A';
+            if(nm) nm.textContent='André';
+            // Montar sidebar após scripts carregarem
+            var tentativas=0;
+            var tentar=function(){
+              tentativas++;
+              if(typeof authMontarSidebar==='function'){ authMontarSidebar(); }
+              else if(tentativas<20){ setTimeout(tentar,300); }
+            };
+            setTimeout(tentar,300);
           } else { alert('Senha incorreta. Use: 2105'); }
         })()">
         Entrar sem internet
