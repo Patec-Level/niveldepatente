@@ -7571,10 +7571,8 @@ async function fbCarregarRadar(){
     const meta=await db.collection('config').doc('radar_dados').get();
     if(!meta.exists) return;
     const d=meta.data();
-    _radarTs = d.ts || d.updated_at || null;
-    // Se não tem ts no Firebase, usar o momento do carregamento como fallback
-    if(!_radarTs && d.n > 0) _radarTs = new Date().toISOString();
-    if(_radarTs) localStorage.setItem('patec_radar_upload_ts', _radarTs);
+    _radarTs = d.ts || d.updated_at || localStorage.getItem('patec_radar_upload_ts') || new Date().toISOString();
+    localStorage.setItem('patec_radar_upload_ts', _radarTs);
     const nChunks = d.nChunks||0;
 
     if(nChunks > 0){
@@ -7596,6 +7594,8 @@ async function fbCarregarRadar(){
     try{
       localStorage.setItem(CACHE_KEY, JSON.stringify(_radarDados));
       localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+      // Salvar timestamp do upload junto com o cache
+      if(_radarTs) localStorage.setItem('patec_radar_upload_ts', _radarTs);
     } catch(e){ console.warn('Radar cache save:', e); }
 
     console.log('Radar: '+_radarDados.length+' registros ('+(nChunks||1)+' chunk(s))');
@@ -8055,6 +8055,8 @@ function renderRadarOperacional(){
   try { _renderRadarCore(); } catch(e){ console.error('[Radar] ERRO INTERNO:', e.message, e.stack); }
 }
 function _renderRadarCore(){
+  // Garantir _radarTs sempre disponível
+  if(!_radarTs) _radarTs = localStorage.getItem('patec_radar_upload_ts');
   const todosRows=_radarDados;
   const r=radarGetRegras();
 
@@ -11592,6 +11594,7 @@ function govSetTab(aba, btn){
 }
 
 async function govInicializar(){
+  if(!_radarTs) _radarTs = localStorage.getItem('patec_radar_upload_ts');
   // Se radar ainda não carregou, aguardar
   if(!_radarDados || !_radarDados.length){
     await fbCarregarRadar();
