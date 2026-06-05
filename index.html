@@ -4013,6 +4013,8 @@ function getDB(){
 }
 
 async function getDBAsync(){
+  // Verificar window._db primeiro
+  if(window._db) { _db = window._db; return _db; }
   if(_db) return _db;
   // Aguardar SDK carregar
   if(!_fbLoaded){
@@ -4021,11 +4023,12 @@ async function getDBAsync(){
   }
   // Tentar até 5 segundos
   for(let i=0;i<10;i++){
+    if(window._db) { _db = window._db; return _db; }
     const db = getDB();
     if(db) return db;
     await new Promise(r=>setTimeout(r,500));
   }
-  return null;
+  return window._db || null;
 }
 
 async function fbSet(col, docId, dados){
