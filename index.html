@@ -13,8 +13,8 @@
 function authFazerLogin(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); else { var t=document.getElementById('login-loading'); if(t)t.style.display='block'; setTimeout(function(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); },1500); } }
 function authEsqueciSenha(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); else setTimeout(function(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); },1500); }
 function authLogout(){ if(typeof window._authLogoutReal==='function') window._authLogoutReal(); }
-function usrCarregarLista(){ if(typeof window._usrCarregarListaReal==='function') window._usrCarregarListaReal(); else setTimeout(usrCarregarLista, 300); }
-function usrCadastrar(){ if(typeof window._usrCadastrarReal==='function') window._usrCadastrarReal(); else setTimeout(usrCadastrar, 300); }
+function usrCarregarLista(){ if(typeof window._usrCarregarListaReal==='function') window._usrCarregarListaReal(); }
+function usrCadastrar(){ if(typeof window._usrCadastrarReal==='function') window._usrCadastrarReal(); }
 function usrResetarSenha(e,n){ if(typeof window._usrResetarSenhaReal==='function') window._usrResetarSenhaReal(e,n); }
 function usrRemover(u,n){ if(typeof window._usrRemoverReal==='function') window._usrRemoverReal(u,n); }
 function usrEditarPerms(u,n,p){ if(typeof window._usrEditarPermsReal==='function') window._usrEditarPermsReal(u,n,p); }
@@ -15411,7 +15411,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
 // ══════════════════════════════════════════════════════
 
 async function usrCadastrar(){
-  window._usrCadastrarReal = usrCadastrar;
   const nome  = document.getElementById('usr-novo-nome').value.trim();
   const email = document.getElementById('usr-novo-email').value.trim();
   const senha = document.getElementById('usr-novo-senha').value.trim();
@@ -15478,7 +15477,6 @@ async function usrCadastrar(){
 }
 
 async function usrCarregarLista(){
-  window._usrCarregarListaReal = usrCarregarLista;
   const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
@@ -15518,6 +15516,10 @@ async function usrCarregarLista(){
     if(loadEl){ loadEl.style.display='block'; loadEl.innerHTML=`<span style="color:var(--vm)">⚠ Erro: ${e.message} <button class="btn btn-s" style="font-size:10px;margin-left:8px" onclick="usrCarregarLista()">↺ Tentar novamente</button></span>`; }
   }
 }
+
+// Registrar todas as funções de usuário imediatamente
+window._usrCadastrarReal    = usrCadastrar;
+window._usrCarregarListaReal = usrCarregarLista;
 
 async function usrResetarSenha(email, nome){
   window._usrResetarSenhaReal = usrResetarSenha;
