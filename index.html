@@ -473,12 +473,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       loadEl.style.display='block';
       try{
         if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
-          errEl.textContent='Carregando...';errEl.style.display='block';
-          const sdkOk=await loadFirebaseSDK();
-          if(!sdkOk){errEl.textContent='Erro de conexão. Verifique sua internet.';loadEl.style.display='none';return;}
-          errEl.style.display='none';
+          errEl.textContent='Firebase não carregado. Aguarde e tente novamente.';
+          errEl.style.display='block';loadEl.style.display='none';return;
         }
-        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
         console.log('LOGIN: tentando com',email);
         var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
         console.log('LOGIN OK:',result.user.email);
@@ -1067,49 +1064,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               </div>
             </div>
             <div style="display:flex;gap:8px;align-items:center">
-              <button class="btn btn-p" onclick="(async()=>{
-                const nome=document.getElementById('usr-novo-nome').value.trim();
-                const email=document.getElementById('usr-novo-email').value.trim();
-                const senha=document.getElementById('usr-novo-senha').value.trim();
-                const okEl=document.getElementById('usr-novo-ok');
-                const errEl=document.getElementById('usr-novo-err');
-                okEl.style.display='none';errEl.style.display='none';
-                if(!nome||!email||!senha){errEl.textContent='Preencha nome, e-mail e senha.';errEl.style.display='inline';return;}
-                errEl.textContent='⏳ Cadastrando...';errEl.style.display='inline';
-                try{
-                  if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-                  const db=window._db||firebase.firestore();
-                  if(!window._db)window._db=db;
-                  const checks=document.querySelectorAll('#usr-novo-perms input[type=checkbox]:checked');
-                  const perms=Array.from(checks).map(c=>c.value);
-                  const colabMap={lory:'Lory',ludy:'Ludy',wanessa:'Wanessa',andre:'André'};
-                  const colabNome=Object.entries(colabMap).find(([k])=>nome.toLowerCase().includes(k))?.[1]||'';
-                  const resp=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+FIREBASE_CONFIG.apiKey,{
-                    method:'POST',headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({email,password:senha,displayName:nome,returnSecureToken:true})
-                  });
-                  const data=await resp.json();
-                  if(data.error)throw new Error(data.error.message);
-                  await db.collection('usuarios').doc(data.localId).set({
-                    nome,email,perfil:'colaborador',permissoes:perms,colabNome,
-                    criadoEm:new Date().toISOString(),criadoPor:window._authUser?.email||'adm'
-                  });
-                  okEl.textContent='✓ '+nome+' cadastrado!';okEl.style.display='inline';errEl.style.display='none';
-                  document.getElementById('usr-novo-nome').value='';
-                  document.getElementById('usr-novo-email').value='';
-                  document.getElementById('usr-novo-senha').value='';
-                  const loadEl=document.getElementById('usr-lista-loading');
-                  const listaEl=document.getElementById('usr-lista');
-                  if(loadEl)loadEl.innerHTML='⏳ Atualizando...';
-                  const snap=await db.collection('usuarios').get();
-                  if(loadEl)loadEl.style.display='none';
-                  if(listaEl){listaEl.style.display='block';listaEl.innerHTML=snap.docs.map(d=>{const u={uid:d.id,...d.data()};return '<div style="display:flex;align-items:center;gap:10px;padding:.75rem;background:var(--cin);border-radius:9px;border:1px solid var(--brd);margin-bottom:8px"><div style="width:32px;height:32px;border-radius:50%;background:var(--azm);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">'+(u.nome||'?')[0].toUpperCase()+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--az)">'+(u.nome||'—')+'</div><div style="font-size:11px;color:var(--tx2)">'+(u.email||'—')+'</div></div></div>';}).join('');}
-                }catch(e){
-                  const m={'EMAIL_EXISTS':'E-mail já cadastrado.','WEAK_PASSWORD : Password should be at least 6 characters':'Senha fraca (mín. 6 caracteres).'};
-                  errEl.textContent=m[e.message]||'Erro: '+e.message;errEl.style.display='inline';
-                }
-              })()">✓ Cadastrar usuário</button>
-              <span id="usr-novo-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none"></span>
+              <button class="btn btn-p" onclick="usrCadastrar()">✓ Cadastrar usuário</button>
+              <span id="usr-novo-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Usuário cadastrado!</span>
               <span id="usr-novo-err" style="font-size:11px;color:var(--vm);font-weight:600;display:none"></span>
             </div>
           </div>
@@ -1117,21 +1073,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <!-- Lista de usuários -->
           <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.75rem">📋 Usuários cadastrados</div>
           <div id="usr-lista-loading" style="font-size:11px;color:var(--tx2)">
-            <button class="btn btn-s" style="font-size:10px" onclick="(async()=>{
-              const loadEl=document.getElementById('usr-lista-loading');
-              const listaEl=document.getElementById('usr-lista');
-              loadEl.innerHTML='⏳ Buscando...';
-              try{
-                if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-                const db=window._db||firebase.firestore();
-                if(!window._db)window._db=db;
-                const snap=await db.collection('usuarios').get();
-                loadEl.style.display='none';
-                listaEl.style.display='block';
-                if(!snap.docs.length){listaEl.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum usuário cadastrado.</div>';return;}
-                listaEl.innerHTML=snap.docs.map(d=>{const u={uid:d.id,...d.data()};return '<div style="display:flex;align-items:center;gap:10px;padding:.75rem;background:var(--cin);border-radius:9px;border:1px solid var(--brd);margin-bottom:8px"><div style="width:32px;height:32px;border-radius:50%;background:var(--azm);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">'+(u.nome||'?')[0].toUpperCase()+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--az)">'+(u.nome||'—')+'</div><div style="font-size:11px;color:var(--tx2)">'+(u.email||'—')+'</div></div></div>';}).join('');
-              }catch(e){loadEl.innerHTML='⚠ Erro: '+e.message;}
-            })()">↺ Atualizar lista</button>
+            Carregando... <button class="btn btn-s" style="font-size:10px;margin-left:8px" onclick="window._db ? usrCarregarLista() : location.reload()">↺ Atualizar</button>
           </div>
           <div id="usr-lista"></div>
         </div>
@@ -4047,10 +3989,6 @@ async function loadFirebaseSDK(){
     const ok = await loadScriptPair(cdnSet);
     if(ok) {
       _fbLoaded=true;_fbLoading=false;
-      try{
-        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-        if(!window._db && typeof firebase.firestore==='function'){ window._db=firebase.firestore(); _db=window._db; }
-      }catch(e){}
       console.log('✓ Firebase SDK carregado');
       return true;
     }
@@ -4264,11 +4202,13 @@ async function fbCarregarTudo(){
   // Q18      → carrega ao abrir Consulta Q18
   // BHE      → carrega ao abrir Gestão de Jornada
   console.log('ℹ Radar, Backlog, Gov, Desfechos → lazy load (carregam ao abrir cada tela)');
-  // Atualizar Painel Estratégico se estiver aberto
+  // Carregar ciclo ativo e atualizar painéis
+  await cicloCarregarAtivo();
+  // Atualizar Painel Estratégico e Ciclo de Medição
+  renderPainelEstrategico();
   if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
     renderCardsDia();
     estPcpHoje();
-    renderPainelEstrategico();
   }
 }
 
@@ -8895,6 +8835,7 @@ function _renderResultadoColab(c){
   };
   if(!ciclos_historico.find(c=>c.id===_s.id)){
     ciclos_historico.unshift(_s);
+    // Salvar snapshot só após autenticação
     window._pendingSnapshotMarAbr = _s;
   }
 })();
@@ -9401,7 +9342,8 @@ function gerarHTMLAtualizado(){
   }catch(e){}
 })();
 
-// initMetaGap após login
+// Carregar valores salvos na topbar ao iniciar
+initMetaGap();
 
 
 // ════ BANCO HE — por período/mês ════
@@ -9745,7 +9687,7 @@ const MAPA_ABR2026 = {
 initMetaGap();
 
 
-// Firebase carregado após login
+// Firebase carregado após login em authMostrarAppReal
 
 // ════════════════════════════════════════════
 // PLANO DE AÇÃO
@@ -10925,7 +10867,9 @@ function aaExportar(){
   XLSX.writeFile(wb, `Analista_Automatico_${dt}.xlsx`);
 }
 
-// aaCarregarResultadoFirebase após login
+// Carregar dados ao iniciar
+// Carregar resultado do Analista Automático ao iniciar (backlog já carregado via fbCarregarTudo)
+aaCarregarResultadoFirebase();
 
 
 // ════════════════════════════════════════════
@@ -11032,7 +10976,7 @@ function aaPublicoAtualizar(){
   aaPublicoCarregar();
 }
 
-// aaPublicoCarregar após login
+// aaPublicoCarregar chamado após login (ver authMostrarAppReal)
 
 
 // ════════════════════════════════════════════
@@ -11842,7 +11786,8 @@ async function govExportar(){
   XLSX.writeFile(wb, 'Governanca_PATEC_' + dt + '.xlsx');
 }
 
-// govCarregarFirebase após login
+// Carregar ao iniciar
+govCarregarFirebase();
 
 
 // ════════════════════════════════════════════
@@ -12055,7 +12000,9 @@ async function xglSalvarLinha(chave, idx){
   } catch(e){ alert('Erro ao salvar: '+e.message); }
 }
 
-// xglCarregarFirebase após login
+// Carregar Firebase primeiro — ele tem prioridade total
+// Base embutida só serve como fallback se Firebase estiver vazio
+xglCarregarFirebase();
 
 
 // ════════════════════════════════════════════
@@ -15159,24 +15106,26 @@ window._authMostrarAppReal = function(){
 
   rtIniciarListener();
 
+  // Todos os carregamentos Firebase centralizados aqui, só uma vez após login
   if(!window._fbCarregadoUmaVez){
     window._fbCarregadoUmaVez = true;
+    // Snapshot Mar/Abr pendente
     if(window._pendingSnapshotMarAbr){
-      const _s=window._pendingSnapshotMarAbr; window._pendingSnapshotMarAbr=null;
-      fbSet('ciclos_encerrados',_s.id,_s).catch(e=>console.warn('Snapshot:',e));
+      const _s = window._pendingSnapshotMarAbr;
+      window._pendingSnapshotMarAbr = null;
+      fbSet('ciclos_encerrados', _s.id, _s)
+        .then(()=>console.log('Snapshot Mar/Abr salvo'))
+        .catch(e=>console.warn('Snapshot Mar/Abr:', e));
     }
+    // Dados gerais
     paEntradaCarregarFirebase();
     aaPublicoCarregar();
-    govCarregarFirebase();
-    xglCarregarFirebase();
-    initMetaGap();
     fbCarregarTudo().then(()=>{
       initMetaGap();
-      aaCarregarResultadoFirebase();
-      const pg=document.getElementById('p-radar');
-      if(pg&&pg.classList.contains('active')) renderRadarOperacional();
-      setTimeout(()=>alertasDisparar('auto-load'),4000);
-    }).catch(e=>console.warn('fbCarregarTudo:',e));
+      const pg = document.getElementById('p-radar');
+      if(pg && pg.classList.contains('active')) renderRadarOperacional();
+      setTimeout(()=>alertasDisparar('auto-load'), 4000);
+    }).catch(e=>console.warn('fbCarregarTudo:', e));
   }
 
   const colab = _authPerfil?.colabNome || colabLogado;
@@ -15485,26 +15434,21 @@ async function usrCadastrar(){
   // Garantir Firebase carregado
   await loadFirebaseSDK();
   if(!firebase.apps.length) try{ firebase.initializeApp(FIREBASE_CONFIG); }catch(e){}
-  // Aguardar Firestore ficar disponível
-  let db = getDB();
+  let db = window._db || getDB();
   if(!db){
     for(let i=0;i<10;i++){
       await new Promise(r=>setTimeout(r,500));
-      db = getDB();
+      db = window._db || getDB();
       if(db) break;
     }
   }
   if(!db){
     errEl.textContent = 'Firebase não disponível. Recarregue a página e tente novamente.';
-    return;
+    errEl.style.display = 'inline'; return;
   }
   errEl.style.display = 'none';
 
-  const db = window._db || getDB();
-  if(!db){
-    errEl.textContent = 'Firebase não disponível. Recarregue a página.';
-    errEl.style.display = 'inline'; return;
-  }
+  const checks = document.querySelectorAll('#usr-novo-perms input[type=checkbox]:checked');
   const perms = Array.from(checks).map(c=>c.value);
   const colabNomes = ['André','Lory','Ludy','Wanessa'];
   const colabNome = colabNomes.find(n => nome.toLowerCase().includes(n.toLowerCase())) || '';
@@ -15554,7 +15498,7 @@ async function usrCarregarLista(){
   try{
     console.log('usrCarregarLista: iniciando...');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    const db = firebase.firestore();
+    const db = window._db || firebase.firestore();
     console.log('usrCarregarLista: db ok, buscando...');
     const snap = await db.collection('usuarios').get();
     console.log('usrCarregarLista: snap ok, docs:', snap.docs.length);
