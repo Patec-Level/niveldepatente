@@ -1072,7 +1072,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
           <!-- Lista de usuários -->
           <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.75rem">📋 Usuários cadastrados</div>
-          <div id="usr-lista-loading" style="font-size:11px;color:var(--tx2)">Carregando...</div>
+          <div id="usr-lista-loading" style="font-size:11px;color:var(--tx2)">
+            Carregando... <button class="btn btn-s" style="font-size:10px;margin-left:8px" onclick="window._db ? usrCarregarLista() : location.reload()">↺ Atualizar</button>
+          </div>
           <div id="usr-lista"></div>
         </div>
       </div>
@@ -15472,10 +15474,22 @@ async function usrCarregarLista(){
   if(loadEl){ loadEl.style.display = 'block'; loadEl.textContent = 'Carregando...'; }
 
   // Aguardar Firebase (até 10s)
-  let db = window._db || getDB();
-  for(let i=0; !db && i<20; i++){
-    await new Promise(r=>setTimeout(r,500));
-    db = window._db || getDB();
+  let db = window._db;
+  if(!db){
+    for(let i=0; i<20; i++){
+      await new Promise(r=>setTimeout(r,500));
+      // Tentar inicializar diretamente
+      try{
+        if(typeof firebase !== 'undefined' && typeof firebase.firestore === 'function'){
+          if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+          db = firebase.firestore();
+          window._db = db;
+          break;
+        }
+      } catch(e){}
+      db = window._db;
+      if(db) break;
+    }
   }
 
   try{
