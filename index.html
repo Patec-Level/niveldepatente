@@ -499,11 +499,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         window._authUser=result.user; window._authPerfil=perfil;
         window.colabLogado=perfil.colabNome;
         if(typeof authSetPerfil==='function') authSetPerfil(result.user,perfil);
-        // Abrir app diretamente sem depender de funções externas
+        // Fechar overlay e abrir app
+        document.getElementById('patec-login-overlay').style.display='none';
         setTimeout(function(){
-          // 1. Fechar tela de login
-          document.getElementById('patec-login-overlay').style.display='none';
-          // 2. Badge topbar
           var badge=document.getElementById('topbar-user-badge');
           if(badge){
             badge.style.display='flex';
@@ -512,14 +510,26 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             if(av) av.textContent=perfil.nome[0].toUpperCase();
             if(nm) nm.textContent=perfil.nome;
           }
-          // 3. colabLogado
           if(typeof colabLogado!=='undefined') colabLogado=perfil.colabNome;
-          // 4. Montar sidebar e inicializar app
           if(typeof authMontarSidebar==='function') authMontarSidebar();
           if(typeof rtIniciarListener==='function') rtIniciarListener();
-          if(typeof prodCarregarHoje==='function' && perfil.colabNome)
+          if(!window._fbCarregadoUmaVez){
+            window._fbCarregadoUmaVez=true;
+            if(typeof paEntradaCarregarFirebase==='function') paEntradaCarregarFirebase();
+            if(typeof govCarregarFirebase==='function') govCarregarFirebase();
+            if(typeof xglCarregarFirebase==='function') xglCarregarFirebase();
+            if(typeof aaPublicoCarregar==='function') aaPublicoCarregar();
+            if(typeof initMetaGap==='function') initMetaGap();
+            if(typeof fbCarregarTudo==='function') fbCarregarTudo().then(function(){
+              if(typeof initMetaGap==='function') initMetaGap();
+              if(typeof aaCarregarResultadoFirebase==='function') aaCarregarResultadoFirebase();
+              if(typeof cicloCarregarAtivo==='function') cicloCarregarAtivo().then(function(){ if(typeof renderPainelEstrategico==='function') renderPainelEstrategico(); });
+              setTimeout(function(){ if(typeof alertasDisparar==='function') alertasDisparar('auto-load'); },4000);
+            }).catch(function(e){ console.warn('fbCarregarTudo:',e); });
+          }
+          if(perfil.colabNome && typeof prodCarregarHoje==='function')
             prodCarregarHoje(perfil.colabNome).then(function(){ if(typeof prodRenderizarPaineis==='function') prodRenderizarPaineis(perfil.colabNome); }).catch(function(){});
-        }, 300);
+        }, 100);
       }catch(e){
         console.error('LOGIN ERRO:',e.code,e.message);
         loadEl.style.display='none';
@@ -530,42 +540,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     })()">Conectar-se</button>
     <div class="login-loading" id="login-loading">⏳ Verificando credenciais...</div>
     <span class="login-forgot" onclick="authEsqueciSenha()">Esqueci minha senha</span>
-    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #EEE">
-      <div style="font-size:10px;color:#9AA;margin-bottom:.5rem;text-align:center">Acesso de emergência (Firebase offline)</div>
-      <input type="password" id="login-local-pwd" placeholder="Senha local ADM"
-        style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #DDE3EE;border-radius:8px;margin-bottom:8px;font-family:inherit"
-        onkeydown="if(event.key==='Enter')document.getElementById('btn-local-entrar').click()">
-      <button id="btn-local-entrar"
-        style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit"
-        onclick="(function(){
-          var pwd=document.getElementById('login-local-pwd').value;
-          if(pwd==='2105'||pwd==='Patec@2026'||pwd==='patec2026'){
-            var u={email:'andre.mazzali@levelgroup.com.br',uid:'local'};
-            var p={nome:'André',email:'andre.mazzali@levelgroup.com.br',perfil:'adm',permissoes:Object.keys(window.PERMS_SIDEBAR||{}),colabNome:'André'};
-            window._authUser=u; window._authPerfil=p; window.colabLogado='André';
-            if(typeof authSetPerfil==='function') authSetPerfil(u,p);
-            // Fechar overlay diretamente — sem depender de Firebase
-            document.getElementById('patec-login-overlay').style.display='none';
-            // Badge topbar
-            var badge=document.getElementById('topbar-user-badge');
-            if(badge){ badge.style.display='flex'; }
-            var av=document.getElementById('topbar-user-avatar');
-            var nm=document.getElementById('topbar-user-nome');
-            if(av) av.textContent='A';
-            if(nm) nm.textContent='André';
-            // Montar sidebar após scripts carregarem
-            var tentativas=0;
-            var tentar=function(){
-              tentativas++;
-              if(typeof authMontarSidebar==='function'){ authMontarSidebar(); }
-              else if(tentativas<20){ setTimeout(tentar,300); }
-            };
-            setTimeout(tentar,300);
-          } else { alert('Senha incorreta. Use: 2105'); }
-        })()">
-        Entrar sem internet
-      </button>
-    </div>
+    
   </div>
 </div>
 <!-- ══ fim LOGIN GLOBAL ══ -->
@@ -15217,19 +15192,6 @@ function authMostrarLogin(){
 
   // Adicionar opção de acesso local se Firebase indisponível
   const box = document.querySelector('#patec-login-overlay .login-box');
-  if(box && !document.getElementById('login-local-bypass')){
-    box.insertAdjacentHTML('beforeend', `
-      <div id="login-local-bypass" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #EEE">
-        <div style="font-size:10px;color:#9AA;margin-bottom:.5rem">Acesso de emergência (Firebase offline)</div>
-        <input type="password" id="login-local-pwd" placeholder="Senha local ADM"
-          style="width:100%;font-size:13px;padding:9px 12px;border:1.5px solid #DDE3EE;border-radius:8px;margin-bottom:8px;font-family:inherit"
-          onkeydown="if(event.key==='Enter')authLoginLocal()">
-        <button onclick="authLoginLocal()"
-          style="width:100%;background:#0D2347;color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
-          Entrar sem internet
-        </button>
-      </div>`);
-  }
 }
 
 
@@ -15363,25 +15325,10 @@ async function authLogout(){
   try{ await firebase.auth().signOut(); } catch(e){}
 }
 
-function authLoginLocal(){
-  const pwd = document.getElementById('login-local-pwd')?.value || '';
-  if(pwd === '2105' || pwd === 'Patec@2026' || pwd === 'patec2026'){
-    _authUser  = { email: 'andre.mazzali@levelgroup.com.br', uid: 'local' };
-    _authPerfil = {
-        nome: 'andre.mazzali', email: 'andre.mazzali@levelgroup.com.br',
-        perfil: 'adm', permissoes: Object.keys(PERMS_SIDEBAR), colabNome: 'André'
-      };
-    authMostrarApp();
-  } else {
-    alert('Senha incorreta.');
-  }
-}
-
 // Registrar aliases para os proxies do topo
 window._authFazerLoginReal  = authFazerLogin;
 window._authEsqueciSenhaReal= authEsqueciSenha;
 window._authLogoutReal      = authLogout;
-window._authLoginLocalReal  = authLoginLocal;
 
 // ── Iniciar na carga ──
 document.addEventListener('DOMContentLoaded', ()=>{
