@@ -6131,7 +6131,19 @@ function setAdmTab(id,btn){
   if(id==='hist-mapa') setTimeout(renderAdmMapaHistorico,50);
   if(id==='hist-prod') setTimeout(renderDistribuicao,50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
-  if(id==='usuarios') setTimeout(()=>{ if(typeof usrCarregarLista==='function') usrCarregarLista(); else console.warn('usrCarregarLista ainda não carregou'); }, 300);
+  if(id==='usuarios') setTimeout(()=>{
+    // Aguardar window._db estar disponível
+    var tentativas = 0;
+    var tentar = function(){
+      tentativas++;
+      if(window._db || getDB()){
+        if(typeof usrCarregarLista==='function') usrCarregarLista();
+      } else if(tentativas < 20){
+        setTimeout(tentar, 500);
+      }
+    };
+    tentar();
+  }, 300);
   if(id==='hist-prod'){
     setTimeout(renderDistribuicao, 50);
     const hoje = new Date().toISOString().split('T')[0];
