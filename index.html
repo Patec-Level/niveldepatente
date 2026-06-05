@@ -13,7 +13,8 @@
 function authFazerLogin(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); else { var t=document.getElementById('login-loading'); if(t)t.style.display='block'; setTimeout(function(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); },1500); } }
 function authEsqueciSenha(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); else setTimeout(function(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); },1500); }
 function authLogout(){ if(typeof window._authLogoutReal==='function') window._authLogoutReal(); }
-// usrCarregarLista e usrCadastrar definidas abaixo no script
+function usrCarregarLista(){ if(typeof window._usrCarregarListaReal==='function') window._usrCarregarListaReal(); }
+function usrCadastrar(){ if(typeof window._usrCadastrarReal==='function') window._usrCadastrarReal(); }
 function usrResetarSenha(e,n){ if(typeof window._usrResetarSenhaReal==='function') window._usrResetarSenhaReal(e,n); }
 function usrRemover(u,n){ if(typeof window._usrRemoverReal==='function') window._usrRemoverReal(u,n); }
 function usrEditarPerms(u,n,p){ if(typeof window._usrEditarPermsReal==='function') window._usrEditarPermsReal(u,n,p); }
@@ -15409,7 +15410,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 // GERENCIAR USUÁRIOS — ADM
 // ══════════════════════════════════════════════════════
 
-async function usrCadastrar(){
+async function _usrCadastrarReal(){
   console.log('[USR] usrCadastrar chamada');
   const nome  = document.getElementById('usr-novo-nome').value.trim();
   const email = document.getElementById('usr-novo-email').value.trim();
@@ -15477,7 +15478,7 @@ async function usrCadastrar(){
   }
 }
 
-async function usrCarregarLista(){
+async function _usrCarregarListaReal(){
   console.log('[USR] usrCarregarLista chamada');
   const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
@@ -15521,6 +15522,9 @@ async function usrCarregarLista(){
 
 // Registrar todas as funções de usuário imediatamente
 
+
+window._usrCadastrarReal = _usrCadastrarReal;
+window._usrCarregarListaReal = _usrCarregarListaReal;
 
 async function usrResetarSenha(email, nome){
   window._usrResetarSenhaReal = usrResetarSenha;
@@ -16397,4 +16401,3 @@ if(_goOrig){
 
 // Adicionar Fechamento do Dia ao PERMS_SIDEBAR e navegação
 PERMS_SIDEBAR['fechamento-dia'] = { icon:'🔒', label:'Fechamento do Dia', mod:'EXECUÇÃO' };
-  
