@@ -13,6 +13,11 @@
 function authFazerLogin(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); else { var t=document.getElementById('login-loading'); if(t)t.style.display='block'; setTimeout(function(){ if(typeof window._authFazerLoginReal==='function') window._authFazerLoginReal(); },1500); } }
 function authEsqueciSenha(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); else setTimeout(function(){ if(typeof window._authEsqueciSenhaReal==='function') window._authEsqueciSenhaReal(); },1500); }
 function authLogout(){ if(typeof window._authLogoutReal==='function') window._authLogoutReal(); }
+function usrCarregarLista(){ if(typeof window._usrCarregarListaReal==='function') window._usrCarregarListaReal(); else setTimeout(usrCarregarLista, 300); }
+function usrCadastrar(){ if(typeof window._usrCadastrarReal==='function') window._usrCadastrarReal(); else setTimeout(usrCadastrar, 300); }
+function usrResetarSenha(e,n){ if(typeof window._usrResetarSenhaReal==='function') window._usrResetarSenhaReal(e,n); }
+function usrRemover(u,n){ if(typeof window._usrRemoverReal==='function') window._usrRemoverReal(u,n); }
+function usrEditarPerms(u,n,p){ if(typeof window._usrEditarPermsReal==='function') window._usrEditarPermsReal(u,n,p); }
 
 // Estado global de autenticação — acessível antes do módulo auth carregar
 window._authUser   = null;
@@ -6076,7 +6081,7 @@ function setAdmTab(id,btn){
   if(id==='hist-mapa') setTimeout(renderAdmMapaHistorico,50);
   if(id==='hist-prod') setTimeout(renderDistribuicao,50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
-  if(id==='usuarios') setTimeout(usrCarregarLista, 100);
+  if(id==='usuarios') setTimeout(()=>{ if(typeof usrCarregarLista==='function') usrCarregarLista(); else console.warn('usrCarregarLista ainda não carregou'); }, 300);
   if(id==='hist-prod'){
     setTimeout(renderDistribuicao, 50);
     const hoje = new Date().toISOString().split('T')[0];
@@ -15311,7 +15316,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 // ══════════════════════════════════════════════════════
 
 async function usrCadastrar(){
-  const nome  = document.getElementById('usr-novo-nome').value.trim();
+  window._usrCadastrarReal = usrCadastrar;
   const email = document.getElementById('usr-novo-email').value.trim();
   const senha = document.getElementById('usr-novo-senha').value.trim();
   const okEl  = document.getElementById('usr-novo-ok');
@@ -15375,7 +15380,7 @@ async function usrCadastrar(){
 }
 
 async function usrCarregarLista(){
-  const listaEl = document.getElementById('usr-lista');
+  window._usrCarregarListaReal = usrCarregarLista;
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
   if(loadEl){ loadEl.style.display = 'block'; loadEl.textContent = 'Carregando...'; }
@@ -15417,7 +15422,7 @@ async function usrCarregarLista(){
 }
 
 async function usrResetarSenha(email, nome){
-  if(!confirm(`Enviar e-mail de redefinição de senha para ${nome} (${email})?`)) return;
+  window._usrResetarSenhaReal = usrResetarSenha;
   try{
     await firebase.auth().sendPasswordResetEmail(email);
     alert(`✓ E-mail de redefinição enviado para ${nome} (${email}).`);
@@ -15425,6 +15430,7 @@ async function usrResetarSenha(email, nome){
 }
 
 async function usrRemover(uid, nome){
+  window._usrRemoverReal = usrRemover;
   if(!confirm(`Remover acesso de ${nome}? O usuário não conseguirá mais entrar.`)) return;
   try{
     const db = getDB(); if(!db) return;
@@ -15434,7 +15440,7 @@ async function usrRemover(uid, nome){
 }
 
 function usrEditarPerms(uid, nome, permsAtual){
-  // Abrir mini-modal inline
+  window._usrEditarPermsReal = usrEditarPerms;
   const mhtml = `
   <div id="usr-perms-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:5000;display:flex;align-items:center;justify-content:center">
     <div style="background:#fff;border-radius:14px;padding:1.5rem;max-width:480px;width:95%;max-height:80vh;overflow-y:auto">
