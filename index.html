@@ -473,9 +473,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       loadEl.style.display='block';
       try{
         if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
-          errEl.textContent='Firebase não carregado. Aguarde e tente novamente.';
-          errEl.style.display='block';loadEl.style.display='none';return;
+          errEl.textContent='Carregando Firebase...';
+          errEl.style.display='block';
+          var sdkOk = await loadFirebaseSDK();
+          if(!sdkOk||typeof firebase==='undefined'){
+            errEl.textContent='Erro de conexão. Verifique sua internet e tente novamente.';
+            loadEl.style.display='none';return;
+          }
+          errEl.style.display='none';
         }
+        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
         console.log('LOGIN: tentando com',email);
         var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
         console.log('LOGIN OK:',result.user.email);
@@ -3989,6 +3996,10 @@ async function loadFirebaseSDK(){
     const ok = await loadScriptPair(cdnSet);
     if(ok) {
       _fbLoaded=true;_fbLoading=false;
+      try{
+        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        if(!window._db && typeof firebase.firestore==='function'){ window._db=firebase.firestore(); _db=window._db; }
+      }catch(e){}
       console.log('✓ Firebase SDK carregado');
       return true;
     }
