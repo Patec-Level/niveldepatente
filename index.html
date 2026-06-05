@@ -15471,32 +15471,12 @@ async function usrCarregarLista(){
   const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
-  if(loadEl){ loadEl.style.display = 'block'; loadEl.textContent = 'Carregando...'; }
-
-  // Aguardar Firebase (até 10s)
-  let db = window._db;
-  if(!db){
-    for(let i=0; i<20; i++){
-      await new Promise(r=>setTimeout(r,500));
-      // Tentar inicializar diretamente
-      try{
-        if(typeof firebase !== 'undefined' && typeof firebase.firestore === 'function'){
-          if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-          db = firebase.firestore();
-          window._db = db;
-          break;
-        }
-      } catch(e){}
-      db = window._db;
-      if(db) break;
-    }
-  }
+  if(loadEl){ loadEl.style.display = 'block'; loadEl.innerHTML = 'Carregando... <button class="btn btn-s" style="font-size:10px;margin-left:8px" onclick="usrCarregarLista()">↺</button>'; }
 
   try{
-    if(!db){
-      if(loadEl){ loadEl.style.display='block'; loadEl.innerHTML='<span style="color:var(--vm)">⚠ Firebase offline. <button class="btn btn-s" style="font-size:10px" onclick="usrCarregarLista()">↺ Tentar novamente</button></span>'; }
-      return;
-    }
+    // Usar firebase.firestore() diretamente - mais confiável
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.firestore();
     const snap = await db.collection('usuarios').get();
     const users = snap.docs.map(d=>({uid:d.id,...d.data()}));
 
