@@ -15400,7 +15400,7 @@ async function usrCadastrar(){
   }
   errEl.style.display = 'none';
 
-  const db = await getDBAsync();
+  const db = window._db || getDB();
   if(!db){
     errEl.textContent = 'Firebase não disponível. Recarregue a página.';
     errEl.style.display = 'inline'; return;
@@ -15451,7 +15451,7 @@ async function usrCarregarLista(){
   if(loadEl){ loadEl.style.display = 'block'; loadEl.textContent = 'Carregando...'; }
 
   try{
-    const db = getDB();
+    const db = window._db || getDB();
     if(!db){
       if(loadEl){ loadEl.style.display='block'; loadEl.innerHTML='<span style="color:var(--vm)">⚠ Firebase offline. <button class="btn btn-s" style="font-size:10px" onclick="usrCarregarLista()">↺ Tentar novamente</button></span>'; }
       return;
