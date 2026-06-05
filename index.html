@@ -479,6 +479,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         console.log('LOGIN: tentando com',email);
         var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
         console.log('LOGIN OK:',result.user.email);
+        // Forçar inicialização do Firestore imediatamente após login
+        try{
+          if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+          if(typeof firebase.firestore === 'function' && !window._db){
+            window._db = firebase.firestore();
+            console.log('✓ Firestore inicializado após login');
+          }
+        } catch(e){ console.warn('Firestore init após login:', e); }
         var emailsAdm=['andre.mazzali@levegroup.com.br','andreluisj4@gmail.com'];
         var isAdm=emailsAdm.includes(result.user.email);
         var perfil={
@@ -3990,12 +3998,14 @@ async function loadFirebaseSDK(){
 }
 
 function getDB(){
+  if(!_db && window._db) _db = window._db;
   if(!_db){
     try{
       if(typeof firebase === 'undefined') return null;
       if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
       if(typeof firebase.firestore !== 'function') return null;
       _db = firebase.firestore();
+      window._db = _db;
       console.log('✓ Firebase conectado:', FIREBASE_CONFIG.projectId);
     } catch(e){ console.error('Firebase erro:',e.message); }
   }
