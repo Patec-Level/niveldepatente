@@ -7561,6 +7561,7 @@ async function fbCarregarRadar(){
     if(!meta.exists) return;
     const d=meta.data();
     _radarTs=d.ts||null;
+    if(_radarTs) localStorage.setItem('patec_radar_upload_ts', _radarTs);
     const nChunks = d.nChunks||0;
 
     if(nChunks > 0){
@@ -11074,10 +11075,12 @@ function pcInicializar(){
   const elDt = document.getElementById('pc-ultima-att');
   const _pcBkTs = localStorage.getItem('patec_bk_upload_ts');
   const _pcBkNome = localStorage.getItem('patec_bk_upload_nome');
-  if(elDt && _pcBkTs){
-    elDt.textContent = '📋 ' + (_pcBkNome ? _pcBkNome + ' · ' : '') + new Date(_pcBkTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_pcBkTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const _tsPc = _radarTs || localStorage.getItem('patec_radar_upload_ts') || _pcBkTs;
+  const _nomePc = localStorage.getItem('patec_radar_upload_nome') || _pcBkNome;
+  if(elDt && _tsPc){
+    const d = new Date(_tsPc);
+    elDt.textContent = '📋 ' + (_nomePc ? _nomePc + ' · ' : '') + d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   }
-  if(elDt && _radarTs) elDt.textContent = 'Base: ' + new Date(_radarTs).toLocaleString('pt-BR');
 
   pcFiltrar();
 }
