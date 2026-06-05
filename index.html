@@ -506,14 +506,40 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         window._authUser=result.user; window._authPerfil=perfil;
         window.colabLogado=perfil.colabNome;
         if(typeof authSetPerfil==='function') authSetPerfil(result.user,perfil);
-        // Chamar authMostrarApp com espera ativa até estar disponível
-        (function esperarEAbrir(){
-          if(typeof window._authMostrarAppReal === 'function'){
-            window._authMostrarAppReal();
-          } else {
-            setTimeout(esperarEAbrir, 150);
-          }
-        })();
+        // Abrir app diretamente
+        var overlay = document.getElementById('patec-login-overlay');
+        if(overlay) overlay.style.display = 'none';
+        // Badge
+        var badge = document.getElementById('topbar-user-badge');
+        if(badge){
+          badge.style.display = 'flex';
+          var av = document.getElementById('topbar-user-avatar');
+          var nm = document.getElementById('topbar-user-nome');
+          if(av) av.textContent = perfil.nome[0].toUpperCase();
+          if(nm) nm.textContent = perfil.nome;
+        }
+        if(typeof colabLogado !== 'undefined') colabLogado = perfil.colabNome;
+        try{ if(typeof authMontarSidebar==='function') authMontarSidebar(); }catch(e){}
+        try{ if(typeof rtIniciarListener==='function') rtIniciarListener(); }catch(e){}
+        // Carregar dados Firebase
+        if(!window._fbCarregadoUmaVez){
+          window._fbCarregadoUmaVez = true;
+          try{ paEntradaCarregarFirebase(); }catch(e){}
+          try{ govCarregarFirebase(); }catch(e){}
+          try{ xglCarregarFirebase(); }catch(e){}
+          try{ initMetaGap(); }catch(e){}
+          fbCarregarTudo().then(function(){
+            try{ initMetaGap(); }catch(e){}
+            try{ aaCarregarResultadoFirebase(); }catch(e){}
+            try{ cicloCarregarAtivo().then(function(){ renderPainelEstrategico(); }); }catch(e){}
+            var pg = document.getElementById('p-radar');
+            if(pg && pg.classList.contains('active')) try{ renderRadarOperacional(); }catch(e){}
+            setTimeout(function(){ try{ alertasDisparar('auto-load'); }catch(e){}; }, 4000);
+          }).catch(function(e){ console.warn('fbCarregarTudo:', e); });
+        }
+        if(perfil.colabNome){
+          try{ prodCarregarHoje(perfil.colabNome).then(function(){ prodRenderizarPaineis(perfil.colabNome); }).catch(function(){}); }catch(e){}
+        }
       }catch(e){
         console.error('LOGIN ERRO:',e.code,e.message);
         loadEl.style.display='none';
