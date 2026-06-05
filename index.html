@@ -506,10 +506,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         window._authUser=result.user; window._authPerfil=perfil;
         window.colabLogado=perfil.colabNome;
         if(typeof authSetPerfil==='function') authSetPerfil(result.user,perfil);
-        // Chamar authMostrarApp que centraliza todo o carregamento
-        setTimeout(function(){
-          if(typeof authMostrarApp==='function') authMostrarApp();
-        }, 300);
+        // Chamar authMostrarApp com espera ativa até estar disponível
+        (function esperarEAbrir(){
+          if(typeof window._authMostrarAppReal === 'function'){
+            window._authMostrarAppReal();
+          } else {
+            setTimeout(esperarEAbrir, 150);
+          }
+        })();
       }catch(e){
         console.error('LOGIN ERRO:',e.code,e.message);
         loadEl.style.display='none';
@@ -15081,8 +15085,11 @@ window._authMostrarAppReal = function(){
   if(window._authPerfil && !_authPerfil) _authPerfil = window._authPerfil;
   if(window.colabLogado && !colabLogado)  colabLogado = window.colabLogado;
 
-  document.getElementById('patec-login-overlay').style.display = 'none';
-  authMontarSidebar();
+  // Fechar overlay — garantido primeiro
+  const overlay = document.getElementById('patec-login-overlay');
+  if(overlay) overlay.style.display = 'none';
+  // Montar sidebar com proteção
+  try{ authMontarSidebar(); }catch(e){ console.warn('sidebar:', e); }
 
   // Badge
   const badge = document.getElementById('topbar-user-badge');
