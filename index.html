@@ -506,26 +506,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         window._authUser=result.user; window._authPerfil=perfil;
         window.colabLogado=perfil.colabNome;
         if(typeof authSetPerfil==='function') authSetPerfil(result.user,perfil);
-        // Abrir app diretamente sem depender de funções externas
+        // Chamar authMostrarApp que centraliza todo o carregamento
         setTimeout(function(){
-          // 1. Fechar tela de login
-          document.getElementById('patec-login-overlay').style.display='none';
-          // 2. Badge topbar
-          var badge=document.getElementById('topbar-user-badge');
-          if(badge){
-            badge.style.display='flex';
-            var av=document.getElementById('topbar-user-avatar');
-            var nm=document.getElementById('topbar-user-nome');
-            if(av) av.textContent=perfil.nome[0].toUpperCase();
-            if(nm) nm.textContent=perfil.nome;
-          }
-          // 3. colabLogado
-          if(typeof colabLogado!=='undefined') colabLogado=perfil.colabNome;
-          // 4. Montar sidebar e inicializar app
-          if(typeof authMontarSidebar==='function') authMontarSidebar();
-          if(typeof rtIniciarListener==='function') rtIniciarListener();
-          if(typeof prodCarregarHoje==='function' && perfil.colabNome)
-            prodCarregarHoje(perfil.colabNome).then(function(){ if(typeof prodRenderizarPaineis==='function') prodRenderizarPaineis(perfil.colabNome); }).catch(function(){});
+          if(typeof authMostrarApp==='function') authMostrarApp();
         }, 300);
       }catch(e){
         console.error('LOGIN ERRO:',e.code,e.message);
