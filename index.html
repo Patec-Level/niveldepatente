@@ -15458,12 +15458,19 @@ async function usrCadastrar(){
 
 async function usrCarregarLista(){
   window._usrCarregarListaReal = usrCarregarLista;
+  const listaEl = document.getElementById('usr-lista');
   const loadEl  = document.getElementById('usr-lista-loading');
   if(!listaEl) return;
   if(loadEl){ loadEl.style.display = 'block'; loadEl.textContent = 'Carregando...'; }
 
+  // Aguardar Firebase (até 10s)
+  let db = window._db || getDB();
+  for(let i=0; !db && i<20; i++){
+    await new Promise(r=>setTimeout(r,500));
+    db = window._db || getDB();
+  }
+
   try{
-    const db = window._db || getDB();
     if(!db){
       if(loadEl){ loadEl.style.display='block'; loadEl.innerHTML='<span style="color:var(--vm)">⚠ Firebase offline. <button class="btn btn-s" style="font-size:10px" onclick="usrCarregarLista()">↺ Tentar novamente</button></span>'; }
       return;
