@@ -8833,7 +8833,8 @@ function _renderResultadoColab(c){
   };
   if(!ciclos_historico.find(c=>c.id===_s.id)){
     ciclos_historico.unshift(_s);
-    setTimeout(()=>fbSet('ciclos_encerrados',_s.id,_s).then(()=>console.log('Snapshot Mar/Abr salvo')),3000);
+    // Salvar snapshot só após autenticação — aguarda login
+    window._pendingSnapshotMarAbr = _s;
   }
 })();
 
@@ -9684,9 +9685,8 @@ const MAPA_ABR2026 = {
 initMetaGap();
 
 
-// Carregar Firebase e aplicar na topbar — chamado após login em authMostrarAppReal
-paEntradaCarregarFirebase();
-// fbCarregarTudo() agora é chamado dentro de authMostrarAppReal após login bem-sucedido
+// Carregar Firebase e aplicar na topbar — movido para após login em authMostrarAppReal
+// paEntradaCarregarFirebase e fbCarregarTudo são chamados após autenticação
 
 // ════════════════════════════════════════════
 // PLANO DE AÇÃO
@@ -15109,6 +15109,16 @@ window._authMostrarAppReal = function(){
   // Carregar dados Firebase (só uma vez após login)
   if(!window._fbCarregadoUmaVez){
     window._fbCarregadoUmaVez = true;
+    // Snapshot Mar/Abr pendente — salvar agora que está autenticado
+    if(window._pendingSnapshotMarAbr){
+      const _s = window._pendingSnapshotMarAbr;
+      window._pendingSnapshotMarAbr = null;
+      fbSet('ciclos_encerrados', _s.id, _s)
+        .then(()=>console.log('Snapshot Mar/Abr salvo'))
+        .catch(e=>console.warn('Snapshot Mar/Abr:', e));
+    }
+    // Carregar dados gerais
+    paEntradaCarregarFirebase();
     fbCarregarTudo().then(()=>{
       initMetaGap();
       const pg = document.getElementById('p-radar');
