@@ -15240,9 +15240,16 @@ function authMontarSidebar(){
   if(!sb) return;
 
   // Detectar ADM — dupla verificação: perfil salvo OU e-mail conhecido
-  const emailAtual = (_authUser?.email || window._authUser?.email || '').toLowerCase().trim();
-  const emailsAdm  = ['andre.mazzali@levelgroup.com.br'];
+  const emailAtual = (
+    _authUser?.email ||
+    window._authUser?.email ||
+    _authPerfil?.email ||
+    window._authPerfil?.email ||
+    ''
+  ).toLowerCase().trim();
+  const emailsAdm = ['andre.mazzali@levelgroup.com.br'];
   const isAdm = emailsAdm.includes(emailAtual);
+  console.log('[Sidebar] email:', emailAtual, '| isAdm:', isAdm);
   const perms = _authPerfil?.permissoes || Object.keys(PERMS_SIDEBAR);
 
   // Remover todos os itens de navegação existentes
