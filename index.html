@@ -36,21 +36,14 @@ function authSetPerfil(user, perfil){
 // fecharOverlay — disponível imediatamente
 function fecharOverlay(){
   var ov = document.getElementById('patec-login-overlay');
-  if(ov){
-    ov.classList.add('fechado');
-    ov.style.display = 'none';
-    ov.style.visibility = 'hidden';
-    ov.style.zIndex = '-1';
-    ov.style.pointerEvents = 'none';
-  }
-  // Mostrar conteúdo do app
-  var sb = document.getElementById('sb');
-  var mn = document.getElementById('mn');
-  var tb = document.getElementById('topbar-main');
+  if(ov){ ov.style.cssText = 'display:none!important;z-index:-1!important;pointer-events:none!important;visibility:hidden!important;'; }
+  var sb  = document.getElementById('sb');
+  var mn  = document.getElementById('mn');
+  var tb  = document.getElementById('topbar-main');
   var hbg = document.getElementById('hbg');
-  if(sb) sb.style.display = '';
-  if(mn) mn.style.display = '';
-  if(tb) tb.style.display = '';
+  if(sb)  sb.style.display  = '';
+  if(mn)  mn.style.display  = '';
+  if(tb)  tb.style.display  = '';
   if(hbg) hbg.style.display = '';
   window._appAberto = true;
 }
@@ -391,7 +384,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
 <!-- Estilos tela de login global -->
 <style>
-#patec-login-overlay.fechado{display:none!important;visibility:hidden!important;pointer-events:none!important;z-index:-1!important;}
 #patec-login-overlay{
   position:fixed;inset:0;z-index:9999;
   background:linear-gradient(135deg,#0D2347 0%,#1A4A8A 60%,#0E9E6A 100%);
@@ -499,48 +491,39 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           errEl.textContent='⏳ Carregando Firebase...';
           errEl.style.display='block';
           var sdkOk = await loadFirebaseSDK();
-          if(!sdkOk||typeof firebase==='undefined'||!firebase.apps.length){
-            errEl.textContent='Erro de conexão. Verifique sua internet e tente novamente.';
+          if(!sdkOk||typeof firebase==='undefined'){
+            errEl.textContent='Erro de conexão. Tente novamente.';
             loadEl.style.display='none'; return;
           }
+          if(!firebase.apps.length) try{ firebase.initializeApp(FIREBASE_CONFIG); }catch(e){}
           errEl.style.display='none';
         }
-        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        if(!firebase.apps.length) try{ firebase.initializeApp(FIREBASE_CONFIG); }catch(e){}
         console.log('LOGIN: tentando com',email);
         var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
         console.log('LOGIN OK:',result.user.email);
-        loadEl.style.display='none';
-
-        // Definir perfil
+        // Fechar overlay IMEDIATAMENTE
+        fecharOverlay();
+        // Forçar inicialização do Firestore imediatamente após login
+        try{
+          if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+          if(typeof firebase.firestore === 'function' && !window._db){
+            window._db = firebase.firestore();
+            console.log('✓ Firestore inicializado após login');
+          }
+        } catch(e){ console.warn('Firestore init após login:', e); }
         var emailsAdm=['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
-        var isAdm=emailsAdm.includes((result.user.email||'').toLowerCase().trim());
-        var colabMap={
-          'loreanny.couto@levelgroup.com.br':'Lory',
-          'ludimila.reis@levelgroup.com.br':'Ludy',
-          'wanessa.oliveira@levelgroup.com.br':'Wanessa'
-        };
-        var colabNome=colabMap[(result.user.email||'').toLowerCase()]||(isAdm?'André':'');
+        var isAdm=emailsAdm.includes(result.user.email);
         var perfil={
-          nome:isAdm?'André':(colabNome||result.user.email.split('@')[0]),
-          email:result.user.email,
-          perfil:isAdm?'adm':'colaborador',
+          nome:isAdm?'André':result.user.email.split('@')[0],
+          email:result.user.email, perfil:isAdm?'adm':'colaborador',
           permissoes:Object.keys(window.PERMS_SIDEBAR||{}),
-          colabNome:colabNome
+          colabNome:isAdm?'André':''
         };
-
         // Salvar estado global
-        window._authUser=result.user;
-        window._authPerfil=perfil;
+        window._authUser=result.user; window._authPerfil=perfil;
         window.colabLogado=perfil.colabNome;
         if(typeof authSetPerfil==='function') authSetPerfil(result.user,perfil);
-
-        // Salvar sessão local
-        try{ localStorage.setItem('patec_sessao',JSON.stringify({
-          email:result.user.email,uid:result.user.uid,
-          nome:perfil.nome,colabNome:perfil.colabNome,
-          perfil:perfil.perfil,ts:Date.now()
-        })); }catch(e){}
-
         // Abrir app
         fecharOverlay();
         var badge=document.getElementById('topbar-user-badge');
@@ -554,14 +537,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         if(typeof colabLogado!=='undefined') colabLogado=perfil.colabNome;
         if(typeof authMontarSidebar==='function') authMontarSidebar();
         if(typeof rtIniciarListener==='function') rtIniciarListener();
-
-        // Carregar dados Firebase
+        // Carregar todos os dados Firebase
         if(!window._fbCarregadoUmaVez){
           window._fbCarregadoUmaVez=true;
-          if(typeof paEntradaCarregarFirebase==='function') setTimeout(paEntradaCarregarFirebase,200);
-          if(typeof govCarregarFirebase==='function') setTimeout(govCarregarFirebase,300);
-          if(typeof xglCarregarFirebase==='function') setTimeout(xglCarregarFirebase,400);
-          if(typeof aaPublicoCarregar==='function') setTimeout(aaPublicoCarregar,500);
+          if(typeof paEntradaCarregarFirebase==='function') paEntradaCarregarFirebase();
+          if(typeof aaPublicoCarregar==='function') aaPublicoCarregar();
+          if(typeof govCarregarFirebase==='function') govCarregarFirebase();
+          if(typeof xglCarregarFirebase==='function') xglCarregarFirebase();
           if(typeof initMetaGap==='function') initMetaGap();
           if(typeof fbCarregarTudo==='function') fbCarregarTudo().then(function(){
             if(typeof initMetaGap==='function') initMetaGap();
@@ -587,20 +569,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     <div class="login-loading" id="login-loading">⏳ Verificando credenciais...</div>
     <span class="login-forgot" onclick="authEsqueciSenha()">Esqueci minha senha</span>
 </div>
-<script>
-// Verificar sessão local imediatamente — sem esperar Firebase
-(function(){
-  try{
-    var s = JSON.parse(localStorage.getItem('patec_sessao')||'null');
-    if(s && s.email && (Date.now()-s.ts) < 28800000){ // 8 horas
-      // Sessão válida — ocultar overlay imediatamente
-      document.getElementById('patec-login-overlay').style.display='none';
-      window._sessaoLocal = s;
-      console.log('Sessão local detectada:', s.email);
-    }
-  }catch(e){}
-})();
-</script>
 <!-- ══ fim LOGIN GLOBAL ══ -->
 <button id="hbg" style="display:none" onclick="document.getElementById('sb').classList.toggle('mob-open')">☰</button>
 <nav id="sb" style="display:none">
@@ -634,8 +602,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('fechamento-dia',this)">🔒 Fechamento do Dia</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
-  <div class="sb-sec" id="sb-adm-sec" style="display:none">ADM</div>
-  <div class="sb-it" id="sb-adm-it" onclick="go('adm',this)" style="display:none">🔐 Administração</div>
+  <div class="sb-sec">Em breve</div>
+
+  <div class="sb-sec">ADM</div>
+  <div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>
 </nav>
 <main id="mn" style="display:none">
 <div class="topbar" id="topbar-main" style="display:none">
@@ -10908,9 +10878,7 @@ function aaExportar(){
   XLSX.writeFile(wb, `Analista_Automatico_${dt}.xlsx`);
 }
 
-// Carregar dados ao iniciar
-// Carregar resultado do Analista Automático ao iniciar (backlog já carregado via fbCarregarTudo)
-aaCarregarResultadoFirebase();
+// aaCarregarResultadoFirebase chamado após login
 
 
 // ════════════════════════════════════════════
@@ -15121,21 +15089,6 @@ function authSetPerfil(user, perfil){
 // Registrar sync local para o proxy do topo
 window._authSyncLocal = authSetPerfil;
 
-// Montar sidebar conforme permissões do usuário logado
-function authMontarSidebar(){
-  const emailAtual = (_authUser?.email || window._authUser?.email || '').toLowerCase().trim();
-  const emailsAdm  = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
-  const isAdm = emailsAdm.includes(emailAtual);
-
-  // Mostrar/ocultar seção ADM
-  const secAdm = document.getElementById('sb-adm-sec');
-  const itAdm  = document.getElementById('sb-adm-it');
-  if(secAdm) secAdm.style.display = isAdm ? '' : 'none';
-  if(itAdm)  itAdm.style.display  = isAdm ? '' : 'none';
-
-  console.log('✓ Sidebar — isAdm:', isAdm, '— email:', emailAtual);
-}
-
 // Registrar authMostrarApp real
 window._authMostrarAppReal = function(){
   // Sincronizar do window caso tenha sido setado pelo botão inline
@@ -15173,6 +15126,8 @@ window._authMostrarAppReal = function(){
     // Dados gerais
     paEntradaCarregarFirebase();
     aaPublicoCarregar();
+    govCarregarFirebase();
+    xglCarregarFirebase();
     Promise.race([
       fbCarregarTudo(),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),15000))
@@ -15198,40 +15153,23 @@ let _fdiaChart    = null;
 // ── Inicializar Auth após Firebase SDK carregado ──
 async function authInit(){
   try{
-    // Sessão local — abrir app sem Firebase (já tratado pelo script inline)
-    if(window._sessaoLocal){
-      const s = window._sessaoLocal;
-      const emailsAdm = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
-      const isAdm = emailsAdm.includes((s.email||'').toLowerCase());
-      const colabMap = {'loreanny.couto@levelgroup.com.br':'Lory','ludimila.reis@levelgroup.com.br':'Ludy','wanessa.oliveira@levelgroup.com.br':'Wanessa'};
-      const colabNome = colabMap[(s.email||'').toLowerCase()] || (isAdm?'André':s.colabNome||'');
-      _authUser = {email:s.email, uid:s.uid};
-      window._authUser = _authUser;
-      _authPerfil = {
-        nome: s.nome||s.email.split('@')[0], email:s.email,
-        perfil: isAdm?'adm':'colaborador',
-        permissoes: Object.keys(PERMS_SIDEBAR),
-        colabNome: colabNome
-      };
-      window._authPerfil = _authPerfil;
-      window.colabLogado = colabNome;
-      fecharOverlay();
-      authMostrarApp();
-    }
-
-    // Tentar Firebase Auth em background
     const ok = await loadFirebaseSDK();
-    if(!ok){ 
-      if(!window._sessaoLocal) authMostrarLogin();
-      return; 
-    }
+    if(!ok){ console.warn('Auth: Firebase SDK não carregado'); return; }
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     const auth = firebase.auth();
+    // Inicializar Firestore imediatamente e registrar globalmente
+    try{
+      if(typeof firebase.firestore === 'function'){
+        window._db = firebase.firestore();
+        console.log('✓ Firestore inicializado no authInit');
+      }
+    } catch(e){}
     auth.onAuthStateChanged(async user => {
       if(user){
         _authUser = user;
+        // Definir perfil mínimo imediatamente — não esperar Firestore
         const emailsAdm = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
-        const isAdm = emailsAdm.includes((user.email||'').toLowerCase());
+        const isAdm = emailsAdm.includes(user.email);
         _authPerfil = {
           nome: user.email.split('@')[0],
           email: user.email,
@@ -15239,18 +15177,17 @@ async function authInit(){
           permissoes: Object.keys(PERMS_SIDEBAR),
           colabNome: isAdm ? 'André' : ''
         };
-        fecharOverlay();
+        // Mostrar app imediatamente
         authMostrarApp();
+        // Carregar perfil completo em background
         authCarregarPerfil(user).catch(e => console.warn('Perfil background:', e));
       } else {
-        if(!window._sessaoLocal){
-          _authUser = null;
-          _authPerfil = null;
-          authMostrarLogin();
-        }
+        _authUser = null;
+        _authPerfil = null;
+        authMostrarLogin();
       }
     });
-  } catch(e){ console.warn('authInit:', e); if(!window._sessaoLocal) authMostrarLogin(); }
+  } catch(e){ console.warn('authInit:', e); }
 }
 
 async function authCarregarPerfil(user){
