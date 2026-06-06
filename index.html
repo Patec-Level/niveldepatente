@@ -3773,8 +3773,32 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
         <!-- Breakdown do dia -->
         <div class="cd" style="margin-bottom:1rem">
-          <div class="cd-t">📋 Composição do dia</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px" id="fdia-breakdown"></div>
+          <div class="cd-t" style="margin-bottom:.75rem">📋 Composição do dia</div>
+          <!-- Linha 1: itens tratados -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem" id="fdia-breakdown"></div>
+          <!-- Linha 2: composição -->
+          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.625rem;display:flex;align-items:center;gap:8px">
+            <span style="flex:1;height:1px;background:var(--brd);display:inline-block"></span>
+            Composição dos itens acima
+            <span style="flex:1;height:1px;background:var(--brd);display:inline-block"></span>
+          </div>
+          <div id="fdia-composicao" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px"></div>
+        </div>
+
+        <!-- Modalidade — obrigatória antes de finalizar -->
+        <div class="cd" id="fdia-card-pres" style="margin-bottom:1rem">
+          <div class="cd-t" style="margin-bottom:.75rem">📍 Onde você trabalhou hoje?</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button id="fdia-pres-P" onclick="fdiaSelecionarPres('Presencial',this)"
+              style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--brd);background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:var(--tx2);transition:all .15s">
+              🏢 Presencial
+            </button>
+            <button id="fdia-pres-H" onclick="fdiaSelecionarPres('Home Office',this)"
+              style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--brd);background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:var(--tx2);transition:all .15s">
+              🏠 Home Office
+            </button>
+          </div>
+          <div id="fdia-pres-aviso" style="display:none;font-size:11px;color:var(--vm);margin-top:8px;font-weight:600">⚠ Selecione onde você trabalhou hoje para finalizar.</div>
         </div>
 
         <!-- Gráfico evolução -->
@@ -16429,6 +16453,26 @@ async function prodInicializarPainel(){
 // ══════════════════════════════════════════════════════
 
 let _fdiaMotivo = '';
+let _fdiaPresenca = '';
+
+function fdiaSelecionarPres(valor, btn){
+  _fdiaPresenca = valor;
+  // Resetar visual dos dois botões
+  ['fdia-pres-P','fdia-pres-H'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.borderColor = 'var(--brd)';
+    el.style.background  = '#fff';
+    el.style.color       = 'var(--tx2)';
+  });
+  // Destacar selecionado
+  btn.style.borderColor = valor === 'Presencial' ? 'var(--azm)' : 'var(--vd)';
+  btn.style.background  = valor === 'Presencial' ? 'var(--azc)' : 'var(--vdc)';
+  btn.style.color       = valor === 'Presencial' ? 'var(--azm)' : 'var(--vd)';
+  // Esconder aviso
+  const av = document.getElementById('fdia-pres-aviso');
+  if(av) av.style.display = 'none';
+}
 
 function fdiaSelectMotivo(btn, motivo){
   document.querySelectorAll('.fdia-motivo-btn').forEach(b=>b.classList.remove('selecionado'));
@@ -16520,23 +16564,25 @@ async function fdiaInicializar(){
     </div>
   `;
 
-  // Composição dos itens tratados
+  // Composição dos itens — cards com label + valor alinhados (estilo foto)
   const compEl = document.getElementById('fdia-composicao');
-  const compCard = (val, label, cor, bg) => val > 0
-    ? `<div style="background:${bg};border-radius:8px;padding:.5rem .625rem;text-align:center">
-        <div style="font-size:18px;font-weight:700;color:${cor}">${val}</div>
-        <div style="font-size:10px;color:var(--tx2)">${label}</div>
-       </div>` : '';
+  const compRow = (val, label) =>
+    `<div style="display:flex;align-items:center;justify-content:space-between;
+       background:#fff;border:1.5px solid var(--brd);border-radius:8px;
+       padding:.5rem .875rem;gap:8px">
+      <span style="font-size:12px;color:var(--tx2)">${label}</span>
+      <span style="font-size:15px;font-weight:700;color:var(--az);background:var(--cin);
+        min-width:36px;text-align:center;border-radius:6px;padding:2px 6px">${val}</span>
+     </div>`;
   if(compEl) compEl.innerHTML =
-    compCard(cntComp.pedido,      'Pedido',             'var(--vd)',  'var(--vdc)') +
-    compCard(cntComp.republicacao,'Republicação',       'var(--azm)', 'var(--azc)') +
-    compCard(cntComp.xgl,         'XGL',                'var(--azm)', 'var(--azc)') +
-    compCard(cntComp.thiago,      'Val. Thiago',        'var(--azm)', 'var(--azc)') +
-    compCard(cntComp.devolucao,   'Devolução',          'var(--vm)',  'var(--vmc)') +
-    compCard(cntComp.mdg,         'MDG',                'var(--azm)', 'var(--azc)') +
-    compCard(cntComp.forn,        'Fornecedor',         'var(--am)',  'var(--amc)') +
-    compCard(cntComp.req,         'Requisitante',       'var(--am)',  'var(--amc)') ||
-    '<div style="font-size:11px;color:var(--tx2);padding:.5rem">Nenhuma composição registrada ainda.</div>';
+    compRow(cntComp.forn,        'Fornecedor') +
+    compRow(cntComp.req,         'Requisitante') +
+    compRow(cntComp.mdg,         'MDG') +
+    compRow(cntComp.thiago,      'Validação Thiago') +
+    compRow(cntComp.xgl,         'XGL') +
+    compRow(cntComp.republicacao,'Republicação') +
+    compRow(cntComp.pedido,      'RCs para Pedidos') +
+    compRow(cntComp.devolucao,   'RCs para Devoluções');
 
   // Justificativa
   const justBox = document.getElementById('fdia-justif-box');
@@ -16553,13 +16599,28 @@ async function fdiaInicializar(){
         document.getElementById('fdia-ja-fechado').style.display = 'block';
         document.getElementById('fdia-btn-wrap').style.display   = 'none';
         document.getElementById('fdia-justif-box').style.display = 'none';
+        const presLabel = fechado.presenca ? ` · ${fechado.presenca}` : '';
         document.getElementById('fdia-fechado-info').textContent =
-          `Fechado às ${new Date(fechado.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · ${cnt.meta} itens · ${pct}% da meta`;
+          `Fechado às ${new Date(fechado.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${presLabel} · ${cnt.meta} itens · ${pct}% da meta`;
+        // Ocultar card de presença se já fechou
+        const presCardCk = document.getElementById('fdia-card-pres');
+        if(presCardCk) presCardCk.style.display = 'none';
         return;
       }
     }
   } catch(e){ console.warn('fdiaInicializar check:', e); }
 
+  // Resetar modalidade para nova sessão
+  _fdiaPresenca = '';
+  ['fdia-pres-P','fdia-pres-H'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.borderColor = 'var(--brd)';
+    el.style.background  = '#fff';
+    el.style.color       = 'var(--tx2)';
+  });
+  const presCard = document.getElementById('fdia-card-pres');
+  if(presCard) presCard.style.display = 'block';
   document.getElementById('fdia-ja-fechado').style.display = 'none';
   document.getElementById('fdia-btn-wrap').style.display   = 'flex';
 
@@ -16591,6 +16652,14 @@ async function fdiaSalvar(){
   const cnt     = prodContarHoje(acoes);
   const hoje    = new Date().toISOString().split('T')[0];
 
+  // Bloquear se modalidade não informada
+  if(!_fdiaPresenca){
+    const av = document.getElementById('fdia-pres-aviso');
+    if(av) av.style.display = 'block';
+    document.getElementById('fdia-card-pres')?.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
   if(cnt.meta < metaVal && metaVal > 0 && !_fdiaMotivo){
     alert('Selecione o motivo por não ter atingido a meta antes de finalizar.');
     return;
@@ -16614,6 +16683,7 @@ async function fdiaSalvar(){
   // Registro fechamento_dia
   const regFecha = {
     colab, data: hoje, total: cnt.meta, meta: metaVal, pct,
+    presenca: _fdiaPresenca,
     metaAtingida: cnt.meta >= metaVal,
     motivo: _fdiaMotivo || '',
     detalhe, ts: new Date().toISOString(),
@@ -16638,7 +16708,7 @@ async function fdiaSalvar(){
     cnt.outros             // pf11 — Outros
   ];
   const regProd = {
-    colab, data: hoje, pres: 'Presencial',
+    colab, data: hoje, pres: _fdiaPresenca,
     f: fArr,
     justif: _fdiaMotivo ? (_fdiaMotivo + (detalhe ? ': ' + detalhe : '')) : ''
   };
@@ -16672,7 +16742,10 @@ async function fdiaSalvar(){
   document.getElementById('fdia-btn-wrap').style.display   = 'none';
   document.getElementById('fdia-justif-box').style.display = 'none';
   document.getElementById('fdia-fechado-info').textContent =
-    `Fechado agora · ${cnt.meta} itens · ${pct}% da meta`;
+    `Fechado agora · ${_fdiaPresenca} · ${cnt.meta} itens · ${pct}% da meta`;
+  // Ocultar card de presença após finalizar
+  const presCard = document.getElementById('fdia-card-pres');
+  if(presCard) presCard.style.display = 'none';
   document.getElementById('fdia-ok').style.display = 'inline';
   setTimeout(()=>{ const el=document.getElementById('fdia-ok'); if(el)el.style.display='none'; }, 3000);
 }
