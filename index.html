@@ -592,10 +592,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
   <div class="sb-it" onclick="go('fechamento-dia',this)">🔒 Fechamento do Dia</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
-  <div class="sb-sec">Em breve</div>
-
-  <div class="sb-sec">ADM</div>
-  <div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>
+  <div class="sb-sec" id="sb-adm-sec" style="display:none">ADM</div>
+  <div class="sb-it" id="sb-adm-it" onclick="go('adm',this)" style="display:none">🔐 Administração</div>
 </nav>
 <main id="mn">
 <div class="topbar">
@@ -15242,9 +15240,9 @@ function authMontarSidebar(){
   if(!sb) return;
 
   // Detectar ADM — dupla verificação: perfil salvo OU e-mail conhecido
-  const emailAtual = _authUser?.email || '';
-  const emailsAdm  = ['andre.mazzali@levelgroup.com.br','andreluisj4@gmail.com'];
-  const isAdm = _authPerfil?.perfil === 'adm' || emailsAdm.includes(emailAtual);
+  const emailAtual = (_authUser?.email || window._authUser?.email || '').toLowerCase().trim();
+  const emailsAdm  = ['andre.mazzali@levelgroup.com.br'];
+  const isAdm = emailsAdm.includes(emailAtual);
   const perms = _authPerfil?.permissoes || Object.keys(PERMS_SIDEBAR);
 
   // Remover todos os itens de navegação existentes
@@ -15276,7 +15274,12 @@ function authMontarSidebar(){
   }
 
   sb.insertAdjacentHTML('beforeend', html);
-  console.log('✓ Sidebar montada — isAdm:', isAdm, '— itens:', sb.querySelectorAll('.sb-it').length);
+  // Controlar ADM estático
+  const _sa = document.getElementById('sb-adm-sec');
+  const _ia = document.getElementById('sb-adm-it');
+  if(_sa) _sa.style.display = isAdm ? '' : 'none';
+  if(_ia) _ia.style.display = isAdm ? '' : 'none';
+  console.log('✓ Sidebar montada — isAdm:', isAdm, '— email:', emailAtual);
 }
 
 async function authFazerLogin(){
