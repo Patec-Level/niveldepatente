@@ -12175,7 +12175,7 @@ function govBuscarRC(rc){
           ${r.aba==='STATUS B'?`<td><button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px" onclick="sbAbrirComentario('${r.chave}')">💬</button></td>`:r.aba==='XGL'?`<td><button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px" onclick="xglAbrirComentario('${r.chave}')">💬</button></td>`:r.aba==='MAPA'?`<td><button title="Editar comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px" onclick="mapaAbrirComentario('${r.chave}')">💬</button></td>`:'<td></td>'}
         </tr>
         ${r.aba==='MAPA'?`<tr style="background:#f7f9fc;border-top:none">
-          <td colspan="12" style="padding:4px 8px 8px 8px">
+          <td colspan="12" style="padding:4px 8px 6px 8px">
             <div style="display:flex;gap:20px;font-size:11px;color:var(--tx2)">
               <span>⏱️ <strong>SLA:</strong> ${r.sla} dias</span>
               <span>📋 <strong>Fila Level Board:</strong> ${r.fila}</span>
@@ -12187,6 +12187,29 @@ function govBuscarRC(rc){
             </div>
           </td>
         </tr>`:''}
+        <tr style="background:#f0f4fc;border-top:none">
+          <td colspan="12" style="padding:5px 8px 8px 8px">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span style="font-size:10px;font-weight:700;color:var(--tx2);margin-right:2px">Registrar ação:</span>
+              <button onclick="prodAbrirModalRC('${r.chave}','primeira_analise')"
+                style="background:var(--azc);border:1.5px solid var(--azm);border-radius:7px;padding:4px 12px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);white-space:nowrap"
+                onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+                onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">🔍 1ª Análise</button>
+              <button onclick="prodAbrirModalRC('${r.chave}','em_tratativa')"
+                style="background:var(--azc);border:1.5px solid var(--azm);border-radius:7px;padding:4px 12px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);white-space:nowrap"
+                onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
+                onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">⚙️ Em Tratativa</button>
+              <button onclick="prodAbrirModalRC('${r.chave}','status_b')"
+                style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:7px;padding:4px 12px;cursor:pointer;font-size:11px;font-weight:700;color:var(--vd);white-space:nowrap"
+                onmouseover="this.style.background='var(--vd)';this.style.color='#fff'"
+                onmouseout="this.style.background='var(--vdc)';this.style.color='var(--vd)'">✅ Status B</button>
+              <button onclick="prodAbrirModalRC('${r.chave}','outros')"
+                style="background:var(--amc);border:1.5px solid var(--am);border-radius:7px;padding:4px 12px;cursor:pointer;font-size:11px;font-weight:700;color:var(--am);white-space:nowrap"
+                onmouseover="this.style.background='var(--am)';this.style.color='#fff'"
+                onmouseout="this.style.background='var(--amc)';this.style.color='var(--am)'">📋 Outros</button>
+            </div>
+          </td>
+        </tr>
         `).join('')}
       </tbody>
     </table>
@@ -16009,22 +16032,36 @@ function pcAbrirModalComRC(tipo){
 }
 
 function prodAbrirModalRC(chave, tipo){
-  // Abre modal para RC específica com chave conhecida
-  const r = (_radarDados||[]).find(r=>govChave(r)===chave);
-  const origem = r ? 'pc' : 'gov';
-  const rcBusca = r ? (r.rc||'') : '';
+  // Abre modal para RC específica com chave conhecida (MAPA, XGL ou STATUS B)
+  const r    = (_radarDados||[]).find(rx=>govChave(rx)===chave);
+  const rXgl = !r ? (_xglItens||[]).find(rx=>xglChave(rx.rc,rx.item,rx.oport,rx.itemop)===chave) : null;
+  const rSb  = !r && !rXgl ? (_sbItens||[]).find(rs=>sbChave(rs.rc,rs.seq,rs.op,rs.item)===chave) : null;
+
+  // Origem para o modal de produção
+  const origem = 'gov';
+
+  // RC para exibição no badge e re-render após salvar
+  const rcBusca = r ? (r.rc||'') : rXgl ? (rXgl.rc||'') : rSb ? (rSb.rc||'') : '';
+
   prodAbrirModal(origem, tipo);
+
   // Sobrescrever _prodCtx com a chave correta
   _prodCtx.rcChave  = chave;
   _prodCtx.rcChaves = [chave];
   _prodCtx.rcBusca  = rcBusca;
+
   // Mostrar RC no badge do modal
   const _rcBadge = document.getElementById('acao-rc-badge');
   const _rcNum   = document.getElementById('acao-rc-numero');
-  if(_rcBadge && r){ _rcBadge.style.display='block'; }
-  if(_rcNum && r){ _rcNum.textContent = (r.rc||'') + (r.seq ? ' · Item ' + r.seq : ''); }
-  // Pré-preencher com dados existentes
-  const _gd = _govDados[chave]||{};
+  const _rcFound = r || rXgl || rSb;
+  if(_rcBadge && _rcFound){ _rcBadge.style.display='block'; }
+  if(_rcNum && _rcFound){
+    const _seq = r ? r.seq : rXgl ? rXgl.item : rSb ? rSb.seq : '';
+    _rcNum.textContent = rcBusca + (_seq ? ' · Item ' + _seq : '');
+  }
+
+  // Pré-preencher com dados existentes (tenta gov_mapa, xgl, sb)
+  const _gd = _govDados[chave] || _xglDados[chave] || _sbDados[chave] || {};
   const _envioEl = document.getElementById('acao-data-envio');
   const _finEl   = document.getElementById('acao-data-finalizado');
   if(_envioEl && _gd.envio) _envioEl.value = _gd.envio;
