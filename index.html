@@ -3151,19 +3151,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <button class="btn btn-s" style="font-size:11px" onclick="pcLimparFiltros()">✕ Limpar</button>
           <!-- Botões de ação -->
           <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
-            <button onclick="prodAbrirModal('pc','primeira_analise')"
+            <button onclick="pcAbrirModalComRC('primeira_analise')"
               style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);white-space:nowrap"
               onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
               onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">🔍 1ª Análise</button>
-            <button onclick="prodAbrirModal('pc','em_tratativa')"
+            <button onclick="pcAbrirModalComRC('em_tratativa')"
               style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);white-space:nowrap"
               onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
               onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">⚙️ Em Tratativa</button>
-            <button onclick="prodAbrirModal('pc','status_b')"
+            <button onclick="pcAbrirModalComRC('status_b')"
               style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--vd);white-space:nowrap"
               onmouseover="this.style.background='var(--vd)';this.style.color='#fff'"
               onmouseout="this.style.background='var(--vdc)';this.style.color='var(--vd)'">✅ Status B</button>
-            <button onclick="prodAbrirModal('pc','outros')"
+            <button onclick="pcAbrirModalComRC('outros')"
               style="background:var(--amc);border:1.5px solid var(--am);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--am);white-space:nowrap"
               onmouseover="this.style.background='var(--am)';this.style.color='#fff'"
               onmouseout="this.style.background='var(--amc)';this.style.color='var(--am)'">📋 Outros</button>
@@ -16007,6 +16007,24 @@ const PROD_TIPO_LABELS = {
   'status_b':         { label:'Status B', emoji:'✅', cor:'var(--vd)' },
   'outros':           { label:'Outros', emoji:'📋', cor:'var(--am)' },
 };
+
+function pcAbrirModalComRC(tipo){
+  // Tenta pegar a RC buscada no campo de busca
+  const _rcBusca = ((document.getElementById('pc-busca')||{}).value||'').trim();
+  if(!_rcBusca){ prodAbrirModal('pc', tipo); return; }
+  // Encontrar as RCs correspondentes
+  const _rows = (_radarDados||[]).filter(r=>(r.rc||'').includes(_rcBusca) &&
+    ['Analisar PATEC Finalizado','PATEC Finalizado sem fornecedores aprovados']
+    .includes((r.analista_auto||'').trim()));
+  if(_rows.length === 0){ prodAbrirModal('pc', tipo); return; }
+  if(_rows.length === 1){
+    prodAbrirModalRC(govChave(_rows[0]), tipo);
+  } else {
+    // Múltiplas linhas — usar a primeira mas guardar todas
+    prodAbrirModalRC(govChave(_rows[0]), tipo);
+    _prodCtx.rcChaves = _rows.map(r=>govChave(r));
+  }
+}
 
 function prodAbrirModalRC(chave, tipo){
   // Abre modal para RC específica com chave conhecida
