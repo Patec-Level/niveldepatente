@@ -16195,28 +16195,46 @@ async function prodConfirmarAcao(){
     }
   } catch(e){ console.warn('prodConfirmarAcao save:', e); }
 
+  // Mapear tratamento do modal → valor de GOV_STATUS_OPCOES
+  const _TRAT_MAP = {
+    'Fornecedor':       'FORNECEDOR',
+    'Requisitante':     'REQUISITANTE',
+    'MDG':              'MDG',
+    'Validação Thiago': 'VALIDAÇÃO DO THIAGO',
+    'Concluído':        'Concluído'
+  };
+  const _tratamentoRaw = _prodCtx.tratamento || '';
+  const _statusGov = _TRAT_MAP[_tratamentoRaw] || _tratamentoRaw;
+
   // Atualizar _govDados com status de tratamento + datas
   const _dataEnvio = (document.getElementById('acao-data-envio')?.value||'').trim();
   const _dataFin   = (document.getElementById('acao-data-finalizado')?.value||'').trim();
   const _chaves = _prodCtx.rcChaves || (_prodCtx.rcChave ? [_prodCtx.rcChave] : []);
   if(_chaves.length > 0){
-    const _novoStatus = _prodCtx.tratamento || '';
     const _dbG = getDB();
     for(const _chave of _chaves){
       if(!_govDados[_chave]) _govDados[_chave] = {};
-      if(_novoStatus) _govDados[_chave].status = _novoStatus;
-      if(_dataEnvio)  _govDados[_chave].envio  = _dataEnvio;
-      if(_dataFin)    _govDados[_chave].finalizado = _dataFin;
-      // Salvar no Firebase
+      if(_statusGov)   _govDados[_chave].status     = _statusGov;
+      if(_dataEnvio)   _govDados[_chave].envio       = _dataEnvio;
+      if(_dataFin)     _govDados[_chave].finalizado  = _dataFin;
+      // Recalcular prazo e status visual inline imediatamente
+      const _prazoCalc   = govCalcPrazo(_statusGov, _dataEnvio);
+      const _statusCalc  = govCalcStatus(_prazoCalc, _dataFin);
+      const _idKey = _chave.replace(/[|]/g,'_');
+      const _elPrazo  = document.getElementById('busca-prazo-' + _idKey);
+      const _elStatus = document.getElementById('busca-status-' + _idKey);
+      if(_elPrazo)  _elPrazo.textContent = _prazoCalc ? fmtBR(_prazoCalc) : '—';
+      if(_elStatus){ _elStatus.textContent = _statusCalc||'—'; _elStatus.style.cssText = govCorStatus(_statusCalc); }
+      // Salvar no Firebase (MAPA)
       try{
         if(_dbG){
           const _docId = _chave.replace(/[|]/g,'_');
           const _payload = { ts: new Date().toISOString() };
-          if(_novoStatus) _payload.status    = _novoStatus;
-          if(_dataEnvio)  _payload.envio      = _dataEnvio;
-          if(_dataFin)    _payload.finalizado = _dataFin;
+          if(_statusGov)  _payload.status     = _statusGov;
+          if(_dataEnvio)  _payload.envio       = _dataEnvio;
+          if(_dataFin)    _payload.finalizado  = _dataFin;
           await _dbG.collection('gov_mapa').doc(_docId).set(_payload, {merge:true});
-          console.log('✓ Gov atualizado:', _chave, '| status:', _novoStatus);
+          console.log('✓ Gov atualizado:', _chave, '| status:', _statusGov);
         }
       }catch(_e){ console.warn('govDados save:', _e); }
     }
@@ -16229,16 +16247,23 @@ async function prodConfirmarAcao(){
   if(!window._prodAcoesHoje) window._prodAcoesHoje = [];
   window._prodAcoesHoje.push(registro);
 
+  // Capturar rcBusca ANTES de fechar o modal (prodFecharModal limpa _prodCtx)
+  const _rcBuscaParaRefresh = _prodCtx.rcBusca || '';
+  const _chaveParaRefresh   = _prodCtx.rcChave  || '';
+
   prodFecharModal();
   prodRenderizarPaineis(colab);
 
-  // Re-renderizar busca RC para mostrar dados atualizados
-  if(_prodCtx.rcBusca){
-    const _pcBEl = document.getElementById('pc-busca');
-    if(_pcBEl && _pcBEl.value) pcBuscarRCDetalhe(_pcBEl.value);
-    const _gvBEl = document.getElementById('gov-busca-rc');
-    if(_gvBEl && _gvBEl.value) govBuscarRC(_gvBEl.value);
+  // Re-renderizar busca RC para mostrar dados atualizados nos campos da linha
+  const _gvBEl = document.getElementById('gov-busca-rc');
+  const _rcValGov = _gvBEl ? _gvBEl.value.trim() : '';
+  if(_rcBuscaParaRefresh || _rcValGov){
+    const _rcRefresh = _rcValGov || _rcBuscaParaRefresh;
+    // Re-render imediato — mostra novo status/envio/prazo na linha da tabela
+    govBuscarRC(_rcRefresh);
   }
+  const _pcBEl = document.getElementById('pc-busca');
+  if(_pcBEl && _pcBEl.value) pcBuscarRCDetalhe(_pcBEl.value);
 
   // Atualizar cache PCP e recalcular
   if(!window._prodAcoesCache) window._prodAcoesCache = {};
