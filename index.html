@@ -15237,7 +15237,9 @@ function authMostrarApp(){
 }
 
 function authMontarSidebar(emailParam){
+  try{
   const sb = document.getElementById('sb');
+  console.log('[Sidebar] sb encontrado:', !!sb, '| emailParam:', emailParam);
   if(!sb) return;
 
   const emailAtual = (
@@ -15295,6 +15297,7 @@ function authMontarSidebar(emailParam){
   if(_sa) _sa.style.display = isAdm ? '' : 'none';
   if(_ia) _ia.style.display = isAdm ? '' : 'none';
   console.log('✓ Sidebar montada — isAdm:', isAdm, '— email:', emailAtual);
+  }catch(e){ console.error('[Sidebar] ERRO:', e.message, e.stack); }
 }
 
 async function authFazerLogin(){
