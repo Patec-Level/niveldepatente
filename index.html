@@ -480,9 +480,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       loadEl.style.display='block';
       try{
         if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
-          errEl.textContent='Firebase não carregado. Aguarde e tente novamente.';
-          errEl.style.display='block';loadEl.style.display='none';return;
+          errEl.textContent='⏳ Carregando...'; errEl.style.display='block';
+          var sdkOk=await loadFirebaseSDK();
+          if(!sdkOk||typeof firebase==='undefined'){
+            errEl.textContent='Sem conexão. Verifique sua internet.';
+            loadEl.style.display='none'; return;
+          }
+          if(!firebase.apps.length) try{firebase.initializeApp(FIREBASE_CONFIG);}catch(e){}
+          errEl.style.display='none';
         }
+        if(!firebase.apps.length) try{firebase.initializeApp(FIREBASE_CONFIG);}catch(e){}
         console.log('LOGIN: tentando com',email);
         var result=await firebase.auth().signInWithEmailAndPassword(email,senha);
         console.log('LOGIN OK:',result.user.email);
