@@ -16006,12 +16006,16 @@ function prodAbrirModal(origem, tipo){
   // Garantir colabLogado sincronizado
   if(!colabLogado && colab) colabLogado = colab;
   // Pegar RC sendo buscada no momento
-  const _rcBusca = (document.getElementById('pc-busca')||{}).value ||
-                   (document.getElementById('gov-busca-rc')||{}).value || '';
-  const _rcRows = (_radarDados||[]).filter(r=>(r.rc||'').includes(_rcBusca.trim()) &&
-    (r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
-  const _rcChave = _rcRows.length === 1 ? govChave(_rcRows[0]) : null;
-  _prodCtx = { origem, tipo, tratamento: null, conclusao: null, rcChave: _rcChave, rcBusca: _rcBusca };
+  const _rcBusca = ((document.getElementById('pc-busca')||{}).value ||
+                   (document.getElementById('gov-busca-rc')||{}).value || '').trim();
+  const _rcRows = (_radarDados||[]).filter(r=>(r.rc||'').includes(_rcBusca) &&
+    ['Analisar PATEC Finalizado','PATEC Finalizado sem fornecedores aprovados']
+    .includes((r.analista_auto||'').trim()));
+  // Pegar todas as chaves da RC buscada
+  const _rcChaves = _rcRows.map(r=>govChave(r));
+  const _rcChave = _rcChaves.length > 0 ? _rcChaves[0] : null;
+  _prodCtx = { origem, tipo, tratamento: null, conclusao: null, rcChave: _rcChave, rcChaves: _rcChaves, rcBusca: _rcBusca };
+  console.log('[Modal] RC:', _rcBusca, '| chaves encontradas:', _rcChaves.length);
   const cfg = PROD_TIPO_LABELS[tipo];
 
   // Resetar modal
@@ -16120,34 +16124,29 @@ async function prodConfirmarAcao(){
   // Atualizar _govDados com status de tratamento + datas
   const _dataEnvio = (document.getElementById('acao-data-envio')?.value||'').trim();
   const _dataFin   = (document.getElementById('acao-data-finalizado')?.value||'').trim();
-  if(_prodCtx.rcChave){
-    if(!_govDados[_prodCtx.rcChave]) _govDados[_prodCtx.rcChave] = {};
-    // Mapear tipo do botão para status de tratamento
-    const _tipoStatusMap = {
-      'primeira_analise': 'AG. TRATAMENTO',
-      'em_tratativa':     _prodCtx.tratamento || 'AG. TRATAMENTO',
-      'status_b':         _prodCtx.tratamento || 'AG. TRATAMENTO',
-      'outros':           _prodCtx.tratamento || 'AG. TRATAMENTO',
-    };
-    const _novoStatus = _tipoStatusMap[_prodCtx.tipo] || _prodCtx.tratamento || '';
-    if(_novoStatus) _govDados[_prodCtx.rcChave].status = _novoStatus;
-    if(_dataEnvio)  _govDados[_prodCtx.rcChave].envio  = _dataEnvio;
-    if(_dataFin)    _govDados[_prodCtx.rcChave].finalizado = _dataFin;
-    // Salvar no Firebase
-    try{
-      const _dbG = getDB();
-      if(_dbG){
-        const _docId = _prodCtx.rcChave.replace(/[|]/g,'_');
-        const _payload = {};
-        if(_novoStatus)  _payload.status     = _novoStatus;
-        if(_dataEnvio)   _payload.envio       = _dataEnvio;
-        if(_dataFin)     _payload.finalizado  = _dataFin;
-        _payload.ts = new Date().toISOString();
-        await _dbG.collection('gov_mapa').doc(_docId).set(_payload, {merge:true});
-        console.log('✓ Gov dados atualizados:', _prodCtx.rcChave);
-      }
-    }catch(_e){ console.warn('govDados save:', _e); }
-    registro.rcChave = _prodCtx.rcChave;
+  const _chaves = _prodCtx.rcChaves || (_prodCtx.rcChave ? [_prodCtx.rcChave] : []);
+  if(_chaves.length > 0){
+    const _novoStatus = _prodCtx.tratamento || '';
+    const _dbG = getDB();
+    for(const _chave of _chaves){
+      if(!_govDados[_chave]) _govDados[_chave] = {};
+      if(_novoStatus) _govDados[_chave].status = _novoStatus;
+      if(_dataEnvio)  _govDados[_chave].envio  = _dataEnvio;
+      if(_dataFin)    _govDados[_chave].finalizado = _dataFin;
+      // Salvar no Firebase
+      try{
+        if(_dbG){
+          const _docId = _chave.replace(/[|]/g,'_');
+          const _payload = { ts: new Date().toISOString() };
+          if(_novoStatus) _payload.status    = _novoStatus;
+          if(_dataEnvio)  _payload.envio      = _dataEnvio;
+          if(_dataFin)    _payload.finalizado = _dataFin;
+          await _dbG.collection('gov_mapa').doc(_docId).set(_payload, {merge:true});
+          console.log('✓ Gov atualizado:', _chave, '| status:', _novoStatus);
+        }
+      }catch(_e){ console.warn('govDados save:', _e); }
+    }
+    registro.rcChave = _chaves[0];
     registro.dataEnvio = _dataEnvio;
     registro.dataFinalizado = _dataFin;
   }
