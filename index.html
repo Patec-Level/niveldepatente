@@ -3171,19 +3171,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
           <!-- Velocímetro PC -->
           <div style="display:flex;flex-direction:column;align-items:center;min-width:140px">
-            <svg id="pc-velocimetro" viewBox="0 0 140 80" width="140" height="80" style="overflow:visible">
-              <path d="M15,70 A55,55 0 0,1 125,70" fill="none" stroke="#E8EDF4" stroke-width="12" stroke-linecap="round"/>
-              <path id="pc-vel-arco" d="M15,70 A55,55 0 0,1 125,70" fill="none" stroke="#D94040" stroke-width="12" stroke-linecap="round"
-                stroke-dasharray="0 173" style="transition:stroke-dasharray .6s ease,stroke .4s ease"/>
-              <line id="pc-vel-agulha" x1="70" y1="70" x2="70" y2="22"
-                stroke="#1A2D4F" stroke-width="2.5" stroke-linecap="round"
-                style="transform-origin:70px 70px;transform:rotate(-90deg);transition:transform .6s ease"/>
-              <circle cx="70" cy="70" r="5" fill="#1A2D4F"/>
-              <text x="12" y="78" font-size="8" fill="#9BA5B5" text-anchor="middle">0</text>
-              <text x="70" y="16" font-size="8" fill="#9BA5B5" text-anchor="middle">50%</text>
-              <text x="128" y="78" font-size="8" fill="#9BA5B5" text-anchor="middle">meta</text>
-              <text id="pc-vel-valor" x="70" y="62" font-size="16" font-weight="700" fill="#1A2D4F" text-anchor="middle">0</text>
-              <text id="pc-vel-pct" x="70" y="75" font-size="8" fill="#9BA5B5" text-anchor="middle">0% da meta</text>
+            <svg id="pc-velocimetro" viewBox="0 0 160 100" width="160" height="100" style="overflow:visible">
+              <path id="pc-vel-bg" d="M18,82 A56,56 0 0,1 142,82" fill="none" stroke="#E0E5EE" stroke-width="10" stroke-linecap="butt"
+                stroke-dasharray="6 4"/>
+              <path id="pc-vel-arco" d="M18,82 A56,56 0 0,1 142,82" fill="none" stroke="#22C55E" stroke-width="10" stroke-linecap="butt"
+                stroke-dasharray="0 176" style="transition:stroke-dasharray .7s cubic-bezier(.4,0,.2,1),stroke .4s ease"/>
+              <polygon id="pc-vel-agulha" points="80,84 77,84 80,34 83,84"
+                fill="#1A2D4F" style="transform-origin:80px 84px;transform:rotate(-90deg);transition:transform .7s cubic-bezier(.4,0,.2,1)"/>
+              <circle cx="80" cy="84" r="6" fill="#1A2D4F"/>
+              <circle cx="80" cy="84" r="3" fill="#fff"/>
+              <rect id="pc-vel-badge" x="55" y="87" width="50" height="16" rx="4" fill="#1A2D4F"/>
+              <text id="pc-vel-pct" x="80" y="99" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">0%</text>
             </svg>
           </div>
 
@@ -3317,25 +3315,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
           <!-- Velocímetro -->
           <div style="display:flex;flex-direction:column;align-items:center;min-width:140px">
-            <svg id="gov-velocimetro" viewBox="0 0 140 80" width="140" height="80" style="overflow:visible">
-              <!-- Arco de fundo -->
-              <path d="M15,70 A55,55 0 0,1 125,70" fill="none" stroke="#E8EDF4" stroke-width="12" stroke-linecap="round"/>
-              <!-- Arco colorido (progresso) -->
-              <path id="gov-vel-arco" d="M15,70 A55,55 0 0,1 125,70" fill="none" stroke="#D94040" stroke-width="12" stroke-linecap="round"
-                stroke-dasharray="0 173" style="transition:stroke-dasharray .6s ease,stroke .4s ease"/>
-              <!-- Agulha -->
-              <line id="gov-vel-agulha" x1="70" y1="70" x2="70" y2="22"
-                stroke="#1A2D4F" stroke-width="2.5" stroke-linecap="round"
-                style="transform-origin:70px 70px;transform:rotate(-90deg);transition:transform .6s ease"/>
-              <!-- Centro da agulha -->
-              <circle cx="70" cy="70" r="5" fill="#1A2D4F"/>
-              <!-- Marcações: 0%, 50%, 100% -->
-              <text x="12" y="78" font-size="8" fill="#9BA5B5" text-anchor="middle">0</text>
-              <text x="70" y="16" font-size="8" fill="#9BA5B5" text-anchor="middle">50%</text>
-              <text x="128" y="78" font-size="8" fill="#9BA5B5" text-anchor="middle">meta</text>
-              <!-- Valor central -->
-              <text id="gov-vel-valor" x="70" y="62" font-size="16" font-weight="700" fill="#1A2D4F" text-anchor="middle">0</text>
-              <text id="gov-vel-pct" x="70" y="75" font-size="8" fill="#9BA5B5" text-anchor="middle">0% da meta</text>
+            <svg id="gov-velocimetro" viewBox="0 0 160 100" width="160" height="100" style="overflow:visible">
+              <!-- Segmentos de fundo (arco tracejado) -->
+              <path id="gov-vel-bg" d="M18,82 A56,56 0 0,1 142,82" fill="none" stroke="#E0E5EE" stroke-width="10" stroke-linecap="butt"
+                stroke-dasharray="6 4"/>
+              <!-- Arco colorido progresso -->
+              <path id="gov-vel-arco" d="M18,82 A56,56 0 0,1 142,82" fill="none" stroke="#22C55E" stroke-width="10" stroke-linecap="butt"
+                stroke-dasharray="0 176" style="transition:stroke-dasharray .7s cubic-bezier(.4,0,.2,1),stroke .4s ease"/>
+              <!-- Agulha: triângulo apontado -->
+              <polygon id="gov-vel-agulha" points="80,84 77,84 80,34 83,84"
+                fill="#1A2D4F" style="transform-origin:80px 84px;transform:rotate(-90deg);transition:transform .7s cubic-bezier(.4,0,.2,1)"/>
+              <!-- Pivot -->
+              <circle cx="80" cy="84" r="6" fill="#1A2D4F"/>
+              <circle cx="80" cy="84" r="3" fill="#fff"/>
+              <!-- Badge % -->
+              <rect id="gov-vel-badge" x="55" y="87" width="50" height="16" rx="4" fill="#1A2D4F"/>
+              <text id="gov-vel-pct" x="80" y="99" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">0%</text>
             </svg>
           </div>
 
@@ -16436,40 +16431,39 @@ function prodTemMeta(colab){
 function govAtualizarVelocimetro(total, metaVal){
   const arco   = document.getElementById('gov-vel-arco');
   const agulha = document.getElementById('gov-vel-agulha');
-  const valor  = document.getElementById('gov-vel-valor');
   const pctEl  = document.getElementById('gov-vel-pct');
+  const badge  = document.getElementById('gov-vel-badge');
   if(!arco || !agulha) return;
 
-  const ratio    = metaVal > 0 ? Math.min(1, total / metaVal) : 0;
-  const arcLen   = 173;
-  const filled   = ratio * arcLen;
-  const cor      = ratio >= 1 ? '#0E9E6A' : ratio >= 0.8 ? '#C07A12' : '#D94040';
-  const graus    = -90 + ratio * 180;
+  const ratio  = metaVal > 0 ? Math.min(1, total / metaVal) : 0;
+  const arcLen = 176;
+  const filled = ratio * arcLen;
+  const cor    = ratio >= 1 ? '#22C55E' : ratio >= 0.8 ? '#F59E0B' : '#EF4444';
+  const graus  = -90 + ratio * 180;
 
   arco.setAttribute('stroke-dasharray', `${filled.toFixed(1)} ${arcLen}`);
   arco.setAttribute('stroke', cor);
   agulha.style.transform = `rotate(${graus}deg)`;
-
-  if(valor) { valor.textContent = total; valor.setAttribute('fill', cor); }
-  if(pctEl) pctEl.textContent = `${Math.round(ratio*100)}% da meta`;
+  if(badge) badge.setAttribute('fill', cor);
+  if(pctEl) pctEl.textContent = `${Math.round(ratio*100)}%`;
 }
 
 function pcAtualizarVelocimetro(total, metaVal){
   const arco   = document.getElementById('pc-vel-arco');
   const agulha = document.getElementById('pc-vel-agulha');
-  const valor  = document.getElementById('pc-vel-valor');
   const pctEl  = document.getElementById('pc-vel-pct');
+  const badge  = document.getElementById('pc-vel-badge');
   if(!arco || !agulha) return;
   const ratio  = metaVal > 0 ? Math.min(1, total / metaVal) : 0;
-  const arcLen = 173;
+  const arcLen = 176;
   const filled = ratio * arcLen;
-  const cor    = ratio >= 1 ? '#0E9E6A' : ratio >= 0.8 ? '#C07A12' : '#D94040';
+  const cor    = ratio >= 1 ? '#22C55E' : ratio >= 0.8 ? '#F59E0B' : '#EF4444';
   const graus  = -90 + ratio * 180;
   arco.setAttribute('stroke-dasharray', `${filled.toFixed(1)} ${arcLen}`);
   arco.setAttribute('stroke', cor);
   agulha.style.transform = `rotate(${graus}deg)`;
-  if(valor) { valor.textContent = total; valor.setAttribute('fill', cor); }
-  if(pctEl) pctEl.textContent = `${Math.round(ratio*100)}% da meta`;
+  if(badge) badge.setAttribute('fill', cor);
+  if(pctEl) pctEl.textContent = `${Math.round(ratio*100)}%`;
 }
 
 function prodRenderizarPaineis(colab){
