@@ -15251,6 +15251,13 @@ function authMontarSidebar(emailParam){
   const emailsAdm = ['andre.mazzali@levelgroup.com.br'];
   const isAdm = emailsAdm.includes(emailAtual);
   console.log('[Sidebar] email:', emailAtual, '| isAdm:', isAdm);
+
+  // Se PERMS_SIDEBAR não existe ainda, tentar de novo em 500ms
+  if(typeof PERMS_SIDEBAR === 'undefined'){
+    console.warn('[Sidebar] PERMS_SIDEBAR não definido, tentando em 500ms');
+    setTimeout(()=>authMontarSidebar(emailParam), 500);
+    return;
+  }
   const perms = _authPerfil?.permissoes || Object.keys(PERMS_SIDEBAR);
 
   // Remover todos os itens de navegação existentes
