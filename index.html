@@ -11247,12 +11247,19 @@ function pcBuscarRCDetalhe(rc){
           </tr>
           <tr style="background:#f7f9fc;border-top:none">
             <td colspan="12" style="padding:4px 8px 8px 8px">
-              <div style="display:flex;gap:20px;font-size:11px;color:var(--tx2)">
+              <div style="display:flex;gap:20px;font-size:11px;color:var(--tx2);flex-wrap:wrap;align-items:center">
                 <span>⏱️ <strong>SLA:</strong> ${r.sla||'—'} dias</span>
                 <span>📋 <strong>Fila Level Board:</strong> ${r.fila||'—'}</span>
                 ${r.centro?`<span>🏗️ <strong>Centro:</strong> ${r.centro}</span>`:''}
                 ${r.familia&&r.familia!=='—'?`<span>🏷️ <strong>Família:</strong> ${r.familia}</span>`:''}
                 <span>🔁 <strong>Seguimento:</strong> ${r.seguimento||'—'}</span>
+                <span style="margin-left:auto;display:flex;gap:5px">
+                  <button onclick="prodAbrirModalRC('${chave}','primeira_analise')" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:7px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:700;color:var(--azm)">🔍 1ª Análise</button>
+                  <button onclick="prodAbrirModalRC('${chave}','em_tratativa')" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:7px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:700;color:var(--azm)">⚙️ Em Tratativa</button>
+                  <button onclick="prodAbrirModalRC('${chave}','status_b')" style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:7px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:700;color:var(--vd)">✅ Status B</button>
+                  <button onclick="prodAbrirModalRC('${chave}','outros')" style="background:var(--amc);border:1.5px solid var(--am);border-radius:7px;padding:4px 10px;cursor:pointer;font-size:10px;font-weight:700;color:var(--am)">📋 Outros</button>
+                </span>
+              </div>
             </td>
           </tr>`;
         }).join('')}
@@ -15995,6 +16002,24 @@ const PROD_TIPO_LABELS = {
   'status_b':         { label:'Status B', emoji:'✅', cor:'var(--vd)' },
   'outros':           { label:'Outros', emoji:'📋', cor:'var(--am)' },
 };
+
+function prodAbrirModalRC(chave, tipo){
+  // Abre modal para RC específica com chave conhecida
+  const r = (_radarDados||[]).find(r=>govChave(r)===chave);
+  const origem = r ? 'pc' : 'gov';
+  const rcBusca = r ? (r.rc||'') : '';
+  prodAbrirModal(origem, tipo);
+  // Sobrescrever _prodCtx com a chave correta
+  _prodCtx.rcChave  = chave;
+  _prodCtx.rcChaves = [chave];
+  _prodCtx.rcBusca  = rcBusca;
+  // Pré-preencher com dados existentes
+  const _gd = _govDados[chave]||{};
+  const _envioEl = document.getElementById('acao-data-envio');
+  const _finEl   = document.getElementById('acao-data-finalizado');
+  if(_envioEl && _gd.envio) _envioEl.value = _gd.envio;
+  if(_finEl && _gd.finalizado) _finEl.value = _gd.finalizado;
+}
 
 function prodAbrirModal(origem, tipo){
   // Identificar colaborador — ADM = André
