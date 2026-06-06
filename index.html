@@ -16700,9 +16700,18 @@ async function fdiaInicializar(){
     compRow(cntComp.pedido,      'RCs para Pedidos') +
     compRow(cntComp.devolucao,   'RCs para Devoluções');
 
-  // Justificativa sempre visível — resetar campos se for nova sessão
+  // Justificativa — visível sempre (para quem bateu meta, campos são opcionais)
   const justBox = document.getElementById('fdia-justif-box');
   if(justBox) justBox.style.display = 'block';
+  // Atualizar label do card conforme situação
+  const _semMetaFdia = (typeof COLABS_SEM_META_RT !== 'undefined') && COLABS_SEM_META_RT.includes(colab);
+  const _abaixoFdia  = !_semMetaFdia && metaVal > 0 && cnt.meta < metaVal;
+  const cdTitle = justBox?.querySelector('.cd-t');
+  if(cdTitle) cdTitle.textContent = _abaixoFdia ? '⚠️ Abaixo da meta — explique o motivo' : '📝 Como foi o seu dia? (opcional)';
+  const motLabel = document.querySelector('#fdia-justif-box [for="fdia-motivos-grid"], #fdia-justif-box div[style*="font-weight:600"]');
+  // Atualizar asterisco obrigatoriedade
+  const spans = justBox?.querySelectorAll('span[style*="vm"]');
+  spans?.forEach(s => s.style.display = _abaixoFdia ? 'inline' : 'none');
 
   // Verificar se já fechou hoje
   try{
@@ -16776,25 +16785,28 @@ async function fdiaSalvar(){
     return;
   }
 
-  // Motivo sempre obrigatório
-  if(!_fdiaMotivo){
-    const av = document.getElementById('fdia-motivo-aviso');
-    if(av) av.style.display = 'block';
-    document.getElementById('fdia-justif-box')?.scrollIntoView({behavior:'smooth', block:'center'});
-    return;
-  }
-  document.getElementById('fdia-motivo-aviso') && (document.getElementById('fdia-motivo-aviso').style.display='none');
-
-  // Comentário obrigatório — mínimo 10 caracteres reais (sem espaços, pontos, reticências)
+  // Motivo e comentário obrigatórios APENAS se abaixo da meta
+  const _semMeta    = (typeof COLABS_SEM_META_RT !== 'undefined') && COLABS_SEM_META_RT.includes(colab);
+  const _abaixoMeta = !_semMeta && metaVal > 0 && cnt.meta < metaVal;
   const _detalheRaw = document.getElementById('fdia-justif-detalhe')?.value || '';
-  const _detalheReal = _detalheRaw.replace(/[\s\.…]/g, '');
-  if(_detalheReal.length < 10){
-    const av2 = document.getElementById('fdia-coment-aviso');
-    if(av2) av2.style.display = 'block';
-    document.getElementById('fdia-justif-detalhe')?.focus();
-    return;
+
+  if(_abaixoMeta){
+    if(!_fdiaMotivo){
+      const av = document.getElementById('fdia-motivo-aviso');
+      if(av) av.style.display = 'block';
+      document.getElementById('fdia-justif-box')?.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+    document.getElementById('fdia-motivo-aviso') && (document.getElementById('fdia-motivo-aviso').style.display='none');
+    const _detalheReal = _detalheRaw.replace(/[\s\.…]/g, '');
+    if(_detalheReal.length < 10){
+      const av2 = document.getElementById('fdia-coment-aviso');
+      if(av2) av2.style.display = 'block';
+      document.getElementById('fdia-justif-detalhe')?.focus();
+      return;
+    }
+    document.getElementById('fdia-coment-aviso') && (document.getElementById('fdia-coment-aviso').style.display='none');
   }
-  document.getElementById('fdia-coment-aviso') && (document.getElementById('fdia-coment-aviso').style.display='none');
 
   // Composição — contagem dos tipos de conclusão
   const cntComp = {
