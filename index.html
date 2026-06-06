@@ -12512,11 +12512,24 @@ async function desfechoCarregarFirebase(){
       } catch(e){}
     }
 
-    // Só carregar desfechos do ciclo atual
-    const snap = await db.collection('desfechos')
+    // Carregar desfechos do ciclo atual (com fallback se retornar vazio)
+    let snap = await db.collection('desfechos')
       .where('data','>=', CICLO_NOVO_INICIO).get();
+    // Fallback: se vazio pode ser que docs antigos não têm campo data — buscar tudo
+    if(snap.empty){
+      console.warn('Desfechos: query por data retornou vazio, buscando todos...');
+      snap = await db.collection('desfechos').get();
+    }
     _desfechoCache = {};
-    snap.docs.forEach(d=>{ const data=d.data(); _desfechoCache[data.chave] = data; });
+    snap.docs.forEach(d=>{
+      const data = d.data();
+      // Filtrar manualmente por data quando necessário
+      const dataDoc = data.data || '';
+      if(!dataDoc || dataDoc >= CICLO_NOVO_INICIO){
+        _desfechoCache[data.chave || d.id] = data;
+      }
+    });
+    console.log('✓ Desfechos carregados:', Object.keys(_desfechoCache).length, '(ciclo atual)');
     // Cache
     try{
       localStorage.setItem(CACHE_KEY, JSON.stringify(_desfechoCache));
