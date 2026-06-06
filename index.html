@@ -3721,6 +3721,21 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+      <!-- Regra do dia -->
+      <div class="cd" style="border:1.5px solid var(--azm);background:var(--azc);margin-bottom:1rem">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="font-size:22px;line-height:1">📌</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--azm);margin-bottom:6px">Regra de registro de produção</div>
+            <div style="font-size:11px;color:var(--tx2);line-height:1.7">
+              ① Ao trabalhar em uma RC, registre a ação <strong>na hora</strong> usando os botões <strong>1ª Análise / Em Tratativa / Status B / Outros</strong> na busca da RC.<br>
+              ② Ao final do dia, clique em <strong>Finalizar meu dia</strong> para consolidar sua produção no histórico.<br>
+              ③ Ações registradas fora do dia correto <strong>não serão contabilizadas retroativamente</strong>. Em caso de esquecimento, fale com o gestor.
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Login check -->
       <div id="fdia-sem-login" class="cd" style="text-align:center;padding:2rem;display:none">
         <div style="font-size:36px;margin-bottom:12px">🔐</div>
@@ -16472,26 +16487,56 @@ async function fdiaInicializar(){
   const regHoje = regs.find(r=>r.colab===colab&&r.data===hoje2);
   if(mo) mo.textContent = regHoje?.pres || '—';
 
-  // Breakdown
+  // Contar composição (conclusões dos itens tratados)
+  const cntComp = {
+    pedido:      acoes.filter(a=>a.conclusao==='Pedido'||a.tratamento==='Pedido').length,
+    republicacao:acoes.filter(a=>a.conclusao==='Republicação'||a.tratamento==='Republicação').length,
+    xgl:         acoes.filter(a=>a.conclusao==='XGL'||a.tratamento==='XGL').length,
+    thiago:      acoes.filter(a=>a.conclusao==='Validação Thiago'||a.tratamento==='Validação Thiago'||a.conclusao==='VALIDAÇÃO DO THIAGO').length,
+    devolucao:   acoes.filter(a=>a.conclusao==='Devolução'||a.tratamento==='Devolução').length,
+    mdg:         acoes.filter(a=>a.conclusao==='MDG'||a.tratamento==='MDG').length,
+    forn:        acoes.filter(a=>a.conclusao==='Fornecedor'||a.tratamento==='Fornecedor'||a.conclusao==='FORNECEDOR').length,
+    req:         acoes.filter(a=>a.conclusao==='Requisitante'||a.tratamento==='Requisitante'||a.conclusao==='REQUISITANTE').length,
+  };
+
+  // Breakdown — Itens Tratados
   const bdEl = document.getElementById('fdia-breakdown');
   if(bdEl) bdEl.innerHTML = `
     <div style="background:var(--azc);border-radius:8px;padding:.625rem;text-align:center">
-      <div style="font-size:20px;font-weight:700;color:var(--azm)">${cnt.primeira_analise}</div>
+      <div style="font-size:22px;font-weight:700;color:var(--azm)">${cnt.primeira_analise}</div>
       <div style="font-size:10px;color:var(--tx2)">1ª Análise</div>
     </div>
     <div style="background:var(--azc);border-radius:8px;padding:.625rem;text-align:center">
-      <div style="font-size:20px;font-weight:700;color:var(--azm)">${cnt.em_tratativa}</div>
+      <div style="font-size:22px;font-weight:700;color:var(--azm)">${cnt.em_tratativa}</div>
       <div style="font-size:10px;color:var(--tx2)">Em Tratativa</div>
     </div>
     <div style="background:var(--vdc);border-radius:8px;padding:.625rem;text-align:center">
-      <div style="font-size:20px;font-weight:700;color:var(--vd)">${cnt.status_b}</div>
+      <div style="font-size:22px;font-weight:700;color:var(--vd)">${cnt.status_b}</div>
       <div style="font-size:10px;color:var(--tx2)">Status B</div>
     </div>
     <div style="background:var(--amc);border-radius:8px;padding:.625rem;text-align:center">
-      <div style="font-size:20px;font-weight:700;color:var(--am)">${cnt.outros}</div>
+      <div style="font-size:22px;font-weight:700;color:var(--am)">${cnt.outros}</div>
       <div style="font-size:10px;color:var(--tx2)">Outros</div>
     </div>
   `;
+
+  // Composição dos itens tratados
+  const compEl = document.getElementById('fdia-composicao');
+  const compCard = (val, label, cor, bg) => val > 0
+    ? `<div style="background:${bg};border-radius:8px;padding:.5rem .625rem;text-align:center">
+        <div style="font-size:18px;font-weight:700;color:${cor}">${val}</div>
+        <div style="font-size:10px;color:var(--tx2)">${label}</div>
+       </div>` : '';
+  if(compEl) compEl.innerHTML =
+    compCard(cntComp.pedido,      'Pedido',             'var(--vd)',  'var(--vdc)') +
+    compCard(cntComp.republicacao,'Republicação',       'var(--azm)', 'var(--azc)') +
+    compCard(cntComp.xgl,         'XGL',                'var(--azm)', 'var(--azc)') +
+    compCard(cntComp.thiago,      'Val. Thiago',        'var(--azm)', 'var(--azc)') +
+    compCard(cntComp.devolucao,   'Devolução',          'var(--vm)',  'var(--vmc)') +
+    compCard(cntComp.mdg,         'MDG',                'var(--azm)', 'var(--azc)') +
+    compCard(cntComp.forn,        'Fornecedor',         'var(--am)',  'var(--amc)') +
+    compCard(cntComp.req,         'Requisitante',       'var(--am)',  'var(--amc)') ||
+    '<div style="font-size:11px;color:var(--tx2);padding:.5rem">Nenhuma composição registrada ainda.</div>';
 
   // Justificativa
   const justBox = document.getElementById('fdia-justif-box');
@@ -16551,26 +16596,83 @@ async function fdiaSalvar(){
     return;
   }
 
+  // Composição — contagem dos tipos de conclusão
+  const cntComp = {
+    pedido:       acoes.filter(a=>a.conclusao==='Pedido'||a.tratamento==='Pedido').length,
+    republicacao: acoes.filter(a=>a.conclusao==='Republicação'||a.tratamento==='Republicação').length,
+    xgl:          acoes.filter(a=>a.conclusao==='XGL'||a.tratamento==='XGL').length,
+    thiago:       acoes.filter(a=>a.conclusao==='Validação Thiago'||a.tratamento==='Validação Thiago'||a.conclusao==='VALIDAÇÃO DO THIAGO').length,
+    devolucao:    acoes.filter(a=>a.conclusao==='Devolução'||a.tratamento==='Devolução').length,
+    mdg:          acoes.filter(a=>a.conclusao==='MDG'||a.tratamento==='MDG').length,
+    forn:         acoes.filter(a=>a.conclusao==='Fornecedor'||a.tratamento==='Fornecedor'||a.conclusao==='FORNECEDOR').length,
+    req:          acoes.filter(a=>a.conclusao==='Requisitante'||a.tratamento==='Requisitante'||a.conclusao==='REQUISITANTE').length,
+  };
+
   const detalhe = document.getElementById('fdia-justif-detalhe')?.value?.trim()||'';
-  const reg = {
-    colab, data: hoje, total: cnt.meta, meta: metaVal,
-    pct: Math.round(cnt.meta/metaVal*100),
+  const pct = Math.round(cnt.meta / Math.max(metaVal,1) * 100);
+
+  // Registro fechamento_dia
+  const regFecha = {
+    colab, data: hoje, total: cnt.meta, meta: metaVal, pct,
     metaAtingida: cnt.meta >= metaVal,
     motivo: _fdiaMotivo || '',
     detalhe, ts: new Date().toISOString(),
-    breakdown: { primeira_analise: cnt.primeira_analise, em_tratativa: cnt.em_tratativa, status_b: cnt.status_b, outros: cnt.outros }
+    breakdown: { primeira_analise: cnt.primeira_analise, em_tratativa: cnt.em_tratativa, status_b: cnt.status_b, outros: cnt.outros },
+    composicao: cntComp
+  };
+
+  // Registro producao (histórico de produção) — mesma estrutura do salvarProducao()
+  // f[]: pf0=1aAnalise, pf1=Tratativa, pf2=StatusB, pf3=Forn, pf4=Req, pf5=MDG, pf6=ValThiago, pf7=XGL, pf8=Repub, pf9=Pedidos, pf10=Devol, pf11=Outros
+  const fArr = [
+    cnt.primeira_analise,  // pf0 — 1ª Análise
+    cnt.em_tratativa,      // pf1 — Em Tratativa
+    cnt.status_b,          // pf2 — Status B
+    cntComp.forn,          // pf3 — Fornecedor
+    cntComp.req,           // pf4 — Requisitante
+    cntComp.mdg,           // pf5 — MDG
+    cntComp.thiago,        // pf6 — Validação Thiago
+    cntComp.xgl,           // pf7 — XGL
+    cntComp.republicacao,  // pf8 — Republicação
+    cntComp.pedido,        // pf9 — RCs para Pedidos
+    cntComp.devolucao,     // pf10 — RCs para Devoluções
+    cnt.outros             // pf11 — Outros
+  ];
+  const regProd = {
+    colab, data: hoje, pres: 'Presencial',
+    f: fArr,
+    justif: _fdiaMotivo ? (_fdiaMotivo + (detalhe ? ': ' + detalhe : '')) : ''
   };
 
   try{
     const db = getDB();
-    if(db) await db.collection('fechamento_dia').add(reg);
+    if(db){
+      // Salvar fechamento
+      await db.collection('fechamento_dia').add(regFecha);
+      // Salvar no histórico de produção (upsert por colab+data)
+      const snapProd = await db.collection('producoes')
+        .where('colab','==',colab).where('data','==',hoje).get();
+      if(!snapProd.empty){
+        await snapProd.docs[0].ref.set(regProd, {merge:true});
+      } else {
+        await db.collection('producoes').add(regProd);
+      }
+    }
   } catch(e){ console.warn('fdiaSalvar:', e); }
+
+  // Atualizar array registros em memória (para PCP e Painel Estratégico)
+  if(typeof registros !== 'undefined'){
+    const idxExist = registros.findIndex(r=>r.colab===colab&&r.data===hoje);
+    if(idxExist >= 0) registros[idxExist] = regProd;
+    else registros.push(regProd);
+    // Recalcular PCP do dia
+    if(typeof pcpAtualizarRegistroDia === 'function') pcpAtualizarRegistroDia(hoje);
+  }
 
   document.getElementById('fdia-ja-fechado').style.display = 'block';
   document.getElementById('fdia-btn-wrap').style.display   = 'none';
   document.getElementById('fdia-justif-box').style.display = 'none';
   document.getElementById('fdia-fechado-info').textContent =
-    `Fechado agora · ${cnt.meta} itens · ${Math.round(cnt.meta/metaVal*100)}% da meta`;
+    `Fechado agora · ${cnt.meta} itens · ${pct}% da meta`;
   document.getElementById('fdia-ok').style.display = 'inline';
   setTimeout(()=>{ const el=document.getElementById('fdia-ok'); if(el)el.style.display='none'; }, 3000);
 }
