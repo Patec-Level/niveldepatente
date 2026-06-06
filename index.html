@@ -11179,70 +11179,75 @@ function pcBuscarRCDetalhe(rc){
 
   el.style.display='block';
   el.innerHTML = `
-    <div style="font-size:11px;font-weight:600;color:var(--az);margin-bottom:6px">${resultados.length} resultado(s) para RC <strong>${rcBusca}</strong>:</div>
-    <div class="tw" style="max-height:320px">
-    <table>
-      <thead><tr>
-        <th>ABA</th><th>Analista</th><th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th>
-        <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th><th>Finalizado</th><th></th>
-      </tr></thead>
-      <tbody>
-        ${resultados.map(r=>{
-          const chave = govChave(r);
-          const m = _govDados[chave]||{};
-          let statusAtual = m.status || '';
-          if(!statusAtual && GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase()))) statusAtual = 'AG. TRATAMENTO';
-          const prazo = govCalcPrazo(statusAtual, m.envio||'');
-          const statusCalc = govCalcStatus(prazo, m.finalizado||'');
-          const chaveId = chave.replace(/[|]/g,'_');
-          const optsStatus = GOV_STATUS_OPCOES.map(o=>`<option value="${o}" ${statusAtual===o?'selected':''}>${o}</option>`).join('');
-          const analistasOpts = _govAnalistasOpts.replace(`value="${r.analista||''}"`,`value="${r.analista||''}" selected`);
-          const abaLabel = resultadosReprov.includes(r) ? '100% REPROV.' : 'MAPA';
-          const abaColor = resultadosReprov.includes(r) ? 'var(--vm)' : 'var(--azm)';
-          return `
-          <tr>
-            <td style="font-weight:700;color:${abaColor};font-size:11px">${abaLabel}</td>
-            <td style="font-size:11px;min-width:90px">
-              <select style="font-size:11px;padding:2px 4px;width:100%"
-                onchange="govBuscaSalvar('MAPA','${chave}','analista',this.value)">
-                ${analistasOpts}
-              </select>
-            </td>
-            <td style="font-weight:700;color:var(--az)">${r.rc}</td>
-            <td>${r.seq||'—'}</td>
-            <td>${r.num_oport||'—'}</td>
-            <td>${r.item_rc||'—'}</td>
-            <td>
-              <select style="font-size:11px;padding:2px 5px;min-width:150px"
-                onchange="govBuscaSalvar('MAPA','${chave}','status',this.value)">
-                <option value="">— selecione —</option>
-                ${optsStatus}
-              </select>
-            </td>
-            <td><input type="date" value="${m.envio||''}" style="font-size:11px;padding:2px 4px;width:105px"
-              onchange="govBuscaSalvarAtualizar('MAPA','${chave}','envio',this.value,this)"></td>
-            <td id="pc-busca-prazo-${chaveId}">${fmtBR(prazo)||'—'}</td>
-            <td id="pc-busca-status-${chaveId}" style="${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
-            <td><input type="date" value="${m.finalizado||''}" style="font-size:11px;padding:2px 4px;width:105px"
-              onchange="govBuscaSalvarAtualizar('MAPA','${chave}','finalizado',this.value,this)"></td>
-            <td><button title="Comentário" style="background:var(--azc);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:13px" onclick="mapaAbrirComentario('${chave}')">💬</button></td>
-          </tr>
-          <tr style="background:#f0f4ff;border-top:none">
-            <td colspan="12" style="padding:6px 8px 10px 8px">
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <span style="font-size:10px;font-weight:700;color:var(--tx2);margin-right:4px">⚡ Registrar ação:</span>
-                <button onclick="prodAbrirModalRC('${chave}','primeira_analise')" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm)">🔍 1ª Análise</button>
-                <button onclick="prodAbrirModalRC('${chave}','em_tratativa')" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm)">⚙️ Em Tratativa</button>
-                <button onclick="prodAbrirModalRC('${chave}','status_b')" style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:700;color:var(--vd)">✅ Status B</button>
-                <button onclick="prodAbrirModalRC('${chave}','outros')" style="background:var(--amc);border:1.5px solid var(--am);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:700;color:var(--am)">📋 Outros</button>
-                <span style="margin-left:12px;font-size:10px;color:var(--tx2)">⏱️ SLA: ${r.sla||'—'} dias &nbsp;|&nbsp; 📋 ${r.fila||'—'} &nbsp;|&nbsp; 🔁 ${r.seguimento||'—'}</span>
-              </div>
-            </td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>
-    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--az);margin-bottom:8px">${resultados.length} resultado(s) para RC <strong>${rcBusca}</strong>:</div>
+    ${resultados.map(r=>{
+      const chave = govChave(r);
+      const m = _govDados[chave]||{};
+      let statusAtual = m.status || '';
+      if(!statusAtual && GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase()))) statusAtual = 'AG. TRATAMENTO';
+      const prazo = govCalcPrazo(statusAtual, m.envio||'');
+      const statusCalc = govCalcStatus(prazo, m.finalizado||'');
+      const chaveId = chave.replace(/[|]/g,'_');
+      const optsStatus = GOV_STATUS_OPCOES.map(o=>`<option value="${o}" ${statusAtual===o?'selected':''}>${o}</option>`).join('');
+      const analistasOpts = _govAnalistasOpts.replace(`value="${r.analista||''}"`,`value="${r.analista||''}" selected`);
+      const abaLabel = resultadosReprov.includes(r) ? '100% REPROV.' : 'MAPA';
+      const abaColor = resultadosReprov.includes(r) ? 'var(--vm)' : 'var(--azm)';
+      const statusCor = govCorStatus(statusCalc);
+      return `
+      <div style="border:1.5px solid var(--brd);border-radius:12px;margin-bottom:10px;overflow:hidden">
+
+        <!-- Linha 1: info da RC -->
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;flex-wrap:wrap;border-bottom:1px solid var(--brd)">
+          <span style="font-size:10px;font-weight:700;color:${abaColor};background:${abaColor==='var(--vm)'?'var(--vmc)':'var(--azc)'};padding:2px 8px;border-radius:20px">${abaLabel}</span>
+          <span style="font-size:14px;font-weight:700;color:var(--az)">RC ${r.rc}</span>
+          <span style="font-size:11px;color:var(--tx2)">Item ${r.seq||'—'} &nbsp;·&nbsp; Op. ${r.num_oport||'—'} &nbsp;·&nbsp; Item Op. ${r.item_rc||'—'}</span>
+          <span style="font-size:11px;color:var(--tx2)">⏱️ SLA ${r.sla||'—'} dias</span>
+          <span style="font-size:11px;color:var(--tx2)">📋 ${r.fila||'—'}</span>
+          <span id="pc-busca-status-${chaveId}" style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;${statusCor}">${statusCalc||'—'}</span>
+          <select style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--brd)"
+            onchange="govBuscaSalvar('MAPA','${chave}','analista',this.value)">
+            ${analistasOpts}
+          </select>
+          <button title="Comentário" style="background:var(--azc);border:none;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:13px" onclick="mapaAbrirComentario('${chave}')">💬</button>
+        </div>
+
+        <!-- Linha 2: status + datas -->
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 14px;flex-wrap:wrap;background:var(--bg2);border-bottom:1px solid var(--brd)">
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--tx2);text-transform:uppercase;margin-bottom:2px">Status Tratamento</div>
+            <select style="font-size:11px;padding:4px 8px;border-radius:7px;border:1.5px solid var(--brd);min-width:160px"
+              onchange="govBuscaSalvar('MAPA','${chave}','status',this.value)" id="pc-sel-status-${chaveId}">
+              <option value="">— selecione —</option>
+              ${optsStatus}
+            </select>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--tx2);text-transform:uppercase;margin-bottom:2px">Data de Envio</div>
+            <input type="date" value="${m.envio||''}" style="font-size:11px;padding:4px 6px;border-radius:7px;border:1.5px solid var(--brd)"
+              onchange="govBuscaSalvarAtualizar('MAPA','${chave}','envio',this.value,this)">
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--tx2);text-transform:uppercase;margin-bottom:2px">Prazo</div>
+            <span id="pc-busca-prazo-${chaveId}" style="font-size:12px;font-weight:600">${fmtBR(prazo)||'—'}</span>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--tx2);text-transform:uppercase;margin-bottom:2px">Finalizado</div>
+            <input type="date" value="${m.finalizado||''}" style="font-size:11px;padding:4px 6px;border-radius:7px;border:1.5px solid var(--brd)"
+              onchange="govBuscaSalvarAtualizar('MAPA','${chave}','finalizado',this.value,this)">
+          </div>
+        </div>
+
+        <!-- Linha 3: botões de ação -->
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:700;color:var(--tx2)">⚡ Registrar ação:</span>
+          <button onclick="prodAbrirModalRC('${chave}','primeira_analise')" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm)">🔍 1ª Análise</button>
+          <button onclick="prodAbrirModalRC('${chave}','em_tratativa')" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm)">⚙️ Em Tratativa</button>
+          <button onclick="prodAbrirModalRC('${chave}','status_b')" style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--vd)">✅ Status B</button>
+          <button onclick="prodAbrirModalRC('${chave}','outros')" style="background:var(--amc);border:1.5px solid var(--am);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--am)">📋 Outros</button>
+        </div>
+
+      </div>`;
+    }).join('')}
   `;
 }
 
