@@ -3275,33 +3275,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <input type="text" id="gov-busca-rc" placeholder="Digite o número da RC..." oninput="govBuscarRC(this.value)"
             style="font-size:12px;padding:5px 10px;flex:1;min-width:200px;max-width:320px">
           <button class="btn btn-s" style="font-size:11px" onclick="govLimparBusca()">✕ Limpar</button>
-          <!-- Botões de ação no mesmo nível -->
-          <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
-            <button onclick="prodAbrirModal('gov','primeira_analise')"
-              style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);display:flex;align-items:center;gap:5px;white-space:nowrap"
-              onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
-              onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">
-              🔍 1ª Análise
-            </button>
-            <button onclick="prodAbrirModal('gov','em_tratativa')"
-              style="background:var(--azc);border:1.5px solid var(--azm);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--azm);display:flex;align-items:center;gap:5px;white-space:nowrap"
-              onmouseover="this.style.background='var(--azm)';this.style.color='#fff'"
-              onmouseout="this.style.background='var(--azc)';this.style.color='var(--azm)'">
-              ⚙️ Em Tratativa
-            </button>
-            <button onclick="prodAbrirModal('gov','status_b')"
-              style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--vd);display:flex;align-items:center;gap:5px;white-space:nowrap"
-              onmouseover="this.style.background='var(--vd)';this.style.color='#fff'"
-              onmouseout="this.style.background='var(--vdc)';this.style.color='var(--vd)'">
-              ✅ Status B
-            </button>
-            <button onclick="prodAbrirModal('gov','outros')"
-              style="background:var(--amc);border:1.5px solid var(--am);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--am);display:flex;align-items:center;gap:5px;white-space:nowrap"
-              onmouseover="this.style.background='var(--am)';this.style.color='#fff'"
-              onmouseout="this.style.background='var(--amc)';this.style.color='var(--am)'">
-              📋 Outros
-            </button>
-          </div>
+
         </div>
         <div id="gov-busca-resultado" style="display:none"></div>
         <!-- Mini KPIs do dia -->
