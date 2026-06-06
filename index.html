@@ -16495,9 +16495,10 @@ function prodRenderizarPaineis(colab){
     }
   });
 
-  // Atualizar velocímetros (Gov e PC)
-  govAtualizarVelocimetro(cnt.meta, metaVal);
-  pcAtualizarVelocimetro(cnt.meta, metaVal);
+  // Atualizar velocímetros — usa 30 como referência mesmo para sem-meta
+  const _velMeta = metaVal > 0 ? metaVal : 30;
+  govAtualizarVelocimetro(cnt.meta, _velMeta);
+  pcAtualizarVelocimetro(cnt.meta, _velMeta);
 
   // Renderizar gráfico (gov)
   prodRenderGrafico('gov-prod-chart', '_prodChartGov', colab);
