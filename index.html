@@ -15093,7 +15093,7 @@ function q18Consultar(valor){
 
     <!-- Finalizado -->
     <div style="margin-bottom:.75rem" id="acao-finalizado-box">
-      <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">✅ Data de Finalização <span style="font-size:10px;color:var(--tx2)">(opcional)</span></div>
+      <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">✅ Data de Finalização <span style="color:var(--vm)">*</span></div>
       <input type="date" id="acao-data-finalizado"
         style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
     </div>
@@ -16246,6 +16246,12 @@ async function prodConfirmarAcao(){
     errEl.textContent = 'Selecione o tipo de conclusão.';
     errEl.style.display = 'block'; return;
   }
+  if(_prodCtx.conclusao && !document.getElementById('acao-data-finalizado')?.value){
+    errEl.textContent = 'Informe a Data de Finalização.';
+    errEl.style.display = 'block';
+    document.getElementById('acao-data-finalizado')?.focus();
+    return;
+  }
 
   const colab = _authPerfil?.colabNome || colabLogado || _authPerfil?.nome;
   if(!colab){ errEl.textContent='Colaborador não identificado.'; errEl.style.display='block'; return; }
@@ -16434,18 +16440,18 @@ function govAtualizarVelocimetro(total, metaVal){
   const pctEl  = document.getElementById('gov-vel-pct');
   if(!arco || !agulha) return;
 
-  const pct      = metaVal > 0 ? Math.min(100, total / metaVal) : 0;
-  const arcLen   = 173; // comprimento total do semicírculo
-  const filled   = pct * arcLen;
-  const cor      = pct >= 1 ? '#0E9E6A' : pct >= 0.8 ? '#C07A12' : '#D94040';
-  const graus    = -90 + pct * 180; // de -90° (esquerda) a +90° (direita)
+  const ratio    = metaVal > 0 ? Math.min(1, total / metaVal) : 0;
+  const arcLen   = 173;
+  const filled   = ratio * arcLen;
+  const cor      = ratio >= 1 ? '#0E9E6A' : ratio >= 0.8 ? '#C07A12' : '#D94040';
+  const graus    = -90 + ratio * 180;
 
-  arco.setAttribute('stroke-dasharray', `${filled} ${arcLen}`);
+  arco.setAttribute('stroke-dasharray', `${filled.toFixed(1)} ${arcLen}`);
   arco.setAttribute('stroke', cor);
   agulha.style.transform = `rotate(${graus}deg)`;
 
   if(valor) { valor.textContent = total; valor.setAttribute('fill', cor); }
-  if(pctEl) pctEl.textContent = `${Math.round(pct*100)}% da meta`;
+  if(pctEl) pctEl.textContent = `${Math.round(ratio*100)}% da meta`;
 }
 
 function pcAtualizarVelocimetro(total, metaVal){
@@ -16454,16 +16460,16 @@ function pcAtualizarVelocimetro(total, metaVal){
   const valor  = document.getElementById('pc-vel-valor');
   const pctEl  = document.getElementById('pc-vel-pct');
   if(!arco || !agulha) return;
-  const pct    = metaVal > 0 ? Math.min(100, total / metaVal) : 0;
+  const ratio  = metaVal > 0 ? Math.min(1, total / metaVal) : 0;
   const arcLen = 173;
-  const filled = pct * arcLen;
-  const cor    = pct >= 1 ? '#0E9E6A' : pct >= 0.8 ? '#C07A12' : '#D94040';
-  const graus  = -90 + pct * 180;
-  arco.setAttribute('stroke-dasharray', `${filled} ${arcLen}`);
+  const filled = ratio * arcLen;
+  const cor    = ratio >= 1 ? '#0E9E6A' : ratio >= 0.8 ? '#C07A12' : '#D94040';
+  const graus  = -90 + ratio * 180;
+  arco.setAttribute('stroke-dasharray', `${filled.toFixed(1)} ${arcLen}`);
   arco.setAttribute('stroke', cor);
   agulha.style.transform = `rotate(${graus}deg)`;
   if(valor) { valor.textContent = total; valor.setAttribute('fill', cor); }
-  if(pctEl) pctEl.textContent = `${Math.round(pct*100)}% da meta`;
+  if(pctEl) pctEl.textContent = `${Math.round(ratio*100)}% da meta`;
 }
 
 function prodRenderizarPaineis(colab){
