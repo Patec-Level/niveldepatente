@@ -4959,27 +4959,28 @@ function renderPainelEstrategico(){
   const label = document.getElementById('est-hoje-label');
   if(label) label.textContent = fmtDt(hoje);
 
-  // Garantir cache de producao_acoes para todos os dias do ciclo
-  (async () => {
-    const db = getDB(); if(!db) return;
-    if(!window._prodAcoesCache) window._prodAcoesCache = {};
-    try {
-      const snap = await db.collection('producao_acoes')
-        .where('data','>=', CICLO_NOVO_INICIO).get();
-      snap.docs.forEach(d => {
-        const a = d.data();
-        if(!window._prodAcoesCache[a.data]) window._prodAcoesCache[a.data] = [];
-        // Evitar duplicatas
-        if(!window._prodAcoesCache[a.data].find(x => x.ts===a.ts && x.colab===a.colab))
-          window._prodAcoesCache[a.data].push(a);
-      });
-      // Re-renderizar com cache completo
-      renderPainelEstrategico._cacheOk = true;
-      renderPainelEstrategico();
-    } catch(e){ console.warn('cache ciclo:', e); }
-  })().catch(()=>{});
-  if(!renderPainelEstrategico._cacheOk) {
-    // Primeira chamada: continua sem cache, será re-renderizado quando carregar
+  // Carregar cache de producao_acoes do ciclo inteiro (apenas uma vez)
+  if(!renderPainelEstrategico._cacheCarregado){
+    renderPainelEstrategico._cacheCarregado = true;
+    (async () => {
+      const db = getDB(); if(!db) return;
+      if(!window._prodAcoesCache) window._prodAcoesCache = {};
+      try {
+        const snap = await db.collection('producao_acoes')
+          .where('data','>=', CICLO_NOVO_INICIO).get();
+        snap.docs.forEach(d => {
+          const a = d.data();
+          if(!window._prodAcoesCache[a.data]) window._prodAcoesCache[a.data] = [];
+          if(!window._prodAcoesCache[a.data].find(x => x.ts===a.ts && x.colab===a.colab))
+            window._prodAcoesCache[a.data].push(a);
+        });
+        console.log('✓ Cache ciclo carregado:', snap.docs.length, 'ações');
+        // Re-renderizar gráficos apenas (não o painel inteiro)
+        const ctx1 = document.getElementById('est-chart-prod');
+        const ctx2 = document.getElementById('est-chart-mapa');
+        if(ctx1 || ctx2) renderPainelEstrategico();
+      } catch(e){ console.warn('cache ciclo:', e); }
+    })().catch(()=>{});
   }
 
   // ── Cards de desfecho (Pedido/Devolução/Republicação/XGL) ──
@@ -5159,8 +5160,15 @@ function renderPainelEstrategico(){
     progAcum.push(acumProg);
 
     if(dt <= hoje){
-      // Contar ações do dia via producao_acoes
-      const acoesDia = _cache[dt] || [];
+      const reg = diasComProd.find(r => r.data === dt);
+      const saidas = reg ? (reg.f3||0)+(reg.f4||0)+(reg.f5||0)+(reg.f6||0) : 0;
+
+      // Usar producao_acoes se cache já foi carregado para este dia
+      // _cache[dt] === undefined → ainda não carregado → usar pcpData fallback
+      // _cache[dt] === [] (array vazio) → carregado mas sem ações → usar pcpData fallback
+      const cacheDisponivel = renderPainelEstrategico._cacheCarregado && _cache[dt] !== undefined;
+      const acoesDia = cacheDisponivel ? (_cache[dt] || []) : [];
+
       const prod_total = acoesDia.filter(a =>
         a.tipo==='primeira_analise'||a.tipo==='em_tratativa'||a.tipo==='status_b'||a.tipo==='outros'
       ).length;
@@ -5168,13 +5176,10 @@ function renderPainelEstrategico(){
         a.tipo==='primeira_analise'||a.tipo==='em_tratativa'
       ).length;
 
-      // Fallback para pcpData se não houver ações registradas via botões
-      const reg = diasComProd.find(r => r.data === dt);
+      // Fallback para pcpData quando cache não tem dados para o dia
       const prodFallback = reg ? (reg.f1||0) : 0;
-      const saidas = reg ? (reg.f3||0)+(reg.f4||0)+(reg.f5||0)+(reg.f6||0) : 0;
-
-      acumReal   += prod_total > 0 ? prod_total : prodFallback;
-      acumMapa   += mapa_total > 0 ? mapa_total : prodFallback;
+      acumReal   += (cacheDisponivel && prod_total > 0) ? prod_total : prodFallback;
+      acumMapa   += (cacheDisponivel && mapa_total > 0) ? mapa_total : prodFallback;
       acumSaidas += saidas;
 
       realProdAcum.push(acumReal);
