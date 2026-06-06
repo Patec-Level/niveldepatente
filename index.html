@@ -35,6 +35,7 @@ function authSetPerfil(user, perfil){
 
 // fecharOverlay — disponível imediatamente
 function fecharOverlay(){
+  console.log('fecharOverlay CHAMADO');
   var ov = document.getElementById('patec-login-overlay');
   if(ov){ ov.style.cssText = 'display:none!important;z-index:-1!important;pointer-events:none!important;visibility:hidden!important;'; }
   // Mostrar todo o app
