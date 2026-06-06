@@ -3813,20 +3813,27 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <canvas id="fdia-chart" height="80"></canvas>
         </div>
 
-        <!-- Justificativa (aparece se abaixo da meta) -->
-        <div id="fdia-justif-box" class="cd" style="display:none;border:1.5px solid var(--am);background:var(--amc);margin-bottom:1rem">
-          <div class="al al-a" style="margin-bottom:.75rem">⚠ Produção abaixo da meta. Informe o motivo para finalizar.</div>
-          <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:6px">Motivo</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.75rem" id="fdia-motivos-grid">
+        <!-- Justificativa — sempre visível, obrigatória -->
+        <div id="fdia-justif-box" class="cd" style="margin-bottom:1rem;border:1.5px solid var(--brd)">
+          <div class="cd-t" style="margin-bottom:.75rem">📝 Como foi o seu dia?</div>
+          <!-- Motivo — obrigatório -->
+          <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:6px">Selecione um motivo <span style="color:var(--vm)">*</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem" id="fdia-motivos-grid">
             <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Reuniões/alinhamentos')">🤝 Reuniões / Alinhamentos</button>
             <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Volume reduzido de itens')">📉 Volume reduzido de itens</button>
             <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Itens complexos')">🔍 Itens complexos</button>
             <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Suporte a outros times')">🤲 Suporte a outros times</button>
             <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Problemas de sistema')">💻 Problemas de sistema</button>
+            <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Meta atingida / Dia normal')">✅ Meta atingida / Dia normal</button>
             <button class="fdia-motivo-btn" onclick="fdiaSelectMotivo(this,'Outro')">📝 Outro</button>
           </div>
-          <input type="text" id="fdia-justif-detalhe" placeholder="Detalhe (opcional)..."
-            style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
+          <div id="fdia-motivo-aviso" style="display:none;font-size:11px;color:var(--vm);margin-bottom:8px;font-weight:600">⚠ Selecione um motivo para finalizar.</div>
+          <!-- Comentário — obrigatório, mínimo real -->
+          <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">Comentário <span style="color:var(--vm)">*</span></div>
+          <div style="font-size:10px;color:var(--tx2);margin-bottom:6px">Escreva um breve resumo do seu dia (mínimo 10 caracteres reais).</div>
+          <textarea id="fdia-justif-detalhe" placeholder="Ex: Tratei 7 RCs de famílias L, fiz alinhamento com Thiago sobre XGL..."
+            rows="3" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--brd);border-radius:7px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+          <div id="fdia-coment-aviso" style="display:none;font-size:11px;color:var(--vm);margin-top:4px;font-weight:600">⚠ Escreva um comentário real (mínimo 10 caracteres).</div>
         </div>
 
         <!-- Já finalizado -->
@@ -16613,9 +16620,9 @@ async function fdiaInicializar(){
     compRow(cntComp.pedido,      'RCs para Pedidos') +
     compRow(cntComp.devolucao,   'RCs para Devoluções');
 
-  // Justificativa
+  // Justificativa sempre visível — resetar campos se for nova sessão
   const justBox = document.getElementById('fdia-justif-box');
-  if(justBox) justBox.style.display = cnt.meta < metaVal ? 'block' : 'none';
+  if(justBox) justBox.style.display = 'block';
 
   // Verificar se já fechou hoje
   try{
@@ -16689,10 +16696,25 @@ async function fdiaSalvar(){
     return;
   }
 
-  if(cnt.meta < metaVal && metaVal > 0 && !_fdiaMotivo){
-    alert('Selecione o motivo por não ter atingido a meta antes de finalizar.');
+  // Motivo sempre obrigatório
+  if(!_fdiaMotivo){
+    const av = document.getElementById('fdia-motivo-aviso');
+    if(av) av.style.display = 'block';
+    document.getElementById('fdia-justif-box')?.scrollIntoView({behavior:'smooth', block:'center'});
     return;
   }
+  document.getElementById('fdia-motivo-aviso') && (document.getElementById('fdia-motivo-aviso').style.display='none');
+
+  // Comentário obrigatório — mínimo 10 caracteres reais (sem espaços, pontos, reticências)
+  const _detalheRaw = document.getElementById('fdia-justif-detalhe')?.value || '';
+  const _detalheReal = _detalheRaw.replace(/[\s\.…]/g, '');
+  if(_detalheReal.length < 10){
+    const av2 = document.getElementById('fdia-coment-aviso');
+    if(av2) av2.style.display = 'block';
+    document.getElementById('fdia-justif-detalhe')?.focus();
+    return;
+  }
+  document.getElementById('fdia-coment-aviso') && (document.getElementById('fdia-coment-aviso').style.display='none');
 
   // Composição — contagem dos tipos de conclusão
   const cntComp = {
@@ -16706,7 +16728,7 @@ async function fdiaSalvar(){
     req:          acoes.filter(a=>a.conclusao==='Requisitante'||a.tratamento==='Requisitante'||a.conclusao==='REQUISITANTE').length,
   };
 
-  const detalhe = document.getElementById('fdia-justif-detalhe')?.value?.trim()||'';
+  const detalhe = _detalheRaw.trim();
   const pct = Math.round(cnt.meta / Math.max(metaVal,1) * 100);
 
   // Registro fechamento_dia
@@ -16767,9 +16789,9 @@ async function fdiaSalvar(){
     if(typeof pcpAtualizarRegistroDia === 'function') pcpAtualizarRegistroDia(hoje);
   }
 
-  document.getElementById('fdia-ja-fechado').style.display = 'block';
-  document.getElementById('fdia-btn-wrap').style.display   = 'none';
-  document.getElementById('fdia-justif-box').style.display = 'none';
+  document.getElementById('fdia-ja-fechado').style.display  = 'block';
+  document.getElementById('fdia-btn-wrap').style.display    = 'none';
+  document.getElementById('fdia-justif-box').style.display  = 'none';
   document.getElementById('fdia-fechado-info').textContent =
     `Fechado agora · ${_fdiaPresenca} · ${cnt.meta} itens · ${pct}% da meta`;
   // Ocultar card de presença após finalizar
