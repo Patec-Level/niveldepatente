@@ -14926,6 +14926,11 @@ function q18Consultar(valor){
       <button onclick="prodFecharModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--tx2)">×</button>
     </div>
 
+    <!-- RC vinculada -->
+    <div id="acao-rc-badge" style="display:none;background:#f0f4ff;border:1px solid var(--azm);border-radius:8px;padding:6px 12px;font-size:12px;margin-bottom:.75rem;color:var(--az)">
+      📋 RC: <strong id="acao-rc-numero">—</strong>
+    </div>
+
     <!-- Tipo selecionado -->
     <div id="acao-tipo-badge" style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:1.25rem;background:var(--azc);color:var(--azm)">—</div>
 
@@ -16013,6 +16018,11 @@ function prodAbrirModalRC(chave, tipo){
   _prodCtx.rcChave  = chave;
   _prodCtx.rcChaves = [chave];
   _prodCtx.rcBusca  = rcBusca;
+  // Mostrar RC no badge do modal
+  const _rcBadge = document.getElementById('acao-rc-badge');
+  const _rcNum   = document.getElementById('acao-rc-numero');
+  if(_rcBadge && r){ _rcBadge.style.display='block'; }
+  if(_rcNum && r){ _rcNum.textContent = (r.rc||'') + (r.seq ? ' · Item ' + r.seq : ''); }
   // Pré-preencher com dados existentes
   const _gd = _govDados[chave]||{};
   const _envioEl = document.getElementById('acao-data-envio');
@@ -16071,6 +16081,8 @@ function prodAbrirModal(origem, tipo){
 
 function prodFecharModal(){
   document.getElementById('modal-acao-rc').style.display = 'none';
+  const _rcBadge = document.getElementById('acao-rc-badge');
+  if(_rcBadge) _rcBadge.style.display = 'none';
   _prodCtx = { origem:null, tipo:null, tratamento:null, conclusao:null };
 }
 
