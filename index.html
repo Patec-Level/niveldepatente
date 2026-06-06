@@ -11706,7 +11706,9 @@ async function govCarregarFirebase(){
     _govDados = {};
     snap.forEach(doc => {
       const d = doc.data();
-      if(d.chave) _govDados[d.chave] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
+      // Usa d.chave se existir; caso contrário reconstrói a chave a partir do ID do doc (A|B|C → A_B_C)
+      const chaveDoc = d.chave || doc.id.replace(/_/g,'|');
+      if(chaveDoc) _govDados[chaveDoc] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
     });
     // Salvar cache
     try{
@@ -16225,11 +16227,11 @@ async function prodConfirmarAcao(){
       const _elStatus = document.getElementById('busca-status-' + _idKey);
       if(_elPrazo)  _elPrazo.textContent = _prazoCalc ? fmtBR(_prazoCalc) : '—';
       if(_elStatus){ _elStatus.textContent = _statusCalc||'—'; _elStatus.style.cssText = govCorStatus(_statusCalc); }
-      // Salvar no Firebase (MAPA)
+      // Salvar no Firebase (MAPA) — inclui chave para o load reconhecer o doc
       try{
         if(_dbG){
           const _docId = _chave.replace(/[|]/g,'_');
-          const _payload = { ts: new Date().toISOString() };
+          const _payload = { chave: _chave, ts: new Date().toISOString() };
           if(_statusGov)  _payload.status     = _statusGov;
           if(_dataEnvio)  _payload.envio       = _dataEnvio;
           if(_dataFin)    _payload.finalizado  = _dataFin;
@@ -16241,6 +16243,19 @@ async function prodConfirmarAcao(){
     registro.rcChave = _chaves[0];
     registro.dataEnvio = _dataEnvio;
     registro.dataFinalizado = _dataFin;
+    // Invalidar cache localStorage para que outros usuários e recargas leiam o Firebase
+    try{
+      localStorage.removeItem('patec_gov_cache_ts');
+      // Atualizar o cache com os dados novos para não perder edições locais de outros campos
+      const _cacheStr = localStorage.getItem('patec_gov_cache');
+      if(_cacheStr){
+        const _cacheObj = JSON.parse(_cacheStr);
+        for(const _ch of _chaves){ _cacheObj[_ch] = _govDados[_ch]; }
+        localStorage.setItem('patec_gov_cache', JSON.stringify(_cacheObj));
+        // Deixar TTL zerado para que na próxima carga force releitura do Firebase
+        localStorage.removeItem('patec_gov_cache_ts');
+      }
+    } catch(e){}
   }
 
   // Atualizar cache local e re-renderizar painéis
