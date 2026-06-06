@@ -527,7 +527,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             if(nm) nm.textContent=perfil.nome;
           }
           if(typeof colabLogado!=='undefined') colabLogado=perfil.colabNome;
-          if(typeof authMontarSidebar==='function') authMontarSidebar();
+          if(typeof authMontarSidebar==='function') authMontarSidebar(perfil.email);
           if(typeof rtIniciarListener==='function') rtIniciarListener();
           if(!window._fbCarregadoUmaVez){
             window._fbCarregadoUmaVez=true;
@@ -15235,12 +15235,12 @@ function authMostrarApp(){
   if(typeof window._authMostrarAppReal === 'function') window._authMostrarAppReal();
 }
 
-function authMontarSidebar(){
+function authMontarSidebar(emailParam){
   const sb = document.getElementById('sb');
   if(!sb) return;
 
-  // Detectar ADM — dupla verificação: perfil salvo OU e-mail conhecido
   const emailAtual = (
+    emailParam ||
     _authUser?.email ||
     window._authUser?.email ||
     _authPerfil?.email ||
