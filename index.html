@@ -3267,27 +3267,56 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- Filtro de RC + Botões de Ação (mesmo card) -->
+      <!-- Filtro de RC + Velocímetro -->
       <div class="cd" style="margin-bottom:1rem;padding:.875rem 1rem">
-        <!-- Linha do filtro -->
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:.875rem">
-          <span style="font-size:12px;font-weight:600;color:var(--az)">🔍 Buscar RC</span>
-          <input type="text" id="gov-busca-rc" placeholder="Digite o número da RC..." oninput="govBuscarRC(this.value)"
-            style="font-size:12px;padding:5px 10px;flex:1;min-width:200px;max-width:320px">
-          <button class="btn btn-s" style="font-size:11px" onclick="govLimparBusca()">✕ Limpar</button>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+
+          <!-- Coluna esquerda: busca + KPIs -->
+          <div style="flex:1;min-width:220px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:.75rem">
+              <span style="font-size:12px;font-weight:600;color:var(--az)">🔍 Buscar RC</span>
+              <input type="text" id="gov-busca-rc" placeholder="Digite o número da RC..." oninput="govBuscarRC(this.value)"
+                style="font-size:12px;padding:5px 10px;flex:1;min-width:160px;max-width:280px">
+              <button class="btn btn-s" style="font-size:11px" onclick="govLimparBusca()">✕ Limpar</button>
+            </div>
+            <!-- Mini KPIs do dia -->
+            <div id="gov-prod-kpis-bar" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              <span style="font-size:10px;color:var(--tx2);font-weight:600">Hoje:</span>
+              <span id="gov-kpi-1a" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">🔍 0</span>
+              <span id="gov-kpi-trat" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">⚙️ 0</span>
+              <span id="gov-kpi-sb" style="font-size:11px;font-weight:700;color:var(--vd);background:var(--vdc);padding:2px 10px;border-radius:20px">✅ 0</span>
+              <span id="gov-kpi-outros" style="font-size:11px;font-weight:700;color:var(--am);background:var(--amc);padding:2px 10px;border-radius:20px">📋 0</span>
+              <span id="gov-kpi-total" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:var(--cin);color:var(--tx2)">Total: 0 / 30</span>
+              <span class="rt-dot" style="margin-left:2px" title="Tempo real"></span>
+            </div>
+          </div>
+
+          <!-- Velocímetro -->
+          <div style="display:flex;flex-direction:column;align-items:center;min-width:140px">
+            <svg id="gov-velocimetro" viewBox="0 0 140 80" width="140" height="80" style="overflow:visible">
+              <!-- Arco de fundo -->
+              <path d="M15,70 A55,55 0 0,1 125,70" fill="none" stroke="#E8EDF4" stroke-width="12" stroke-linecap="round"/>
+              <!-- Arco colorido (progresso) -->
+              <path id="gov-vel-arco" d="M15,70 A55,55 0 0,1 125,70" fill="none" stroke="#D94040" stroke-width="12" stroke-linecap="round"
+                stroke-dasharray="0 173" style="transition:stroke-dasharray .6s ease,stroke .4s ease"/>
+              <!-- Agulha -->
+              <line id="gov-vel-agulha" x1="70" y1="70" x2="70" y2="22"
+                stroke="#1A2D4F" stroke-width="2.5" stroke-linecap="round"
+                style="transform-origin:70px 70px;transform:rotate(-90deg);transition:transform .6s ease"/>
+              <!-- Centro da agulha -->
+              <circle cx="70" cy="70" r="5" fill="#1A2D4F"/>
+              <!-- Marcações: 0%, 50%, 100% -->
+              <text x="12" y="78" font-size="8" fill="#9BA5B5" text-anchor="middle">0</text>
+              <text x="70" y="16" font-size="8" fill="#9BA5B5" text-anchor="middle">50%</text>
+              <text x="128" y="78" font-size="8" fill="#9BA5B5" text-anchor="middle">meta</text>
+              <!-- Valor central -->
+              <text id="gov-vel-valor" x="70" y="62" font-size="16" font-weight="700" fill="#1A2D4F" text-anchor="middle">0</text>
+              <text id="gov-vel-pct" x="70" y="75" font-size="8" fill="#9BA5B5" text-anchor="middle">0% da meta</text>
+            </svg>
+          </div>
 
         </div>
-        <div id="gov-busca-resultado" style="display:none"></div>
-        <!-- Mini KPIs do dia -->
-        <div id="gov-prod-kpis-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--brd);padding-top:.625rem;margin-top:.25rem">
-          <span style="font-size:10px;color:var(--tx2);font-weight:600">Hoje:</span>
-          <span id="gov-kpi-1a" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">🔍 0</span>
-          <span id="gov-kpi-trat" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">⚙️ 0</span>
-          <span id="gov-kpi-sb" style="font-size:11px;font-weight:700;color:var(--vd);background:var(--vdc);padding:2px 10px;border-radius:20px">✅ 0</span>
-          <span id="gov-kpi-outros" style="font-size:11px;font-weight:700;color:var(--am);background:var(--amc);padding:2px 10px;border-radius:20px">📋 0</span>
-          <span id="gov-kpi-total" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:var(--cin);color:var(--tx2)">Total: 0 / 30</span>
-          <span class="rt-dot" style="margin-left:4px" title="Tempo real"></span>
-        </div>
+        <div id="gov-busca-resultado" style="display:none;margin-top:.5rem"></div>
       </div>
 
       <!-- Painel gráfico separado (colapsável) -->
@@ -16367,6 +16396,27 @@ function prodTemMeta(colab){
   return !COLABS_SEM_META_RT.includes(colab);
 }
 
+function govAtualizarVelocimetro(total, metaVal){
+  const arco   = document.getElementById('gov-vel-arco');
+  const agulha = document.getElementById('gov-vel-agulha');
+  const valor  = document.getElementById('gov-vel-valor');
+  const pctEl  = document.getElementById('gov-vel-pct');
+  if(!arco || !agulha) return;
+
+  const pct      = metaVal > 0 ? Math.min(100, total / metaVal) : 0;
+  const arcLen   = 173; // comprimento total do semicírculo
+  const filled   = pct * arcLen;
+  const cor      = pct >= 1 ? '#0E9E6A' : pct >= 0.8 ? '#C07A12' : '#D94040';
+  const graus    = -90 + pct * 180; // de -90° (esquerda) a +90° (direita)
+
+  arco.setAttribute('stroke-dasharray', `${filled} ${arcLen}`);
+  arco.setAttribute('stroke', cor);
+  agulha.style.transform = `rotate(${graus}deg)`;
+
+  if(valor) { valor.textContent = total; valor.setAttribute('fill', cor); }
+  if(pctEl) pctEl.textContent = `${Math.round(pct*100)}% da meta`;
+}
+
 function prodRenderizarPaineis(colab){
   const acoes = window._prodAcoesHoje || [];
   const cnt   = prodContarHoje(acoes);
@@ -16389,6 +16439,9 @@ function prodRenderizarPaineis(colab){
       s('total').style.color = cor;
     }
   });
+
+  // Atualizar velocímetro
+  govAtualizarVelocimetro(cnt.meta, metaVal);
 
   // Renderizar gráfico (gov)
   prodRenderGrafico('gov-prod-chart', '_prodChartGov', colab);
