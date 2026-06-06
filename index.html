@@ -4959,6 +4959,29 @@ function renderPainelEstrategico(){
   const label = document.getElementById('est-hoje-label');
   if(label) label.textContent = fmtDt(hoje);
 
+  // Garantir cache de producao_acoes para todos os dias do ciclo
+  (async () => {
+    const db = getDB(); if(!db) return;
+    if(!window._prodAcoesCache) window._prodAcoesCache = {};
+    try {
+      const snap = await db.collection('producao_acoes')
+        .where('data','>=', CICLO_NOVO_INICIO).get();
+      snap.docs.forEach(d => {
+        const a = d.data();
+        if(!window._prodAcoesCache[a.data]) window._prodAcoesCache[a.data] = [];
+        // Evitar duplicatas
+        if(!window._prodAcoesCache[a.data].find(x => x.ts===a.ts && x.colab===a.colab))
+          window._prodAcoesCache[a.data].push(a);
+      });
+      // Re-renderizar com cache completo
+      renderPainelEstrategico._cacheOk = true;
+      renderPainelEstrategico();
+    } catch(e){ console.warn('cache ciclo:', e); }
+  })().catch(()=>{});
+  if(!renderPainelEstrategico._cacheOk) {
+    // Primeira chamada: continua sem cache, será re-renderizado quando carregar
+  }
+
   // ── Cards de desfecho (Pedido/Devolução/Republicação/XGL) ──
   estRenderDesfechoCards();
 
@@ -5121,28 +5144,47 @@ function renderPainelEstrategico(){
   const todosOsDias = gerarDiasUteisCiclo(CICLO_NOVO_INICIO, cicloFimGraf);
   const labels = todosOsDias.map(d => fmtDt(d));
 
-  // Montar acumulados: dias passados/com dados preenchidos, dias futuros = null
+  // Montar acumulados usando producao_acoes (botões) como fonte principal
+  // Gráfico Produção: primeira_analise + em_tratativa + status_b + outros
+  // Gráfico Mapa:     primeira_analise + em_tratativa (apenas)
+  // Saídas:           f3+f4+f5+f6 do pcpData (Pedidos+Devoluções+Repub+XGL)
+  const _cache = window._prodAcoesCache || {};
+
   let acumReal = 0, acumMapa = 0, acumSaidas = 0;
   const realProdAcum = [], realMapaAcum = [], saidasAcum = [], progAcum = [];
   let acumProg = 0;
 
   todosOsDias.forEach((dt, i) => {
-    const reg = diasComProd.find(r => r.data === dt);
     acumProg += META_EQUIPE;
     progAcum.push(acumProg);
 
-    if(reg){
-      acumReal   += (reg.f1||0);
-      acumMapa   += (reg.f1||0);
-      acumSaidas += (reg.f3||0)+(reg.f4||0)+(reg.f5||0)+(reg.f6||0);
+    if(dt <= hoje){
+      // Contar ações do dia via producao_acoes
+      const acoesDia = _cache[dt] || [];
+      const prod_total = acoesDia.filter(a =>
+        a.tipo==='primeira_analise'||a.tipo==='em_tratativa'||a.tipo==='status_b'||a.tipo==='outros'
+      ).length;
+      const mapa_total = acoesDia.filter(a =>
+        a.tipo==='primeira_analise'||a.tipo==='em_tratativa'
+      ).length;
+
+      // Fallback para pcpData se não houver ações registradas via botões
+      const reg = diasComProd.find(r => r.data === dt);
+      const prodFallback = reg ? (reg.f1||0) : 0;
+      const saidas = reg ? (reg.f3||0)+(reg.f4||0)+(reg.f5||0)+(reg.f6||0) : 0;
+
+      acumReal   += prod_total > 0 ? prod_total : prodFallback;
+      acumMapa   += mapa_total > 0 ? mapa_total : prodFallback;
+      acumSaidas += saidas;
+
       realProdAcum.push(acumReal);
       realMapaAcum.push(acumMapa);
       saidasAcum.push(acumSaidas);
     } else {
-      // Dia futuro ou sem produção: null (linha para, não vai a zero)
-      realProdAcum.push(dt <= hoje ? acumReal : null);
-      realMapaAcum.push(dt <= hoje ? acumMapa : null);
-      saidasAcum.push(dt <= hoje ? acumSaidas : null);
+      // Dia futuro: null
+      realProdAcum.push(null);
+      realMapaAcum.push(null);
+      saidasAcum.push(null);
     }
   });
 
