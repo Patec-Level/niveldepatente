@@ -478,8 +478,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       errEl.style.display='none';
       if(!email||!senha){errEl.textContent='Preencha e-mail e senha.';errEl.style.display='block';return;}
       loadEl.style.display='block';
-      try{
-        if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
+            if(typeof firebase==='undefined'||!firebase.apps||!firebase.apps.length){
           errEl.textContent='⏳ Carregando...'; errEl.style.display='block';
           var sdkOk=await loadFirebaseSDK();
           if(!sdkOk||typeof firebase==='undefined'){
@@ -527,7 +526,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             if(nm) nm.textContent=perfil.nome;
           }
           if(typeof colabLogado!=='undefined') colabLogado=perfil.colabNome;
-          console.log('[BTN] chamando authMontarSidebar com email:', perfil.email);
           if(typeof authMontarSidebar==='function') authMontarSidebar(perfil.email);
           if(typeof rtIniciarListener==='function') rtIniciarListener();
           if(!window._fbCarregadoUmaVez){
@@ -14991,6 +14989,20 @@ function q18Consultar(valor){
       ✓ <span id="acao-selecao-texto">—</span>
     </div>
 
+    <!-- Data de Envio -->
+    <div style="margin-bottom:.75rem">
+      <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">📅 Data de Envio <span style="color:var(--vm)">*</span></div>
+      <input type="date" id="acao-data-envio"
+        style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
+    </div>
+
+    <!-- Finalizado -->
+    <div style="margin-bottom:.75rem" id="acao-finalizado-box">
+      <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">✅ Data de Finalização <span style="font-size:10px;color:var(--tx2)">(opcional)</span></div>
+      <input type="date" id="acao-data-finalizado"
+        style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
+    </div>
+
     <!-- Observação -->
     <div style="margin-bottom:1rem">
       <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">Observação (opcional)</div>
@@ -15239,7 +15251,6 @@ function authMostrarApp(){
 function authMontarSidebar(emailParam){
   try{
   const sb = document.getElementById('sb');
-  console.log('[Sidebar] sb encontrado:', !!sb, '| emailParam:', emailParam);
   if(!sb) return;
 
   const emailAtual = (
@@ -15252,7 +15263,6 @@ function authMontarSidebar(emailParam){
   ).toLowerCase().trim();
   const emailsAdm = ['andre.mazzali@levelgroup.com.br'];
   const isAdm = emailsAdm.includes(emailAtual);
-  console.log('[Sidebar] email:', emailAtual, '| isAdm:', isAdm);
 
   // Se PERMS_SIDEBAR não existe ainda, tentar de novo em 500ms
   if(typeof PERMS_SIDEBAR === 'undefined'){
@@ -15297,7 +15307,6 @@ function authMontarSidebar(emailParam){
   if(_sa) _sa.style.display = isAdm ? '' : 'none';
   if(_ia) _ia.style.display = isAdm ? '' : 'none';
   console.log('✓ Sidebar montada — isAdm:', isAdm, '— email:', emailAtual);
-  }catch(e){ console.error('[Sidebar] ERRO:', e.message, e.stack); }
 }
 
 async function authFazerLogin(){
@@ -16003,7 +16012,13 @@ function prodAbrirModal(origem, tipo){
   }
   // Garantir colabLogado sincronizado
   if(!colabLogado && colab) colabLogado = colab;
-  _prodCtx = { origem, tipo, tratamento: null, conclusao: null };
+  // Pegar RC sendo buscada no momento
+  const _rcBusca = (document.getElementById('pc-busca')||{}).value ||
+                   (document.getElementById('gov-busca-rc')||{}).value || '';
+  const _rcRows = (_radarDados||[]).filter(r=>(r.rc||'').includes(_rcBusca.trim()) &&
+    (r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
+  const _rcChave = _rcRows.length === 1 ? govChave(_rcRows[0]) : null;
+  _prodCtx = { origem, tipo, tratamento: null, conclusao: null, rcChave: _rcChave, rcBusca: _rcBusca };
   const cfg = PROD_TIPO_LABELS[tipo];
 
   // Resetar modal
@@ -16017,6 +16032,18 @@ function prodAbrirModal(origem, tipo){
   document.getElementById('acao-obs').value = '';
   document.getElementById('acao-erro').style.display = 'none';
   document.querySelectorAll('.acao-sel-btn').forEach(b=>b.classList.remove('selecionado'));
+  // Preencher data de envio com hoje
+  const _hoje = new Date().toISOString().split('T')[0];
+  const _envioEl = document.getElementById('acao-data-envio');
+  const _finEl   = document.getElementById('acao-data-finalizado');
+  if(_envioEl) _envioEl.value = _hoje;
+  if(_finEl)   _finEl.value = '';
+  // Pré-preencher com dados existentes da RC se disponível
+  if(_prodCtx.rcChave && _govDados[_prodCtx.rcChave]){
+    const _gd = _govDados[_prodCtx.rcChave];
+    if(_envioEl && _gd.envio) _envioEl.value = _gd.envio;
+    if(_finEl && _gd.finalizado) _finEl.value = _gd.finalizado;
+  }
   document.getElementById('modal-acao-rc').style.display = 'flex';
 }
 
@@ -16097,12 +16124,55 @@ async function prodConfirmarAcao(){
     }
   } catch(e){ console.warn('prodConfirmarAcao save:', e); }
 
+  // Atualizar _govDados com status de tratamento + datas
+  const _dataEnvio = (document.getElementById('acao-data-envio')?.value||'').trim();
+  const _dataFin   = (document.getElementById('acao-data-finalizado')?.value||'').trim();
+  if(_prodCtx.rcChave){
+    if(!_govDados[_prodCtx.rcChave]) _govDados[_prodCtx.rcChave] = {};
+    // Mapear tipo do botão para status de tratamento
+    const _tipoStatusMap = {
+      'primeira_analise': 'AG. TRATAMENTO',
+      'em_tratativa':     _prodCtx.tratamento || 'AG. TRATAMENTO',
+      'status_b':         _prodCtx.tratamento || 'AG. TRATAMENTO',
+      'outros':           _prodCtx.tratamento || 'AG. TRATAMENTO',
+    };
+    const _novoStatus = _tipoStatusMap[_prodCtx.tipo] || _prodCtx.tratamento || '';
+    if(_novoStatus) _govDados[_prodCtx.rcChave].status = _novoStatus;
+    if(_dataEnvio)  _govDados[_prodCtx.rcChave].envio  = _dataEnvio;
+    if(_dataFin)    _govDados[_prodCtx.rcChave].finalizado = _dataFin;
+    // Salvar no Firebase
+    try{
+      const _dbG = getDB();
+      if(_dbG){
+        const _docId = _prodCtx.rcChave.replace(/[|]/g,'_');
+        const _payload = {};
+        if(_novoStatus)  _payload.status     = _novoStatus;
+        if(_dataEnvio)   _payload.envio       = _dataEnvio;
+        if(_dataFin)     _payload.finalizado  = _dataFin;
+        _payload.ts = new Date().toISOString();
+        await _dbG.collection('gov_mapa').doc(_docId).set(_payload, {merge:true});
+        console.log('✓ Gov dados atualizados:', _prodCtx.rcChave);
+      }
+    }catch(_e){ console.warn('govDados save:', _e); }
+    registro.rcChave = _prodCtx.rcChave;
+    registro.dataEnvio = _dataEnvio;
+    registro.dataFinalizado = _dataFin;
+  }
+
   // Atualizar cache local e re-renderizar painéis
   if(!window._prodAcoesHoje) window._prodAcoesHoje = [];
   window._prodAcoesHoje.push(registro);
 
   prodFecharModal();
   prodRenderizarPaineis(colab);
+
+  // Re-renderizar busca RC para mostrar dados atualizados
+  if(_prodCtx.rcBusca){
+    const _pcBEl = document.getElementById('pc-busca');
+    if(_pcBEl && _pcBEl.value) pcBuscarRCDetalhe(_pcBEl.value);
+    const _gvBEl = document.getElementById('gov-busca-rc');
+    if(_gvBEl && _gvBEl.value) govBuscarRC(_gvBEl.value);
+  }
 
   // Atualizar cache PCP e recalcular
   if(!window._prodAcoesCache) window._prodAcoesCache = {};
