@@ -41,10 +41,10 @@ function fecharOverlay(){
   var mn  = document.getElementById('mn');
   var tb  = document.getElementById('topbar-main');
   var hbg = document.getElementById('hbg');
-  if(sb)  sb.style.display  = '';
-  if(mn)  mn.style.display  = '';
-  if(tb)  tb.style.display  = '';
-  if(hbg) hbg.style.display = '';
+  if(sb)  sb.style.removeProperty('display');
+  if(mn)  mn.style.removeProperty('display');
+  if(tb)  tb.style.removeProperty('display');
+  if(hbg) hbg.style.removeProperty('display');
   window._appAberto = true;
 }
 
