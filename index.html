@@ -588,7 +588,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-it" onclick="go('analista-auto',this)">🤖 Analista Automático</div>
   <div class="sb-it" onclick="go('consulta-q18',this)">🚫 Consulta Q18</div>
 
-  <div class="sb-it" onclick="go('pr-lancar',this)">✏️ Gestão de Produção</div>
+  <!-- Gestão de Produção movida para ADM -->
   <div class="sb-it" onclick="go('fechamento-dia',this)">🔒 Fechamento do Dia</div>
   <div class="sb-it" onclick="go('pr-bancoferias',this)">🗓 Gestão de Jornada</div>
   <div class="sb-sec" id="sb-adm-sec" style="display:none">ADM</div>
@@ -1011,6 +1011,181 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('email-teste',this)">📧 Testar E-mails</button>
         <button class="stab" onclick="setAdmTab('apresentacao',this);admApresentacaoInit()">🖥️ Apresentação</button>
         <button class="stab" onclick="setAdmTab('q18-upload',this)">🚫 Q18</button>
+        <button class="stab" onclick="setAdmTab('gestao-prod',this)">✏️ Gestão de Produção</button>
+      </div>
+
+
+      <!-- ── GESTÃO DE PRODUÇÃO ── -->
+      <div id="adm-gestao-prod" class="adm-tab" style="display:none">
+
+
+      <!-- TELA DE LOGIN -->
+      <div id="pr-login" class="cd" style="max-width:420px;margin:2rem auto;text-align:center">
+        <div style="font-size:48px;margin-bottom:12px">🔐</div>
+        <div style="font-size:16px;font-weight:700;color:var(--az);margin-bottom:4px">Lançamento de Produção</div>
+        <div style="font-size:12px;color:var(--tx2);margin-bottom:1.5rem">Identifique-se para acessar seu painel</div>
+        <div style="display:flex;flex-direction:column;gap:10px;text-align:left">
+          <div class="field-wrap">
+            <span class="field-label">Colaborador</span>
+            <select id="pr-login-nome" onchange="if(this.value)fazerLogin()" style="width:100%">
+              <option value="">— selecione —</option>
+              <option>André</option><option>Aline</option><option>Lory</option>
+              <option>Ludy</option><option>Wanessa</option>
+            </select>
+          </div>
+          <button class="btn btn-p" onclick="fazerLogin()" style="justify-content:center;width:100%;margin-top:4px">Entrar</button>
+        </div>
+        <div style="margin-top:1rem;font-size:10px;color:var(--tx2)">Esqueceu a senha? Fale com o gestor.</div>
+      </div>
+
+      <!-- PAINEL DO COLABORADOR (após login) -->
+      <div id="pr-painel" style="display:none">
+
+        <!-- Header do colaborador logado -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--azm);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700" id="pr-avatar">—</div>
+            <div>
+              <div style="font-size:15px;font-weight:700;color:var(--az)" id="pr-nome-logado">—</div>
+              <div style="font-size:11px;color:var(--tx2)" id="pr-data-hoje">—</div>
+            </div>
+          </div>
+          <button class="btn btn-s" onclick="fazerLogout()" style="font-size:11px;padding:5px 12px">Sair</button>
+        </div>
+
+        <!-- PASSO 1: Data -->
+        <div class="cd" id="pr-s1">
+          <div class="cd-t">📅 Data de referência</div>
+          <div style="max-width:260px">
+            <input type="date" id="pr-data-ref" onchange="selecionarData(this.value)" style="width:100%">
+          </div>
+        </div>
+
+        <!-- PASSO 2: Presença (aparece após data) -->
+        <div class="cd" id="pr-s2" style="display:none">
+          <div class="cd-t">🏢 Como você está trabalhando hoje?</div>
+          <div class="pres-sel">
+            <div class="pres-opt" id="popt-P" onclick="selecionarPresenca('Presencial',this)">🏢 Presencial</div>
+            <div class="pres-opt" id="popt-H" onclick="selecionarPresenca('Home Office',this)">🏠 Home Office</div>
+            <div class="pres-opt" id="popt-F" onclick="selecionarPresenca('Folga',this)">🌴 Folga</div>
+          </div>
+        </div>
+
+        <!-- FOLGA -->
+        <div class="cd" id="pr-folga" style="display:none;background:var(--amc);border-color:var(--am)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:36px">🌴</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--am);margin-bottom:4px">Folga registrada</div>
+              <div style="font-size:12px;color:var(--tx2)">Este dia não será contabilizado na sua média de produção.</div>
+              <button class="btn btn-p" style="margin-top:10px" onclick="salvarFolga()">✓ Confirmar folga</button>
+              <span id="pr-folga-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Salvo!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASSO 3: Produção (Presencial ou HO) -->
+        <div class="cd" id="pr-s3" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+            <div class="cd-t" style="margin:0">📋 Lançamento de produção</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;color:var(--tx2)">Itens analisados:</span>
+              <span class="total-badge" id="pr-total-badge">0</span>
+            </div>
+          </div>
+
+          <!-- Barra de progresso da meta -->
+          <div style="margin-bottom:1rem">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx2);margin-bottom:4px">
+              <span>Progresso vs meta (<span id="pr-meta-label">30</span> itens)</span>
+              <span id="pr-pct-meta">0%</span>
+            </div>
+            <div style="height:8px;background:#EEE;border-radius:4px;overflow:hidden">
+              <div id="pr-barra-meta" style="height:100%;border-radius:4px;transition:width .3s;background:var(--vm);width:0%"></div>
+            </div>
+          </div>
+
+          <!-- Mensagem motivacional -->
+          <div id="pr-motivacao" style="border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;font-weight:600;display:none;align-items:center;gap:10px"></div>
+
+          <!-- Campos principais — definem a meta (pf0, pf1, pf2=StatusB) -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.75rem">
+            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(primeira análise)</span></label>
+              <input type="number" id="pf0" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
+            </div>
+            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(em tratativa)</span></label>
+              <input type="number" id="pf1" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
+            </div>
+            <div class="prod-row" style="background:#EFF8F5;border:1.5px solid var(--vd);border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:var(--vd)">Status B<br><span style="font-size:10px;font-weight:500;color:var(--vd)">(entra na meta)</span></label>
+              <input type="number" id="pf2" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--vd);width:80px">
+            </div>
+          </div>
+
+          <!-- Outros — não entram na meta individual -->
+          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;display:flex;align-items:center;gap:8px">
+            <span>📋 Outros</span>
+            <span style="font-size:9px;font-weight:500;color:var(--tx2);text-transform:none;letter-spacing:0">(Republicação, Devoluções etc — somam ao resultado da equipe, não à meta individual)</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem">
+            <div class="prod-row" style="background:#FFF3E0;border:1.5px solid #CC6600;border-radius:9px;padding:.875rem 1rem">
+              <label style="font-size:13px;font-weight:700;color:#884400">Outros<br><span style="font-size:10px;font-weight:500;color:#884400">(Repub. + Devol. + outros)</span></label>
+              <input type="number" id="pf11" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:#884400;width:80px">
+            </div>
+          </div>
+
+          <!-- Divisor composição -->
+          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;padding-top:.25rem">↓ Composição dos itens acima</div>
+
+          <!-- Campos de composição (pf3 a pf10) -->
+          <div class="prod-grid">
+            <div class="prod-row"><label>Fornecedor</label><input type="number" id="pf3" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Requisitante</label><input type="number" id="pf4" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>MDG</label><input type="number" id="pf5" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Validação Thiago</label><input type="number" id="pf6" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>XGL</label><input type="number" id="pf7" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>Republicação</label><input type="number" id="pf8" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>RCs para Pedidos</label><input type="number" id="pf9" min="0" placeholder="0" oninput="updProd()"></div>
+            <div class="prod-row"><label>RCs para Devoluções</label><input type="number" id="pf10" min="0" placeholder="0" oninput="updProd()"></div>
+          </div>
+
+          <!-- Aviso composição -->
+          <div id="pr-composicao-aviso" style="display:none;background:var(--vmc);color:var(--vm);border:1px solid #f5b8b8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;align-items:center;gap:8px">⚠ </div>
+
+          <!-- Badge sem meta -->
+          <div id="pr-sem-meta-msg" style="display:none;background:var(--azc);border:1px solid var(--azm);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;color:var(--azm);align-items:center;gap:8px">
+            ℹ️ <span>Este colaborador <strong>não possui meta individual</strong>. Os lançamentos somam ao resultado da equipe.</span>
+          </div>
+
+          <!-- Justificativa (aparece se abaixo da meta) -->
+          <div id="pr-justif-box" style="display:none;margin-bottom:1rem">
+            <div class="al al-a">⚠ Produção abaixo da meta mínima. Informe o motivo para salvar.</div>
+            <div class="field-wrap">
+              <span class="field-label">Justificativa (obrigatória)</span>
+              <textarea id="pr-justif" rows="3" style="width:100%;padding:8px 12px;border:1.5px solid var(--am);border-radius:7px;font-family:Arial,sans-serif;font-size:13px;resize:vertical" placeholder="Ex: Volume reduzido por reuniões no período da manhã..."></textarea>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-p" onclick="salvarProducao()">✓ Salvar produção</button>
+            <button class="btn btn-s" onclick="limparProd()">↺ Limpar</button>
+            <span id="pr-ok-msg" style="font-size:12px;color:var(--vd);font-weight:600;display:none">✓ Produção salva com sucesso!</span>
+          </div>
+        </div>
+
+        <!-- Mini histórico do colaborador logado -->
+        <div class="cd" id="pr-mini-hist" style="display:none;margin-top:1rem">
+          <div class="cd-t">Meus últimos lançamentos</div>
+          <div class="tw" style="max-height:220px">
+            <table>
+              <thead><tr><th>Data</th><th>Presença</th><th>1ª Análise</th><th>Em Tratativa</th><th>Status B</th><th>Outros</th><th>Forn.</th><th>Req.</th><th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Total</th><th>Meta</th></tr></thead>
+              <tbody id="pr-hist-tb"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
       </div>
 
       <!-- ── USUÁRIOS ── -->
@@ -2430,173 +2605,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
          OPERAÇÃO — LANÇAR PRODUÇÃO
     ══════════════════════════════════════════ -->
     <div id="p-pr-lancar" class="page">
+      <div class="cd" style="text-align:center;padding:2.5rem;max-width:440px;margin:2rem auto">
+        <div style="font-size:48px;margin-bottom:1rem">🔒</div>
+        <div style="font-size:15px;font-weight:700;color:var(--az);margin-bottom:8px">Gestão de Produção</div>
+        <div style="font-size:12px;color:var(--tx2);margin-bottom:1.5rem">Este módulo foi movido para o painel ADM. Acesse como administrador para lançar produções.</div>
 
-      <!-- TELA DE LOGIN -->
-      <div id="pr-login" class="cd" style="max-width:420px;margin:2rem auto;text-align:center">
-        <div style="font-size:48px;margin-bottom:12px">🔐</div>
-        <div style="font-size:16px;font-weight:700;color:var(--az);margin-bottom:4px">Lançamento de Produção</div>
-        <div style="font-size:12px;color:var(--tx2);margin-bottom:1.5rem">Identifique-se para acessar seu painel</div>
-        <div style="display:flex;flex-direction:column;gap:10px;text-align:left">
-          <div class="field-wrap">
-            <span class="field-label">Colaborador</span>
-            <select id="pr-login-nome" onchange="if(this.value)fazerLogin()" style="width:100%">
-              <option value="">— selecione —</option>
-              <option>André</option><option>Aline</option><option>Lory</option>
-              <option>Ludy</option><option>Wanessa</option>
-            </select>
-          </div>
-          <button class="btn btn-p" onclick="fazerLogin()" style="justify-content:center;width:100%;margin-top:4px">Entrar</button>
-        </div>
-        <div style="margin-top:1rem;font-size:10px;color:var(--tx2)">Esqueceu a senha? Fale com o gestor.</div>
-      </div>
-
-      <!-- PAINEL DO COLABORADOR (após login) -->
-      <div id="pr-painel" style="display:none">
-
-        <!-- Header do colaborador logado -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:40px;height:40px;border-radius:50%;background:var(--azm);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700" id="pr-avatar">—</div>
-            <div>
-              <div style="font-size:15px;font-weight:700;color:var(--az)" id="pr-nome-logado">—</div>
-              <div style="font-size:11px;color:var(--tx2)" id="pr-data-hoje">—</div>
-            </div>
-          </div>
-          <button class="btn btn-s" onclick="fazerLogout()" style="font-size:11px;padding:5px 12px">Sair</button>
-        </div>
-
-        <!-- PASSO 1: Data -->
-        <div class="cd" id="pr-s1">
-          <div class="cd-t">📅 Data de referência</div>
-          <div style="max-width:260px">
-            <input type="date" id="pr-data-ref" onchange="selecionarData(this.value)" style="width:100%">
-          </div>
-        </div>
-
-        <!-- PASSO 2: Presença (aparece após data) -->
-        <div class="cd" id="pr-s2" style="display:none">
-          <div class="cd-t">🏢 Como você está trabalhando hoje?</div>
-          <div class="pres-sel">
-            <div class="pres-opt" id="popt-P" onclick="selecionarPresenca('Presencial',this)">🏢 Presencial</div>
-            <div class="pres-opt" id="popt-H" onclick="selecionarPresenca('Home Office',this)">🏠 Home Office</div>
-            <div class="pres-opt" id="popt-F" onclick="selecionarPresenca('Folga',this)">🌴 Folga</div>
-          </div>
-        </div>
-
-        <!-- FOLGA -->
-        <div class="cd" id="pr-folga" style="display:none;background:var(--amc);border-color:var(--am)">
-          <div style="display:flex;align-items:center;gap:12px">
-            <span style="font-size:36px">🌴</span>
-            <div>
-              <div style="font-size:14px;font-weight:700;color:var(--am);margin-bottom:4px">Folga registrada</div>
-              <div style="font-size:12px;color:var(--tx2)">Este dia não será contabilizado na sua média de produção.</div>
-              <button class="btn btn-p" style="margin-top:10px" onclick="salvarFolga()">✓ Confirmar folga</button>
-              <span id="pr-folga-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none;margin-left:8px">✓ Salvo!</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- PASSO 3: Produção (Presencial ou HO) -->
-        <div class="cd" id="pr-s3" style="display:none">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-            <div class="cd-t" style="margin:0">📋 Lançamento de produção</div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:11px;color:var(--tx2)">Itens analisados:</span>
-              <span class="total-badge" id="pr-total-badge">0</span>
-            </div>
-          </div>
-
-          <!-- Barra de progresso da meta -->
-          <div style="margin-bottom:1rem">
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx2);margin-bottom:4px">
-              <span>Progresso vs meta (<span id="pr-meta-label">30</span> itens)</span>
-              <span id="pr-pct-meta">0%</span>
-            </div>
-            <div style="height:8px;background:#EEE;border-radius:4px;overflow:hidden">
-              <div id="pr-barra-meta" style="height:100%;border-radius:4px;transition:width .3s;background:var(--vm);width:0%"></div>
-            </div>
-          </div>
-
-          <!-- Mensagem motivacional -->
-          <div id="pr-motivacao" style="border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:13px;font-weight:600;display:none;align-items:center;gap:10px"></div>
-
-          <!-- Campos principais — definem a meta (pf0, pf1, pf2=StatusB) -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.75rem">
-            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
-              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(primeira análise)</span></label>
-              <input type="number" id="pf0" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
-            </div>
-            <div class="prod-row" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:9px;padding:.875rem 1rem">
-              <label style="font-size:13px;font-weight:700;color:var(--azm)">Itens Analisados<br><span style="font-size:10px;font-weight:500;color:var(--azm)">(em tratativa)</span></label>
-              <input type="number" id="pf1" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--azm);width:80px">
-            </div>
-            <div class="prod-row" style="background:#EFF8F5;border:1.5px solid var(--vd);border-radius:9px;padding:.875rem 1rem">
-              <label style="font-size:13px;font-weight:700;color:var(--vd)">Status B<br><span style="font-size:10px;font-weight:500;color:var(--vd)">(entra na meta)</span></label>
-              <input type="number" id="pf2" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:var(--vd);width:80px">
-            </div>
-          </div>
-
-          <!-- Outros — não entram na meta individual -->
-          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;display:flex;align-items:center;gap:8px">
-            <span>📋 Outros</span>
-            <span style="font-size:9px;font-weight:500;color:var(--tx2);text-transform:none;letter-spacing:0">(Republicação, Devoluções etc — somam ao resultado da equipe, não à meta individual)</span>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem">
-            <div class="prod-row" style="background:#FFF3E0;border:1.5px solid #CC6600;border-radius:9px;padding:.875rem 1rem">
-              <label style="font-size:13px;font-weight:700;color:#884400">Outros<br><span style="font-size:10px;font-weight:500;color:#884400">(Repub. + Devol. + outros)</span></label>
-              <input type="number" id="pf11" min="0" placeholder="0" oninput="updProd()" style="font-size:18px;font-weight:700;color:#884400;width:80px">
-            </div>
-          </div>
-
-          <!-- Divisor composição -->
-          <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;padding-top:.25rem">↓ Composição dos itens acima</div>
-
-          <!-- Campos de composição (pf3 a pf10) -->
-          <div class="prod-grid">
-            <div class="prod-row"><label>Fornecedor</label><input type="number" id="pf3" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Requisitante</label><input type="number" id="pf4" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>MDG</label><input type="number" id="pf5" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Validação Thiago</label><input type="number" id="pf6" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>XGL</label><input type="number" id="pf7" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>Republicação</label><input type="number" id="pf8" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>RCs para Pedidos</label><input type="number" id="pf9" min="0" placeholder="0" oninput="updProd()"></div>
-            <div class="prod-row"><label>RCs para Devoluções</label><input type="number" id="pf10" min="0" placeholder="0" oninput="updProd()"></div>
-          </div>
-
-          <!-- Aviso composição -->
-          <div id="pr-composicao-aviso" style="display:none;background:var(--vmc);color:var(--vm);border:1px solid #f5b8b8;border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;align-items:center;gap:8px">⚠ </div>
-
-          <!-- Badge sem meta -->
-          <div id="pr-sem-meta-msg" style="display:none;background:var(--azc);border:1px solid var(--azm);border-radius:8px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;color:var(--azm);align-items:center;gap:8px">
-            ℹ️ <span>Este colaborador <strong>não possui meta individual</strong>. Os lançamentos somam ao resultado da equipe.</span>
-          </div>
-
-          <!-- Justificativa (aparece se abaixo da meta) -->
-          <div id="pr-justif-box" style="display:none;margin-bottom:1rem">
-            <div class="al al-a">⚠ Produção abaixo da meta mínima. Informe o motivo para salvar.</div>
-            <div class="field-wrap">
-              <span class="field-label">Justificativa (obrigatória)</span>
-              <textarea id="pr-justif" rows="3" style="width:100%;padding:8px 12px;border:1.5px solid var(--am);border-radius:7px;font-family:Arial,sans-serif;font-size:13px;resize:vertical" placeholder="Ex: Volume reduzido por reuniões no período da manhã..."></textarea>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-p" onclick="salvarProducao()">✓ Salvar produção</button>
-            <button class="btn btn-s" onclick="limparProd()">↺ Limpar</button>
-            <span id="pr-ok-msg" style="font-size:12px;color:var(--vd);font-weight:600;display:none">✓ Produção salva com sucesso!</span>
-          </div>
-        </div>
-
-        <!-- Mini histórico do colaborador logado -->
-        <div class="cd" id="pr-mini-hist" style="display:none;margin-top:1rem">
-          <div class="cd-t">Meus últimos lançamentos</div>
-          <div class="tw" style="max-height:220px">
-            <table>
-              <thead><tr><th>Data</th><th>Presença</th><th>1ª Análise</th><th>Em Tratativa</th><th>Status B</th><th>Outros</th><th>Forn.</th><th>Req.</th><th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th><th>Total</th><th>Meta</th></tr></thead>
-              <tbody id="pr-hist-tb"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
 
