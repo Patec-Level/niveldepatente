@@ -39,15 +39,14 @@ function fecharOverlay(){
   var ov = document.getElementById('patec-login-overlay');
   if(ov){ ov.style.cssText = 'display:none!important;z-index:-1!important;pointer-events:none!important;visibility:hidden!important;'; }
   // Mostrar todo o app
-  document.body.style.visibility = 'visible';
   var sb  = document.getElementById('sb');
   var mn  = document.getElementById('mn');
   var tb  = document.getElementById('topbar-main');
   var hbg = document.getElementById('hbg');
-  if(sb)  { sb.style.display  = 'flex'; sb.removeAttribute && sb.style.removeProperty('display'); }
-  if(mn)  { mn.style.display  = 'flex'; }
-  if(tb)  { tb.style.display  = 'flex'; }
-  if(hbg) { hbg.style.display = 'block'; }
+  if(sb)  { sb.style.opacity = '1';  sb.style.pointerEvents = ''; }
+  if(mn)  { mn.style.opacity = '1';  mn.style.pointerEvents = ''; }
+  if(tb)  { tb.style.opacity = '1';  tb.style.pointerEvents = ''; }
+  if(hbg) { hbg.style.opacity = '1'; hbg.style.pointerEvents = ''; }
   window._appAberto = true;
   console.log('✓ App aberto');
 }
@@ -574,8 +573,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
     <span class="login-forgot" onclick="authEsqueciSenha()">Esqueci minha senha</span>
 </div>
 <!-- ══ fim LOGIN GLOBAL ══ -->
-<button id="hbg" style="display:none" onclick="document.getElementById('sb').classList.toggle('mob-open')">☰</button>
-<nav id="sb" style="display:none">
+<button id="hbg" style="opacity:0;pointer-events:none" onclick="document.getElementById('sb').classList.toggle('mob-open')">☰</button>
+<nav id="sb" style="opacity:0;pointer-events:none;transition:opacity .2s">
   <div class="sb-logo"><h1>PATEC</h1><p>Sistema de Gestão de Compras</p></div>
 
   <!-- Mini Meta/Gap no sidebar -->
@@ -611,8 +610,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div class="sb-sec">ADM</div>
   <div class="sb-it" onclick="go('adm',this)">🔐 Administração</div>
 </nav>
-<main id="mn" style="display:none">
-<div class="topbar" id="topbar-main" style="display:none">
+<main id="mn" style="opacity:0;pointer-events:none;transition:opacity .2s">
+<div class="topbar" id="topbar-main" style="opacity:0;pointer-events:none;transition:opacity .2s">
 
   <!-- ── Apenas data à esquerda (ESQ 1 e ESQ 2 ficam só no sidebar) ── -->
   <div class="top-dt" id="tdt"></div>
