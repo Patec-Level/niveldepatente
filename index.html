@@ -37,15 +37,18 @@ function authSetPerfil(user, perfil){
 function fecharOverlay(){
   var ov = document.getElementById('patec-login-overlay');
   if(ov){ ov.style.cssText = 'display:none!important;z-index:-1!important;pointer-events:none!important;visibility:hidden!important;'; }
+  // Mostrar todo o app
+  document.body.style.visibility = 'visible';
   var sb  = document.getElementById('sb');
   var mn  = document.getElementById('mn');
   var tb  = document.getElementById('topbar-main');
   var hbg = document.getElementById('hbg');
-  if(sb)  sb.style.removeProperty('display');
-  if(mn)  mn.style.removeProperty('display');
-  if(tb)  tb.style.removeProperty('display');
-  if(hbg) hbg.style.removeProperty('display');
+  if(sb)  { sb.style.display  = 'flex'; sb.removeAttribute && sb.style.removeProperty('display'); }
+  if(mn)  { mn.style.display  = 'flex'; }
+  if(tb)  { tb.style.display  = 'flex'; }
+  if(hbg) { hbg.style.display = 'block'; }
   window._appAberto = true;
+  console.log('✓ App aberto');
 }
 
 // authMostrarApp proxy — chama a real quando disponível
