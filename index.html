@@ -15483,7 +15483,41 @@ async function authCarregarPerfil(user){
     _authPerfil.perfil = 'adm';
     if(!_authPerfil.colabNome) _authPerfil.colabNome = 'André';
   }
-  console.log('✓ Perfil carregado:', _authPerfil.perfil, _authPerfil.nome);
+
+  // Fallback: derivar colabNome do email se ainda estiver vazio
+  if(!_authPerfil.colabNome){
+    const EMAIL_COLAB_MAP = {
+      'loreanny.couto@levelgroup.com.br':   'Lory',
+      'ludimila.reis@levelgroup.com.br':    'Ludy',
+      'wanessa.oliveira@levelgroup.com.br': 'Wanessa',
+      'andre.mazzali@levelgroup.com.br':    'André',
+    };
+    const emailNorm = (user.email||'').toLowerCase().trim();
+    _authPerfil.colabNome = EMAIL_COLAB_MAP[emailNorm] || '';
+    if(_authPerfil.colabNome){
+      console.log('✓ colabNome derivado do email:', _authPerfil.colabNome);
+      // Salvar no Firestore para corrigir o doc
+      try{
+        const db = getDB();
+        if(db) await db.collection('usuarios').doc(user.uid).set(
+          { colabNome: _authPerfil.colabNome }, { merge: true }
+        );
+      }catch(e){}
+    }
+  }
+
+  // Propagar colabNome para variáveis globais
+  window.colabLogado = _authPerfil.colabNome;
+  window._authPerfil = _authPerfil;
+
+  // Re-carregar produção do dia com colabNome correto
+  if(_authPerfil.colabNome && typeof prodCarregarHoje === 'function'){
+    prodCarregarHoje(_authPerfil.colabNome)
+      .then(() => { if(typeof prodRenderizarPaineis==='function') prodRenderizarPaineis(_authPerfil.colabNome); })
+      .catch(()=>{});
+  }
+
+  console.log('✓ Perfil carregado:', _authPerfil.perfil, _authPerfil.colabNome || _authPerfil.nome);
 }
 
 function authMostrarLogin(){
