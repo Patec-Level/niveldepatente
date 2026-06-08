@@ -11900,7 +11900,18 @@ async function govExportar(){
   wsM['!cols'] = [{wch:14},{wch:18},{wch:14},{wch:8},{wch:6},{wch:12},{wch:8},{wch:14},{wch:8},{wch:20},{wch:12},{wch:12},{wch:16},{wch:12},{wch:30}];
   XLSX.utils.book_append_sheet(wb, wsM, 'MAPA');
 
-  // ── Aba XGL ──
+  // ── Aba XGL — garantir itens carregados do Firebase ──
+  if(!(_xglItens||[]).length){
+    try{
+      const db = getDB();
+      if(db){
+        const docItens = await db.collection('config').doc('xgl_itens').get();
+        if(docItens.exists && docItens.data().itens) _xglItens = docItens.data().itens;
+      }
+    } catch(e){ console.warn('govExportar xgl load:', e); }
+  }
+  if(!Object.keys(_xglDados||{}).length) await xglCarregarFirebase().catch(()=>{});
+
   const wsXGL = [['Analista','RC','Item','Oportunidade','Item OP','Status Tratamento','Envio','Prazo Retorno','Status','Finalizado','Comentário']];
   (_xglItens||[]).forEach(r => {
     const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
@@ -12421,10 +12432,16 @@ async function desfechoSalvar(){
   }
 
   const {aba, chave} = _desfechoCtx;
+  // Normalizar tipo para garantir capitalização correta
+  const TIPO_MAP = {
+    'pedido':'Pedido','devolução':'Devolução','devolucao':'Devolução',
+    'republicação':'Republicação','republicacao':'Republicação','xgl':'XGL'
+  };
+  const tipoNorm = TIPO_MAP[tipo.toLowerCase()] || tipo;
   const desfecho = {
-    tipo,
-    centro: tipo === 'Devolução' ? document.getElementById('desfecho-centro').value.trim() : '',
-    motivo: tipo === 'Devolução' ? document.getElementById('desfecho-motivo').value : '',
+    tipo: tipoNorm,
+    centro: tipoNorm === 'Devolução' ? document.getElementById('desfecho-centro').value.trim() : '',
+    motivo: tipoNorm === 'Devolução' ? document.getElementById('desfecho-motivo').value : '',
     obs: document.getElementById('desfecho-obs').value.trim(),
     ts: new Date().toISOString()
   };
@@ -12483,7 +12500,7 @@ function estRenderDesfechoCards(){
   ];
 
   el.innerHTML = tipos.map(t => {
-    const cnt = todos.filter(d => d.tipo === t.key).length;
+    const cnt = todos.filter(d => (d.tipo||'').toLowerCase() === t.key.toLowerCase()).length;
     return `<div style="background:${t.bg};border-radius:8px;padding:.75rem;border:1px solid ${t.cor}22;text-align:center">
       <div style="font-size:18px;margin-bottom:2px">${t.emoji}</div>
       <div style="font-size:22px;font-weight:700;color:${cnt>0?t.cor:'var(--tx2)'}">${cnt}</div>
@@ -12521,14 +12538,20 @@ async function desfechoCarregarFirebase(){
       snap = await db.collection('desfechos').get();
     }
     _desfechoCache = {};
+    const TIPO_NORM = {
+      'pedido':'Pedido','devolução':'Devolução','devolucao':'Devolução',
+      'republicação':'Republicação','republicacao':'Republicação','xgl':'XGL'
+    };
     snap.docs.forEach(d=>{
       const data = d.data();
-      // Filtrar manualmente por data quando necessário
       const dataDoc = data.data || '';
       if(!dataDoc || dataDoc >= CICLO_NOVO_INICIO){
+        // Normalizar campo tipo
+        if(data.tipo) data.tipo = TIPO_NORM[data.tipo.toLowerCase()] || data.tipo;
         _desfechoCache[data.chave || d.id] = data;
       }
     });
+    console.log('✓ Tipos no cache:', [...new Set(Object.values(_desfechoCache).map(d=>d.tipo))]);
     console.log('✓ Desfechos carregados:', Object.keys(_desfechoCache).length, '(ciclo atual)');
     // Cache
     try{
@@ -12558,7 +12581,7 @@ function estRenderDevolucoes(){
     'Proposta vencida',
   ];
 
-  const devs = Object.values(_desfechoCache).filter(d => d.tipo === 'Devolução');
+  const devs = Object.values(_desfechoCache).filter(d => (d.tipo||'').toLowerCase() === 'devolução' || (d.tipo||'').toLowerCase() === 'devolucao');
   if(!devs.length){ sec.style.display='none'; return; }
   sec.style.display='block';
 
