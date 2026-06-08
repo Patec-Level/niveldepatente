@@ -12533,11 +12533,13 @@ async function desfechoCarregarFirebase(){
       snap.docs.forEach(d => {
         const data = d.data();
         const dataDoc = data.data || '';
+        // Incluir: sem campo data (legado) OU data dentro do ciclo atual
         if(!dataDoc || dataDoc >= CICLO_NOVO_INICIO){
-          if(data.tipo) data.tipo = TIPO_NORM[data.tipo.toLowerCase()] || data.tipo;
+          if(data.tipo) data.tipo = TIPO_NORM[(data.tipo||'').toLowerCase()] || data.tipo;
           cache[data.chave || d.id] = data;
         }
       });
+      console.log('normalizarDocs: total docs Firebase='+snap.docs.length+' | no ciclo='+Object.keys(cache).length);
       return cache;
     };
 
@@ -12553,14 +12555,8 @@ async function desfechoCarregarFirebase(){
           console.log('✓ Desfechos (cache):', Object.keys(_desfechoCache).length);
           estRenderDevolucoes(); estRenderDesfechoCards();
           // Ainda assim atualiza em background
-          db.collection('desfechos').where('data','>=', CICLO_NOVO_INICIO).get()
-            .then(snap => {
-              const novo = normalizarDocs(snap);
-              if(snap.empty){
-                return db.collection('desfechos').get().then(s => normalizarDocs(s));
-              }
-              return novo;
-            })
+          db.collection('desfechos').get()
+            .then(snap => normalizarDocs(snap))
             .then(novo => {
               if(Object.keys(novo).length > 0){
                 _desfechoCache = novo;
@@ -12574,13 +12570,8 @@ async function desfechoCarregarFirebase(){
       } catch(e){}
     }
 
-    // Sem cache válido: buscar do Firebase diretamente
-    let snap = await db.collection('desfechos')
-      .where('data','>=', CICLO_NOVO_INICIO).get();
-    if(snap.empty){
-      console.warn('Desfechos: query por data vazia, buscando tudo...');
-      snap = await db.collection('desfechos').get();
-    }
+    // Sempre buscar TUDO e filtrar na memória — evita perder docs sem campo data
+    const snap = await db.collection('desfechos').get();
     _desfechoCache = normalizarDocs(snap);
     console.log('✓ Desfechos:', Object.keys(_desfechoCache).length, '| Tipos:', [...new Set(Object.values(_desfechoCache).map(d=>d.tipo))]);
     try{
