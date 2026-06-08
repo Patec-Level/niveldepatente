@@ -12613,10 +12613,25 @@ function estRenderDevolucoes(){
   if(!devs.length){ sec.style.display='none'; return; }
   sec.style.display='block';
 
-  // Cards por motivo
+  // Log dos motivos reais para debug
+  console.log('Devoluções encontradas:', devs.length, '| Motivos:', devs.map(d=>d.motivo));
+
+  // Cards por motivo — comparação normalizada (trim + lowercase)
+  const norm = s => (s||'').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'');
   const contMotivo = {};
   MOTIVOS.forEach(m=>contMotivo[m]=0);
-  devs.forEach(d=>{ if(d.motivo && contMotivo[d.motivo]!==undefined) contMotivo[d.motivo]++; });
+  devs.forEach(d=>{
+    if(!d.motivo) return;
+    const motNorm = norm(d.motivo);
+    const match = MOTIVOS.find(m => norm(m) === motNorm);
+    if(match) contMotivo[match]++;
+    else {
+      // Motivo não reconhecido — adicionar dinamicamente
+      contMotivo[d.motivo] = (contMotivo[d.motivo]||0) + 1;
+      if(!MOTIVOS.includes(d.motivo)) MOTIVOS.push(d.motivo);
+    }
+  });
   const totalDevs = devs.length;
 
   document.getElementById('est-dev-total-label').textContent = `${totalDevs} devolução${totalDevs!==1?'s':''} registrada${totalDevs!==1?'s':''}`;
