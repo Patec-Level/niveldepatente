@@ -4532,6 +4532,14 @@ function go(id, el) {
   if(id==='adm') setTimeout(paEntradaInitADM, 100);
   if(id==='pr-estrategico') setTimeout(()=>{
     // Lazy: carregar desfechos se não tiver cache
+    // Limpar cache de desfecho se estiver vazio (pode ter sido gravado vazio)
+    try{
+      const _cached = JSON.parse(localStorage.getItem('patec_desfecho_cache')||'null');
+      if(!_cached || Object.keys(_cached).length === 0){
+        localStorage.removeItem('patec_desfecho_cache');
+        localStorage.removeItem('patec_desfecho_cache_ts');
+      }
+    }catch(e){}
     if(!Object.keys(_desfechoCache||{}).length) desfechoCarregarFirebase().then(()=>{ estRenderDevolucoes(); estRenderDesfechoCards(); });
     const sel=document.getElementById('est-dia-sel');
     if(sel&&!sel.value) sel.value=HOJE.toISOString().split('T')[0];
@@ -12513,52 +12521,72 @@ async function desfechoCarregarFirebase(){
   try{
     const db = getDB(); if(!db) return;
 
-    // Cache 2h
     const CACHE_KEY = 'patec_desfecho_cache';
     const CACHE_TS_KEY = 'patec_desfecho_cache_ts';
+    const TIPO_NORM = {
+      'pedido':'Pedido','devolução':'Devolução','devolucao':'Devolução',
+      'republicação':'Republicação','republicacao':'Republicação','xgl':'XGL'
+    };
+
+    const normalizarDocs = (snap) => {
+      const cache = {};
+      snap.docs.forEach(d => {
+        const data = d.data();
+        const dataDoc = data.data || '';
+        if(!dataDoc || dataDoc >= CICLO_NOVO_INICIO){
+          if(data.tipo) data.tipo = TIPO_NORM[data.tipo.toLowerCase()] || data.tipo;
+          cache[data.chave || d.id] = data;
+        }
+      });
+      return cache;
+    };
+
+    // Sempre buscar do Firebase — sem depender do cache localStorage para exibição
+    // (cache só serve para acelerar re-aberturas dentro de 30min COM dados)
     const cacheTs = parseInt(localStorage.getItem(CACHE_TS_KEY)||'0');
-    if(Date.now() - cacheTs < 2*60*60*1000){
+    const cacheValido = Date.now() - cacheTs < 30*60*1000;
+    if(cacheValido){
       try{
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
         if(cached && Object.keys(cached).length > 0){
           _desfechoCache = cached;
           console.log('✓ Desfechos (cache):', Object.keys(_desfechoCache).length);
           estRenderDevolucoes(); estRenderDesfechoCards();
+          // Ainda assim atualiza em background
+          db.collection('desfechos').where('data','>=', CICLO_NOVO_INICIO).get()
+            .then(snap => {
+              const novo = normalizarDocs(snap);
+              if(snap.empty){
+                return db.collection('desfechos').get().then(s => normalizarDocs(s));
+              }
+              return novo;
+            })
+            .then(novo => {
+              if(Object.keys(novo).length > 0){
+                _desfechoCache = novo;
+                localStorage.setItem(CACHE_KEY, JSON.stringify(_desfechoCache));
+                localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+                estRenderDevolucoes(); estRenderDesfechoCards();
+              }
+            }).catch(()=>{});
           return;
         }
       } catch(e){}
     }
 
-    // Carregar desfechos do ciclo atual (com fallback se retornar vazio)
+    // Sem cache válido: buscar do Firebase diretamente
     let snap = await db.collection('desfechos')
       .where('data','>=', CICLO_NOVO_INICIO).get();
-    // Fallback: se vazio pode ser que docs antigos não têm campo data — buscar tudo
     if(snap.empty){
-      console.warn('Desfechos: query por data retornou vazio, buscando todos...');
+      console.warn('Desfechos: query por data vazia, buscando tudo...');
       snap = await db.collection('desfechos').get();
     }
-    _desfechoCache = {};
-    const TIPO_NORM = {
-      'pedido':'Pedido','devolução':'Devolução','devolucao':'Devolução',
-      'republicação':'Republicação','republicacao':'Republicação','xgl':'XGL'
-    };
-    snap.docs.forEach(d=>{
-      const data = d.data();
-      const dataDoc = data.data || '';
-      if(!dataDoc || dataDoc >= CICLO_NOVO_INICIO){
-        // Normalizar campo tipo
-        if(data.tipo) data.tipo = TIPO_NORM[data.tipo.toLowerCase()] || data.tipo;
-        _desfechoCache[data.chave || d.id] = data;
-      }
-    });
-    console.log('✓ Tipos no cache:', [...new Set(Object.values(_desfechoCache).map(d=>d.tipo))]);
-    console.log('✓ Desfechos carregados:', Object.keys(_desfechoCache).length, '(ciclo atual)');
-    // Cache
+    _desfechoCache = normalizarDocs(snap);
+    console.log('✓ Desfechos:', Object.keys(_desfechoCache).length, '| Tipos:', [...new Set(Object.values(_desfechoCache).map(d=>d.tipo))]);
     try{
       localStorage.setItem(CACHE_KEY, JSON.stringify(_desfechoCache));
       localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
     }catch(e){}
-    console.log('✓ Desfechos carregados:', snap.docs.length);
     estRenderDevolucoes(); estRenderDesfechoCards();
   } catch(e){ console.warn('desfechoCarregarFirebase:', e); }
 }
