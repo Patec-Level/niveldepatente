@@ -16288,6 +16288,7 @@ function rtRenderizarMonitoramento(acoes, hoje){
     return (p.primeira_analise+p.em_tratativa+p.status_b) >= meta;
   }).length;
   const ativos = COLABS_RT.filter(c=>porColab[c].total>0).length;
+  const faltam = Math.max(0, META_EQUIPE_RT - totalEquipe);
 
   if(kpiEl) kpiEl.innerHTML = `
     <div class="kc ${totalEquipe>=META_EQUIPE_RT?'ok':totalEquipe>=META_EQUIPE_RT*.8?'warn':'bad'}">
@@ -16305,10 +16306,10 @@ function rtRenderizarMonitoramento(acoes, hoje){
       <div class="kc-v">${bateramMeta} / ${comMeta.length}</div>
       <div class="kc-s">analistas</div>
     </div>
-    <div class="kc">
-      <div class="kc-l">Total de ações hoje</div>
-      <div class="kc-v">${acoes.length}</div>
-      <div class="kc-s">registros acumulados</div>
+    <div class="kc ${totalEquipe>=META_EQUIPE_RT?'ok':faltam===0?'ok':'warn'}">
+      <div class="kc-l">Faltam para a meta</div>
+      <div class="kc-v" style="color:${faltam===0?'var(--vd)':'var(--am)'}">${faltam}</div>
+      <div class="kc-s">${faltam===0?'✅ Meta atingida!':'de '+META_EQUIPE_RT+' itens'}</div>
     </div>
   `;
 
