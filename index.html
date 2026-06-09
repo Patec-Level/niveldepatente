@@ -6845,6 +6845,13 @@ async function zeroRtExecutar(){
     document.getElementById('zero-rt-btn-reverter').style.display = 'inline-block';
     document.getElementById('zero-rt-btn-reverter').dataset.colab = colab;
     document.getElementById('zero-rt-btn-reverter').dataset.data  = data;
+    // Re-renderizar painel RT imediatamente
+    const _n2 = new Date();
+    const _hoje2 = _n2.getFullYear()+'-'+String(_n2.getMonth()+1).padStart(2,'0')+'-'+String(_n2.getDate()).padStart(2,'0');
+    if(typeof rtRenderizarMonitoramento === 'function'){
+      const _todasAcoes = Object.values(window._prodAcoesCache||{}).flat();
+      rtRenderizarMonitoramento(_todasAcoes, _hoje2);
+    }
     const ok = document.createElement('div');
     ok.textContent = '✓ Ações anuladas!';
     ok.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--vd);color:#fff;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;z-index:9999';
@@ -16117,6 +16124,7 @@ function rtRenderizarMonitoramento(acoes, hoje){
 
   acoes.forEach(a => {
     if(!porColab[a.colab]) return;
+    if(a.anulada) return; // ignorar ações anuladas
     const p = porColab[a.colab];
     if(p[a.tipo] !== undefined) p[a.tipo]++;
     p.total++;
