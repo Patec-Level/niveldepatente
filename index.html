@@ -2028,6 +2028,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <span class="field-label">Data</span>
               <input type="date" id="zero-rt-data" style="padding:7px 10px;font-size:13px;border:1px solid var(--brd);border-radius:8px">
             </div>
+            <div class="field-wrap">
+              <span class="field-label">Anular ações após</span>
+              <input type="time" id="zero-rt-hora" value="21:00" style="padding:7px 10px;font-size:13px;border:1px solid var(--brd);border-radius:8px;width:110px">
+            </div>
             <button class="btn btn-s" style="padding:6px 14px;font-size:12px" onclick="zeroRtPreview()">🔍 Verificar</button>
             <button class="btn btn-r" id="zero-rt-btn-exec" style="padding:6px 14px;font-size:12px;display:none" onclick="zeroRtExecutar()">🔒 Anular contagem</button>
             <button class="btn btn-s" id="zero-rt-btn-reverter" style="padding:6px 14px;font-size:12px;display:none;border-color:var(--am);color:var(--am)" onclick="zeroRtReverter()">↩ Reverter anulação</button>
@@ -6728,12 +6732,26 @@ function filtrarHistProd(modo){
 }
 
 // ── Anular Ações RT (evitar duplicidade, sem perder governança) ──
+function _zeroRtHoraLimite(){
+  // Retorna hora limite em minutos desde meia-noite (local)
+  const h = (document.getElementById('zero-rt-hora')?.value || '21:00').split(':');
+  return parseInt(h[0])*60 + parseInt(h[1]||0);
+}
+function _zeroRtTsMinutos(ts){
+  // Extrai hora local em minutos a partir do ISO timestamp
+  if(!ts) return 0;
+  const d = new Date(ts);
+  return d.getHours()*60 + d.getMinutes();
+}
+
 async function zeroRtPreview(){
-  const colab   = document.getElementById('zero-rt-colab').value;
-  const data    = document.getElementById('zero-rt-data').value;
-  const prev    = document.getElementById('zero-rt-preview');
-  const btnExec = document.getElementById('zero-rt-btn-exec');
-  const btnRev  = document.getElementById('zero-rt-btn-reverter');
+  const colab    = document.getElementById('zero-rt-colab').value;
+  const data     = document.getElementById('zero-rt-data').value;
+  const prev     = document.getElementById('zero-rt-preview');
+  const btnExec  = document.getElementById('zero-rt-btn-exec');
+  const btnRev   = document.getElementById('zero-rt-btn-reverter');
+  const horaLim  = _zeroRtHoraLimite();
+  const horaFmt  = document.getElementById('zero-rt-hora')?.value || '21:00';
   if(!colab || !data){ alert('Selecione colaborador e data.'); return; }
   prev.style.display = 'block';
   prev.innerHTML = '<span style="color:var(--tx2)">🔍 Verificando...</span>';
@@ -6743,76 +6761,92 @@ async function zeroRtPreview(){
     const db = getDB(); if(!db){ prev.innerHTML='⚠ Firebase não disponível.'; return; }
     const snap = await db.collection('producao_acoes')
       .where('colab','==',colab).where('data','==',data).get();
-    const total    = snap.size;
-    const ativas   = snap.docs.filter(d=>!d.data().anulada);
-    const anuladas = snap.docs.filter(d=> d.data().anulada);
-
-    if(total === 0){
+    if(snap.size === 0){
       prev.innerHTML = `<span style="color:var(--vd)">✓ Nenhuma ação encontrada para <strong>${colab}</strong> em <strong>${data.split('-').reverse().join('/')}</strong>.</span>`;
       return;
     }
 
-    // Contar tipos das ativas
-    const tipos = {};
-    ativas.forEach(d=>{ const t=d.data().tipo||'?'; tipos[t]=(tipos[t]||0)+1; });
-    const tiposStr = Object.entries(tipos).map(([t,n])=>`${t}: ${n}`).join(' | ') || '—';
+    // Separar: antes do horário (legítimas) vs após horário (suspeitas de virada de dia)
+    const todas    = snap.docs.map(d=>({ref:d.ref, ...d.data()}));
+    const legitimas  = todas.filter(a=>!a.anulada && _zeroRtTsMinutos(a.ts) < horaLim);
+    const suspeitas  = todas.filter(a=>!a.anulada && _zeroRtTsMinutos(a.ts) >= horaLim);
+    const anuladas   = todas.filter(a=> a.anulada);
 
-    // Contar tipos das anuladas
-    const tiposAn = {};
-    anuladas.forEach(d=>{ const t=d.data().tipo||'?'; tiposAn[t]=(tiposAn[t]||0)+1; });
-    const tiposAnStr = Object.entries(tiposAn).map(([t,n])=>`${t}: ${n}`).join(' | ') || '—';
+    // Formatar linha de detalhe por ação
+    const fmtLinha = (a) => {
+      const hr = a.ts ? new Date(a.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '??:??';
+      const tipoLabel = {primeira_analise:'1ª Análise',em_tratativa:'Em Tratativa',status_b:'Status B',outros:'Outros'}[a.tipo]||a.tipo;
+      return `<span style="font-family:monospace">${hr}</span> · ${tipoLabel} → ${a.conclusao||a.tratamento||'—'}`;
+    };
 
     let html = '';
-    if(ativas.length > 0){
-      html += `<strong style="color:var(--vm)">⚠ ${ativas.length} ação(ões) ativa(s) na contagem</strong> — <span style="color:var(--tx2);font-size:11px">${tiposStr}</span><br>`;
-      html += `<span style="color:var(--am)">Clique em <strong>Anular contagem</strong> para excluí-las da produção. O histórico de governança (status RC, envio, finalizado) <strong>não será afetado</strong>.</span>`;
+
+    if(legitimas.length > 0){
+      html += `<div style="margin-bottom:.6rem"><span style="color:var(--vd);font-weight:700">✓ ${legitimas.length} ação(ões) antes das ${horaFmt} — serão preservadas:</span><br>`;
+      html += legitimas.map(a=>`&nbsp;&nbsp;${fmtLinha(a)}`).join('<br>') + '</div>';
+    }
+    if(suspeitas.length > 0){
+      html += `<div style="margin-bottom:.6rem"><span style="color:var(--vm);font-weight:700">⚠ ${suspeitas.length} ação(ões) após ${horaFmt} — serão anuladas:</span><br>`;
+      html += suspeitas.map(a=>`&nbsp;&nbsp;${fmtLinha(a)}`).join('<br>') + '</div>';
+      html += `<span style="color:var(--tx2);font-size:11px">A governança (status RC, envio, finalizado) <strong>não será alterada</strong>.</span>`;
     }
     if(anuladas.length > 0){
-      html += (html?'<br><br>':'') +
-        `<span style="color:var(--vd)">✓ ${anuladas.length} ação(ões) já anulada(s)</span> — <span style="color:var(--tx2);font-size:11px">${tiposAnStr}</span><br>` +
-        `<span style="color:var(--tx2)">Clique em <strong>Reverter anulação</strong> para reativar essas ações na contagem caso tenha errado.</span>`;
+      html += `<div style="margin-top:.6rem"><span style="color:var(--tx2)">↩ ${anuladas.length} ação(ões) já anuladas anteriormente.</span></div>`;
     }
-    prev.innerHTML = html;
+    if(suspeitas.length === 0 && anuladas.length === 0){
+      html += `<span style="color:var(--vd)">✓ Nenhuma ação após ${horaFmt}. Sem duplicidade.</span>`;
+    }
 
-    btnExec.style.display = ativas.length  > 0 ? 'inline-block' : 'none';
-    btnRev.style.display  = anuladas.length > 0 ? 'inline-block' : 'none';
-    btnExec.dataset.colab = colab; btnExec.dataset.data = data;
+    prev.innerHTML = html;
+    btnExec.style.display = suspeitas.length > 0 ? 'inline-block' : 'none';
+    btnRev.style.display  = anuladas.length  > 0 ? 'inline-block' : 'none';
+    btnExec.dataset.colab = colab; btnExec.dataset.data = data; btnExec.dataset.hora = horaLim;
     btnRev.dataset.colab  = colab; btnRev.dataset.data  = data;
 
   } catch(e){ prev.innerHTML = '⚠ Erro: '+e.message; }
 }
 
 async function zeroRtExecutar(){
-  const btn  = document.getElementById('zero-rt-btn-exec');
-  const colab = btn.dataset.colab;
-  const data  = btn.dataset.data;
-  const prev  = document.getElementById('zero-rt-preview');
-  const dtFmt = data.split('-').reverse().join('/');
-  if(!confirm(`Anular contagem de todas as ações ativas de ${colab} em ${dtFmt}?\n\nO histórico de governança (status RC, envio, finalizado) NÃO será alterado.`)) return;
-  btn.disabled = true;
-  btn.textContent = '⏳ Anulando...';
+  const btn    = document.getElementById('zero-rt-btn-exec');
+  const colab  = btn.dataset.colab;
+  const data   = btn.dataset.data;
+  const horaLim = parseInt(btn.dataset.hora || '1260'); // 21:00 = 1260 min
+  const horaFmt = `${String(Math.floor(horaLim/60)).padStart(2,'0')}:${String(horaLim%60).padStart(2,'0')}`;
+  const prev   = document.getElementById('zero-rt-preview');
+  const dtFmt  = data.split('-').reverse().join('/');
+  if(!confirm(`Anular ações de ${colab} em ${dtFmt} registradas após ${horaFmt}?\n\nAções antes das ${horaFmt} serão preservadas.\nA governança (status RC, envio, finalizado) NÃO será alterada.`)) return;
+  btn.disabled = true; btn.textContent = '⏳ Anulando...';
   try{
     const db = getDB(); if(!db) throw new Error('Firebase não disponível');
     const snap = await db.collection('producao_acoes')
       .where('colab','==',colab).where('data','==',data).get();
-    const ativas = snap.docs.filter(d=>!d.data().anulada);
-    if(ativas.length === 0){ prev.innerHTML='<span style="color:var(--vd)">✓ Nenhuma ação ativa para anular.</span>'; btn.disabled=false; btn.textContent='🔒 Anular contagem'; return; }
+    // Apenas ativas E após hora limite
+    const suspeitas = snap.docs.filter(d=>{
+      const a = d.data();
+      return !a.anulada && _zeroRtTsMinutos(a.ts) >= horaLim;
+    });
+    if(suspeitas.length === 0){
+      prev.innerHTML='<span style="color:var(--vd)">✓ Nenhuma ação após ' + horaFmt + ' para anular.</span>';
+      btn.disabled=false; btn.textContent='🔒 Anular contagem'; return;
+    }
     const batch = db.batch();
-    ativas.forEach(d => batch.update(d.ref, { anulada: true, anuladaEm: new Date().toISOString(), anuladaPor: 'ADM' }));
+    suspeitas.forEach(d => batch.update(d.ref, { anulada: true, anuladaEm: new Date().toISOString(), anuladaPor: 'ADM' }));
     await batch.commit();
     // Atualizar cache em memória
     if(window._prodAcoesCache && window._prodAcoesCache[data]){
-      window._prodAcoesCache[data].forEach(a=>{ if(a.colab===colab) a.anulada=true; });
+      window._prodAcoesCache[data].forEach(a=>{ if(a.colab===colab && _zeroRtTsMinutos(a.ts)>=horaLim) a.anulada=true; });
     }
-    if(window._prodAcoesHoje){ window._prodAcoesHoje.forEach(a=>{ if(a.colab===colab && a.data===data) a.anulada=true; }); }
+    if(window._prodAcoesHoje){ window._prodAcoesHoje.forEach(a=>{ if(a.colab===colab && a.data===data && _zeroRtTsMinutos(a.ts)>=horaLim) a.anulada=true; }); }
     if(typeof pcpAtualizarRegistroDia === 'function') pcpAtualizarRegistroDia(data);
-    prev.innerHTML = `<span style="color:var(--vd)">✓ ${ativas.length} ação(ões) anulada(s) com sucesso!<br>A produção de <strong>${colab}</strong> em <strong>${dtFmt}</strong> agora reflete apenas o lançamento manual.<br><span style="color:var(--tx2);font-size:11px">Os dados de governança (status RC, envio, finalizado) estão intactos.</span></span>`;
+    prev.innerHTML = `<span style="color:var(--vd)">✓ ${suspeitas.length} ação(ões) após ${horaFmt} anuladas com sucesso!<br>
+      Ações antes das ${horaFmt} continuam contabilizadas normalmente.<br>
+      <span style="color:var(--tx2);font-size:11px">Governança (status RC, envio, finalizado) intacta.</span></span>`;
     btn.style.display = 'none';
     document.getElementById('zero-rt-btn-reverter').style.display = 'inline-block';
     document.getElementById('zero-rt-btn-reverter').dataset.colab = colab;
     document.getElementById('zero-rt-btn-reverter').dataset.data  = data;
     const ok = document.createElement('div');
-    ok.textContent = '✓ Contagem anulada!';
+    ok.textContent = '✓ Ações anuladas!';
     ok.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--vd);color:#fff;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;z-index:9999';
     document.body.appendChild(ok); setTimeout(()=>ok.remove(), 3500);
   } catch(e){
