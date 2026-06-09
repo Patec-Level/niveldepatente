@@ -3187,11 +3187,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <!-- Mini KPIs do dia -->
             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
               <span style="font-size:10px;color:var(--tx2);font-weight:600">Hoje:</span>
-              <span id="pc-kpi-1a" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">🔍 0</span>
-              <span id="pc-kpi-trat" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">⚙️ 0</span>
-              <span id="pc-kpi-sb" style="font-size:11px;font-weight:700;color:var(--vd);background:var(--vdc);padding:2px 10px;border-radius:20px">✅ 0</span>
-              <span id="pc-kpi-outros" style="font-size:11px;font-weight:700;color:var(--am);background:var(--amc);padding:2px 10px;border-radius:20px">📋 0</span>
-              <span id="pc-kpi-total" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:var(--cin);color:var(--tx2)">Total: 0 / 30</span>
+              <span id="pc-kpi-1a" title="1ª Análise" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px;cursor:default">🔍 0</span>
+              <span id="pc-kpi-trat" title="Em Tratativa" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px;cursor:default">⚙️ 0</span>
+              <span id="pc-kpi-sb" title="Status B" style="font-size:11px;font-weight:700;color:var(--vd);background:var(--vdc);padding:2px 10px;border-radius:20px;cursor:default">✅ 0</span>
+              <span id="pc-kpi-outros" title="Outros" style="font-size:11px;font-weight:700;color:var(--am);background:var(--amc);padding:2px 10px;border-radius:20px;cursor:default">📋 0</span>
+              <span id="pc-kpi-total" title="Total do dia / Meta" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:var(--cin);color:var(--tx2);cursor:default">Total: 0 / 30</span>
               <span class="rt-dot" style="margin-left:2px" title="Tempo real"></span>
             </div>
           </div>
@@ -3352,11 +3352,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <!-- Mini KPIs do dia -->
             <div id="gov-prod-kpis-bar" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
               <span style="font-size:10px;color:var(--tx2);font-weight:600">Hoje:</span>
-              <span id="gov-kpi-1a" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">🔍 0</span>
-              <span id="gov-kpi-trat" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px">⚙️ 0</span>
-              <span id="gov-kpi-sb" style="font-size:11px;font-weight:700;color:var(--vd);background:var(--vdc);padding:2px 10px;border-radius:20px">✅ 0</span>
-              <span id="gov-kpi-outros" style="font-size:11px;font-weight:700;color:var(--am);background:var(--amc);padding:2px 10px;border-radius:20px">📋 0</span>
-              <span id="gov-kpi-total" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:var(--cin);color:var(--tx2)">Total: 0 / 30</span>
+              <span id="gov-kpi-1a" title="1ª Análise" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px;cursor:default">🔍 0</span>
+              <span id="gov-kpi-trat" title="Em Tratativa" style="font-size:11px;font-weight:700;color:var(--azm);background:var(--azc);padding:2px 10px;border-radius:20px;cursor:default">⚙️ 0</span>
+              <span id="gov-kpi-sb" title="Status B" style="font-size:11px;font-weight:700;color:var(--vd);background:var(--vdc);padding:2px 10px;border-radius:20px;cursor:default">✅ 0</span>
+              <span id="gov-kpi-outros" title="Outros" style="font-size:11px;font-weight:700;color:var(--am);background:var(--amc);padding:2px 10px;border-radius:20px;cursor:default">📋 0</span>
+              <span id="gov-kpi-total" title="Total do dia / Meta" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:var(--cin);color:var(--tx2);cursor:default">Total: 0 / 30</span>
               <span class="rt-dot" style="margin-left:2px" title="Tempo real"></span>
             </div>
           </div>
@@ -16076,7 +16076,8 @@ const COLABS_SEM_META_RT = ['André']; // contribui para equipe mas sem meta di�
 function rtIniciarListener(){
   try{
     const db = getDB(); if(!db) return;
-    const hoje = new Date().toISOString().split('T')[0];
+    const _rtn = new Date();
+    const hoje = _rtn.getFullYear()+'-'+String(_rtn.getMonth()+1).padStart(2,'0')+'-'+String(_rtn.getDate()).padStart(2,'0');
 
     if(_rtUnsubProd){ _rtUnsubProd(); _rtUnsubProd = null; }
 
@@ -16722,11 +16723,8 @@ async function prodConfirmarAcao(){
     } catch(e){}
   }
 
-  // Atualizar cache local e re-renderizar painéis
-  if(!window._prodAcoesHoje) window._prodAcoesHoje = [];
-  window._prodAcoesHoje.push(registro);
-
   // Capturar rcBusca ANTES de fechar o modal (prodFecharModal limpa _prodCtx)
+  // Nota: _prodAcoesHoje é atualizado pelo listener onSnapshot automaticamente
   const _rcBuscaParaRefresh = _prodCtx.rcBusca || '';
   const _chaveParaRefresh   = _prodCtx.rcChave  || '';
 
@@ -16744,11 +16742,7 @@ async function prodConfirmarAcao(){
   const _pcBEl = document.getElementById('pc-busca');
   if(_pcBEl && _pcBEl.value) pcBuscarRCDetalhe(_pcBEl.value);
 
-  // Atualizar cache PCP e recalcular
-  if(!window._prodAcoesCache) window._prodAcoesCache = {};
-  if(!window._prodAcoesCache[hoje]) window._prodAcoesCache[hoje] = [];
-  window._prodAcoesCache[hoje].push(registro);
-  pcpAtualizarRegistroDia(hoje);
+  // PCP será recalculado quando o listener onSnapshot disparar
 
   // Feedback visual rápido
   const origemEl = document.getElementById(_prodCtx.origem === 'gov' ? 'gov-prod-painel' : 'pc-prod-painel');
