@@ -16873,10 +16873,11 @@ function prodRenderizarPaineis(colab){
     }
   });
 
-  // Atualizar velocímetros — usa 30 como referência mesmo para sem-meta
-  const _velMeta = metaVal > 0 ? metaVal : 30;
-  govAtualizarVelocimetro(cnt.meta, _velMeta);
-  pcAtualizarVelocimetro(cnt.meta, _velMeta);
+  // Atualizar velocímetros — sem-meta usa total (inclui Outros); com meta usa só itens que contam
+  const _velMeta  = metaVal > 0 ? metaVal : 30;
+  const _velTotal = semMeta ? cnt.total : cnt.meta;
+  govAtualizarVelocimetro(_velTotal, _velMeta);
+  pcAtualizarVelocimetro(_velTotal, _velMeta);
 
   // Renderizar gráfico (gov)
   prodRenderGrafico('gov-prod-chart', '_prodChartGov', colab);
