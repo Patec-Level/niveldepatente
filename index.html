@@ -16538,25 +16538,59 @@ async function fechCarregarHistorico(){
   }
 }
 
-function rtAbrirComposicao(colab, acoesJson){
+// Cache das ações abertas no modal (com docId para anular)
+let _rtCompAcoes = [];
+let _rtCompColab = '';
+
+async function rtAbrirComposicao(colab, acoesJson){
   const modal = document.getElementById('rt-comp-modal');
   const titulo = document.getElementById('rt-comp-titulo');
   const body   = document.getElementById('rt-comp-body');
   if(!modal) return;
 
-  let acoes = [];
-  try{ acoes = JSON.parse(acoesJson.replace(/&quot;/g,'"').replace(/&#39;/g,"'")); } catch(e){}
-
+  _rtCompColab = colab;
   titulo.textContent = `Composição — ${colab}`;
+  body.innerHTML = '<div style="text-align:center;color:var(--tx2);padding:1rem;font-size:12px">⏳ Carregando...</div>';
+  modal.style.display = 'flex';
 
-  // Contar por tratamento e conclusão
+  // Buscar ações do Firebase com docId (para poder anular individualmente)
+  try{
+    const db = getDB();
+    const _n = new Date();
+    const hoje = _n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-'+String(_n.getDate()).padStart(2,'0');
+    if(db){
+      const snap = await db.collection('producao_acoes')
+        .where('colab','==',colab).where('data','==',hoje).get();
+      _rtCompAcoes = snap.docs.map(d=>({_docId:d.id, ...d.data()}));
+    } else {
+      let parsed = [];
+      try{ parsed = JSON.parse(acoesJson.replace(/&quot;/g,'"').replace(/&#39;/g,"'")); }catch(e){}
+      _rtCompAcoes = parsed;
+    }
+  } catch(e){
+    let parsed = [];
+    try{ parsed = JSON.parse(acoesJson.replace(/&quot;/g,'"').replace(/&#39;/g,"'")); }catch(e2){}
+    _rtCompAcoes = parsed;
+  }
+
+  rtRenderComposicaoModal();
+}
+
+function rtRenderComposicaoModal(){
+  const body = document.getElementById('rt-comp-body');
+  if(!body) return;
+
+  const acoes = _rtCompAcoes.filter(a=>!a.anulada);
+  const anuladas = _rtCompAcoes.filter(a=>a.anulada);
+
+  // Contar por tratamento e conclusão (apenas ativas)
   const contTrat = {}, contConc = {};
   acoes.forEach(a => {
     if(a.tratamento){ contTrat[a.tratamento] = (contTrat[a.tratamento]||0)+1; }
     if(a.conclusao){  contConc[a.conclusao]  = (contConc[a.conclusao]||0)+1; }
   });
 
-  const sorted = [...acoes].sort((a,b)=>b.ts>a.ts?1:-1);
+  const sorted = [..._rtCompAcoes].sort((a,b)=>b.ts>a.ts?1:-1);
 
   body.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem">
@@ -16571,22 +16605,56 @@ function rtAbrirComposicao(colab, acoesJson){
           <span style="font-size:18px;font-weight:700;color:var(--vd)">${v}</span>
         </div>`).join('')}
     </div>
+    ${anuladas.length?`<div style="font-size:10px;color:var(--tx2);margin-bottom:.5rem">🔒 ${anuladas.length} ação(ões) já anulada(s) — não contabilizadas</div>`:''}
     <div style="font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">Linha do tempo</div>
-    <div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:5px">
+    <div style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:5px">
       ${sorted.map(a=>{
         const cfg = PROD_TIPO_LABELS[a.tipo]||{emoji:'•',label:a.tipo};
         const hr  = a.ts ? new Date(a.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
-        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--cin);border-radius:7px;font-size:11px">
-          <span style="color:var(--tx2);font-weight:600;min-width:36px">${hr}</span>
-          <span style="background:var(--azc);color:var(--azm);padding:1px 8px;border-radius:10px;font-weight:700;font-size:10px">${cfg.emoji} ${cfg.label}</span>
-          <span style="color:var(--tx)">${a.tratamento||''}${a.conclusao?' → <strong>'+a.conclusao+'</strong>':''}</span>
-          ${a.obs?`<span style="color:var(--tx2);font-size:10px;margin-left:auto">${a.obs}</span>`:''}
+        const rc  = a.rcChave ? a.rcChave.split('|')[0] : '';
+        const anulada = a.anulada;
+        const docId = a._docId||'';
+        return `<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:${anulada?'#fafafa':'var(--cin)'};border-radius:7px;font-size:11px;opacity:${anulada?'.45':'1'};border:1px solid ${anulada?'var(--brd)':'transparent'}">
+          <span style="color:var(--tx2);font-weight:600;min-width:34px">${hr}</span>
+          <span style="background:var(--azc);color:var(--azm);padding:1px 7px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0">${cfg.emoji} ${cfg.label}</span>
+          <span style="color:var(--tx);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.tratamento||''}${a.conclusao?' → <strong>'+a.conclusao+'</strong>':''}</span>
+          ${rc?`<span style="color:var(--azm);font-size:10px;font-weight:700;background:var(--azc);padding:1px 6px;border-radius:5px;flex-shrink:0">RC ${rc}</span>`:''}
+          ${anulada
+            ? `<span style="font-size:9px;color:var(--tx2);flex-shrink:0">anulada</span>`
+            : docId
+              ? `<button onclick="rtAnularAcao('${docId}')" title="Anular esta ação da produtividade (gov não é afetada)"
+                  style="background:var(--vmc);border:1px solid var(--vm);border-radius:5px;padding:2px 7px;cursor:pointer;font-size:10px;color:var(--vm);font-weight:700;flex-shrink:0">🗑</button>`
+              : ''}
         </div>`;
       }).join('')}
     </div>
   `;
+}
 
-  modal.style.display = 'flex';
+async function rtAnularAcao(docId){
+  if(!confirm('Anular esta ação da produtividade?\nA governança (status RC, envio, finalizado) NÃO será alterada.')) return;
+  try{
+    const db = getDB(); if(!db) return;
+    await db.collection('producao_acoes').doc(docId).update({ anulada: true, anuladaEm: new Date().toISOString(), anuladaPor: 'ADM' });
+    // Atualizar cache local
+    const idx = _rtCompAcoes.findIndex(a=>a._docId===docId);
+    if(idx>=0){ _rtCompAcoes[idx].anulada = true; _rtCompAcoes[idx].anuladaEm = new Date().toISOString(); }
+    if(window._prodAcoesCache){
+      Object.values(window._prodAcoesCache).forEach(arr=>arr.forEach(a=>{ if(a.ts===_rtCompAcoes[idx]?.ts&&a.colab===_rtCompColab) a.anulada=true; }));
+    }
+    // Recalcular RT
+    const _n2 = new Date();
+    const _hoje2 = _n2.getFullYear()+'-'+String(_n2.getMonth()+1).padStart(2,'0')+'-'+String(_n2.getDate()).padStart(2,'0');
+    const _todasAcoes = Object.values(window._prodAcoesCache||{}).flat();
+    if(typeof rtRenderizarMonitoramento==='function') rtRenderizarMonitoramento(_todasAcoes, _hoje2);
+    // Re-renderizar modal
+    rtRenderComposicaoModal();
+    // Toast
+    const ok = document.createElement('div');
+    ok.textContent = '✓ Ação anulada da produtividade!';
+    ok.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--vd);color:#fff;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;z-index:9999';
+    document.body.appendChild(ok); setTimeout(()=>ok.remove(),3000);
+  } catch(e){ alert('Erro: '+e.message); }
 }
 
 
