@@ -16611,7 +16611,7 @@ function rtRenderComposicaoModal(){
       ${sorted.map(a=>{
         const cfg = PROD_TIPO_LABELS[a.tipo]||{emoji:'•',label:a.tipo};
         const hr  = a.ts ? new Date(a.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
-        const rc  = a.rcChave ? a.rcChave.split('|')[0] : '';
+        const rc  = a.rc || (a.rcChave ? a.rcChave.split('|')[0] : '');
         const anulada = a.anulada;
         const docId = a._docId||'';
         return `<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:${anulada?'#fafafa':'var(--cin)'};border-radius:7px;font-size:11px;opacity:${anulada?'.45':'1'};border:1px solid ${anulada?'var(--brd)':'transparent'}">
@@ -16884,6 +16884,9 @@ async function prodConfirmarAcao(){
     if(!_devCentro){ errEl.textContent='Informe o Centro.'; errEl.style.display='block'; document.getElementById('acao-dev-centro')?.focus(); return; }
     if(!_devMotivo){ errEl.textContent='Selecione o Motivo da devolução.'; errEl.style.display='block'; document.getElementById('acao-dev-motivo')?.focus(); return; }
   }
+  // Capturar RC antes de montar o registro
+  const _rcChavePre  = (_prodCtx.rcChaves||[_prodCtx.rcChave]||[]).filter(Boolean)[0] || '';
+  const _rcNumPre    = _rcChavePre ? _rcChavePre.split('|')[0] : (_prodCtx.rcBusca||'');
   const registro = {
     colab,
     data: hoje,
@@ -16893,6 +16896,7 @@ async function prodConfirmarAcao(){
     obs,
     origem: _prodCtx.origem,
     ts: new Date().toISOString(),
+    ...(_rcChavePre ? { rcChave: _rcChavePre, rc: _rcNumPre } : (_rcNumPre ? { rc: _rcNumPre } : {})),
     ...(_devVis ? { centro: _devCentro, motivo: _devMotivo } : {})
   };
 
