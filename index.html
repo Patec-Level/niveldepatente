@@ -16697,17 +16697,18 @@ function pcAbrirModalComRC(tipo){
   const _rcBusca = ((document.getElementById('pc-busca')||{}).value||'').trim();
   if(!_rcBusca){ prodAbrirModal('pc', tipo); return; }
   // Encontrar as RCs correspondentes
-  const _rows = (_radarDados||[]).filter(r=>(r.rc||'').includes(_rcBusca) &&
-    ['Analisar PATEC Finalizado','PATEC Finalizado sem fornecedores aprovados']
-    .includes((r.analista_auto||'').trim()));
-  if(_rows.length === 0){ prodAbrirModal('pc', tipo); return; }
-  if(_rows.length === 1){
-    prodAbrirModalRC(govChave(_rows[0]), tipo);
-  } else {
-    // Múltiplas linhas — usar a primeira mas guardar todas
-    prodAbrirModalRC(govChave(_rows[0]), tipo);
-    _prodCtx.rcChaves = _rows.map(r=>govChave(r));
-  }
+  // Buscar em todas as fontes
+  const _rowsRadar = (_radarDados||[]).filter(r=>(r.rc||'').includes(_rcBusca));
+  const _rowsXgl   = (_xglItens||[]).filter(r=>(r.rc||'').includes(_rcBusca));
+  const _rowsSb    = (_sbItens||[]).filter(r=>(r.rc||'').includes(_rcBusca));
+  const _allChaves = [
+    ..._rowsRadar.map(r=>govChave(r)),
+    ..._rowsXgl.map(r=>xglChave(r.rc,r.item,r.oport,r.itemop)),
+    ..._rowsSb.map(r=>sbChave(r.rc,r.seq,r.op,r.item))
+  ];
+  if(_allChaves.length === 0){ prodAbrirModal('pc', tipo); return; }
+  prodAbrirModalRC(_allChaves[0], tipo);
+  if(_allChaves.length > 1) _prodCtx.rcChaves = _allChaves;
 }
 
 function prodAbrirModalRC(chave, tipo){
@@ -16759,11 +16760,14 @@ function prodAbrirModal(origem, tipo){
   // Pegar RC sendo buscada no momento
   const _rcBusca = ((document.getElementById('pc-busca')||{}).value ||
                    (document.getElementById('gov-busca-rc')||{}).value || '').trim();
-  const _rcRows = (_radarDados||[]).filter(r=>(r.rc||'').includes(_rcBusca) &&
-    ['Analisar PATEC Finalizado','PATEC Finalizado sem fornecedores aprovados']
-    .includes((r.analista_auto||'').trim()));
-  // Pegar todas as chaves da RC buscada
-  const _rcChaves = _rcRows.map(r=>govChave(r));
+  // Buscar RC em todas as fontes: radar (todas as abas), XGL e Status B
+  const _rcRowsRadar = (_radarDados||[]).filter(r=>(r.rc||'').includes(_rcBusca) && _rcBusca.length>=5);
+  const _rcRowsXgl   = (_xglItens||[]).filter(r=>(r.rc||'').includes(_rcBusca) && _rcBusca.length>=5);
+  const _rcRowsSb    = (_sbItens||[]).filter(r=>(r.rc||'').includes(_rcBusca) && _rcBusca.length>=5);
+  const _rcChavesRadar = _rcRowsRadar.map(r=>govChave(r));
+  const _rcChavesXgl   = _rcRowsXgl.map(r=>xglChave(r.rc,r.item,r.oport,r.itemop));
+  const _rcChavesSb    = _rcRowsSb.map(r=>sbChave(r.rc,r.seq,r.op,r.item));
+  const _rcChaves = [..._rcChavesRadar, ..._rcChavesXgl, ..._rcChavesSb];
   const _rcChave = _rcChaves.length > 0 ? _rcChaves[0] : null;
   _prodCtx = { origem, tipo, tratamento: null, conclusao: null, rcChave: _rcChave, rcChaves: _rcChaves, rcBusca: _rcBusca };
   console.log('[Modal] RC:', _rcBusca, '| chaves encontradas:', _rcChaves.length);
