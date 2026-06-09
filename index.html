@@ -3246,6 +3246,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="pcSetTab('reprovado',this)">❌ 100% Reprovado</button>
         <button class="stab" onclick="pcSetTab('criticos',this)">🔴 Itens Críticos</button>
         <button class="stab" onclick="pcSetTab('fluxo',this)">🗑 Tirar do Fluxo</button>
+        <button class="stab" onclick="pcSetTab('cancelado',this)">🚫 Cancelado</button>
       </div>
 
 
@@ -3310,6 +3311,21 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th>
               </tr></thead>
               <tbody id="pc-tbody-fluxo"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABA CANCELADO -->
+        <div id="pc-tab-cancelado" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--am);margin-bottom:.5rem" id="pc-count-cancelado"></div>
+          <div id="pc-cancelado-detalhe" style="display:none;margin-bottom:1rem"></div>
+          <div class="tw" style="max-height:500px">
+            <table>
+              <thead><tr>
+                <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th>
+              </tr></thead>
+              <tbody id="pc-tbody-cancelado"></tbody>
             </table>
           </div>
         </div>
@@ -11329,6 +11345,11 @@ function pcDadosReprovado(){
   return (_radarDados||[]).filter(r => (r.analista_auto||'').trim() === 'PATEC Finalizado sem fornecedores aprovados');
 }
 
+function pcDadosCancelado(){
+  // Cancelado: col D (STATUS MAPA) = 'Analisar PATEC Cancelado'
+  return (_radarDados||[]).filter(r => (r.analista_auto||'').trim() === 'Analisar PATEC Cancelado');
+}
+
 function pcInicializar(){
   const base = pcDadosBase();
 
@@ -11354,6 +11375,7 @@ function pcInicializar(){
   // KPIs gerais
   const vencidos   = base.filter(r => (r.validade||'').toLowerCase().includes('vencida') || (r.validade||'').toLowerCase().includes('vencid'));
   const reprovados = pcDadosReprovado();
+  const cancelados = pcDadosCancelado();
   const criticos   = base.filter(r => {
     const ctrl = (r.status_ctrl||'').toUpperCase();
     const val  = (r.validade||'').toLowerCase();
@@ -11373,6 +11395,10 @@ function pcInicializar(){
     <div class="kc" style="cursor:pointer" onclick="pcSetTab('criticos', document.querySelectorAll('#pc-tabs .stab')[2])">
       <div class="kn" style="color:var(--vm)">${criticos.length}</div>
       <div class="kl">🔴 Itens Críticos</div>
+    </div>
+    <div class="kc" style="cursor:pointer" onclick="pcSetTab('cancelado', document.querySelectorAll('#pc-tabs .stab')[4])">
+      <div class="kn" style="color:var(--am)">${cancelados.length}</div>
+      <div class="kl">🚫 Cancelados</div>
     </div>
 
   `;
@@ -11424,6 +11450,10 @@ function pcFiltrar(){
     return (ctrl === 'CRÍTICO' || ctrl === 'CRITICO') && !ehVencido;
   }));
   pcRenderTabela('criticos', criticos, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
+
+  // CANCELADO: col D = 'Analisar PATEC Cancelado'
+  const cancelados = filtrar(pcDadosCancelado());
+  pcRenderTabela('cancelado', cancelados, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
 }
 
 function pcRenderTabela(aba, rows, campos, comExtra){
@@ -11456,7 +11486,7 @@ function pcRenderTabela(aba, rows, campos, comExtra){
       `<td>${r.analista||'—'}</td>`,
     ];
     // Centro — entre Analista e Fila (para criticos e reprovado)
-    if(aba === 'criticos' || aba === 'reprovado'){
+    if(aba === 'criticos' || aba === 'reprovado' || aba === 'cancelado'){
       cells.push(`<td style="font-size:11px">${r.centro||'—'}</td>`);
     }
     cells.push(`<td style="font-size:11px">${r.fila||'—'}</td>`);
@@ -11521,12 +11551,14 @@ function pcBuscarRCDetalhe(rc){
   const rcBusca = (rc||'').trim();
   if(!rcBusca || rcBusca.length < 5){ el.style.display='none'; el.innerHTML=''; return; }
 
-  // Busca nos dados MAPA (Analisar PATEC Finalizado) E nos 100% Reprovados
-  const dadosMapa = (_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
+  // Busca nos dados MAPA, 100% Reprovados e Cancelados
+  const dadosMapa   = (_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Finalizado');
   const dadosReprov = (_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='PATEC Finalizado sem fornecedores aprovados');
-  const resultadosMapa = dadosMapa.filter(r=>(r.rc||'').includes(rcBusca));
+  const dadosCancel = (_radarDados||[]).filter(r=>(r.analista_auto||'').trim()==='Analisar PATEC Cancelado');
+  const resultadosMapa   = dadosMapa.filter(r=>(r.rc||'').includes(rcBusca));
   const resultadosReprov = dadosReprov.filter(r=>(r.rc||'').includes(rcBusca));
-  const resultados = [...resultadosMapa, ...resultadosReprov];
+  const resultadosCancel = dadosCancel.filter(r=>(r.rc||'').includes(rcBusca));
+  const resultados = [...resultadosMapa, ...resultadosReprov, ...resultadosCancel];
 
   if(!resultados.length){
     el.style.display='block';
@@ -11550,8 +11582,8 @@ function pcBuscarRCDetalhe(rc){
       const chaveId = chave.replace(/[|]/g,'_');
       const optsStatus = GOV_STATUS_OPCOES.map(o=>`<option value="${o}" ${statusAtual===o?'selected':''}>${o}</option>`).join('');
       const analistasOpts = _govAnalistasOpts.replace(`value="${r.analista||''}"`,`value="${r.analista||''}" selected`);
-      const abaLabel = resultadosReprov.includes(r) ? '100% REPROV.' : 'MAPA';
-      const abaColor = resultadosReprov.includes(r) ? 'var(--vm)' : 'var(--azm)';
+      const abaLabel = resultadosReprov.includes(r) ? '100% REPROV.' : resultadosCancel.includes(r) ? 'CANCELADO' : 'MAPA';
+      const abaColor = resultadosReprov.includes(r) ? 'var(--vm)' : resultadosCancel.includes(r) ? 'var(--am)' : 'var(--azm)';
       const statusCor = govCorStatus(statusCalc);
       return `
       <div style="border:1.5px solid var(--brd);border-radius:12px;margin-bottom:10px;overflow:hidden">
@@ -11624,7 +11656,7 @@ function pcSetTab(aba, btn){
   _pcTabAtiva = aba;
   document.querySelectorAll('#pc-tabs .stab').forEach(b => b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  ['vencido','reprovado','criticos','fluxo'].forEach(t => {
+  ['vencido','reprovado','criticos','fluxo','cancelado'].forEach(t => {
     const el = document.getElementById('pc-tab-' + t);
     if(el) el.style.display = t === aba ? 'block' : 'none';
   });
