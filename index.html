@@ -16647,6 +16647,7 @@ function prodAbrirModal(origem, tipo){
   document.getElementById('acao-estagio-1').style.display = 'block';
   document.getElementById('acao-estagio-2').style.display = 'none';
   document.getElementById('acao-selecao-atual').style.display = 'none';
+  document.getElementById('acao-finalizado-box').style.display = 'none';
   document.getElementById('acao-obs').value = '';
   document.getElementById('acao-erro').style.display = 'none';
   document.querySelectorAll('.acao-sel-btn').forEach(b=>b.classList.remove('selecionado'));
@@ -16684,6 +16685,7 @@ function acaoSelecionarTratamento(btn, tratamento){
     document.getElementById('acao-estagio-2').style.display = 'block';
     document.getElementById('acao-modal-subtitulo').textContent = 'Selecione o tipo de conclusão';
     document.getElementById('acao-selecao-atual').style.display = 'none';
+    document.getElementById('acao-finalizado-box').style.display = 'block';
   } else {
     document.getElementById('acao-selecao-atual').style.display = 'block';
     document.getElementById('acao-selecao-texto').textContent = 'Status: ' + tratamento;
@@ -16702,6 +16704,7 @@ function acaoVoltarEstagio1(){
   _prodCtx.conclusao = null;
   document.getElementById('acao-estagio-2').style.display = 'none';
   document.getElementById('acao-estagio-1').style.display = 'block';
+  document.getElementById('acao-finalizado-box').style.display = 'none';
   document.getElementById('acao-modal-subtitulo').textContent = 'Selecione o status de tratamento';
   document.getElementById('acao-selecao-atual').style.display = 'none';
 }
