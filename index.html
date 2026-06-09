@@ -2012,6 +2012,29 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- ── HISTÓRICO DA PRODUÇÃO ── -->
       <div id="adm-hist-prod" class="adm-tab" style="display:none">
 
+        <!-- ── ANULAR AÇÕES RT (evitar duplicidade) ── -->
+        <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vm)">
+          <div class="cd-t">🔒 Anular contagem de ações RT — evitar duplicidade</div>
+          <div class="al al-a" style="margin-bottom:1rem">⚠ Use quando você lançou a produção manualmente no ADM e o colaborador também registrou ações via botões durante o dia. As ações são <strong>anuladas da contagem</strong> (não excluídas) — o histórico de governança (status, envio, finalizado) permanece 100% intacto.</div>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem">
+            <div class="field-wrap" style="min-width:170px">
+              <span class="field-label">Colaborador</span>
+              <select id="zero-rt-colab" style="width:100%;padding:7px 10px;font-size:13px;border:1px solid var(--brd);border-radius:8px">
+                <option value="">Selecione...</option>
+                <option>Lory</option><option>Ludy</option><option>Wanessa</option><option>André</option>
+              </select>
+            </div>
+            <div class="field-wrap">
+              <span class="field-label">Data</span>
+              <input type="date" id="zero-rt-data" style="padding:7px 10px;font-size:13px;border:1px solid var(--brd);border-radius:8px">
+            </div>
+            <button class="btn btn-s" style="padding:6px 14px;font-size:12px" onclick="zeroRtPreview()">🔍 Verificar</button>
+            <button class="btn btn-r" id="zero-rt-btn-exec" style="padding:6px 14px;font-size:12px;display:none" onclick="zeroRtExecutar()">🔒 Anular contagem</button>
+            <button class="btn btn-s" id="zero-rt-btn-reverter" style="padding:6px 14px;font-size:12px;display:none;border-color:var(--am);color:var(--am)" onclick="zeroRtReverter()">↩ Reverter anulação</button>
+          </div>
+          <div id="zero-rt-preview" style="display:none;padding:.875rem 1rem;border-radius:8px;border:1px solid var(--brd);background:var(--cin);font-size:12px;line-height:1.7"></div>
+        </div>
+
         <!-- ── FECHAMENTOS DO DIA (Firebase) ── -->
         <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vd)">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem">
@@ -4177,8 +4200,13 @@ async function fbSalvarCiclos(){
 }
 
 async function fbSalvarProducao(reg){
-  const docId = reg.colab.replace(/\s+/g,'_')+'_'+reg.data;
-  await fbSet('producao', docId, reg);
+  try{
+    const db = getDB(); if(!db){ await fbSet('producao', reg.colab.replace(/\s+/g,'_')+'_'+reg.data, reg); return; }
+    const docId = reg.colab.replace(/\s+/g,'_')+'_'+reg.data;
+    // Grava nas duas colecoes para compatibilidade
+    await db.collection('producoes').doc(docId).set(reg, {merge:true});
+    await fbSet('producao', docId, reg);
+  } catch(e){ console.warn('fbSalvarProducao:', e); }
 }
 
 async function fbCarregarTudo(){
@@ -6699,6 +6727,133 @@ function filtrarHistProd(modo){
   document.getElementById('adm-prod-tf').innerHTML=`<tr><td colspan="3"><strong>TOTAL</strong></td>${sumsOrdem.map(v=>`<td style="font-weight:700">${v||'—'}</td>`).join('')}<td style="font-weight:700">${totMeta}</td><td>—</td><td>—</td></tr>`;
 }
 
+// ── Anular Ações RT (evitar duplicidade, sem perder governança) ──
+async function zeroRtPreview(){
+  const colab   = document.getElementById('zero-rt-colab').value;
+  const data    = document.getElementById('zero-rt-data').value;
+  const prev    = document.getElementById('zero-rt-preview');
+  const btnExec = document.getElementById('zero-rt-btn-exec');
+  const btnRev  = document.getElementById('zero-rt-btn-reverter');
+  if(!colab || !data){ alert('Selecione colaborador e data.'); return; }
+  prev.style.display = 'block';
+  prev.innerHTML = '<span style="color:var(--tx2)">🔍 Verificando...</span>';
+  btnExec.style.display = 'none';
+  btnRev.style.display  = 'none';
+  try{
+    const db = getDB(); if(!db){ prev.innerHTML='⚠ Firebase não disponível.'; return; }
+    const snap = await db.collection('producao_acoes')
+      .where('colab','==',colab).where('data','==',data).get();
+    const total    = snap.size;
+    const ativas   = snap.docs.filter(d=>!d.data().anulada);
+    const anuladas = snap.docs.filter(d=> d.data().anulada);
+
+    if(total === 0){
+      prev.innerHTML = `<span style="color:var(--vd)">✓ Nenhuma ação encontrada para <strong>${colab}</strong> em <strong>${data.split('-').reverse().join('/')}</strong>.</span>`;
+      return;
+    }
+
+    // Contar tipos das ativas
+    const tipos = {};
+    ativas.forEach(d=>{ const t=d.data().tipo||'?'; tipos[t]=(tipos[t]||0)+1; });
+    const tiposStr = Object.entries(tipos).map(([t,n])=>`${t}: ${n}`).join(' | ') || '—';
+
+    // Contar tipos das anuladas
+    const tiposAn = {};
+    anuladas.forEach(d=>{ const t=d.data().tipo||'?'; tiposAn[t]=(tiposAn[t]||0)+1; });
+    const tiposAnStr = Object.entries(tiposAn).map(([t,n])=>`${t}: ${n}`).join(' | ') || '—';
+
+    let html = '';
+    if(ativas.length > 0){
+      html += `<strong style="color:var(--vm)">⚠ ${ativas.length} ação(ões) ativa(s) na contagem</strong> — <span style="color:var(--tx2);font-size:11px">${tiposStr}</span><br>`;
+      html += `<span style="color:var(--am)">Clique em <strong>Anular contagem</strong> para excluí-las da produção. O histórico de governança (status RC, envio, finalizado) <strong>não será afetado</strong>.</span>`;
+    }
+    if(anuladas.length > 0){
+      html += (html?'<br><br>':'') +
+        `<span style="color:var(--vd)">✓ ${anuladas.length} ação(ões) já anulada(s)</span> — <span style="color:var(--tx2);font-size:11px">${tiposAnStr}</span><br>` +
+        `<span style="color:var(--tx2)">Clique em <strong>Reverter anulação</strong> para reativar essas ações na contagem caso tenha errado.</span>`;
+    }
+    prev.innerHTML = html;
+
+    btnExec.style.display = ativas.length  > 0 ? 'inline-block' : 'none';
+    btnRev.style.display  = anuladas.length > 0 ? 'inline-block' : 'none';
+    btnExec.dataset.colab = colab; btnExec.dataset.data = data;
+    btnRev.dataset.colab  = colab; btnRev.dataset.data  = data;
+
+  } catch(e){ prev.innerHTML = '⚠ Erro: '+e.message; }
+}
+
+async function zeroRtExecutar(){
+  const btn  = document.getElementById('zero-rt-btn-exec');
+  const colab = btn.dataset.colab;
+  const data  = btn.dataset.data;
+  const prev  = document.getElementById('zero-rt-preview');
+  const dtFmt = data.split('-').reverse().join('/');
+  if(!confirm(`Anular contagem de todas as ações ativas de ${colab} em ${dtFmt}?\n\nO histórico de governança (status RC, envio, finalizado) NÃO será alterado.`)) return;
+  btn.disabled = true;
+  btn.textContent = '⏳ Anulando...';
+  try{
+    const db = getDB(); if(!db) throw new Error('Firebase não disponível');
+    const snap = await db.collection('producao_acoes')
+      .where('colab','==',colab).where('data','==',data).get();
+    const ativas = snap.docs.filter(d=>!d.data().anulada);
+    if(ativas.length === 0){ prev.innerHTML='<span style="color:var(--vd)">✓ Nenhuma ação ativa para anular.</span>'; btn.disabled=false; btn.textContent='🔒 Anular contagem'; return; }
+    const batch = db.batch();
+    ativas.forEach(d => batch.update(d.ref, { anulada: true, anuladaEm: new Date().toISOString(), anuladaPor: 'ADM' }));
+    await batch.commit();
+    // Atualizar cache em memória
+    if(window._prodAcoesCache && window._prodAcoesCache[data]){
+      window._prodAcoesCache[data].forEach(a=>{ if(a.colab===colab) a.anulada=true; });
+    }
+    if(window._prodAcoesHoje){ window._prodAcoesHoje.forEach(a=>{ if(a.colab===colab && a.data===data) a.anulada=true; }); }
+    if(typeof pcpAtualizarRegistroDia === 'function') pcpAtualizarRegistroDia(data);
+    prev.innerHTML = `<span style="color:var(--vd)">✓ ${ativas.length} ação(ões) anulada(s) com sucesso!<br>A produção de <strong>${colab}</strong> em <strong>${dtFmt}</strong> agora reflete apenas o lançamento manual.<br><span style="color:var(--tx2);font-size:11px">Os dados de governança (status RC, envio, finalizado) estão intactos.</span></span>`;
+    btn.style.display = 'none';
+    document.getElementById('zero-rt-btn-reverter').style.display = 'inline-block';
+    document.getElementById('zero-rt-btn-reverter').dataset.colab = colab;
+    document.getElementById('zero-rt-btn-reverter').dataset.data  = data;
+    const ok = document.createElement('div');
+    ok.textContent = '✓ Contagem anulada!';
+    ok.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--vd);color:#fff;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;z-index:9999';
+    document.body.appendChild(ok); setTimeout(()=>ok.remove(), 3500);
+  } catch(e){
+    prev.innerHTML = '⚠ Erro: '+e.message;
+    btn.disabled = false; btn.textContent = '🔒 Anular contagem';
+  }
+}
+
+async function zeroRtReverter(){
+  const btn   = document.getElementById('zero-rt-btn-reverter');
+  const colab = btn.dataset.colab;
+  const data  = btn.dataset.data;
+  const prev  = document.getElementById('zero-rt-preview');
+  const dtFmt = data.split('-').reverse().join('/');
+  if(!confirm(`Reverter anulação de ${colab} em ${dtFmt}?\nAs ações voltarão a ser contabilizadas na produção.`)) return;
+  btn.disabled = true; btn.textContent = '⏳ Revertendo...';
+  try{
+    const db = getDB(); if(!db) throw new Error('Firebase não disponível');
+    const snap = await db.collection('producao_acoes')
+      .where('colab','==',colab).where('data','==',data).get();
+    const anuladas = snap.docs.filter(d=>d.data().anulada);
+    if(anuladas.length === 0){ prev.innerHTML='<span style="color:var(--vd)">✓ Nenhuma ação anulada para reverter.</span>'; btn.disabled=false; btn.textContent='↩ Reverter anulação'; return; }
+    const batch = db.batch();
+    anuladas.forEach(d => batch.update(d.ref, { anulada: false, anuladaEm: null, anuladaPor: null }));
+    await batch.commit();
+    if(window._prodAcoesCache && window._prodAcoesCache[data]){
+      window._prodAcoesCache[data].forEach(a=>{ if(a.colab===colab) a.anulada=false; });
+    }
+    if(window._prodAcoesHoje){ window._prodAcoesHoje.forEach(a=>{ if(a.colab===colab && a.data===data) a.anulada=false; }); }
+    if(typeof pcpAtualizarRegistroDia === 'function') pcpAtualizarRegistroDia(data);
+    prev.innerHTML = `<span style="color:var(--am)">↩ ${anuladas.length} ação(ões) reativada(s). As ações de <strong>${colab}</strong> em <strong>${dtFmt}</strong> voltaram a ser contabilizadas.</span>`;
+    btn.disabled=false; btn.textContent='↩ Reverter anulação';
+    document.getElementById('zero-rt-btn-exec').style.display = 'inline-block';
+    document.getElementById('zero-rt-btn-exec').dataset.colab = colab;
+    document.getElementById('zero-rt-btn-exec').dataset.data  = data;
+  } catch(e){
+    prev.innerHTML = '⚠ Erro: '+e.message;
+    btn.disabled=false; btn.textContent='↩ Reverter anulação';
+  }
+}
+
 // ── Excluir produção ──
 async function admExcluirProducao(idx, colab, data){
   if(!confirm('Excluir lançamento de '+colab+' em '+fmtDt(data)+'?')) return;
@@ -6709,7 +6864,8 @@ async function admExcluirProducao(idx, colab, data){
     const db=getDB();
     if(db){
       const docId=colab.replace(/\s+/g,'_')+'_'+data;
-      await db.collection('producao').doc(docId).delete();
+      await db.collection('producao').doc(docId).delete().catch(()=>{});
+      await db.collection('producoes').doc(docId).delete().catch(()=>{});
       console.log('✓ Excluído do Firebase:', docId);
     }
   }catch(e){ console.warn('Erro ao excluir Firebase:', e.message); }
@@ -16590,6 +16746,7 @@ async function prodCarregarHistorico(colab, dias=7){
     datas.forEach(d=>hist[d]=0);
     snap.docs.forEach(doc=>{
       const r=doc.data();
+      if(r.anulada) return; // ignorar ações anuladas
       // Só conta tipos que vão para meta (não "outros")
       const contaMeta = ['primeira_analise','em_tratativa','status_b'].includes(r.tipo);
       if(contaMeta && hist[r.data]!==undefined) hist[r.data]++;
@@ -16601,6 +16758,7 @@ async function prodCarregarHistorico(colab, dias=7){
 function prodContarHoje(acoes){
   const cnt = { primeira_analise:0, em_tratativa:0, status_b:0, outros:0, total:0, meta:0 };
   (acoes||[]).forEach(r=>{
+    if(r.anulada) return; // ignorar ações anuladas (lançamento manual sobrepõe)
     if(cnt[r.tipo]!==undefined) cnt[r.tipo]++;
     cnt.total++;
   });
