@@ -4262,15 +4262,25 @@ async function fbCarregarTudo(){
     console.log('✓ Topbar carregada do Firebase');
   }
 
-  // Produção — apenas ciclo atual
-  const prods = await db.collection('producoes')
-    .where('data','>=', CICLO_NOVO_INICIO).get();
-  const prodsArr = prods.docs ? prods.docs.map(d=>d.data()) : await fbGetAll('producoes');
-  if(prodsArr.length > 0){
-    registros = prodsArr.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
-    console.log('✓ Produção carregada:', registros.length, 'registros');
-    pcpRecalcularTudo();
-  }
+  // Produção — ler das duas coleções (producao = histórico antigo, producoes = novo sistema)
+  // producoes prevalece sobre producao para o mesmo colab+data
+  try{
+    const [snapAntiga, snapNova] = await Promise.all([
+      db.collection('producao').where('data','>=', CICLO_NOVO_INICIO).get(),
+      db.collection('producoes').where('data','>=', CICLO_NOVO_INICIO).get()
+    ]);
+    const map = {};
+    // Primeiro carrega os antigos
+    (snapAntiga.docs||[]).forEach(d=>{ const r=d.data(); if(r.colab&&r.data) map[r.colab+'|'+r.data]=r; });
+    // Depois os novos sobrescrevem (prevalecem)
+    (snapNova.docs||[]).forEach(d=>{ const r=d.data(); if(r.colab&&r.data) map[r.colab+'|'+r.data]=r; });
+    const prodsArr = Object.values(map);
+    if(prodsArr.length > 0){
+      registros = prodsArr.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
+      console.log('✓ Produção carregada:', registros.length, 'registros (antiga:', snapAntiga.size, '+ nova:', snapNova.size, ')');
+      pcpRecalcularTudo();
+    }
+  } catch(_ep){ console.warn('fbCarregarTudo producao:', _ep); }
 
   // Férias — sync Firebase ↔ localStorage
   const ferias=await fbGet('config','ferias');
