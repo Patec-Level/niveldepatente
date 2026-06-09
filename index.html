@@ -14247,18 +14247,23 @@ function aaCompletoOnFile(input){
 
 async function aaCompletoSalvar(){
   if(!_aaCompleto || !_aaCompleto.rows.length){ alert('Carregue a planilha primeiro.'); return; }
+  const _aaEl = document.getElementById('aa-completo-upload-info');
+  const _prevBtn = document.querySelector('[onclick="aaCompletoSalvar()"]');
+  if(_prevBtn){ _prevBtn.disabled = true; _prevBtn.textContent = '⏳ Salvando...'; }
   try{
-    if(typeof firebase === 'undefined' || !_fbLoaded) await loadFirebaseSDK();
-    const db = firebase.firestore();
-    // Salvar em chunks de 500
+    const db = getDB();
+    if(!db){ alert('Firebase não disponível. Tente novamente em alguns segundos.'); return; }
     const rows = _aaCompleto.rows;
     const CHUNK = 400;
+    const totalChunks = Math.ceil(rows.length/CHUNK);
     for(let i=0; i<rows.length; i+=CHUNK){
-      await db.collection('patec-dashboard').doc('aa_completo_' + Math.floor(i/CHUNK)).set({
+      const chunkIdx = Math.floor(i/CHUNK);
+      if(_aaEl) _aaEl.textContent = '⏳ Salvando chunk ' + (chunkIdx+1) + ' de ' + totalChunks + '...';
+      await db.collection('patec-dashboard').doc('aa_completo_' + chunkIdx).set({
         rows: rows.slice(i, i+CHUNK),
         arquivo: _aaCompleto.arquivo,
         dt: _aaCompleto.dt,
-        chunk: Math.floor(i/CHUNK),
+        chunk: chunkIdx,
         total: rows.length
       });
     }
@@ -14267,15 +14272,17 @@ async function aaCompletoSalvar(){
       arquivo: _aaCompleto.arquivo,
       dt: _aaCompleto.dt,
       total: rows.length,
-      chunks: Math.ceil(rows.length/CHUNK)
+      chunks: totalChunks
     });
     const _aaTs = new Date().toISOString();
     localStorage.setItem('patec_aa_upload_ts', _aaTs);
-    localStorage.setItem('patec_aa_upload_nome', (input?.files?.[0]?.name||''));
-    const _aaEl = document.getElementById('aa-completo-upload-info');
-    if(_aaEl) _aaEl.textContent = '✅ ' + rows.length + ' registros — ' + new Date(_aaTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_aaTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    localStorage.setItem('patec_aa_upload_nome', _aaCompleto.arquivo||'');
+    if(_aaEl) _aaEl.textContent = '✅ ' + rows.length + ' registros salvos — ' + new Date(_aaTs).toLocaleDateString('pt-BR') + ' às ' + new Date(_aaTs).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    if(_prevBtn){ _prevBtn.disabled = false; _prevBtn.textContent = '💾 Salvar no Firebase'; }
   } catch(err){
-    alert('Erro ao salvar: ' + err.message);
+    if(_aaEl) _aaEl.textContent = '❌ Erro: ' + err.message;
+    if(_prevBtn){ _prevBtn.disabled = false; _prevBtn.textContent = '💾 Salvar no Firebase'; }
+    console.error('aaCompletoSalvar:', err);
   }
 }
 
@@ -14294,8 +14301,8 @@ async function aaCompletoCarregar(){
   const elWrap = document.getElementById('aac-tabela-wrap');
   if(elAtt) elAtt.textContent = '⏳ Carregando...';
   try{
-    if(typeof firebase === 'undefined' || !_fbLoaded) await loadFirebaseSDK();
-    const db = firebase.firestore();
+    const db = getDB();
+    if(!db){ if(elAtt) elAtt.textContent = '⚠ Firebase não disponível.'; return; }
     const meta = await db.collection('patec-dashboard').doc('aa_completo_meta').get();
     if(!meta.exists){
       if(elSem){ elSem.style.display='block'; }
