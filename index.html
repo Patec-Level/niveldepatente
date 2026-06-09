@@ -2015,7 +2015,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <!-- ── ANULAR AÇÕES RT (evitar duplicidade) ── -->
         <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vm)">
           <div class="cd-t">🔒 Anular contagem de ações RT — evitar duplicidade</div>
-          <div class="al al-a" style="margin-bottom:1rem">⚠ Use quando você lançou a produção manualmente no ADM e o colaborador também registrou ações via botões durante o dia. As ações são <strong>anuladas da contagem</strong> (não excluídas) — o histórico de governança (status, envio, finalizado) permanece 100% intacto.</div>
+          <div class="al al-a" style="margin-bottom:1rem">⚠ Use para resolver duplicidade ou ações gravadas com data errada. As ações são <strong>anuladas da contagem</strong> (não excluídas) — o histórico de governança (status RC, envio, finalizado) permanece <strong>100% intacto</strong>.<br><span style="font-size:11px">Exemplo: Lory registrou ações ontem à noite → o sistema gravou com a data de hoje (fuso UTC) → filtre por <em>hoje</em> e anule.</span></div>
           <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem">
             <div class="field-wrap" style="min-width:170px">
               <span class="field-label">Colaborador</span>
@@ -16595,7 +16595,9 @@ async function prodConfirmarAcao(){
   const colab = _authPerfil?.colabNome || colabLogado || _authPerfil?.nome;
   if(!colab){ errEl.textContent='Colaborador não identificado.'; errEl.style.display='block'; return; }
 
-  const hoje = new Date().toISOString().split('T')[0];
+  // Usar data local (Brasil) — toISOString() retorna UTC e pode virar outro dia após 21h
+  const _agora = new Date();
+  const hoje = _agora.getFullYear()+'-'+String(_agora.getMonth()+1).padStart(2,'0')+'-'+String(_agora.getDate()).padStart(2,'0');
   const obs   = document.getElementById('acao-obs').value.trim();
   const registro = {
     colab,
@@ -16715,7 +16717,8 @@ async function prodConfirmarAcao(){
 }
 
 async function prodCarregarHoje(colab){
-  const hoje = new Date().toISOString().split('T')[0];
+  const _n = new Date();
+  const hoje = _n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-'+String(_n.getDate()).padStart(2,'0');
   try{
     const db = getDB(); if(!db) return [];
     const snap = await db.collection('producao_acoes')
@@ -17084,7 +17087,8 @@ async function fdiaSalvar(){
   const metaVal = META_ANALISTA_RT[colab]||30;
   const acoes   = window._prodAcoesHoje||[];
   const cnt     = prodContarHoje(acoes);
-  const hoje    = new Date().toISOString().split('T')[0];
+  const _hn = new Date();
+  const hoje = _hn.getFullYear()+'-'+String(_hn.getMonth()+1).padStart(2,'0')+'-'+String(_hn.getDate()).padStart(2,'0');
 
   // Bloquear se modalidade não informada
   if(!_fdiaPresenca){
