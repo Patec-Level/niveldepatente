@@ -16559,9 +16559,17 @@ async function rtAbrirComposicao(colab, acoesJson){
     const _n = new Date();
     const hoje = _n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-'+String(_n.getDate()).padStart(2,'0');
     if(db){
-      const snap = await db.collection('producao_acoes')
-        .where('colab','==',colab).where('data','==',hoje).get();
-      _rtCompAcoes = snap.docs.map(d=>({_docId:d.id, ...d.data()}));
+      // Buscar hoje e ontem (ações gravadas com UTC podem ter virado outro dia)
+      const _n2 = new Date(); _n2.setDate(_n2.getDate()-1);
+      const ontem = _n2.getFullYear()+'-'+String(_n2.getMonth()+1).padStart(2,'0')+'-'+String(_n2.getDate()).padStart(2,'0');
+      const [snapHoje, snapOntem] = await Promise.all([
+        db.collection('producao_acoes').where('colab','==',colab).where('data','==',hoje).get(),
+        db.collection('producao_acoes').where('colab','==',colab).where('data','==',ontem).get()
+      ]);
+      const _mapComp = {};
+      [...snapHoje.docs, ...snapOntem.docs].forEach(d=>{ _mapComp[d.id]=({_docId:d.id,...d.data()}); });
+      _rtCompAcoes = Object.values(_mapComp);
+      console.log('[Composição] Ações carregadas:', _rtCompAcoes.length, '| com rcChave:', _rtCompAcoes.filter(a=>a.rcChave||a.rc).length);
     } else {
       let parsed = [];
       try{ parsed = JSON.parse(acoesJson.replace(/&quot;/g,'"').replace(/&#39;/g,"'")); }catch(e){}
@@ -16618,7 +16626,8 @@ function rtRenderComposicaoModal(){
           <span style="color:var(--tx2);font-weight:600;min-width:34px">${hr}</span>
           <span style="background:var(--azc);color:var(--azm);padding:1px 7px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0">${cfg.emoji} ${cfg.label}</span>
           <span style="color:var(--tx);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.tratamento||''}${a.conclusao?' → <strong>'+a.conclusao+'</strong>':''}</span>
-          ${rc?`<span style="color:var(--azm);font-size:10px;font-weight:700;background:var(--azc);padding:1px 6px;border-radius:5px;flex-shrink:0">RC ${rc}</span>`:''}
+          ${rc?`<span style="color:var(--azm);font-size:10px;font-weight:700;background:var(--azc);padding:1px 6px;border-radius:5px;flex-shrink:0" title="${a.rcChave||rc}">RC ${rc}</span>`:
+            (a.dataEnvio?`<span style="color:var(--tx2);font-size:9px;flex-shrink:0">env:${a.dataEnvio.split('-').reverse().join('/')}</span>`:'')}
           ${anulada
             ? `<span style="font-size:9px;color:var(--tx2);flex-shrink:0">anulada</span>`
             : docId
