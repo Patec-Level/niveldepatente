@@ -16167,8 +16167,12 @@ function rtRenderizarMonitoramento(acoes, hoje){
 
   // KPIs equipe
   const kpiEl = document.getElementById('rt-kpi-equipe');
-  const totalEquipe = COLABS_RT.filter(c=>!COLABS_SEM_META_RT.includes(c))
-    .reduce((s,c)=> s + (porColab[c]?.primeira_analise||0) + (porColab[c]?.em_tratativa||0) + (porColab[c]?.status_b||0), 0);
+  // Analistas: conta só 1ªAnálise+Tratativa+StatusB | Líder (André): conta total (inclui Outros)
+  const totalEquipe = COLABS_RT.reduce((s,c)=> {
+    const p = porColab[c];
+    const semMetaC = COLABS_SEM_META_RT.includes(c);
+    return s + (semMetaC ? (p?.total||0) : (p?.primeira_analise||0) + (p?.em_tratativa||0) + (p?.status_b||0));
+  }, 0);
   const pctEq = META_EQUIPE_RT>0 ? Math.min(100,Math.round(totalEquipe/META_EQUIPE_RT*100)) : 0;
   const comMeta = COLABS_RT.filter(c=>!COLABS_SEM_META_RT.includes(c));
   const bateramMeta = comMeta.filter(c=>{
@@ -16208,9 +16212,9 @@ function rtRenderizarMonitoramento(acoes, hoje){
       const p = porColab[colab];
       const semMeta = COLABS_SEM_META_RT.includes(colab);
       const meta = META_ANALISTA_RT[colab]||30;
-      const resultado = p.primeira_analise + p.em_tratativa + p.status_b;
-      const pctC = semMeta ? 100 : Math.min(100, Math.round(resultado/meta*100));
-      const cor = semMeta ? 'var(--azm)' : resultado>=meta?'var(--vd)':resultado>=meta*.8?'var(--am)':resultado>0?'var(--vm)':'var(--brd)';
+      const resultado = semMeta ? p.total : (p.primeira_analise + p.em_tratativa + p.status_b);
+      const pctC = Math.min(100, Math.round(resultado/meta*100));
+      const cor = semMeta ? (resultado>=meta?'var(--vd)':resultado>=meta*.8?'var(--am)':'var(--azm)') : resultado>=meta?'var(--vd)':resultado>=meta*.8?'var(--am)':resultado>0?'var(--vm)':'var(--brd)';
       const ativo = p.total > 0;
       const horario = p.ultimaAcao ? new Date(p.ultimaAcao).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : null;
 
@@ -16233,13 +16237,12 @@ function rtRenderizarMonitoramento(acoes, hoje){
           </div>
           <div style="text-align:right">
             <div style="font-size:28px;font-weight:700;color:${ativo?cor:'var(--tx2)'};line-height:1">${resultado}</div>
-            <div style="font-size:10px;color:var(--tx2)">${semMeta?`${p.total} ações`:`meta ${meta}`}</div>
+            <div style="font-size:10px;color:var(--tx2)">${semMeta?`meta ${meta}`:`meta ${meta}`}</div>
           </div>
         </div>
-        ${!semMeta?`
         <div style="height:6px;background:#EEE;border-radius:3px;overflow:hidden;margin-bottom:.75rem">
           <div style="height:100%;width:${pctC}%;background:${cor};border-radius:3px;transition:width .6s"></div>
-        </div>`:''}
+        </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px;margin-bottom:${ultimaLabel?'.625rem':'0'}">
           <div style="text-align:center;background:var(--azc);border-radius:6px;padding:4px 2px">
             <div style="font-weight:700;color:var(--azm)">${p.primeira_analise}</div><div style="color:var(--tx2)">1ª Anál.</div>
@@ -16281,8 +16284,8 @@ function rtRenderizarMonitoramento(acoes, hoje){
 
         const semMeta = COLABS_SEM_META_RT.includes(colab);
         const meta = META_ANALISTA_RT[colab]||30;
-        const resultado = p.primeira_analise + p.em_tratativa + p.status_b;
-        const ok = semMeta || resultado >= meta;
+        const resultado = semMeta ? p.total : (p.primeira_analise + p.em_tratativa + p.status_b);
+        const ok = resultado >= meta;
         const horario = p.ultimaAcao ? new Date(p.ultimaAcao).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
         const cor = ok ? 'var(--vd)' : resultado >= meta*.8 ? 'var(--am)' : 'var(--vm)';
 
