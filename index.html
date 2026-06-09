@@ -15531,6 +15531,31 @@ function q18Consultar(valor){
         style="width:100%;font-size:12px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:7px">
     </div>
 
+    <!-- Centro + Motivo (Devolução / Outros) -->
+    <div id="acao-dev-box" style="display:none;background:var(--vmc);border:1px solid rgba(217,64,64,.2);border-radius:10px;padding:.875rem;margin-bottom:.75rem">
+      <div style="font-size:11px;font-weight:700;color:var(--vm);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.4px">↩ Dados da devolução</div>
+      <div style="margin-bottom:.625rem">
+        <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">Centro <span style="color:var(--vm)">*</span></div>
+        <input type="text" id="acao-dev-centro" placeholder="Ex: 4142"
+          style="width:100%;font-size:13px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">Motivo da devolução <span style="color:var(--vm)">*</span></div>
+        <select id="acao-dev-motivo" style="width:100%;font-size:13px;padding:7px 10px;border:1.5px solid var(--brd);border-radius:8px;background:#fff">
+          <option value="">— selecione —</option>
+          <option>Falta de retorno CSPN</option>
+          <option>Solicitação de cancelamento requisitante</option>
+          <option>Acima do DPV</option>
+          <option>Reprovado 100%</option>
+          <option>PATEC cancelado</option>
+          <option>Falta de retorno fornecedor</option>
+          <option>Falta de retorno cadastro (Thiago)</option>
+          <option>Preço excessivo</option>
+          <option>Proposta vencida</option>
+        </select>
+      </div>
+    </div>
+
     <!-- Observação -->
     <div style="margin-bottom:1rem">
       <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">Observação (opcional)</div>
@@ -16648,6 +16673,9 @@ function prodAbrirModal(origem, tipo){
   document.getElementById('acao-estagio-2').style.display = 'none';
   document.getElementById('acao-selecao-atual').style.display = 'none';
   document.getElementById('acao-finalizado-box').style.display = 'none';
+  document.getElementById('acao-dev-box').style.display = 'none';
+  const _dc0 = document.getElementById('acao-dev-centro'); if(_dc0) _dc0.value = '';
+  const _dm0 = document.getElementById('acao-dev-motivo'); if(_dm0) _dm0.value = '';
   document.getElementById('acao-obs').value = '';
   document.getElementById('acao-erro').style.display = 'none';
   document.querySelectorAll('.acao-sel-btn').forEach(b=>b.classList.remove('selecionado'));
@@ -16689,6 +16717,11 @@ function acaoSelecionarTratamento(btn, tratamento){
   } else {
     document.getElementById('acao-selecao-atual').style.display = 'block';
     document.getElementById('acao-selecao-texto').textContent = 'Status: ' + tratamento;
+    // Mostrar campos de devolução se tipo do modal for 'outros'
+    const _devBox = document.getElementById('acao-dev-box');
+    if(_devBox) _devBox.style.display = _prodCtx.tipo === 'outros' ? 'block' : 'none';
+    if(_prodCtx.tipo !== 'outros' && document.getElementById('acao-dev-centro')) document.getElementById('acao-dev-centro').value = '';
+    if(_prodCtx.tipo !== 'outros' && document.getElementById('acao-dev-motivo')) document.getElementById('acao-dev-motivo').value = '';
   }
 }
 
@@ -16698,6 +16731,13 @@ function acaoSelecionarConclusao(btn, conclusao){
   _prodCtx.conclusao = conclusao;
   document.getElementById('acao-selecao-atual').style.display = 'block';
   document.getElementById('acao-selecao-texto').textContent = 'Concluído → ' + conclusao;
+  // Mostrar campos de devolução apenas se Devolução selecionada
+  const _devBoxC = document.getElementById('acao-dev-box');
+  if(_devBoxC) _devBoxC.style.display = conclusao === 'Devolução' ? 'block' : 'none';
+  if(conclusao !== 'Devolução'){
+    const _dc = document.getElementById('acao-dev-centro'); if(_dc) _dc.value = '';
+    const _dm = document.getElementById('acao-dev-motivo'); if(_dm) _dm.value = '';
+  }
 }
 
 function acaoVoltarEstagio1(){
@@ -16705,6 +16745,9 @@ function acaoVoltarEstagio1(){
   document.getElementById('acao-estagio-2').style.display = 'none';
   document.getElementById('acao-estagio-1').style.display = 'block';
   document.getElementById('acao-finalizado-box').style.display = 'none';
+  document.getElementById('acao-dev-box').style.display = 'none';
+  const _dcV = document.getElementById('acao-dev-centro'); if(_dcV) _dcV.value = '';
+  const _dmV = document.getElementById('acao-dev-motivo'); if(_dmV) _dmV.value = '';
   document.getElementById('acao-modal-subtitulo').textContent = 'Selecione o status de tratamento';
   document.getElementById('acao-selecao-atual').style.display = 'none';
 }
@@ -16735,6 +16778,16 @@ async function prodConfirmarAcao(){
   const _agora = new Date();
   const hoje = _agora.getFullYear()+'-'+String(_agora.getMonth()+1).padStart(2,'0')+'-'+String(_agora.getDate()).padStart(2,'0');
   const obs   = document.getElementById('acao-obs').value.trim();
+  // Capturar centro+motivo se dev-box visível
+  const _devBoxEl = document.getElementById('acao-dev-box');
+  const _devVis   = _devBoxEl && _devBoxEl.style.display !== 'none';
+  const _devCentro = _devVis ? (document.getElementById('acao-dev-centro')?.value||'').trim() : '';
+  const _devMotivo = _devVis ? (document.getElementById('acao-dev-motivo')?.value||'') : '';
+  // Validar campos de devolução obrigatórios
+  if(_devVis){
+    if(!_devCentro){ errEl.textContent='Informe o Centro.'; errEl.style.display='block'; document.getElementById('acao-dev-centro')?.focus(); return; }
+    if(!_devMotivo){ errEl.textContent='Selecione o Motivo da devolução.'; errEl.style.display='block'; document.getElementById('acao-dev-motivo')?.focus(); return; }
+  }
   const registro = {
     colab,
     data: hoje,
@@ -16743,7 +16796,8 @@ async function prodConfirmarAcao(){
     conclusao: _prodCtx.conclusao || '',
     obs,
     origem: _prodCtx.origem,
-    ts: new Date().toISOString()
+    ts: new Date().toISOString(),
+    ...(_devVis ? { centro: _devCentro, motivo: _devMotivo } : {})
   };
 
   // Salvar no Firebase
