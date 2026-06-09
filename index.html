@@ -1915,6 +1915,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <input type="date" id="mapa-lanc-dt" style="width:100%">
             </div>
             <button class="btn btn-g" onclick="mapaAutoHoje()" style="align-self:flex-end;font-size:11px">📅 Hoje</button>
+            <button class="btn btn-s" onclick="mapaCarregarParaEditar()" style="align-self:flex-end;font-size:11px;border-color:var(--am);color:var(--am)">✎ Carregar lançamento da data</button>
+            <button class="btn btn-r" onclick="mapaExcluirDataSelecionada()" style="align-self:flex-end;font-size:11px">🗑 Excluir lançamento</button>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1rem">
             <div class="field-wrap">
@@ -1953,6 +1955,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <button class="btn btn-s" style="font-size:11px" onclick="mapaLimparLanc()">↺ Limpar</button>
             <span id="mapa-lanc-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Lançamento salvo!</span>
             <span id="mapa-lanc-dup" style="font-size:11px;color:var(--am);font-weight:600;display:none">⚠ Data já existe — substituído.</span>
+            <span id="mapa-carr-ok" style="font-size:11px;color:var(--am);font-weight:600;display:none">✎ Dados carregados — edite e salve.</span>
           </div>
         </div>
 
@@ -6445,6 +6448,58 @@ function mapaCalcPreview(){
 ['mapa-lanc-l3','mapa-lanc-l4','mapa-lanc-l5','mapa-lanc-l6','mapa-lanc-l7','mapa-lanc-l8'].forEach(id=>{
   setTimeout(()=>{const el=document.getElementById(id);if(el)el.addEventListener('input',mapaCalcPreview);},500);
 });
+
+async function mapaCarregarParaEditar(){
+  const dt = document.getElementById('mapa-lanc-dt')?.value;
+  if(!dt){ alert('Informe a data primeiro.'); return; }
+  // Buscar no Firebase direto (mais confiável)
+  try{
+    const db = getDB();
+    if(db){
+      const doc = await db.collection('mapa_diario').doc(dt.replace(/-/g,'')).get();
+      if(doc.exists){
+        const r = doc.data();
+        const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||0;};
+        set('mapa-lanc-l3',r.l3); set('mapa-lanc-l4',r.l4);
+        set('mapa-lanc-l5',r.l5); set('mapa-lanc-l6',r.l6);
+        set('mapa-lanc-l7',r.l7); set('mapa-lanc-l8',r.l8);
+        mapaCalcPreview();
+        _flash('mapa-carr-ok');
+        return;
+      }
+    }
+  } catch(e){ console.warn('mapaCarregarParaEditar:', e); }
+  // Fallback: buscar em mapaFirebase memória
+  const reg = mapaFirebase.find(r=>r.data===dt);
+  if(reg){
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||0;};
+    set('mapa-lanc-l3',reg.l3); set('mapa-lanc-l4',reg.l4);
+    set('mapa-lanc-l5',reg.l5); set('mapa-lanc-l6',reg.l6);
+    set('mapa-lanc-l7',reg.l7); set('mapa-lanc-l8',reg.l8);
+    mapaCalcPreview();
+    _flash('mapa-carr-ok');
+  } else {
+    alert('Nenhum lançamento encontrado para ' + fmtDt(dt) + '.\nPreencha os campos e salve normalmente.');
+  }
+}
+
+async function mapaExcluirDataSelecionada(){
+  const dt = document.getElementById('mapa-lanc-dt')?.value;
+  if(!dt){ alert('Informe a data primeiro.'); return; }
+  if(!confirm('Excluir lançamento de ' + fmtDt(dt) + '?\nVocê poderá lançar novamente depois.')) return;
+  try{
+    const db = getDB();
+    if(db) await db.collection('mapa_diario').doc(dt.replace(/-/g,'')).delete();
+    mapaFirebase = mapaFirebase.filter(r=>r.data!==dt);
+    mapaAtualizarGlobais();
+    renderAdmMapaHistorico();
+    mapaLimparLanc();
+    const ok = document.createElement('div');
+    ok.textContent = '✓ Lançamento de '+fmtDt(dt)+' excluído!';
+    ok.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--vd);color:#fff;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;z-index:9999';
+    document.body.appendChild(ok); setTimeout(()=>ok.remove(), 3000);
+  } catch(e){ alert('Erro ao excluir: '+e.message); }
+}
 
 async function salvarMapaDia(){
   const dt=document.getElementById('mapa-lanc-dt')?.value;
