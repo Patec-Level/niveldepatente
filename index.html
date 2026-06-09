@@ -4212,9 +4212,9 @@ async function fbCarregarTudo(){
   }
 
   // Produção — apenas ciclo atual
-  const prods = await db.collection('producao')
+  const prods = await db.collection('producoes')
     .where('data','>=', CICLO_NOVO_INICIO).get();
-  const prodsArr = prods.docs ? prods.docs.map(d=>d.data()) : await fbGetAll('producao');
+  const prodsArr = prods.docs ? prods.docs.map(d=>d.data()) : await fbGetAll('producoes');
   if(prodsArr.length > 0){
     registros = prodsArr.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
     console.log('✓ Produção carregada:', registros.length, 'registros');
