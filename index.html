@@ -5089,10 +5089,10 @@ function renderPainelEstrategico(){
   const mediaEquipe = nDias>0?Math.round(totalAnalis/nDias):0;
   const metaDia = getMeta();
 
-  // Melhor e pior dia = pf0+pf1+pf2+pf11 (1aAnalise+Tratativa+StatusB+Outros)
+  // Melhor e pior dia — usa pcpData (mesma fonte do totalAnalis) para consistência
   const porDia = dias.map(dt=>{
-    const regsD=registros.filter(r=>r.data===dt&&r.pres!=='Folga'&&r.pres!=='Férias');
-    const tot=regsD.reduce((s,r)=>s+(r.f[0]||0)+(r.f[1]||0)+(r.f[2]||0)+(r.f[11]||0),0);
+    const reg = diasComProd.find(r=>r.data===dt);
+    const tot = reg ? (reg.f1||0) : 0;
     return{dt,tot};
   });
   const melhor = porDia.length?porDia.reduce((a,b)=>b.tot>a.tot?b:a):{dt:'—',tot:0};
