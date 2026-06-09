@@ -3909,12 +3909,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div id="fdia-pres-aviso" style="display:none;font-size:11px;color:var(--vm);margin-top:8px;font-weight:600">⚠ Selecione onde você trabalhou hoje para finalizar.</div>
         </div>
 
-        <!-- Gráfico evolução -->
-        <div class="cd" style="margin-bottom:1rem">
-          <div class="cd-t">📈 Evolução dos últimos 7 dias</div>
-          <canvas id="fdia-chart" height="80"></canvas>
-        </div>
-
         <!-- Justificativa — sempre visível, obrigatória -->
         <div id="fdia-justif-box" class="cd" style="margin-bottom:1rem;border:1.5px solid var(--brd)">
           <div class="cd-t" style="margin-bottom:.75rem">📝 Como foi o seu dia?</div>
@@ -3950,6 +3944,29 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <button class="btn btn-p" onclick="fdiaSalvar()" style="font-size:14px;padding:10px 28px;background:var(--vd)">🔒 Finalizar meu dia</button>
           <span id="fdia-ok" style="font-size:12px;color:var(--vd);font-weight:600;display:none">✓ Fechamento registrado!</span>
         </div>
+
+        <!-- Gráfico evolução dos últimos 7 dias -->
+        <div class="cd" style="margin-bottom:1rem;margin-top:1rem">
+          <div class="cd-t">📈 Evolução dos últimos 7 dias</div>
+          <canvas id="fdia-chart" height="80"></canvas>
+        </div>
+
+        <!-- Histórico individual -->
+        <div class="cd" style="margin-bottom:1rem">
+          <div class="cd-t">📊 Histórico da minha produção</div>
+          <div class="tw" style="max-height:340px">
+            <table>
+              <thead><tr>
+                <th>Data</th><th>Presença</th>
+                <th>1ª Anál.</th><th>Em Trat.</th><th>Status B</th><th>Outros</th>
+                <th>Forn.</th><th>Req.</th><th>MDG</th><th>Val.Thiago</th><th>XGL</th><th>Rep.</th><th>Pedidos</th><th>Dev.</th>
+                <th>Total</th><th>%</th><th>Status</th>
+              </tr></thead>
+              <tbody id="fdia-hist-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
     <!-- ══ fim FECHAMENTO DO DIA ══ -->
@@ -17274,6 +17291,64 @@ async function fdiaInicializar(){
       options:{ plugins:{legend:{display:false},datalabels:{display:false}}, scales:{ y:{min:0,grid:{color:'#f0f0f0'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} } }
     });
   }
+
+  // Histórico individual — últimos 30 dias do Firebase (producoes + producao)
+  try{
+    const db = getDB();
+    const tbHist = document.getElementById('fdia-hist-tbody');
+    if(db && tbHist){
+      const _30diasAtras = new Date(); _30diasAtras.setDate(_30diasAtras.getDate()-30);
+      const _dtMin = _30diasAtras.getFullYear()+'-'+String(_30diasAtras.getMonth()+1).padStart(2,'0')+'-'+String(_30diasAtras.getDate()).padStart(2,'0');
+      const [snapA, snapN] = await Promise.all([
+        db.collection('producao').where('colab','==',colab).where('data','>=',_dtMin).get(),
+        db.collection('producoes').where('colab','==',colab).where('data','>=',_dtMin).get()
+      ]);
+      const mapH = {};
+      (snapA.docs||[]).forEach(d=>{ const r=d.data(); if(r.data) mapH[r.data]=r; });
+      (snapN.docs||[]).forEach(d=>{ const r=d.data(); if(r.data) mapH[r.data]=r; });
+      const histRegs = Object.values(mapH).sort((a,b)=>b.data.localeCompare(a.data));
+      if(!histRegs.length){
+        tbHist.innerHTML='<tr><td colspan="16" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum registro encontrado.</td></tr>';
+      } else {
+        const _semMetaH = (typeof COLABS_SEM_META_RT !== 'undefined') && COLABS_SEM_META_RT.includes(colab);
+        tbHist.innerHTML = histRegs.map(r=>{
+          const f = [...(r.f||[])]; while(f.length<12) f.push(0);
+          const tot = _semMetaH ? f.reduce((s,v)=>s+v,0) : (f[0]||0)+(f[1]||0)+(f[2]||0);
+          const pctH = metaVal>0 ? Math.round(tot/metaVal*100) : 0;
+          const corPct = pctH>=100?'var(--vd)':pctH>=80?'var(--am)':'var(--vm)';
+          let metaPill;
+          if(r.pres==='Folga'||r.pres==='Férias'){
+            metaPill = `<span class="pl pl-g">${r.pres}</span>`;
+          } else if(pctH>=100){
+            metaPill = '<span class="pl pl-ok">✓ Meta</span>';
+          } else if(pctH>=80){
+            metaPill = `<span class="pl pl-w">⚠ Abaixo</span>`;
+          } else {
+            metaPill = `<span class="pl pl-b">⚠ Abaixo</span>`;
+          }
+          return `<tr>
+            <td style="white-space:nowrap">${r.data.split('-').reverse().join('/')}</td>
+            <td>${r.pres||'—'}</td>
+            <td style="text-align:center;font-weight:600">${f[0]||'—'}</td>
+            <td style="text-align:center;font-weight:600">${f[1]||'—'}</td>
+            <td style="text-align:center;font-weight:600">${f[2]||'—'}</td>
+            <td style="text-align:center;font-weight:600">${f[11]||'—'}</td>
+            <td style="text-align:center">${f[3]||'—'}</td>
+            <td style="text-align:center">${f[4]||'—'}</td>
+            <td style="text-align:center">${f[5]||'—'}</td>
+            <td style="text-align:center">${f[6]||'—'}</td>
+            <td style="text-align:center">${f[7]||'—'}</td>
+            <td style="text-align:center">${f[8]||'—'}</td>
+            <td style="text-align:center">${f[9]||'—'}</td>
+            <td style="text-align:center">${f[10]||'—'}</td>
+            <td style="text-align:center;font-weight:700;color:${corPct}">${tot}</td>
+            <td style="text-align:center">${pctH}%</td>
+            <td style="text-align:center">${metaPill}</td>
+          </tr>`;
+        }).join('');
+      }
+    }
+  } catch(_eh){ console.warn('fdia histórico:', _eh); }
 }
 
 async function fdiaSalvar(){
