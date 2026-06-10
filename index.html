@@ -3893,6 +3893,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div id="fdia-composicao" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px"></div>
         </div>
 
+        <!-- Linha do tempo do dia -->
+        <div class="cd" style="margin-bottom:1rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+            <div class="cd-t" style="margin:0">⏱ Linha do tempo de hoje</div>
+            <span id="fdia-lt-anuladas" style="font-size:10px;color:var(--tx2);display:none"></span>
+          </div>
+          <div id="fdia-linha-tempo" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:5px">
+            <div style="text-align:center;color:var(--tx2);font-size:12px;padding:1rem">⏳ Carregando...</div>
+          </div>
+        </div>
+
         <!-- Modalidade — obrigatória antes de finalizar -->
         <div class="cd" id="fdia-card-pres" style="margin-bottom:1rem">
           <div class="cd-t" style="margin-bottom:.75rem">📍 Onde você trabalhou hoje?</div>
@@ -17245,6 +17256,8 @@ async function fdiaInicializar(){
   // Carregar ações do dia
   await prodCarregarHoje(colab);
   const acoes = window._prodAcoesHoje || [];
+  // Renderizar linha do tempo
+  fdiaRenderLinhaTempo(colab);
   const cnt   = prodContarHoje(acoes);
   const pct   = Math.min(100, Math.round(cnt.meta / metaVal * 100));
   const cor   = cnt.meta >= metaVal ? 'var(--vd)' : cnt.meta >= metaVal*.8 ? 'var(--am)' : 'var(--vm)';
@@ -17438,6 +17451,105 @@ async function fdiaInicializar(){
       }
     }
   } catch(_eh){ console.warn('fdia histórico:', _eh); }
+}
+
+// Cache das ações do dia no fechamento (com docId para anular)
+let _fdiaAcoesDia = [];
+
+async function fdiaRenderLinhaTempo(colab){
+  const el = document.getElementById('fdia-linha-tempo');
+  const elAnuladas = document.getElementById('fdia-lt-anuladas');
+  if(!el) return;
+
+  // Buscar ações do Firebase com docId
+  try{
+    const db = getDB(); if(!db){ el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:1rem">Firebase não disponível.</div>'; return; }
+    const _n = new Date();
+    const hoje = _n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-'+String(_n.getDate()).padStart(2,'0');
+    const snap = await db.collection('producao_acoes').where('colab','==',colab).where('data','==',hoje).get();
+    _fdiaAcoesDia = snap.docs.map(d=>({_docId:d.id,...d.data()}));
+  } catch(e){ console.warn('fdiaRenderLinhaTempo:', e); _fdiaAcoesDia = window._prodAcoesHoje||[]; }
+
+  _fdiaDesenharLinhaTempo();
+}
+
+function _fdiaDesenharLinhaTempo(){
+  const el = document.getElementById('fdia-linha-tempo');
+  const elAnuladas = document.getElementById('fdia-lt-anuladas');
+  if(!el) return;
+
+  const sorted = [..._fdiaAcoesDia].sort((a,b)=>b.ts>a.ts?1:-1);
+  const ativas  = sorted.filter(a=>!a.anulada);
+  const anuladas = sorted.filter(a=>a.anulada);
+
+  if(elAnuladas){
+    elAnuladas.style.display = anuladas.length ? 'inline' : 'none';
+    elAnuladas.textContent = anuladas.length + ' anulada(s)';
+  }
+
+  if(!sorted.length){
+    el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:1rem">Nenhuma ação registrada hoje.</div>';
+    return;
+  }
+
+  el.innerHTML = sorted.map(a=>{
+    const cfg = (typeof PROD_TIPO_LABELS!=='undefined'&&PROD_TIPO_LABELS[a.tipo])||{emoji:'•',label:a.tipo||'?'};
+    const hr  = a.ts ? new Date(a.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
+    const rc  = a.rc || (a.rcChave ? a.rcChave.split('|')[0] : '');
+    const anulada = a.anulada;
+    const docId = a._docId||'';
+    return `<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:${anulada?'#fafafa':'var(--cin)'};border-radius:8px;font-size:11px;opacity:${anulada?'.45':'1'};border:1px solid ${anulada?'var(--brd)':'transparent'}">
+      <span style="color:var(--tx2);font-weight:600;min-width:34px">${hr}</span>
+      <span style="background:var(--azc);color:var(--azm);padding:1px 7px;border-radius:10px;font-weight:700;font-size:10px;flex-shrink:0">${cfg.emoji} ${cfg.label}</span>
+      <span style="color:var(--tx);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.tratamento||''}${a.conclusao?' → <strong>'+a.conclusao+'</strong>':''}</span>
+      ${rc?`<span style="color:var(--azm);font-size:10px;font-weight:700;background:var(--azc);padding:1px 6px;border-radius:5px;flex-shrink:0">RC ${rc}</span>`:''}
+      ${anulada
+        ? `<span style="font-size:9px;color:var(--tx2);flex-shrink:0;font-style:italic">anulada</span>`
+        : docId
+          ? `<button onclick="fdiaAnularAcao('${docId}')" title="Anular esta ação — governança não é afetada"
+              style="background:var(--vmc);border:1px solid var(--vm);border-radius:5px;padding:2px 7px;cursor:pointer;font-size:10px;color:var(--vm);font-weight:700;flex-shrink:0;line-height:1.4">🗑</button>`
+          : ''}
+    </div>`;
+  }).join('');
+}
+
+async function fdiaAnularAcao(docId){
+  if(!confirm('Anular esta ação da produtividade?\nA governança (status RC, envio, finalizado) NÃO será alterada.')) return;
+  try{
+    const db = getDB(); if(!db) return;
+    await db.collection('producao_acoes').doc(docId).update({ anulada: true, anuladaEm: new Date().toISOString(), anuladaPor: 'colab' });
+    // Atualizar cache local
+    const idx = _fdiaAcoesDia.findIndex(a=>a._docId===docId);
+    if(idx>=0) _fdiaAcoesDia[idx].anulada = true;
+    // Atualizar _prodAcoesHoje em memória
+    if(window._prodAcoesHoje){
+      const aObj = _fdiaAcoesDia[idx];
+      const iHoje = window._prodAcoesHoje.findIndex(a=>a.ts===aObj?.ts);
+      if(iHoje>=0) window._prodAcoesHoje[iHoje].anulada = true;
+    }
+    // Re-renderizar linha do tempo
+    _fdiaDesenharLinhaTempo();
+    // Atualizar totais do card
+    const colab = _authPerfil?.colabNome || colabLogado;
+    const metaVal = META_ANALISTA_RT[colab]||30;
+    const semMeta = (typeof COLABS_SEM_META_RT!=='undefined') && COLABS_SEM_META_RT.includes(colab);
+    const acoesAtivas = _fdiaAcoesDia.filter(a=>!a.anulada);
+    const cnt = prodContarHoje(acoesAtivas);
+    const total = semMeta ? cnt.total : cnt.meta;
+    const pct = Math.min(100, Math.round(total/metaVal*100));
+    const cor = total>=metaVal?'var(--vd)':total>=metaVal*.8?'var(--am)':'var(--vm)';
+    const totalEl = document.getElementById('fdia-total');
+    const barraEl = document.getElementById('fdia-barra');
+    const pctEl   = document.getElementById('fdia-pct');
+    if(totalEl){ totalEl.textContent=total; totalEl.style.color=cor; }
+    if(barraEl){ barraEl.style.width=pct+'%'; barraEl.style.background=cor; }
+    if(pctEl)   pctEl.textContent=pct+'%';
+    // Toast
+    const ok = document.createElement('div');
+    ok.textContent = '✓ Ação anulada!';
+    ok.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--vd);color:#fff;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;z-index:9999';
+    document.body.appendChild(ok); setTimeout(()=>ok.remove(),3000);
+  } catch(e){ alert('Erro: '+e.message); }
 }
 
 async function fdiaSalvar(){
