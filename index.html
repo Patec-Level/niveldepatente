@@ -16599,9 +16599,10 @@ function rtRenderComposicaoModal(){
   const anuladas = _rtCompAcoes.filter(a=>a.anulada);
 
   // Contar por tratamento e conclusão (apenas ativas)
+  // 'Concluído' é excluído do contTrat pois já está detalhado nos cards de conclusão
   const contTrat = {}, contConc = {};
   acoes.forEach(a => {
-    if(a.tratamento){ contTrat[a.tratamento] = (contTrat[a.tratamento]||0)+1; }
+    if(a.tratamento && a.tratamento !== 'Concluído'){ contTrat[a.tratamento] = (contTrat[a.tratamento]||0)+1; }
     if(a.conclusao){  contConc[a.conclusao]  = (contConc[a.conclusao]||0)+1; }
   });
 
