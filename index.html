@@ -17399,18 +17399,34 @@ async function fdiaInicializar(){
     });
   }
 
-  // Histórico individual — usa array registros (já em memória, sem query extra)
+  // Histórico individual — busca Firebase direto (evita problema de nome colab no array global)
   try{
     const tbHist = document.getElementById('fdia-hist-tbody');
     if(tbHist){
+      tbHist.innerHTML='<tr><td colspan="17" style="text-align:center;color:var(--tx2);padding:1rem;font-size:12px">⏳ Carregando histórico...</td></tr>';
       const _30diasAtras = new Date(); _30diasAtras.setDate(_30diasAtras.getDate()-30);
       const _dtMin = _30diasAtras.getFullYear()+'-'+String(_30diasAtras.getMonth()+1).padStart(2,'0')+'-'+String(_30diasAtras.getDate()).padStart(2,'0');
-      const _regsGlobal = (typeof registros !== 'undefined' ? registros : []);
-      const histRegs = _regsGlobal
-        .filter(r => r.colab === colab && r.data >= _dtMin)
-        .sort((a,b) => b.data.localeCompare(a.data));
+      // Buscar nas duas coleções e mesclar
+      const db = getDB();
+      let histRegs = [];
+      if(db){
+        const [snapA, snapN] = await Promise.all([
+          db.collection('producao').where('colab','==',colab).where('data','>=',_dtMin).get().catch(()=>({docs:[]})),
+          db.collection('producoes').where('colab','==',colab).where('data','>=',_dtMin).get().catch(()=>({docs:[]}))
+        ]);
+        const mapH = {};
+        (snapA.docs||[]).forEach(d=>{ const r=d.data(); if(r.data) mapH[r.data]=r; });
+        (snapN.docs||[]).forEach(d=>{ const r=d.data(); if(r.data) mapH[r.data]=r; });
+        histRegs = Object.values(mapH).sort((a,b)=>b.data.localeCompare(a.data));
+      } else {
+        // Fallback: array global com filtro flexível (nome parcial)
+        const _regsGlobal = (typeof registros !== 'undefined' ? registros : []);
+        histRegs = _regsGlobal
+          .filter(r => r.colab === colab && r.data >= _dtMin)
+          .sort((a,b) => b.data.localeCompare(a.data));
+      }
       if(!histRegs.length){
-        tbHist.innerHTML='<tr><td colspan="16" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum registro encontrado.</td></tr>';
+        tbHist.innerHTML='<tr><td colspan="17" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum registro encontrado.</td></tr>';
       } else {
         const _semMetaH = (typeof COLABS_SEM_META_RT !== 'undefined') && COLABS_SEM_META_RT.includes(colab);
         tbHist.innerHTML = histRegs.map(r=>{
