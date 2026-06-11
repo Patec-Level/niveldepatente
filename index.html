@@ -10259,7 +10259,8 @@ function renderCascata(){
     return agTrat > 0 ? agTrat : null;
   })();
 
-  const hojeISO = new Date().toISOString().split('T')[0];
+  const _hISO = new Date();
+  const hojeISO = _hISO.getFullYear()+'-'+String(_hISO.getMonth()+1).padStart(2,'0')+'-'+String(_hISO.getDate()).padStart(2,'0');
   // Ancorar no radar APENAS se data fim incluir hoje ou futuro
   const anchorarRadar = dtFim >= hojeISO && _backlogRealRadar !== null;
 
