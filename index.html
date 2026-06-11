@@ -2457,7 +2457,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <div id="adm-analista-auto" class="adm-tab" style="display:none">
         <div class="cd">
           <div class="cd-t">🤖 Analista Automático — Potencial Pedido Direto</div>
-          <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem">Aplica as 7 regras de identificação de RCs aptas para pedido direto sobre a planilha de backlog carregada.</p>
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:1rem">Aplica as 8 regras de identificação de RCs aptas para pedido direto sobre a planilha de backlog carregada. Col Y="não" desclassifica qualquer regra. Regras 3–8 exigem que fornecedores anteriores sejam NÃO ANALISAR.</p>
           <div id="aa-sem-dados" style="text-align:center;padding:2rem;color:var(--tx2);font-size:13px">
             📂 Nenhuma planilha carregada. Acesse <strong>Upload Backlog</strong> para carregar os dados.
           </div>
@@ -11085,64 +11085,83 @@ function aaProcessar(){
       const colR  = parseInt(r[iR])||0;
       const colEup = colE.toUpperCase();
 
-      // ── Regra zero: Col Y = "não" → desconsiderar qualquer regra ──
-      if((colY||'').toString().trim().toLowerCase() === 'não' ||
-         (colY||'').toString().trim().toLowerCase() === 'nao') return;
+      // ── Regra zero: Col Y = "não" → desconsiderar QUALQUER regra ──
+      const yNorm = (colY||'').toString().trim().toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g,'');
+      if(yNorm === 'nao' || yNorm === 'não') return;
 
-      // Verificar precedência: todos os fornecedores anteriores devem ser NÃO ANALISAR
+      // ── Verificar precedência ──
+      // Todos os fornecedores ANTERIORES (posição menor) na mesma RC devem ser NÃO ANALISAR
       const anteriores = itens.filter(x => (parseInt(x.r[iR])||0) < colR);
       const todosNaoAnalisar = anteriores.every(x => aaEhNaoAnalisar(x.r[iE]));
       const ehPrimeiro = colR <= 1 || anteriores.length === 0;
+      // precedenciaOK = é o 1º fornecedor OU todos anteriores são NÃO ANALISAR
       const precedenciaOK = ehPrimeiro || todosNaoAnalisar;
 
       let regra = null;
 
-      // REGRA 1: Col E = "1º MELHOR FORNECEDOR APTO..." + Col Y = "sim"
+      // ── REGRA 1: 1º Melhor Fornecedor Apto + Y=sim ──
+      // Não exige precedência pois o próprio E já qualifica como apto
       if(!regra && colEup.includes('MELHOR FORNECEDOR APTO') && aaEhIdentico(colY)){
         regra = 'Regra 1 — 1º Melhor Fornecedor Apto + Material Idêntico';
       }
 
-      // REGRA 2: Fornecedor anterior NÃO ANALISAR + próximo com Y=sim (não é NÃO ANALISAR)
-      if(!regra && aaEhIdentico(colY) && precedenciaOK && !aaEhNaoAnalisar(colE)){
-        if(!ehPrimeiro && todosNaoAnalisar){
-          regra = 'Regra 2 — Anterior NÃO ANALISAR + Material Idêntico';
-        }
+      // ── REGRA 2: NM zerado (W vazio) + Y=sim + precedência OK ──
+      // Prompt: "quando na coluna W estiver sem nenhum dado e na coluna Y for idêntico sim"
+      if(!regra && aaEhIdentico(colY) && precedenciaOK && !colW && !aaEhNaoAnalisar(colE)){
+        regra = 'Regra 2 — NM Material zerado + Material Idêntico';
       }
 
-      // REGRA 3: NM Filho — Desvio de código/fabricante/PN + Y=sim + anteriores NÃO ANALISAR
-      if(!regra && aaEhIdentico(colY) && precedenciaOK){
-        const temDesvio = colEup.includes('DESVIO DE CÓDIGO') || colEup.includes('DESVIO CÓDIGO') ||
+      // ── REGRA 3: NM Filho — Desvio de código/fabricante/PN + Y=sim ──
+      // Para não-primeiros: OBRIGATÓRIO que anteriores sejam NÃO ANALISAR
+      if(!regra && aaEhIdentico(colY) && !aaEhNaoAnalisar(colE)){
+        const temDesvio = colEup.includes('DESVIO DE C') || colEup.includes('DESVIO C') ||
                           colEup.includes('DESVIO DE FABRICANTE') || colEup.includes('DESVIO FABRICANTE') ||
-                          colEup.includes('DESVIO PART') || colEup.includes('DESVIO DE PART');
-        if(temDesvio){
+                          colEup.includes('DESVIO PART') || colEup.includes('DESVIO DE PART') ||
+                          colEup.includes('DESVIO DE CÓDIGO') || colEup.includes('DESVIO CÓDIGO');
+        if(temDesvio && (ehPrimeiro || todosNaoAnalisar)){
           regra = 'Regra 3 — NM Filho (Desvio) + Material Idêntico ⚠️ Verificar SAP';
         }
       }
 
-      // REGRA 4: Y=sim + (Z e AA vazios OU AB e AC vazios) + precedência OK
-      if(!regra && aaEhIdentico(colY) && precedenciaOK){
-        if((!colZ && !colAA) || (!colAB && !colAC)){
-          regra = 'Regra 4 — Material Idêntico + Ausência de informação de Fabricante/PN';
+      // ── REGRA 4: Ausência Z e AA (fabricante) + Y=sim + precedência OK ──
+      // Prompt: "Colunas Z e AA vazias"
+      if(!regra && aaEhIdentico(colY) && precedenciaOK && !aaEhNaoAnalisar(colE)){
+        if(!colZ && !colAA){
+          regra = 'Regra 4 — Material Idêntico + Fabricante Fornecedor/Petrobras ausente';
         }
       }
 
-      // REGRA 5: Fabricante (Z) e PN (AB) vazios + Y=sim + precedência OK
-      if(!regra && aaEhIdentico(colY) && precedenciaOK && !colZ && !colAB){
-        regra = 'Regra 5 — Sem Fabricante/PN informado + Material Idêntico';
+      // ── REGRA 5: Ausência AB e AC (Part Number) + Y=sim + precedência OK ──
+      // Prompt: "Colunas AB e AC vazias"
+      if(!regra && aaEhIdentico(colY) && precedenciaOK && !aaEhNaoAnalisar(colE)){
+        if(!colAB && !colAC){
+          regra = 'Regra 5 — Material Idêntico + Part Number Fornecedor/Petrobras ausente';
+        }
       }
 
-      // REGRA 6: NM zerado (W vazio) + Y=sim + precedência OK
-      if(!regra && aaEhIdentico(colY) && precedenciaOK && !colW){
-        regra = 'Regra 6 — NM Material zerado + Material Idêntico';
+      // ── REGRA 6: Fornecedor não informa Fabricante (Z) e PN (AB) + Y=sim + precedência OK ──
+      // Prompt: "quando as colunas Z AB estiverem vazias e na coluna Y for idêntico Sim"
+      if(!regra && aaEhIdentico(colY) && precedenciaOK && !aaEhNaoAnalisar(colE)){
+        if(!colZ && !colAB){
+          regra = 'Regra 6 — Fornecedor sem Fabricante/PN informado + Material Idêntico';
+        }
       }
 
-      // REGRA 7: Validação técnica — Fabricante E PN iguais entre fornecedor e Petrobras + Y=sim
-      if(!regra && aaEhIdentico(colY) && precedenciaOK){
+      // ── REGRA 7: Validação técnica — Fabricante Z=AA E PN AB=AC + Y=sim + precedência OK ──
+      // Prompt: "Colunas Z vs AA → Fabricante | Colunas AB vs AC → Part Number — se iguais reforça pedido direto"
+      if(!regra && aaEhIdentico(colY) && precedenciaOK && !aaEhNaoAnalisar(colE)){
         const fabIgual = colZ && colAA && colZ.toUpperCase() === colAA.toUpperCase();
         const pnIgual  = colAB && colAC && colAB.toUpperCase() === colAC.toUpperCase();
         if(fabIgual && pnIgual){
           regra = 'Regra 7 — Fabricante e Part Number idênticos (Fornecedor = Petrobras)';
         }
+      }
+
+      // ── REGRA 8: Anterior NÃO ANALISAR + próximo com Y=sim (não é NÃO ANALISAR) ──
+      // Prompt: "Se fornecedor na 1ª posição estiver NÃO ANALISAR e existir próximo fornecedor apto"
+      if(!regra && aaEhIdentico(colY) && !ehPrimeiro && todosNaoAnalisar && !aaEhNaoAnalisar(colE)){
+        regra = 'Regra 8 — Anterior(es) NÃO ANALISAR + Material Idêntico';
       }
 
       if(regra){
