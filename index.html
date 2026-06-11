@@ -10218,7 +10218,7 @@ function renderCascata(){
 
   const metaDia = Number(r.pa_meta_dia)||30;
 
-  // Saídas/entradas por dia
+  // Saídas = apenas 1ª Análise (f[0]) — critério do cascata
   const saidasPorDia = {};
   registros.forEach(reg=>{
     if(!reg.data||!reg.f||reg.pres==='Folga'||reg.pres==='Férias') return;
@@ -14906,10 +14906,13 @@ async function admApresentacaoGerar(){
     const _hojeISO = new Date().toISOString().split('T')[0];
     const _FILAS_AG_PA = ['patec','análise de oportunidade'];
     const _normFPA = v=>String(v||'').trim().toLowerCase();
-    const _backlogRealRadar = (_radarDados||[]).filter(r=>
+    const _backlogRealRadarCont = (_radarDados||[]).filter(r=>
       (r.analista_auto||'').trim()==='Analisar PATEC Finalizado' &&
       _FILAS_AG_PA.includes(_normFPA(r.fila))
-    ).length || null;
+    ).length;
+    // Usar radar se disponível, senão usar _backlogAtualGlobal do renderCascata
+    const _backlogRealRadar = _backlogRealRadarCont > 0 ? _backlogRealRadarCont
+      : (typeof _backlogAtualGlobal === 'number' && _backlogAtualGlobal > 0 ? _backlogAtualGlobal : null);
     const _anchorarRadar = dtFimPA >= _hojeISO && _backlogRealRadar !== null;
 
     let backlogAtual = backlogBase;
