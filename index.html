@@ -1606,6 +1606,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:11px;color:var(--tx2)">✦ Entradas salvas automaticamente ao adicionar ou remover.</span>
           <button class="btn btn-g" style="font-size:11px" onclick="paEntradaSalvarFirebase()">💾 Forçar salvamento</button>
+          <button class="btn btn-r" style="font-size:11px" onclick="paEntradaLimparTudo()">🗑 Limpar todas as entradas</button>
           <span id="pa-ent-ok" style="font-size:11px;color:var(--vd);font-weight:600;display:none">✓ Salvo!</span>
         </div>
         </div><!-- /pa-adm-tab-entradas -->
@@ -10699,6 +10700,18 @@ Deseja substituir pelo valor ${val}?`)) return;
   paEntradaSalvarFirebase(); // salva automaticamente ao adicionar
 }
 
+function paEntradaLimparTudo(){
+  if(!_paEntradas.length){ alert('Não há entradas cadastradas.'); return; }
+  if(!confirm(`Remover todas as ${_paEntradas.length} entradas registradas?\n\nIsso corrige o gráfico de cascata caso os valores estejam inflados por bug de duplicidade. Novas entradas serão registradas corretamente a partir do próximo upload do MAPA.`)) return;
+  _paEntradas = [];
+  paEntradaRenderLista();
+  paEntradaSalvarFirebase();
+  const ok = document.createElement('div');
+  ok.textContent = '✓ Entradas limpas! Faça um novo upload do MAPA para recalcular.';
+  ok.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--vd);color:#fff;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;z-index:9999;max-width:320px';
+  document.body.appendChild(ok); setTimeout(()=>ok.remove(),5000);
+}
+
 function paEntradaRemover(dt){
   _paEntradas = _paEntradas.filter(e=>e.dt!==dt);
   paEntradaRenderLista();
@@ -13277,7 +13290,8 @@ function govSincronizarMapa(rows){
     // (o backlog atual é atualizado normalmente, mas a entrada fica travada).
     (async () => {
       try {
-        const hoje = new Date().toISOString().split('T')[0];
+        const _hn3 = new Date();
+        const hoje = _hn3.getFullYear()+'-'+String(_hn3.getMonth()+1).padStart(2,'0')+'-'+String(_hn3.getDate()).padStart(2,'0');
         const jaExiste = _paEntradas.find(e => e.dt === hoje);
         if(jaExiste){
           // Já houve upload hoje — entrada travada, não altera
@@ -13294,17 +13308,22 @@ function govSincronizarMapa(rows){
     // ── FIM REGISTRO AUTOMÁTICO ──
 
     // Persistir em lotes de 10 com delay para não sobrecarregar o Firebase
+    // CRÍTICO: gravar na MESMA coleção 'gov_mapa' lida por govCarregarFirebase,
+    // com o campo 'chave' para que a leitura reconstrua corretamente _govDados.
+    // (Bug anterior gravava em 'patec-dashboard/gov_*' — coleção nunca lida de volta,
+    //  fazendo os mesmos itens serem contados como "novos" todos os dias)
     const LOTE = 10;
     const persistirLote = async (idx) => {
       if(idx >= novasChaves.length) return;
       const lote = novasChaves.slice(idx, idx + LOTE);
-      if(typeof firebase !== 'undefined' && _fbLoaded){
+      const db = getDB();
+      if(db){
         try{
-          const db = firebase.firestore();
           const batch = db.batch();
           lote.forEach(chave => {
-            const ref = db.collection('patec-dashboard').doc('gov_' + chave.replace(/[|]/g,'_').substring(0,100));
-            batch.set(ref, { status: 'AG. TRATAMENTO', envio: '', finalizado: '', ts: new Date().toISOString() }, { merge: true });
+            const docId = chave.replace(/[|]/g,'_').substring(0,400);
+            const ref = db.collection('gov_mapa').doc(docId);
+            batch.set(ref, { chave, status: 'AG. TRATAMENTO', envio: '', finalizado: '', ts: new Date().toISOString() }, { merge: true });
           });
           await batch.commit();
         } catch(e){ console.warn('Gov batch erro:', e.message); }
