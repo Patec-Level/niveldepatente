@@ -10291,10 +10291,19 @@ function renderCascata(){
     const entrada = (_paEntradas.find(e=>e.dt===d)?.val)||0;
     const saldo   = entrada - saidas;
     const isUltimo = idx === diasUteis.length - 1;
-    // Último dia: ancorar no radar só se período incluir hoje
-    const backlogFim = (isUltimo && anchorarRadar)
-      ? _backlogRealRadar
-      : Math.max(0, backlogAtual + saldo);
+    // Backlog Fim do dia: se existir um marco "Backlog Auto — AG. Tratamento" para
+    // essa data (snapshot real do 1º upload do dia), usar ele como valor oficial —
+    // isso mantém o gráfico fiel ao Ag. Tratamento do Radar de cada dia.
+    const marcoDia = _paHistorico.find(h=>h.dt===d && h.label && h.label.includes('Auto'));
+    let backlogFim;
+    if(marcoDia){
+      backlogFim = marcoDia.val;
+    } else if(isUltimo && anchorarRadar){
+      // Último dia sem marco salvo ainda hoje: ancorar no radar ao vivo
+      backlogFim = _backlogRealRadar;
+    } else {
+      backlogFim = Math.max(0, backlogAtual + saldo);
+    }
     linhas.push({data:d, backlogInicio:backlogAtual, saidas, entrada, saldo, backlogFim});
     backlogAtual = backlogFim;
   });
