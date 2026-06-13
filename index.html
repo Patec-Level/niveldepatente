@@ -16960,6 +16960,19 @@ function acaoSelecionarConclusao(btn, conclusao){
   if(conclusao !== 'Devolução'){
     const _dc = document.getElementById('acao-dev-centro'); if(_dc) _dc.value = '';
     const _dm = document.getElementById('acao-dev-motivo'); if(_dm) _dm.value = '';
+  } else {
+    // Auto-preencher Centro a partir da coluna CENTRO da planilha (Radar), se disponível
+    const _dcAuto = document.getElementById('acao-dev-centro');
+    if(_dcAuto && !_dcAuto.value){
+      try{
+        const _rcChaveAtual = (_prodCtx.rcChaves||[_prodCtx.rcChave]||[]).filter(Boolean)[0];
+        if(_rcChaveAtual){
+          const _rcNumAtual = _rcChaveAtual.split('|')[0];
+          const _rowCentro = (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNumAtual && r.centro);
+          if(_rowCentro && _rowCentro.centro) _dcAuto.value = _rowCentro.centro;
+        }
+      } catch(e){ console.warn('Auto-preencher centro:', e); }
+    }
   }
 }
 
