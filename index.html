@@ -10294,7 +10294,7 @@ function renderCascata(){
     // Backlog Fim do dia: se existir um marco "Backlog Auto — AG. Tratamento" para
     // essa data (snapshot real do 1º upload do dia), usar ele como valor oficial —
     // isso mantém o gráfico fiel ao Ag. Tratamento do Radar de cada dia.
-    const marcoDia = _paHistorico.find(h=>h.dt===d && h.label && h.label.includes('Auto'));
+    const marcoDia = _paHistorico.find(h=>h.dt===d);
     let backlogFim;
     if(marcoDia){
       backlogFim = marcoDia.val;
