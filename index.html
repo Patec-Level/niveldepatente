@@ -7964,7 +7964,27 @@ async function fbCarregarRadar(){
     const agora = Date.now();
     const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 horas
 
-    if(agora - cacheTs < CACHE_TTL){
+    // ── Verificar SEMPRE se há upload mais recente no Firebase (custo: 1 leitura pequena) ──
+    // Isso evita que outra máquina veja dados antigos do localStorage por até 4h
+    // quando alguém faz um novo upload em outra máquina.
+    let _tsFirebaseMaisRecente = null;
+    try{
+      const metaCheck = await db.collection('config').doc('radar_dados').get();
+      if(metaCheck.exists){
+        const dCheck = metaCheck.data();
+        _tsFirebaseMaisRecente = dCheck.ts || dCheck.updated_at || null;
+      }
+    } catch(e){ console.warn('Radar: check ts falhou', e); }
+
+    const _tsCacheLocal = localStorage.getItem('patec_radar_upload_ts');
+    const _cacheDesatualizado = _tsFirebaseMaisRecente && _tsCacheLocal &&
+      new Date(_tsFirebaseMaisRecente).getTime() > new Date(_tsCacheLocal).getTime();
+    if(_cacheDesatualizado){
+      console.log('Radar: cache local desatualizado (Firebase mais recente). Invalidando cache.');
+      localStorage.removeItem(CACHE_TS_KEY);
+    }
+
+    if(agora - cacheTs < CACHE_TTL && !_cacheDesatualizado){
       try{
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'[]');
         if(cached.length > 0){
@@ -7980,7 +8000,7 @@ async function fbCarregarRadar(){
       } catch(e){}
     }
 
-    // Cache expirado ou inexistente — buscar do Firebase
+    // Cache expirado/inexistente/desatualizado — buscar do Firebase
     const meta=await db.collection('config').doc('radar_dados').get();
     if(!meta.exists) return;
     const d=meta.data();
