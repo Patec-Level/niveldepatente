@@ -531,6 +531,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           if(!window._fbCarregadoUmaVez){
             window._fbCarregadoUmaVez=true;
             if(typeof paEntradaCarregarFirebase==='function') paEntradaCarregarFirebase();
+            if(typeof paHistoricoCarregarFirebase==='function') paHistoricoCarregarFirebase().then(()=>{ try{ renderCascata(); }catch(e){} });
             if(typeof govCarregarFirebase==='function') govCarregarFirebase();
             if(typeof xglCarregarFirebase==='function') xglCarregarFirebase();
             if(typeof aaPublicoCarregar==='function') aaPublicoCarregar();
@@ -4609,7 +4610,7 @@ function go(id, el) {
   }, 100);
   if(id==='plano-acao') setTimeout(()=>{
     if(!_radarDados?.length){
-      fbCarregarRadar().then(()=>{ setTimeout(paAtualizarBacklogAuto,500); renderPlanoAcao(); });
+      fbCarregarRadar().then(async ()=>{ await paHistoricoCarregarFirebase(); setTimeout(paAtualizarBacklogAuto,500); renderPlanoAcao(); });
     } else {
       renderPlanoAcao();
     }
@@ -10662,6 +10663,27 @@ async function paEntradaCarregarFirebase(){
       renderCascata(); // atualizar gráfico com entradas carregadas
     }
   } catch(e){ console.warn('PA Entradas load:', e); }
+}
+
+async function paHistoricoCarregarFirebase(){
+  try {
+    if(typeof firebase === 'undefined' || !_fbLoaded){
+      const ok = await loadFirebaseSDK();
+      if(!ok){ console.warn('PA Histórico: Firebase SDK não disponível'); return; }
+      await new Promise(r => setTimeout(r, 300));
+    }
+    const db=getDB(); if(!db){ console.warn('PA Histórico: db null'); return; }
+    const doc=await db.collection('config').doc('pa_historico').get();
+    if(doc.exists){
+      const lista = doc.data().lista || [];
+      if(lista.length){
+        _paHistorico = lista;
+        try{ localStorage.setItem('patec_pa_historico', JSON.stringify(_paHistorico)); }catch(e){}
+        console.log('PA Histórico carregado do Firebase:', _paHistorico.length, 'marcos');
+        paHistoricoRender();
+      }
+    }
+  } catch(e){ console.warn('PA Histórico load:', e); }
 }
 
 async function paEntradaSalvarFirebase(){
