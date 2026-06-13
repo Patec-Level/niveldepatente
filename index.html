@@ -10337,7 +10337,7 @@ function renderCascata(){
   const kpiEl = document.getElementById('pa-kpis');
   if(kpiEl) kpiEl.innerHTML=[
     {label:`Backlog Inicial (${fmtDt(linhas[0]?.data||'')})`, val:backlogBase, cor:'var(--az)', bg:'var(--azc)', extra:''},
-    {label:`Backlog Atual (${fmtDt(new Date().toISOString().split('T')[0])})`, val:backlogAtual, cor:backlogAtual<=backlogBase?'var(--vd)':'var(--vm)', bg:backlogAtual<=backlogBase?'var(--vdc)':'var(--vmc)', extra: tendHTML},
+    {label:`Backlog Atual (${fmtDt(linhas[linhas.length-1]?.data||dtFim)})`, val:backlogAtual, cor:backlogAtual<=backlogBase?'var(--vd)':'var(--vm)', bg:backlogAtual<=backlogBase?'var(--vdc)':'var(--vmc)', extra: tendHTML},
     {label:'Total Saídas',    val:totalSaidas,    cor:'var(--vd)', bg:'var(--vdc)'},
     {label:'Total Entradas',  val:totalEntrada||0, cor:'var(--am)', bg:'var(--amc)'},
     {label:'Redução líquida', val:(reducao>=0?'−':'+')+Math.abs(reducao), cor:reducao>=0?'var(--vd)':'var(--vm)', bg:reducao>=0?'var(--vdc)':'var(--vmc)'},
@@ -13838,25 +13838,27 @@ async function mapaSalvarComentario(){
 function paAtualizarBacklogAuto(){
   if(!_radarDados || !_radarDados.length) return;
 
-  // Contar itens do MAPA com AG. TRATAMENTO
-  const itensMapa = (_radarDados||[]).filter(r =>
-    (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado'
-  );
-  const totalAgTrat = itensMapa.filter(r => {
-    const chave = govChave(r);
-    const m = _govDados[chave] || {};
-    return !m.status || m.status === 'AG. TRATAMENTO';
-  }).length;
+  // Contar Ag. Tratamento — MESMA lógica de _backlogRealRadar (renderCascata)
+  // e do card "Ag. Tratamento" do Radar Estratégico: filtra por FILA, não por status de governança.
+  const FILAS_AG_AUTO = ['patec','análise de oportunidade'];
+  const normFAuto = v=>String(v||'').trim().toLowerCase();
+  const totalAgTrat = (_radarDados||[]).filter(r =>
+    (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado' &&
+    FILAS_AG_AUTO.includes(normFAuto(r.fila))
+  ).length;
 
-  const hoje = new Date().toISOString().split('T')[0];
+  const _hAuto = new Date();
+  const hoje = _hAuto.getFullYear()+'-'+String(_hAuto.getMonth()+1).padStart(2,'0')+'-'+String(_hAuto.getDate()).padStart(2,'0');
 
-  // Atualizar ou criar marco do dia no histórico
+  // Criar marco do dia APENAS no primeiro upload (travado depois, igual _paEntradas).
+  // Isso preserva o valor do dia para comparação no gráfico de cascata, mesmo que
+  // status mudem ao longo do dia.
   const idxExist = _paHistorico.findIndex(h => h.dt === hoje && h.label && h.label.includes('Auto'));
   if(idxExist >= 0){
-    _paHistorico[idxExist].val = totalAgTrat;
-    _paHistorico[idxExist].label = 'Backlog Auto — AG. Tratamento';
+    console.log('PA Histórico: marco de hoje ('+hoje+') já registrado em '+_paHistorico[idxExist].val+'. Mantendo (travado).');
   } else {
     _paHistorico.push({ dt: hoje, val: totalAgTrat, label: 'Backlog Auto — AG. Tratamento' });
+    console.log('✓ PA Histórico: novo marco do dia '+hoje+' = '+totalAgTrat+' (Ag. Tratamento)');
   }
 
   // Ordenar e salvar
