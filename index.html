@@ -4751,6 +4751,16 @@ function renderCardsDia(){
       ${cardHTML({label:'Abrir PATEC Obrig.',  val:l8, ant:l8a, cor:'var(--am)', bg:'var(--amc)'})}
       ${cardHTML({label:'Total Abrir PATEC',        val:totAbrir, ant:totAbrirAnt, cor:'var(--am)', bg:'var(--amc)'})}
     </div>`;
+
+  // ── Sincronizar PATEC FINALIZADO (ESQ 2) da topbar/sidebar com o valor do Painel Estratégico ──
+  // Só sincroniza quando o dia selecionado for o dia atual (hoje)
+  const dtHoje = HOJE.toISOString().split('T')[0];
+  if(dt === dtHoje && l3 > 0){
+    const dtFmt = fmtDt(dtHoje); // ex: "14/06/2026"
+    localStorage.setItem('patec_patec_val', String(l3));
+    localStorage.setItem('patec_patec_sub', dtFmt);
+    if(typeof initMetaGap === 'function') initMetaGap();
+  }
 }
 function estPcpHoje(){
   const sel=document.getElementById('est-pcp-dt');
