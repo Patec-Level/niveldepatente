@@ -12305,9 +12305,26 @@ async function govCarregarFirebase(){
         if(rawId.startsWith('gov_')) rawId = rawId.slice(4); // remove prefixo 'gov_'
         chaveDoc = rawId.replace(/_/g,'|');
       }
-      if(chaveDoc && (d.envio || d.finalizado || d.status)){
-        // Só guardar se tiver algum dado útil (envio/finalizado/status real)
-        _govDados[chaveDoc] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
+      if(chaveDoc){
+        // Normalizar status (pode ter sido salvo em case diferente)
+        let _stRaw = (d.status||'').trim();
+        if(_stRaw.toUpperCase() === 'AG. TRATAMENTO') _stRaw = 'AG. TRATAMENTO';
+        // Normalizar envio/finalizado: converter "04-Apr-26" ou "18-May-26" para "2026-04-04"
+        const _meses = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+        const _normData = v => {
+          if(!v) return '';
+          // Formato "04-Apr-26" → "2026-04-04"
+          const m1 = v.match(/^(\d{2})-([A-Za-z]{3})-(\d{2})$/);
+          if(m1){ const mes=_meses[m1[2].charAt(0).toUpperCase()+m1[2].slice(1).toLowerCase()]||'??'; return '20'+m1[3]+'-'+mes+'-'+m1[1]; }
+          // Formato "2026-04-04" já OK
+          if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+          return v;
+        };
+        const _envioNorm = _normData(d.envio||'');
+        const _finalNorm = _normData(d.finalizado||'');
+        if(d.envio || d.finalizado || _stRaw){
+          _govDados[chaveDoc] = { status: _stRaw, envio: _envioNorm, finalizado: _finalNorm, comentario: d.comentario||'' };
+        }
       }
     });
     // Salvar cache com timestamp
