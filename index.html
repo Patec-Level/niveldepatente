@@ -2657,6 +2657,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px" id="est-cards-dia"></div>
       </div>
 
+      <!-- RANKING TOP 5 SLA CRÍTICO -->
+      <div class="cd" style="border-top:3px solid var(--vm);margin-bottom:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;font-weight:700;color:var(--vm)">🚨 Top 5 — Maior SLA</span>
+            <span style="font-size:11px;color:var(--tx2);font-weight:500">Base: Radar atual · RCs com maior SLA LevelBoard</span>
+          </div>
+          <button class="btn btn-s" style="font-size:11px;border-color:var(--vm);color:var(--vm)" onclick="renderTopSLA()">↺ Atualizar</button>
+        </div>
+        <div id="est-top-sla-content">
+          <div style="font-size:12px;color:var(--tx2);padding:.5rem">Carregando ranking…</div>
+        </div>
+      </div>
+
       <!-- ANÁLISE PCP DO DIA -->
       <div class="cd" style="border-top:3px solid var(--azm);margin-bottom:1rem">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
@@ -4682,6 +4696,112 @@ function estGetDiaAnterior(dt){
   }
   return null;
 }
+function renderTopSLA(){
+  const el = document.getElementById('est-top-sla-content');
+  if(!el) return;
+
+  const dados = _radarDados || [];
+  if(!dados.length){
+    el.innerHTML = '<div style="font-size:12px;color:var(--tx2);padding:.5rem">⚠ Nenhum dado de Radar carregado. Faça o upload do Radar Estratégico.</div>';
+    return;
+  }
+
+  const FILAS_AG = ['patec','análise de oportunidade'];
+  const normF = f => (f||'').toLowerCase().trim();
+
+  // Agrupar por RC (r.rc) — pegar maior SLA por RC
+  const porRC = {};
+  dados.forEach(r => {
+    const rc = r.rc || '—';
+    const sla = Number(r.sla) || 0;
+    if(!porRC[rc] || sla > porRC[rc].slaMax) {
+      porRC[rc] = {
+        rc,
+        fila: r.fila || '—',
+        analista: (r.analista && r.analista !== '#N/A') ? r.analista : '—',
+        slaMax: sla,
+        analista_auto: r.analista_auto || ''
+      };
+    }
+  });
+
+  // Top 5 por SLA decrescente
+  const top5 = Object.values(porRC)
+    .filter(r => r.slaMax > 0)
+    .sort((a,b) => b.slaMax - a.slaMax)
+    .slice(0, 5);
+
+  if(!top5.length){
+    el.innerHTML = '<div style="font-size:12px;color:var(--tx2);padding:.5rem">Nenhum item com SLA disponível.</div>';
+    return;
+  }
+
+  // Para cada RC do top5, contar itens Ag. Tratamento e Em Análise no _radarDados
+  const resultado = top5.map(item => {
+    const itensRC = dados.filter(r => r.rc === item.rc);
+    const agTrat  = itensRC.filter(r =>
+      (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado' &&
+      FILAS_AG.includes(normF(r.fila))
+    ).length;
+    const emAnalise = itensRC.filter(r =>
+      (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado' &&
+      !FILAS_AG.includes(normF(r.fila))
+    ).length;
+    return { ...item, agTrat, emAnalise, totalRC: itensRC.length };
+  });
+
+  // Paleta de cor por SLA
+  const corSLA = sla => sla >= 150 ? 'var(--vm)' : sla >= 90 ? 'var(--am)' : 'var(--vd)';
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr;gap:8px">
+      ${resultado.map((r, i) => `
+        <div style="display:grid;grid-template-columns:28px 90px 1fr 160px 120px 120px;align-items:center;gap:10px;
+             background:${i===0?'rgba(217,64,64,.07)':'var(--cin)'};
+             border:1px solid ${i===0?'rgba(217,64,64,.2)':'var(--brd)'};
+             border-radius:8px;padding:.6rem .875rem">
+
+          <!-- Posição -->
+          <div style="font-size:14px;font-weight:800;color:${i===0?'var(--vm)':i===1?'var(--am)':'var(--tx2)'};text-align:center">${i+1}°</div>
+
+          <!-- SLA badge -->
+          <div style="text-align:center">
+            <div style="font-size:18px;font-weight:800;color:${corSLA(r.slaMax)};line-height:1">${r.slaMax}</div>
+            <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.5px">dias SLA</div>
+          </div>
+
+          <!-- RC + Fila -->
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--az);font-family:monospace">${r.rc}</div>
+            <div style="font-size:10px;color:var(--tx2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.fila}</div>
+          </div>
+
+          <!-- Analista -->
+          <div>
+            <div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-bottom:2px">Analista</div>
+            <div style="font-size:11px;font-weight:600;color:var(--tx)">${r.analista}</div>
+          </div>
+
+          <!-- Ag. Tratamento -->
+          <div style="text-align:center;background:rgba(192,122,18,.1);border-radius:6px;padding:.375rem .5rem">
+            <div style="font-size:16px;font-weight:800;color:var(--am);line-height:1">${r.agTrat}</div>
+            <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Ag. Tratamento</div>
+          </div>
+
+          <!-- Em Análise -->
+          <div style="text-align:center;background:rgba(50,102,173,.1);border-radius:6px;padding:.375rem .5rem">
+            <div style="font-size:16px;font-weight:800;color:#3266AD;line-height:1">${r.emAnalise}</div>
+            <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Em Análise</div>
+          </div>
+
+        </div>
+      `).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--tx2);margin-top:.5rem">
+      Ag. Tratamento = itens na fila PATEC/Análise de Oportunidade · Em Análise = demais itens do RC em "Analisar PATEC Finalizado"
+    </div>`;
+}
+
 function renderCardsDia(){
   const dt=estGetDia();
   const dtAnt=estGetDiaAnterior(dt);
@@ -5097,6 +5217,9 @@ function renderPainelEstrategico(){
 
   // ── Cards do dia — delegar para renderCardsDia ──
   renderCardsDia();
+
+  // ── Top 5 SLA crítico ──
+  renderTopSLA();
 
   // ── Filtro: definir período ──
   const cicloSel = document.getElementById('est-ciclo-sel')?.value || 'atual';
