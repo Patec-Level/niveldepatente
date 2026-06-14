@@ -12225,9 +12225,13 @@ async function govSalvarCampo(chave, campo, valor, idx){
   // Auto-save no Firebase
   try{
     const db = getDB(); if(!db) return;
+    const _tsAutoSave = new Date().toISOString();
     await db.collection('gov_mapa').doc(chave.replace(/[|]/g,'_')).set({
-      ..._govDados[chave], chave, ts: new Date().toISOString()
+      ..._govDados[chave], chave, ts: _tsAutoSave
     });
+    // Invalidar cache das outras máquinas
+    await db.collection('config').doc('gov_mapa_ts').set({ts: _tsAutoSave});
+    localStorage.setItem('patec_gov_cache_saved_ts', _tsAutoSave);
   } catch(e){ console.warn('govAutoSave:', e); }
 }
 
@@ -12259,7 +12263,24 @@ async function govCarregarFirebase(){
     const cacheTs = parseInt(localStorage.getItem(CACHE_TS_KEY)||'0');
     const CACHE_TTL = 2 * 60 * 60 * 1000;
 
+    // Verificar se Firebase tem dados mais recentes que o cache local
+    // (evita cache stale em outra máquina ou após edições recentes)
+    let _govCacheInvalido = false;
     if(Date.now() - cacheTs < CACHE_TTL){
+      try{
+        const _metaGov = await db.collection('config').doc('gov_mapa_ts').get();
+        if(_metaGov.exists){
+          const _tsFirebaseGov = _metaGov.data().ts || null;
+          const _tsCacheGov    = localStorage.getItem('patec_gov_cache_saved_ts');
+          if(_tsFirebaseGov && _tsCacheGov && new Date(_tsFirebaseGov).getTime() > new Date(_tsCacheGov).getTime()){
+            console.log('Gov MAPA: cache local desatualizado (Firebase mais recente). Invalidando.');
+            _govCacheInvalido = true;
+          }
+        }
+      } catch(e){}
+    }
+
+    if(!_govCacheInvalido && Date.now() - cacheTs < CACHE_TTL){
       try{
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
         if(cached && Object.keys(cached).length > 0){
@@ -12279,11 +12300,15 @@ async function govCarregarFirebase(){
       const chaveDoc = d.chave || doc.id.replace(/_/g,'|');
       if(chaveDoc) _govDados[chaveDoc] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
     });
-    // Salvar cache
+    // Salvar cache com timestamp
+    const _nowGovTs = new Date().toISOString();
     try{
       localStorage.setItem(CACHE_KEY, JSON.stringify(_govDados));
       localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+      localStorage.setItem('patec_gov_cache_saved_ts', _nowGovTs);
     } catch(e){}
+    // Atualizar metadata de timestamp no Firebase (outras máquinas usam para invalidar cache)
+    try{ await db.collection('config').doc('gov_mapa_ts').set({ts: _nowGovTs}); } catch(e){}
     console.log('Gov MAPA carregado:', Object.keys(_govDados).length, 'registros');
     await govCarregarBase();
   } catch(e){ console.warn('govCarregarFirebase:', e); }
