@@ -4700,8 +4700,12 @@ function renderTopSLA(){
   const el = document.getElementById('est-top-sla-content');
   if(!el) return;
 
-  const dados = _radarDados || [];
-  if(!dados.length){
+  // ── Filtro idêntico ao MAPA: apenas "Analisar PATEC Finalizado" ──
+  const BASE = (_radarDados || []).filter(r =>
+    (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado'
+  );
+
+  if(!BASE.length){
     el.innerHTML = '<div style="font-size:12px;color:var(--tx2);padding:.5rem">⚠ Nenhum dado de Radar carregado. Faça o upload do Radar Estratégico.</div>';
     return;
   }
@@ -4709,18 +4713,21 @@ function renderTopSLA(){
   const FILAS_AG = ['patec','análise de oportunidade'];
   const normF = f => (f||'').toLowerCase().trim();
 
-  // Agrupar por RC (r.rc) — pegar maior SLA por RC
+  // Agrupar por RC — item com maior SLA é o representante
   const porRC = {};
-  dados.forEach(r => {
-    const rc = r.rc || '—';
+  BASE.forEach(r => {
+    const rc = String(r.rc||'').trim();
+    if(!rc) return;
     const sla = Number(r.sla) || 0;
     if(!porRC[rc] || sla > porRC[rc].slaMax) {
       porRC[rc] = {
         rc,
+        seq: r.seq,
+        num_oport: r.num_oport,
         fila: r.fila || '—',
         analista: (r.analista && r.analista !== '#N/A') ? r.analista : '—',
         slaMax: sla,
-        analista_auto: r.analista_auto || ''
+        _ref: r   // referência ao item com maior SLA (para govChave)
       };
     }
   });
@@ -4736,18 +4743,38 @@ function renderTopSLA(){
     return;
   }
 
-  // Para cada RC do top5, contar itens Ag. Tratamento e Em Análise no _radarDados
+  // Para cada RC: contagem + prazo da governança
   const resultado = top5.map(item => {
-    const itensRC = dados.filter(r => r.rc === item.rc);
-    const agTrat  = itensRC.filter(r =>
-      (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado' &&
-      FILAS_AG.includes(normF(r.fila))
-    ).length;
-    const emAnalise = itensRC.filter(r =>
-      (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado' &&
-      !FILAS_AG.includes(normF(r.fila))
-    ).length;
-    return { ...item, agTrat, emAnalise, totalRC: itensRC.length };
+    const itensRC = BASE.filter(r => String(r.rc||'').trim() === item.rc);
+
+    const agTrat    = itensRC.filter(r => FILAS_AG.includes(normF(r.fila))).length;
+    const emAnalise = itensRC.filter(r => !FILAS_AG.includes(normF(r.fila))).length;
+
+    // Buscar prazo na governança usando o item de maior SLA como referência
+    const chave = govChave(item._ref);
+    const m = (_govDados && _govDados[chave]) || {};
+    const prazo = govCalcPrazo(m.status||'', m.envio||'');
+    const statusGov = govCalcStatus(prazo, m.finalizado||'');
+
+    let prazoLabel, prazoStyle;
+    if(!m.status && !m.envio){
+      prazoLabel = '⚠ Precisa de ação';
+      prazoStyle = 'color:var(--am);font-weight:700';
+    } else if(statusGov === 'ATRASADO'){
+      prazoLabel = '🔴 Fora do prazo';
+      prazoStyle = 'color:var(--vm);font-weight:700';
+    } else if(statusGov === 'DENTRO DO PRAZO'){
+      prazoLabel = '🟢 Dentro do prazo';
+      prazoStyle = 'color:var(--vd);font-weight:700';
+    } else if(statusGov === 'CONCLUÍDO'){
+      prazoLabel = '✅ Concluído';
+      prazoStyle = 'color:var(--az);font-weight:700';
+    } else {
+      prazoLabel = '⚠ Precisa de ação';
+      prazoStyle = 'color:var(--am);font-weight:700';
+    }
+
+    return { ...item, agTrat, emAnalise, prazoLabel, prazoStyle };
   });
 
   // Paleta de cor por SLA
@@ -4756,7 +4783,7 @@ function renderTopSLA(){
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr;gap:8px">
       ${resultado.map((r, i) => `
-        <div style="display:grid;grid-template-columns:28px 90px 1fr 160px 120px 120px;align-items:center;gap:10px;
+        <div style="display:grid;grid-template-columns:28px 90px 1fr 150px 110px 110px 170px;align-items:center;gap:10px;
              background:${i===0?'rgba(217,64,64,.07)':'var(--cin)'};
              border:1px solid ${i===0?'rgba(217,64,64,.2)':'var(--brd)'};
              border-radius:8px;padding:.6rem .875rem">
@@ -4794,11 +4821,17 @@ function renderTopSLA(){
             <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Em Análise</div>
           </div>
 
+          <!-- Prazo Governança -->
+          <div style="text-align:center;background:var(--bg);border:1px solid var(--brd);border-radius:6px;padding:.375rem .5rem">
+            <div style="font-size:11px;${r.prazoStyle};line-height:1.3">${r.prazoLabel}</div>
+            <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:3px">Governança</div>
+          </div>
+
         </div>
       `).join('')}
     </div>
     <div style="font-size:10px;color:var(--tx2);margin-top:.5rem">
-      Ag. Tratamento = itens na fila PATEC/Análise de Oportunidade · Em Análise = demais itens do RC em "Analisar PATEC Finalizado"
+      Base: <strong>Analisar PATEC Finalizado</strong> · Ag. Tratamento = fila PATEC/Análise de Oportunidade · Prazo via Governança do item com maior SLA
     </div>`;
 }
 
