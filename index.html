@@ -12297,8 +12297,18 @@ async function govCarregarFirebase(){
     snap.forEach(doc => {
       const d = doc.data();
       // Usa d.chave se existir; caso contrário reconstrói a chave a partir do ID do doc (A|B|C → A_B_C)
-      const chaveDoc = d.chave || doc.id.replace(/_/g,'|');
-      if(chaveDoc) _govDados[chaveDoc] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
+      // d.chave é o campo confiável; se não existir, reconstruir do doc.id
+      // Doc IDs antigos tinham prefixo 'gov_' (bug do persistirLote anterior) — remover
+      let chaveDoc = d.chave || '';
+      if(!chaveDoc){
+        let rawId = doc.id;
+        if(rawId.startsWith('gov_')) rawId = rawId.slice(4); // remove prefixo 'gov_'
+        chaveDoc = rawId.replace(/_/g,'|');
+      }
+      if(chaveDoc && (d.envio || d.finalizado || d.status)){
+        // Só guardar se tiver algum dado útil (envio/finalizado/status real)
+        _govDados[chaveDoc] = { status: d.status||'', envio: d.envio||'', finalizado: d.finalizado||'', comentario: d.comentario||'' };
+      }
     });
     // Salvar cache com timestamp
     const _nowGovTs = new Date().toISOString();
