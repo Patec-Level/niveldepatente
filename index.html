@@ -12322,9 +12322,8 @@ async function govCarregarFirebase(){
         };
         const _envioNorm = _normData(d.envio||'');
         const _finalNorm = _normData(d.finalizado||'');
-        if(d.envio || d.finalizado || _stRaw){
-          _govDados[chaveDoc] = { status: _stRaw, envio: _envioNorm, finalizado: _finalNorm, comentario: d.comentario||'' };
-        }
+        // Guardar TODOS os docs — inclusive os com só status (AG. TRATAMENTO sem envio)
+        _govDados[chaveDoc] = { status: _stRaw, envio: _envioNorm, finalizado: _finalNorm, comentario: d.comentario||'' };
       }
     });
     // Salvar cache com timestamp
@@ -13422,13 +13421,19 @@ function govSincronizarMapa(rows){
       const db = getDB();
       if(db){
         try{
-          const batch = db.batch();
-          lote.forEach(chave => {
+          // Usar Promise.all para verificar existência antes de gravar
+          // Só criar doc se não existir — preserva envio/finalizado já preenchidos
+          await Promise.all(lote.map(async chave => {
             const docId = chave.replace(/[|]/g,'_').substring(0,400);
             const ref = db.collection('gov_mapa').doc(docId);
-            batch.set(ref, { chave, status: 'AG. TRATAMENTO', envio: '', finalizado: '', ts: new Date().toISOString() }, { merge: true });
-          });
-          await batch.commit();
+            const snap = await ref.get();
+            if(!snap.exists){
+              await ref.set({ chave, status: 'AG. TRATAMENTO', envio: '', finalizado: '', ts: new Date().toISOString() });
+            } else if(!snap.data().chave){
+              // Doc existe mas sem campo chave — adicionar só o campo chave
+              await ref.update({ chave });
+            }
+          }));
         } catch(e){ console.warn('Gov batch erro:', e.message); }
       }
       // Próximo lote com delay de 500ms
