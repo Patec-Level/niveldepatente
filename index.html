@@ -2671,6 +2671,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+      <!-- BUSCA HISTÓRICO POR RC -->
+      <div class="cd" style="border-top:3px solid var(--azm);margin-bottom:1rem;padding:.875rem 1rem">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-size:13px;font-weight:700;color:var(--az)">📋 Histórico por RC</div>
+          <input type="text" id="hist-rc-input" placeholder="Digite o número da RC..." maxlength="20"
+            style="font-size:12px;padding:5px 10px;border:1.5px solid var(--brd);border-radius:6px;color:var(--az);font-weight:600;width:200px"
+            onkeydown="if(event.key==='Enter') abrirHistoricoRC(document.getElementById('hist-rc-input').value)">
+          <button class="btn btn-g" style="font-size:11px" onclick="abrirHistoricoRC(document.getElementById('hist-rc-input').value)">🔍 Ver histórico</button>
+          <span style="font-size:11px;color:var(--tx2)">Busque qualquer RC para ver todas as ações registradas</span>
+        </div>
+      </div>
+
       <!-- ANÁLISE PCP DO DIA -->
       <div class="cd" style="border-top:3px solid var(--azm);margin-bottom:1rem">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
@@ -4700,7 +4712,6 @@ function renderTopSLA(){
   const el = document.getElementById('est-top-sla-content');
   if(!el) return;
 
-  // ── Filtro idêntico ao MAPA: apenas "Analisar PATEC Finalizado" ──
   const BASE = (_radarDados || []).filter(r =>
     (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado'
   );
@@ -4713,26 +4724,19 @@ function renderTopSLA(){
   const FILAS_AG = ['patec','análise de oportunidade'];
   const normF = f => (f||'').toLowerCase().trim();
 
-  // Agrupar por RC — item com maior SLA é o representante
+  // Agrupar por RC
   const porRC = {};
   BASE.forEach(r => {
     const rc = String(r.rc||'').trim();
     if(!rc) return;
     const sla = Number(r.sla) || 0;
     if(!porRC[rc] || sla > porRC[rc].slaMax) {
-      porRC[rc] = {
-        rc,
-        seq: r.seq,
-        num_oport: r.num_oport,
-        fila: r.fila || '—',
+      porRC[rc] = { rc, seq: r.seq, num_oport: r.num_oport, fila: r.fila||'—',
         analista: (r.analista && r.analista !== '#N/A') ? r.analista : '—',
-        slaMax: sla,
-        _ref: r   // referência ao item com maior SLA (para govChave)
-      };
+        slaMax: sla, _ref: r };
     }
   });
 
-  // Top 5 por SLA decrescente
   const top5 = Object.values(porRC)
     .filter(r => r.slaMax > 0)
     .sort((a,b) => b.slaMax - a.slaMax)
@@ -4743,96 +4747,209 @@ function renderTopSLA(){
     return;
   }
 
-  // Para cada RC: contagem + prazo da governança
+  // ── Calcular dias sem movimentação por RC ──
+  const todasAcoes = Object.values(window._prodAcoesCache||{}).flat().filter(a=>!a.anulada);
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+  function diasSemMovimentacao(rc){
+    const acoesRC = todasAcoes.filter(a => String(a.rc||'').trim() === String(rc).trim() || (a.rcChave||'').startsWith(String(rc)+'|'));
+    if(!acoesRC.length) return null; // nunca teve ação
+    const datas = acoesRC.map(a => new Date(a.data+'T00:00:00')).filter(d => !isNaN(d));
+    if(!datas.length) return null;
+    const ultima = new Date(Math.max(...datas));
+    return Math.floor((hoje - ultima) / 86400000);
+  }
+
+  function badgeMovimentacao(dias){
+    if(dias === null) return { txt: '⚫ Nunca registrado', st: 'color:#888;font-weight:600' };
+    if(dias === 0)    return { txt: '🟢 Movimentado hoje', st: 'color:var(--vd);font-weight:700' };
+    if(dias <= 3)     return { txt: `🟢 Há ${dias} dia${dias>1?'s':''}`, st: 'color:var(--vd);font-weight:700' };
+    if(dias <= 7)     return { txt: `🟡 Há ${dias} dias`, st: 'color:var(--am);font-weight:700' };
+    return { txt: `🔴 ${dias} dias parado`, st: 'color:var(--vm);font-weight:700' };
+  }
+
+  const corSLA = sla => sla >= 150 ? 'var(--vm)' : sla >= 90 ? 'var(--am)' : 'var(--vd)';
+
   const resultado = top5.map(item => {
     const itensRC = BASE.filter(r => String(r.rc||'').trim() === item.rc);
-
     const agTrat    = itensRC.filter(r => FILAS_AG.includes(normF(r.fila))).length;
     const emAnalise = itensRC.filter(r => !FILAS_AG.includes(normF(r.fila))).length;
 
-    // Buscar prazo na governança usando o item de maior SLA como referência
     const chave = govChave(item._ref);
     const m = (_govDados && _govDados[chave]) || {};
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const statusGov = govCalcStatus(prazo, m.finalizado||'');
 
     let prazoLabel, prazoStyle;
-    if(!m.status && !m.envio){
-      prazoLabel = '⚠ Precisa de ação';
-      prazoStyle = 'color:var(--am);font-weight:700';
-    } else if(statusGov === 'ATRASADO'){
-      prazoLabel = '🔴 Fora do prazo';
-      prazoStyle = 'color:var(--vm);font-weight:700';
-    } else if(statusGov === 'DENTRO DO PRAZO'){
-      prazoLabel = '🟢 Dentro do prazo';
-      prazoStyle = 'color:var(--vd);font-weight:700';
-    } else if(statusGov === 'CONCLUÍDO'){
-      prazoLabel = '✅ Concluído';
-      prazoStyle = 'color:var(--az);font-weight:700';
-    } else {
-      prazoLabel = '⚠ Precisa de ação';
-      prazoStyle = 'color:var(--am);font-weight:700';
-    }
+    if(!m.status && !m.envio){ prazoLabel='⚠ Precisa de ação'; prazoStyle='color:var(--am);font-weight:700'; }
+    else if(statusGov==='ATRASADO'){ prazoLabel='🔴 Fora do prazo'; prazoStyle='color:var(--vm);font-weight:700'; }
+    else if(statusGov==='DENTRO DO PRAZO'){ prazoLabel='🟢 Dentro do prazo'; prazoStyle='color:var(--vd);font-weight:700'; }
+    else if(statusGov==='CONCLUÍDO'){ prazoLabel='✅ Concluído'; prazoStyle='color:var(--az);font-weight:700'; }
+    else { prazoLabel='⚠ Precisa de ação'; prazoStyle='color:var(--am);font-weight:700'; }
 
-    return { ...item, agTrat, emAnalise, prazoLabel, prazoStyle };
+    const dias = diasSemMovimentacao(item.rc);
+    const mov  = badgeMovimentacao(dias);
+
+    return { ...item, agTrat, emAnalise, prazoLabel, prazoStyle, movTxt: mov.txt, movSt: mov.st, dias };
   });
-
-  // Paleta de cor por SLA
-  const corSLA = sla => sla >= 150 ? 'var(--vm)' : sla >= 90 ? 'var(--am)' : 'var(--vd)';
 
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr;gap:8px">
       ${resultado.map((r, i) => `
-        <div style="display:grid;grid-template-columns:28px 90px 1fr 150px 110px 110px 170px;align-items:center;gap:10px;
-             background:${i===0?'rgba(217,64,64,.07)':'var(--cin)'};
-             border:1px solid ${i===0?'rgba(217,64,64,.2)':'var(--brd)'};
-             border-radius:8px;padding:.6rem .875rem">
+        <div style="border-radius:8px;background:${i===0?'rgba(217,64,64,.07)':'var(--cin)'};border:1px solid ${i===0?'rgba(217,64,64,.2)':'var(--brd)'};overflow:hidden">
+          <!-- Linha principal -->
+          <div style="display:grid;grid-template-columns:28px 90px 1fr 150px 110px 110px 160px 120px;align-items:center;gap:10px;padding:.6rem .875rem">
 
-          <!-- Posição -->
-          <div style="font-size:14px;font-weight:800;color:${i===0?'var(--vm)':i===1?'var(--am)':'var(--tx2)'};text-align:center">${i+1}°</div>
+            <div style="font-size:14px;font-weight:800;color:${i===0?'var(--vm)':i===1?'var(--am)':'var(--tx2)'};text-align:center">${i+1}°</div>
 
-          <!-- SLA badge -->
-          <div style="text-align:center">
-            <div style="font-size:18px;font-weight:800;color:${corSLA(r.slaMax)};line-height:1">${r.slaMax}</div>
-            <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.5px">dias SLA</div>
+            <div style="text-align:center">
+              <div style="font-size:18px;font-weight:800;color:${corSLA(r.slaMax)};line-height:1">${r.slaMax}</div>
+              <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.5px">dias SLA</div>
+            </div>
+
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--az);font-family:monospace">${r.rc}</div>
+              <div style="font-size:10px;color:var(--tx2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.fila}</div>
+            </div>
+
+            <div>
+              <div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-bottom:2px">Analista</div>
+              <div style="font-size:11px;font-weight:600;color:var(--tx)">${r.analista}</div>
+            </div>
+
+            <div style="text-align:center;background:rgba(192,122,18,.1);border-radius:6px;padding:.375rem .5rem">
+              <div style="font-size:16px;font-weight:800;color:var(--am);line-height:1">${r.agTrat}</div>
+              <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Ag. Tratamento</div>
+            </div>
+
+            <div style="text-align:center;background:rgba(50,102,173,.1);border-radius:6px;padding:.375rem .5rem">
+              <div style="font-size:16px;font-weight:800;color:#3266AD;line-height:1">${r.emAnalise}</div>
+              <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Em Análise</div>
+            </div>
+
+            <div style="text-align:center;background:var(--bg);border:1px solid var(--brd);border-radius:6px;padding:.375rem .5rem">
+              <div style="font-size:11px;${r.prazoStyle};line-height:1.3">${r.prazoLabel}</div>
+              <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:3px">Governança</div>
+            </div>
+
+            <!-- Botão histórico -->
+            <div style="text-align:center">
+              <button onclick="abrirHistoricoRC('${r.rc}')"
+                style="background:var(--azc);border:1.5px solid var(--azm);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:10px;font-weight:700;color:var(--azm);white-space:nowrap">
+                📋 Histórico
+              </button>
+            </div>
           </div>
 
-          <!-- RC + Fila -->
-          <div>
-            <div style="font-size:12px;font-weight:700;color:var(--az);font-family:monospace">${r.rc}</div>
-            <div style="font-size:10px;color:var(--tx2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.fila}</div>
+          <!-- Barra de movimentação -->
+          <div style="border-top:1px solid var(--brd);padding:.35rem .875rem;display:flex;align-items:center;gap:6px;background:var(--bg)">
+            <span style="font-size:10px;font-weight:600;${r.movSt}">${r.movTxt}</span>
+            <span style="font-size:10px;color:var(--tx2)">· última ação registrada no sistema</span>
           </div>
-
-          <!-- Analista -->
-          <div>
-            <div style="font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-bottom:2px">Analista</div>
-            <div style="font-size:11px;font-weight:600;color:var(--tx)">${r.analista}</div>
-          </div>
-
-          <!-- Ag. Tratamento -->
-          <div style="text-align:center;background:rgba(192,122,18,.1);border-radius:6px;padding:.375rem .5rem">
-            <div style="font-size:16px;font-weight:800;color:var(--am);line-height:1">${r.agTrat}</div>
-            <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Ag. Tratamento</div>
-          </div>
-
-          <!-- Em Análise -->
-          <div style="text-align:center;background:rgba(50,102,173,.1);border-radius:6px;padding:.375rem .5rem">
-            <div style="font-size:16px;font-weight:800;color:#3266AD;line-height:1">${r.emAnalise}</div>
-            <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px">Em Análise</div>
-          </div>
-
-          <!-- Prazo Governança -->
-          <div style="text-align:center;background:var(--bg);border:1px solid var(--brd);border-radius:6px;padding:.375rem .5rem">
-            <div style="font-size:11px;${r.prazoStyle};line-height:1.3">${r.prazoLabel}</div>
-            <div style="font-size:9px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:3px">Governança</div>
-          </div>
-
         </div>
       `).join('')}
     </div>
     <div style="font-size:10px;color:var(--tx2);margin-top:.5rem">
-      Base: <strong>Analisar PATEC Finalizado</strong> · Ag. Tratamento = fila PATEC/Análise de Oportunidade · Prazo via Governança do item com maior SLA
+      Base: <strong>Analisar PATEC Finalizado</strong> · Ag. Tratamento = fila PATEC/Análise de Oportunidade · Prazo via Governança · Movimentação via histórico de produção
     </div>`;
+}
+
+// ── MODAL HISTÓRICO POR RC ──
+function abrirHistoricoRC(rc){
+  rc = String(rc).trim();
+  // Buscar todas as ações desse RC no cache
+  const todasAcoes = Object.values(window._prodAcoesCache||{}).flat();
+  const acoesRC = todasAcoes.filter(a =>
+    String(a.rc||'').trim() === rc || (a.rcChave||'').startsWith(rc+'|')
+  ).filter(a => !a.anulada);
+
+  // Ordenar por data+hora decrescente
+  acoesRC.sort((a,b) => {
+    const da = (a.data||'')+(a.ts||'');
+    const db = (b.data||'')+(b.ts||'');
+    return db.localeCompare(da);
+  });
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const fmtData = d => {
+    if(!d) return '—';
+    const [y,m,dd] = d.split('-');
+    return `${dd}/${m}/${y}`;
+  };
+  const tipoLabel = {
+    'primeira_analise': '🔍 1ª Análise',
+    'em_tratativa':     '⚙️ Em Tratativa',
+    'status_b':         '✅ Status B',
+    'outros':           '📋 Outros'
+  };
+  const corTipo = {
+    'primeira_analise': 'var(--azm)',
+    'em_tratativa':     'var(--azm)',
+    'status_b':         'var(--vd)',
+    'outros':           'var(--am)'
+  };
+
+  let conteudo = '';
+  if(!acoesRC.length){
+    conteudo = '<div style="font-size:12px;color:var(--tx2);padding:1rem;text-align:center">⚫ Nenhuma ação registrada para esta RC no sistema.</div>';
+  } else {
+    const ultimaData = acoesRC[0]?.data;
+    const ultimaDt = ultimaData ? new Date(ultimaData+'T00:00:00') : null;
+    const diasParado = ultimaDt ? Math.floor((hoje - ultimaDt)/86400000) : null;
+    const resumo = diasParado === 0 ? 'Movimentada hoje' : diasParado === 1 ? 'Última ação há 1 dia' : diasParado !== null ? `Última ação há ${diasParado} dias` : '';
+
+    conteudo = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;padding:.625rem .875rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd)">
+        <span style="font-size:12px;font-weight:700;color:var(--az)">${acoesRC.length} ação${acoesRC.length>1?'ões':''} registrada${acoesRC.length>1?'s':''}</span>
+        <span style="font-size:11px;color:${diasParado>7?'var(--vm)':diasParado>3?'var(--am)':'var(--vd)'};font-weight:600">${resumo}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;padding-right:4px">
+        ${acoesRC.map((a,idx) => {
+          const tl = tipoLabel[a.tipo] || a.tipo || '—';
+          const tc = corTipo[a.tipo] || 'var(--tx)';
+          const tratamento = a.tratamento ? `<span style="font-size:10px;background:var(--cin);border:1px solid var(--brd);border-radius:4px;padding:1px 6px;color:var(--tx2)">→ ${a.tratamento}</span>` : '';
+          const conclusao  = a.conclusao  ? `<span style="font-size:10px;background:var(--vdc);border:1px solid var(--vd);border-radius:4px;padding:1px 6px;color:var(--vd)">${a.conclusao}</span>` : '';
+          const obs = a.obs ? `<div style="font-size:11px;color:var(--tx2);margin-top:4px;padding:4px 8px;background:#fff;border-radius:5px;border-left:2px solid var(--azm);font-style:italic">"${a.obs}"</div>` : '';
+          const hora = a.ts ? new Date(a.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+          return `
+            <div style="background:${idx===0?'var(--azc)':'#fff'};border:1px solid ${idx===0?'var(--azm)':'var(--brd)'};border-radius:8px;padding:.625rem .875rem">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-size:11px;font-weight:700;color:var(--tx2);min-width:75px">${fmtData(a.data)}${hora?' '+hora:''}</span>
+                <span style="font-size:11px;font-weight:700;color:var(--az)">${a.colab||'—'}</span>
+                <span style="font-size:11px;font-weight:700;color:${tc}">${tl}</span>
+                ${tratamento}
+                ${conclusao}
+              </div>
+              ${obs}
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // Abrir modal
+  let modal = document.getElementById('modal-historico-rc');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'modal-historico-rc';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;align-items:center;justify-content:center';
+    modal.innerHTML = `<div style="background:#fff;border-radius:16px;padding:1.5rem;max-width:560px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--az)" id="hist-titulo">Histórico da RC</div>
+          <div style="font-size:11px;color:var(--tx2);margin-top:2px" id="hist-subtitulo"></div>
+        </div>
+        <button onclick="document.getElementById('modal-historico-rc').style.display='none'"
+          style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--tx2)">×</button>
+      </div>
+      <div id="hist-conteudo"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById('hist-titulo').textContent = `📋 Histórico — RC ${rc}`;
+  document.getElementById('hist-subtitulo').textContent = `Todas as ações registradas no sistema para esta RC`;
+  document.getElementById('hist-conteudo').innerHTML = conteudo;
+  modal.style.display = 'flex';
 }
 
 function renderCardsDia(){
