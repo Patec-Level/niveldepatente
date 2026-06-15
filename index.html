@@ -2065,6 +2065,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
         </div>
 
+        <!-- ── ALERTAS DE PERFORMANCE ── -->
+        <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vm)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem">
+            <div>
+              <div class="cd-t" style="margin:0">🔔 Alertas de Performance</div>
+              <div style="font-size:11px;color:var(--tx2);margin-top:3px">Últimos 5 dias úteis · Baseado nos fechamentos do dia</div>
+            </div>
+            <button class="btn btn-s" style="font-size:11px" onclick="renderAlertasPerf()">↺ Atualizar</button>
+          </div>
+          <div id="alertas-perf-content">
+            <div style="font-size:12px;color:var(--tx2)">Carregando...</div>
+          </div>
+        </div>
+
         <!-- ── PERFORMANCE SEMANAL DA EQUIPE ── -->
         <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem">
@@ -3939,6 +3953,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div id="fdia-composicao" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px"></div>
         </div>
 
+        <!-- Alerta Individual de Performance -->
+        <div id="fdia-alerta-perf" style="display:none;margin-bottom:1rem"></div>
+
         <!-- Minha Semana -->
         <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
@@ -4979,6 +4996,184 @@ function abrirHistoricoRC(rc){
   document.getElementById('hist-subtitulo').textContent = `Todas as ações registradas no sistema para esta RC`;
   document.getElementById('hist-conteudo').innerHTML = conteudo;
   modal.style.display = 'flex';
+}
+
+// ── ALERTAS DE PERFORMANCE ──
+async function _buscarFechamentos5Dias(colabs){
+  const db = getDB(); if(!db) return {};
+  const hoje = new Date();
+  const dias = [];
+  let d = new Date(hoje);
+  while(dias.length < 5){
+    const dow = d.getDay();
+    if(dow !== 0 && dow !== 6) dias.unshift(d.toISOString().split('T')[0]);
+    d.setDate(d.getDate()-1);
+  }
+  const resultado = {};
+  colabs.forEach(c => { resultado[c] = {}; dias.forEach(dia => { resultado[c][dia] = null; }); });
+  try{
+    const snap = await db.collection('fechamento_dia')
+      .where('data','>=',dias[0]).where('data','<=',dias[4]).get();
+    snap.forEach(doc => {
+      const f = doc.data();
+      if(resultado[f.colab] && f.data) resultado[f.colab][f.data] = f.total || 0;
+    });
+  } catch(e){ console.warn('alertas perf:', e); }
+  return { resultado, dias };
+}
+
+async function renderAlertasPerf(){
+  const el = document.getElementById('alertas-perf-content');
+  if(!el) return;
+  el.innerHTML = '<div style="font-size:12px;color:var(--tx2)">⏳ Carregando fechamentos...</div>';
+
+  const COLABS_AN = (window.COLABS||['Lory','Ludy','Wanessa']).filter(c=>c!=='André');
+  const META = 30;
+
+  const { resultado, dias } = await _buscarFechamentos5Dias(COLABS_AN);
+
+  const fmtD = d => { const [,m,dd]=d.split('-'); return `${dd}/${m}`; };
+
+  const cards = COLABS_AN.map(colab => {
+    const hist = resultado[colab] || {};
+    const vals = dias.map(d => hist[d]); // null = sem fechamento
+
+    // Calcular sequência de dias consecutivos abaixo da meta (do mais recente para trás)
+    let consecutivos = 0;
+    for(let i=dias.length-1;i>=0;i--){
+      if(vals[i]===null) break; // sem dado = para de contar
+      if(vals[i] < META) consecutivos++;
+      else break;
+    }
+
+    // Média dos dias com fechamento
+    const comDados = vals.filter(v=>v!==null);
+    const media = comDados.length ? Math.round(comDados.reduce((a,b)=>a+b,0)/comDados.length) : null;
+    const pctMedia = media !== null ? Math.round(media/META*100) : null;
+
+    // Última vez que bateu a meta
+    let ultimaBateu = null;
+    for(let i=dias.length-1;i>=0;i--){
+      if(vals[i]!==null && vals[i]>=META){ ultimaBateu = dias[i]; break; }
+    }
+
+    // Status
+    let status, cor, icone, msg;
+    if(consecutivos >= 3){
+      status='CRÍTICO'; cor='var(--vm)'; icone='🔴';
+      msg=`${consecutivos} dias consecutivos abaixo da meta`;
+    } else if(consecutivos === 2){
+      status='ATENÇÃO'; cor='var(--am)'; icone='🟡';
+      msg=`${consecutivos} dias consecutivos abaixo da meta`;
+    } else if(consecutivos === 1){
+      status='OBSERVAR'; cor='#E67E22'; icone='🟠';
+      msg='1 dia abaixo da meta';
+    } else if(comDados.length===0){
+      status='SEM DADOS'; cor='var(--tx2)'; icone='⚫';
+      msg='Sem fechamentos registrados';
+    } else {
+      status='NORMAL'; cor='var(--vd)'; icone='✅';
+      msg='Dentro da meta nos últimos dias';
+    }
+
+    return { colab, consecutivos, media, pctMedia, ultimaBateu, status, cor, icone, msg, vals, dias };
+  });
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">
+      ${cards.map(c => `
+        <div style="border-radius:10px;border:1.5px solid ${c.cor};background:${c.status==='CRÍTICO'?'rgba(217,64,64,.06)':c.status==='ATENÇÃO'?'rgba(192,122,18,.06)':c.status==='NORMAL'?'rgba(76,175,80,.06)':'var(--cin)'};padding:.875rem 1rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.625rem">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:16px">${c.icone}</span>
+              <span style="font-size:14px;font-weight:700;color:var(--az)">${c.colab}</span>
+            </div>
+            <span style="font-size:10px;font-weight:700;color:${c.cor};background:${c.status==='CRÍTICO'?'rgba(217,64,64,.1)':c.status==='ATENÇÃO'?'rgba(192,122,18,.1)':'transparent'};padding:2px 8px;border-radius:12px;border:1px solid ${c.cor}">${c.status}</span>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:${c.cor};margin-bottom:.5rem">${c.msg}</div>
+          <div style="display:flex;gap:12px;font-size:11px;color:var(--tx2);margin-bottom:.625rem">
+            ${c.media!==null?`<span>Média: <strong style="color:${c.pctMedia>=100?'var(--vd)':c.pctMedia>=70?'var(--am)':'var(--vm)'}">${c.media}/${META} (${c.pctMedia}%)</strong></span>`:''}
+            ${c.ultimaBateu?`<span>Última meta: <strong style="color:var(--vd)">${fmtD(c.ultimaBateu)}</strong></span>`:c.comDados>0?'<span style="color:var(--vm)">Não bateu a meta no período</span>':''}
+          </div>
+          <!-- Mini histórico 5 dias -->
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px">
+            ${c.dias.map((d,i) => {
+              const v = c.vals[i];
+              const cor2 = v===null?'var(--tx2)':v>=META?'var(--vd)':v>=META*.7?'var(--am)':'var(--vm)';
+              const bg  = v===null?'var(--cin)':v>=META?'rgba(76,175,80,.12)':v>=META*.7?'rgba(192,122,18,.12)':'rgba(217,64,64,.1)';
+              return `<div style="text-align:center;background:${bg};border-radius:5px;padding:3px 2px">
+                <div style="font-size:11px;font-weight:700;color:${cor2}">${v!==null?v:'—'}</div>
+                <div style="font-size:9px;color:var(--tx2)">${fmtD(d)}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--tx2);margin-top:.75rem">🔴 3+ dias consecutivos · 🟡 2 dias · 🟠 1 dia · ✅ Normal · Baseado nos fechamentos registrados</div>`;
+}
+
+async function renderFdiaAlertaIndividual(colab){
+  const el = document.getElementById('fdia-alerta-perf');
+  if(!el || !colab) return;
+
+  const META = 30;
+  const { resultado, dias } = await _buscarFechamentos5Dias([colab]);
+  const hist = resultado[colab] || {};
+  const vals = dias.map(d => hist[d]);
+
+  // Consecutivos abaixo
+  let consecutivos = 0;
+  for(let i=dias.length-1;i>=0;i--){
+    if(vals[i]===null) break;
+    if(vals[i] < META) consecutivos++;
+    else break;
+  }
+
+  // Sem alerta se está bem
+  if(consecutivos < 1){ el.style.display='none'; return; }
+
+  const comDados = vals.filter(v=>v!==null);
+  const media = comDados.length ? Math.round(comDados.reduce((a,b)=>a+b,0)/comDados.length) : null;
+  const pct = media !== null ? Math.round(media/META*100) : null;
+  const fmtD = d => { const [,m,dd]=d.split('-'); return `${dd}/${m}`; };
+  let ultimaBateu = null;
+  for(let i=dias.length-1;i>=0;i--){
+    if(vals[i]!==null && vals[i]>=META){ ultimaBateu = dias[i]; break; }
+  }
+
+  const cor  = consecutivos>=3?'var(--vm)':consecutivos>=2?'var(--am)':'#E67E22';
+  const bg   = consecutivos>=3?'rgba(217,64,64,.06)':consecutivos>=2?'rgba(192,122,18,.06)':'rgba(230,126,34,.06)';
+  const icone = consecutivos>=3?'🔴':consecutivos>=2?'🟡':'🟠';
+  const titulo = consecutivos>=3?'Atenção — Meta não atingida por '+consecutivos+' dias seguidos':
+                 consecutivos>=2?'Atenção — '+consecutivos+' dias seguidos abaixo da meta':
+                 'Ontem você ficou abaixo da meta';
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="border-radius:10px;border:2px solid ${cor};background:${bg};padding:.875rem 1rem">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="font-size:24px;line-height:1">${icone}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:${cor};margin-bottom:4px">${titulo}</div>
+          <div style="font-size:11px;color:var(--tx2);line-height:1.6">
+            ${media!==null?`Média dos últimos dias: <strong style="color:${pct>=100?'var(--vd)':pct>=70?'var(--am)':'var(--vm)'}">${media}/${META} itens (${pct}%)</strong><br>`:''}
+            ${ultimaBateu?`Última vez que bateu a meta: <strong style="color:var(--vd)">${fmtD(ultimaBateu)}</strong>`:'<span style="color:var(--vm);font-weight:600">Não bateu a meta em nenhum dos últimos 5 dias</span>'}
+          </div>
+          <!-- Mini histórico -->
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:.625rem">
+            ${dias.map((d,i) => {
+              const v = vals[i];
+              const c2 = v===null?'var(--tx2)':v>=META?'var(--vd)':v>=META*.7?'var(--am)':'var(--vm)';
+              const b2 = v===null?'var(--cin)':v>=META?'rgba(76,175,80,.12)':v>=META*.7?'rgba(192,122,18,.12)':'rgba(217,64,64,.1)';
+              return `<div style="text-align:center;background:${b2};border-radius:5px;padding:3px 2px">
+                <div style="font-size:12px;font-weight:700;color:${c2}">${v!==null?v:'—'}</div>
+                <div style="font-size:9px;color:var(--tx2)">${fmtD(d)}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
 }
 
 // ── UTILITÁRIOS DE SEMANA ──
@@ -6868,7 +7063,7 @@ function setAdmTab(id,btn){
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
   if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
   if(id==='hist-mapa') setTimeout(renderAdmMapaHistorico,50);
-  if(id==='hist-prod') setTimeout(()=>{ renderDistribuicao(); renderPerfSemanal(); },50);
+  if(id==='hist-prod') setTimeout(()=>{ renderDistribuicao(); renderAlertasPerf(); renderPerfSemanal(); },50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
   if(id==='usuarios') setTimeout(()=>{
     // Aguardar window._db estar disponível
@@ -17938,6 +18133,8 @@ async function fdiaInicializar(){
   fdiaRenderLinhaTempo(colab);
   // Renderizar visão da semana
   renderFdiaSemana(colab);
+  // Alerta individual de performance
+  renderFdiaAlertaIndividual(colab);
   const cnt   = prodContarHoje(acoes);
   const pct   = Math.min(100, Math.round(cnt.meta / metaVal * 100));
   const cor   = cnt.meta >= metaVal ? 'var(--vd)' : cnt.meta >= metaVal*.8 ? 'var(--am)' : 'var(--vm)';
