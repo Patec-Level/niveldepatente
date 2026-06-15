@@ -3889,6 +3889,20 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
+      <!-- Alerta Individual de Performance -->
+      <div id="fdia-alerta-perf" style="display:none;margin-bottom:1rem"></div>
+
+      <!-- Minha Semana -->
+      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <div class="cd-t" style="margin:0">📅 Minha Semana</div>
+          <span style="font-size:11px;color:var(--tx2)" id="fdia-semana-label">—</span>
+        </div>
+        <div id="fdia-semana-content">
+          <div style="font-size:12px;color:var(--tx2);padding:.5rem">Carregando...</div>
+        </div>
+      </div>
+
       <!-- Regra do dia -->
       <div class="cd" style="border:1.5px solid var(--azm);background:var(--azc);margin-bottom:1rem">
         <div style="display:flex;align-items:flex-start;gap:10px">
@@ -3951,20 +3965,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <span style="flex:1;height:1px;background:var(--brd);display:inline-block"></span>
           </div>
           <div id="fdia-composicao" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px"></div>
-        </div>
-
-        <!-- Alerta Individual de Performance -->
-        <div id="fdia-alerta-perf" style="display:none;margin-bottom:1rem"></div>
-
-        <!-- Minha Semana -->
-        <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-            <div class="cd-t" style="margin:0">📅 Minha Semana</div>
-            <span style="font-size:11px;color:var(--tx2)" id="fdia-semana-label">—</span>
-          </div>
-          <div id="fdia-semana-content">
-            <div style="font-size:12px;color:var(--tx2);padding:.5rem">Carregando...</div>
-          </div>
         </div>
 
         <!-- Linha do tempo do dia -->
@@ -5115,7 +5115,6 @@ async function renderFdiaAlertaIndividual(colab){
   const hist = resultado[colab] || {};
   const vals = dias.map(d => hist[d]);
 
-  // Consecutivos abaixo
   let consecutivos = 0;
   for(let i=dias.length-1;i>=0;i--){
     if(vals[i]===null) break;
@@ -5123,7 +5122,6 @@ async function renderFdiaAlertaIndividual(colab){
     else break;
   }
 
-  // Sem alerta se está bem
   if(consecutivos < 1){ el.style.display='none'; return; }
 
   const comDados = vals.filter(v=>v!==null);
@@ -5135,11 +5133,39 @@ async function renderFdiaAlertaIndividual(colab){
     if(vals[i]!==null && vals[i]>=META){ ultimaBateu = dias[i]; break; }
   }
 
+  const FRASES = {
+    1: [
+      "Todo dia é uma nova chance. Vamos recuperar hoje! 💪",
+      "Ontem ficou para trás — o que importa é o que você faz agora. 🚀",
+      "Um dia abaixo não define a semana. Bora virar! 🎯",
+      "Hoje é o dia de mostrar do que você é capaz. Vamos lá! ⚡",
+      "Cada RC tratada hoje é um passo na direção certa. 👊"
+    ],
+    2: [
+      "Dois dias difíceis não definem sua semana. Foco no próximo! 🔥",
+      "Agora é hora de virar o jogo — você consegue! 💥",
+      "A semana ainda não acabou. Cada ação conta agora. 🎯",
+      "Desafios existem para ser superados. Bora recuperar! 💪",
+      "Você já passou por dias difíceis antes e virou. Hoje não é diferente! 🚀"
+    ],
+    3: [
+      "Momento de virar o jogo! Cada RC tratada hoje conta. 🔥",
+      "Isso é só um momento — sua capacidade é maior que qualquer sequência ruim. 💪",
+      "O melhor dia da semana pode ser hoje. Depende só de você! ⚡",
+      "Foco total agora. Uma ação de cada vez, e o resultado vem! 🎯",
+      "Grandes viradas começam com uma decisão. Essa é a sua hora! 🚀"
+    ]
+  };
+
+  const nivel = consecutivos >= 3 ? 3 : consecutivos;
+  const lista = FRASES[nivel];
+  const frase = lista[Math.floor(Math.random() * lista.length)];
+
   const cor  = consecutivos>=3?'var(--vm)':consecutivos>=2?'var(--am)':'#E67E22';
   const bg   = consecutivos>=3?'rgba(217,64,64,.06)':consecutivos>=2?'rgba(192,122,18,.06)':'rgba(230,126,34,.06)';
   const icone = consecutivos>=3?'🔴':consecutivos>=2?'🟡':'🟠';
-  const titulo = consecutivos>=3?'Atenção — Meta não atingida por '+consecutivos+' dias seguidos':
-                 consecutivos>=2?'Atenção — '+consecutivos+' dias seguidos abaixo da meta':
+  const titulo = consecutivos>=3?`Atenção — Meta não atingida por ${consecutivos} dias seguidos`:
+                 consecutivos>=2?`Atenção — ${consecutivos} dias seguidos abaixo da meta`:
                  'Ontem você ficou abaixo da meta';
 
   el.style.display = 'block';
@@ -5149,11 +5175,11 @@ async function renderFdiaAlertaIndividual(colab){
         <div style="font-size:24px;line-height:1">${icone}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700;color:${cor};margin-bottom:4px">${titulo}</div>
+          <div style="font-size:12px;color:var(--az);font-weight:600;font-style:italic;margin-bottom:.5rem;padding:.5rem .75rem;background:rgba(255,255,255,.7);border-radius:6px;border-left:3px solid ${cor}">${frase}</div>
           <div style="font-size:11px;color:var(--tx2);line-height:1.6">
             ${media!==null?`Média dos últimos dias: <strong style="color:${pct>=100?'var(--vd)':pct>=70?'var(--am)':'var(--vm)'}">${media}/${META} itens (${pct}%)</strong><br>`:''}
             ${ultimaBateu?`Última vez que bateu a meta: <strong style="color:var(--vd)">${fmtD(ultimaBateu)}</strong>`:'<span style="color:var(--vm);font-weight:600">Não bateu a meta em nenhum dos últimos 5 dias</span>'}
           </div>
-          <!-- Mini histórico -->
           <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:.625rem">
             ${dias.map((d,i) => {
               const v = vals[i];
