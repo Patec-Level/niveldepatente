@@ -7409,21 +7409,21 @@ function _renderFeriasColabs(){
 
 function _periodoHTML(colab, pi, p, unico=false){
   const cid=colab.replace(/ /g,'_');
-  const cj=JSON.stringify(colab);
+  const cs=colab.replace(/'/g,"\\'");  // escapar aspas simples no nome
   const botoes=unico && !p.saida
-    ?`<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end;font-size:10px;white-space:nowrap" onclick="_limparPeriodo(${cj},${pi})" title="Limpar datas">🗑 Limpar</button>`
+    ?`<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end;font-size:10px;white-space:nowrap" onclick="_limparPeriodo('${cs}',${pi})" title="Limpar datas">🗑 Limpar</button>`
     :`<div style="display:flex;flex-direction:column;gap:4px;align-self:flex-end">
-        <button class="btn btn-r" style="padding:4px 8px;font-size:10px" onclick="_removePeriodo(${cj},${pi})" title="Remover">✕</button>
-        <button class="btn btn-s" style="padding:4px 8px;font-size:10px" onclick="_limparPeriodo(${cj},${pi})" title="Limpar datas">🗑</button>
+        <button class="btn btn-r" style="padding:4px 8px;font-size:10px" onclick="_removePeriodo('${cs}',${pi})" title="Remover">✕</button>
+        <button class="btn btn-s" style="padding:4px 8px;font-size:10px" onclick="_limparPeriodo('${cs}',${pi})" title="Limpar datas">🗑</button>
       </div>`;
   return `<div id="ferias-p-${cid}-${pi}" style="display:grid;grid-template-columns:1fr 80px 1fr auto;gap:8px;align-items:end;background:var(--cin);padding:8px 10px;border-radius:8px;border:1px solid var(--brd)">
     <div class="field-wrap">
       <span class="field-label">Período ${pi+1} — Data de saída</span>
-      <input type="date" value="${p.saida||''}" onchange="_updPeriodo(${cj},${pi},'saida',this.value)" style="width:100%">
+      <input type="date" value="${p.saida||''}" onchange="_updPeriodo('${cs}',${pi},'saida',this.value)" style="width:100%">
     </div>
     <div class="field-wrap">
       <span class="field-label">Dias</span>
-      <input type="number" value="${p.dias||30}" min="1" max="90" onchange="_updPeriodo(${cj},${pi},'dias',this.value)" style="width:100%;text-align:center;font-weight:700">
+      <input type="number" value="${p.dias||30}" min="1" max="90" onchange="_updPeriodo('${cs}',${pi},'dias',this.value)" style="width:100%;text-align:center;font-weight:700">
     </div>
     <div class="field-wrap">
       <span class="field-label">Retorno (automático)</span>
