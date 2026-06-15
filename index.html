@@ -3483,6 +3483,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <th>Envio</th>
                 <th>Prazo Retorno</th>
                 <th>Status</th>
+                <th>Ações</th>
                 <th>Finalizado</th>
                 <th>Validade Proposta</th>
                 <th>Idas Mercado</th>
@@ -3581,6 +3582,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <th>Envio</th>
                 <th>Prazo Retorno</th>
                 <th>Status</th>
+                <th>Ações</th>
                 <th>Finalizado</th>
                 <th>Conclusão</th>
                 <th>Comentário</th>
@@ -3676,7 +3678,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <thead><tr>
               <th>Analista</th><th>RC</th><th>SEQ</th><th>Oportunidade</th><th>Item OP</th>
               <th>Status Tratamento</th><th>Envio</th><th>Prazo</th><th>Status</th>
-              <th>Finalizado</th><th>Comentário</th>
+              <th>Ações</th><th>Finalizado</th><th>Comentário</th>
             </tr></thead>
             <tbody id="sb-tbody"></tbody>
           </table>
@@ -12478,6 +12480,7 @@ function govRenderMapa(dados){
       <td style="font-size:11px">${envio?fmtBR(envio):'—'}</td>
       <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo?fmtBR(prazo):'—'}</td>
       <td style="text-align:center;font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
+      <td style="text-align:center"><button onclick="abrirHistoricoRC('${r.rc||''}')" title="Ver histórico de ações" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-weight:700;color:var(--azm);white-space:nowrap">📋 Histórico</button></td>
       <td style="font-size:11px">${finalizado?fmtBR(finalizado):'—'}</td>
       <td style="font-size:11px;${corVal(r.validade)}">${r.validade||'—'}</td>
       <td style="text-align:center">${r.idas||'—'}</td>
@@ -12805,7 +12808,7 @@ function xglRender(){
   const tbody = document.getElementById('xgl-tbody');
   if(!tbody) return;
   if(!_xglItens.length){
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum item cadastrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum item cadastrado.</td></tr>';
     return;
   }
 
@@ -12864,6 +12867,7 @@ function xglRender(){
       <td style="font-size:11px">${envio?fmtBR(envio):'—'}</td>
       <td style="text-align:center;font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo?fmtBR(prazo):'—'}</td>
       <td style="text-align:center;font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
+      <td style="text-align:center"><button onclick="abrirHistoricoRC('${r.rc||''}')" title="Ver histórico de ações" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-weight:700;color:var(--azm);white-space:nowrap">📋 Histórico</button></td>
       <td style="font-size:11px">${finalizado?fmtBR(finalizado):'—'}</td>
       <td>${mostrarConclusao?`<select style="font-size:11px;padding:2px 5px;min-width:110px"
           onchange="xglSalvarConclusao('${chave}',this.value,${idx})">
@@ -13879,7 +13883,7 @@ function sbRender(){
   const tbody = document.getElementById('sb-tbody');
   if(!tbody) return;
   if(!_sbItens.length){
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum item cadastrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--tx2);padding:1.5rem">Nenhum item cadastrado.</td></tr>';
     return;
   }
 
@@ -13922,6 +13926,7 @@ function sbRender(){
       <td style="font-size:11px">${envio?fmtBR(envio):'—'}</td>
       <td style="font-size:11px;${prazo?'font-weight:600':'color:var(--tx2)'}">${prazo?fmtBR(prazo):'—'}</td>
       <td style="font-size:11px;${govCorStatus(statusCalc)}">${statusCalc||'—'}</td>
+      <td style="text-align:center"><button onclick="abrirHistoricoRC('${r.rc||''}')" title="Ver histórico de ações" style="background:var(--azc);border:1.5px solid var(--azm);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-weight:700;color:var(--azm);white-space:nowrap">📋 Histórico</button></td>
       <td style="font-size:11px">${finalizado&&finalizado!=='sim'?fmtBR(finalizado):finalizado==='sim'?'—':'—'}</td>
       <td style="font-size:11px;max-width:200px">${comentario||'—'}</td>
     </tr>`;
