@@ -2428,6 +2428,60 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
       <!-- ── EXPORTAR ADM ── -->
       <div id="adm-export-adm" class="adm-tab" style="display:none">
+
+        <!-- ── RELATÓRIOS DE PERFORMANCE ── -->
+        <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+          <div class="cd-t">📊 Relatórios de Performance</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:1rem">
+
+            <!-- Performance Equipe -->
+            <div style="background:var(--cin);border:1px solid var(--brd);border-radius:10px;padding:.875rem 1rem">
+              <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.5rem">📈 Performance da Equipe</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:.75rem">Fechamentos por analista com totais, metas e % atingido</div>
+              <div style="display:flex;gap:6px;margin-bottom:.5rem;align-items:center">
+                <input type="date" id="exp-perf-de" style="font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;flex:1">
+                <span style="font-size:11px;color:var(--tx2)">até</span>
+                <input type="date" id="exp-perf-ate" style="font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;flex:1">
+              </div>
+              <button class="btn btn-g" style="width:100%;justify-content:center;font-size:11px" onclick="expRelatorioPerformance()">📥 Exportar Excel</button>
+            </div>
+
+            <!-- Fechamentos do Dia -->
+            <div style="background:var(--cin);border:1px solid var(--brd);border-radius:10px;padding:.875rem 1rem">
+              <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.5rem">🔒 Histórico de Fechamentos</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:.75rem">Todos os fechamentos do dia com presença, composição e justificativas</div>
+              <div style="display:flex;gap:6px;margin-bottom:.5rem;align-items:center">
+                <input type="date" id="exp-fech-de" style="font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;flex:1">
+                <span style="font-size:11px;color:var(--tx2)">até</span>
+                <input type="date" id="exp-fech-ate" style="font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;flex:1">
+              </div>
+              <button class="btn btn-g" style="width:100%;justify-content:center;font-size:11px" onclick="expRelatorioFechamentos()">📥 Exportar Excel</button>
+            </div>
+
+            <!-- Histórico de Ações por RC -->
+            <div style="background:var(--cin);border:1px solid var(--brd);border-radius:10px;padding:.875rem 1rem">
+              <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.5rem">📋 Ações por RC</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:.75rem">Todas as ações registradas com RC, analista, tipo e observação</div>
+              <div style="display:flex;gap:6px;margin-bottom:.5rem;align-items:center">
+                <input type="date" id="exp-acoes-de" style="font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;flex:1">
+                <span style="font-size:11px;color:var(--tx2)">até</span>
+                <input type="date" id="exp-acoes-ate" style="font-size:11px;padding:4px 8px;border:1px solid var(--brd);border-radius:6px;flex:1">
+              </div>
+              <button class="btn btn-g" style="width:100%;justify-content:center;font-size:11px" onclick="expRelatorioAcoes()">📥 Exportar Excel</button>
+            </div>
+
+            <!-- Governança MAPA -->
+            <div style="background:var(--cin);border:1px solid var(--brd);border-radius:10px;padding:.875rem 1rem">
+              <div style="font-size:12px;font-weight:700;color:var(--az);margin-bottom:.5rem">⚖️ Governança Completa</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:.75rem">MAPA + XGL + Status B com status de prazo atual</div>
+              <button class="btn btn-g" style="width:100%;justify-content:center;font-size:11px;margin-top:1.75rem" onclick="expRelatorioGovernanca()">📥 Exportar Excel</button>
+            </div>
+
+          </div>
+          <div id="exp-status" style="font-size:11px;color:var(--tx2);padding:.5rem;display:none"></div>
+        </div>
+
+        <!-- ── EXPORTAÇÕES EXISTENTES ── -->
         <div class="g2">
           <div class="cd">
             <div class="cd-t">💾 Exportar dados</div>
@@ -2452,6 +2506,55 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </div>
           </div>
         </div>
+
+        <!-- ── BACKUP DO FIREBASE ── -->
+        <div class="cd" style="margin-top:1rem;border-top:3px solid var(--vm)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.75rem">
+            <div>
+              <div class="cd-t" style="margin:0">💾 Backup do Firebase</div>
+              <div style="font-size:11px;color:var(--tx2);margin-top:3px">Exporta todas as coleções em um arquivo JSON. Guarde em local seguro.</div>
+            </div>
+            <div style="font-size:11px;color:var(--tx2)" id="backup-ultimo">Nenhum backup realizado nesta sessão</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:1rem">
+            <div style="background:var(--cin);border:1px solid var(--brd);border-radius:8px;padding:.75rem;display:flex;align-items:center;gap:10px">
+              <span style="font-size:20px">🗄️</span>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--az)">Backup Completo</div>
+                <div style="font-size:10px;color:var(--tx2)">Todas as coleções</div>
+              </div>
+              <button class="btn btn-r" style="margin-left:auto;font-size:10px;padding:4px 10px" onclick="backupCompleto()">💾 Baixar</button>
+            </div>
+            <div style="background:var(--cin);border:1px solid var(--brd);border-radius:8px;padding:.75rem;display:flex;align-items:center;gap:10px">
+              <span style="font-size:20px">⚖️</span>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--az)">Backup Governança</div>
+                <div style="font-size:10px;color:var(--tx2)">MAPA + XGL + Status B</div>
+              </div>
+              <button class="btn btn-s" style="margin-left:auto;font-size:10px;padding:4px 10px" onclick="backupGovernanca()">💾 Baixar</button>
+            </div>
+            <div style="background:var(--cin);border:1px solid var(--brd);border-radius:8px;padding:.75rem;display:flex;align-items:center;gap:10px">
+              <span style="font-size:20px">📋</span>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--az)">Backup Produção</div>
+                <div style="font-size:10px;color:var(--tx2)">Ações + Fechamentos</div>
+              </div>
+              <button class="btn btn-s" style="margin-left:auto;font-size:10px;padding:4px 10px" onclick="backupProducao()">💾 Baixar</button>
+            </div>
+          </div>
+
+          <div class="al al-b" style="font-size:11px">
+            ℹ️ O backup é somente leitura — <strong>nenhum dado é alterado</strong>. Recomendado fazer semanalmente e salvar em pasta compartilhada ou Google Drive.
+          </div>
+          <div id="backup-progress" style="display:none;margin-top:.75rem">
+            <div style="font-size:12px;color:var(--azm);font-weight:600" id="backup-progress-txt">⏳ Preparando backup...</div>
+            <div style="height:6px;background:#EEE;border-radius:3px;margin-top:6px;overflow:hidden">
+              <div id="backup-progress-bar" style="height:100%;width:0%;background:var(--azm);border-radius:3px;transition:width .3s"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
 
@@ -7084,6 +7187,12 @@ function setAdmTab(id,btn){
   if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
   if(id==='hist-mapa') setTimeout(renderAdmMapaHistorico,50);
   if(id==='hist-prod') setTimeout(()=>{ renderDistribuicao(); renderAlertasPerf(); renderPerfSemanal(); },50);
+  if(id==='export-adm') setTimeout(()=>{
+    const hoje = new Date().toISOString().split('T')[0];
+    const mes  = hoje.slice(0,7)+'-01';
+    ['exp-perf-de','exp-fech-de','exp-acoes-de'].forEach(id=>{ const el=document.getElementById(id); if(el&&!el.value) el.value=mes; });
+    ['exp-perf-ate','exp-fech-ate','exp-acoes-ate'].forEach(id=>{ const el=document.getElementById(id); if(el&&!el.value) el.value=hoje; });
+  },50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
   if(id==='usuarios') setTimeout(()=>{
     // Aguardar window._db estar disponível
@@ -8364,6 +8473,268 @@ function salvarAdmPCP(){
   ['adm-pcp-f1','adm-pcp-f2','adm-pcp-f6','adm-pcp-f3','adm-pcp-f4','adm-pcp-f5'].forEach(id=>document.getElementById(id).value='');
   renderAdmPCP();
 }
+// ══════════════════════════════════════════
+// RELATÓRIOS DE PERFORMANCE
+// ══════════════════════════════════════════
+
+function _expStatus(msg, ok=false){
+  const el = document.getElementById('exp-status');
+  if(!el) return;
+  el.style.display = 'block';
+  el.style.color = ok ? 'var(--vd)' : 'var(--tx2)';
+  el.textContent = msg;
+}
+
+function _expDatas(deId, ateId){
+  const hoje = new Date().toISOString().split('T')[0];
+  const de  = document.getElementById(deId)?.value  || '2026-01-01';
+  const ate = document.getElementById(ateId)?.value || hoje;
+  return { de, ate };
+}
+
+async function expRelatorioPerformance(){
+  _expStatus('⏳ Buscando fechamentos...');
+  const { de, ate } = _expDatas('exp-perf-de','exp-perf-ate');
+  try{
+    const db = getDB(); if(!db){ _expStatus('❌ Firebase indisponível'); return; }
+    const snap = await db.collection('fechamento_dia')
+      .where('data','>=',de).where('data','<=',ate)
+      .orderBy('data','desc').get();
+
+    const TIPO = {'primeira_analise':'1ª Análise','em_tratativa':'Em Tratativa','status_b':'Status B','outros':'Outros'};
+    const rows = [['Data','Colaborador','Presença','1ª Análise','Em Tratativa','Status B','Outros','Total','Meta','%','Status','Motivo','Observação']];
+    snap.forEach(d=>{
+      const r = d.data();
+      const tot = (r.primeira_analise||0)+(r.em_tratativa||0)+(r.status_b||0)+(r.outros||0);
+      const meta = r.meta || 30;
+      const pct  = meta>0 ? Math.round(tot/meta*100) : 0;
+      rows.push([
+        r.data?.split('-').reverse().join('/') || '',
+        r.colab||'',
+        r.presenca||'',
+        r.primeira_analise||0,
+        r.em_tratativa||0,
+        r.status_b||0,
+        r.outros||0,
+        tot, meta, pct+'%',
+        pct>=100?'✓ Meta':'Abaixo',
+        r.motivo||'',
+        r.obs||''
+      ]);
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Performance');
+
+    // Aba resumo por colaborador
+    const resumo = [['Colaborador','Dias Registrados','Total Ações','Média/Dia','Dias Meta','Dias Abaixo','% Meta Geral']];
+    const porColab = {};
+    snap.forEach(d=>{
+      const r=d.data();
+      if(!porColab[r.colab]) porColab[r.colab]={dias:0,total:0,meta:0,acimaMeta:0};
+      const tot=(r.primeira_analise||0)+(r.em_tratativa||0)+(r.status_b||0)+(r.outros||0);
+      const m=r.meta||30;
+      porColab[r.colab].dias++;
+      porColab[r.colab].total+=tot;
+      porColab[r.colab].meta+=m;
+      if(tot>=m) porColab[r.colab].acimaMeta++;
+    });
+    Object.entries(porColab).forEach(([c,v])=>{
+      const media = v.dias>0?Math.round(v.total/v.dias):0;
+      const pct = v.meta>0?Math.round(v.total/v.meta*100):0;
+      resumo.push([c,v.dias,v.total,media,v.acimaMeta,v.dias-v.acimaMeta,pct+'%']);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumo), 'Resumo por Analista');
+
+    XLSX.writeFile(wb, `Performance_PATEC_${de}_${ate}.xlsx`);
+    _expStatus(`✅ ${snap.size} registros exportados!`, true);
+  } catch(e){ _expStatus('❌ Erro: '+e.message); }
+}
+
+async function expRelatorioFechamentos(){
+  _expStatus('⏳ Buscando fechamentos...');
+  const { de, ate } = _expDatas('exp-fech-de','exp-fech-ate');
+  try{
+    const db = getDB(); if(!db){ _expStatus('❌ Firebase indisponível'); return; }
+    const snap = await db.collection('fechamento_dia')
+      .where('data','>=',de).where('data','<=',ate)
+      .orderBy('data','desc').get();
+
+    const rows = [['Data','Colaborador','Presença','1ª Análise','Em Tratativa','Status B','Outros','Fornecedor','Requisitante','MDG','Val.Thiago','XGL','Republicação','Pedido','Devolução','Total','Meta','%','Motivo','Observação','Horário Fechamento']];
+    snap.forEach(d=>{
+      const r=d.data();
+      const tot=(r.primeira_analise||0)+(r.em_tratativa||0)+(r.status_b||0)+(r.outros||0);
+      const meta=r.meta||30;
+      const ts = r.ts ? new Date(r.ts).toLocaleString('pt-BR') : '';
+      rows.push([
+        r.data?.split('-').reverse().join('/')||'', r.colab||'', r.presenca||'',
+        r.primeira_analise||0, r.em_tratativa||0, r.status_b||0, r.outros||0,
+        r.forn||0, r.req||0, r.mdg||0, r.thiago||0, r.xgl||0,
+        r.republicacao||0, r.pedido||0, r.devolucao||0,
+        tot, meta, Math.round(tot/meta*100)+'%',
+        r.motivo||'', r.obs||'', ts
+      ]);
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Fechamentos');
+    XLSX.writeFile(wb, `Fechamentos_PATEC_${de}_${ate}.xlsx`);
+    _expStatus(`✅ ${snap.size} fechamentos exportados!`, true);
+  } catch(e){ _expStatus('❌ Erro: '+e.message); }
+}
+
+async function expRelatorioAcoes(){
+  _expStatus('⏳ Buscando ações...');
+  const { de, ate } = _expDatas('exp-acoes-de','exp-acoes-ate');
+  try{
+    const db = getDB(); if(!db){ _expStatus('❌ Firebase indisponível'); return; }
+
+    // producao_acoes é particionada por chunks — buscar todos os docs
+    const snap = await db.collection('producao_acoes')
+      .where('data','>=',de).where('data','<=',ate).get();
+
+    const TIPO = {'primeira_analise':'1ª Análise','em_tratativa':'Em Tratativa','status_b':'Status B','outros':'Outros'};
+    const rows = [['Data','Hora','Colaborador','RC','Tipo','Tratamento','Conclusão','Observação','Anulada']];
+
+    snap.forEach(d=>{
+      const r=d.data();
+      if(!r.rc && !r.colab) return; // doc container, não ação individual
+      const hora = r.ts ? new Date(r.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+      rows.push([
+        r.data||'', hora, r.colab||'', r.rc||'',
+        TIPO[r.tipo]||r.tipo||'',
+        r.tratamento||'', r.conclusao||'', r.obs||'',
+        r.anulada?'Sim':'Não'
+      ]);
+    });
+
+    rows.sort((a,b)=> (b[0]+b[1]).localeCompare(a[0]+a[1]));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Ações');
+    XLSX.writeFile(wb, `Acoes_RC_PATEC_${de}_${ate}.xlsx`);
+    _expStatus(`✅ ${rows.length-1} ações exportadas!`, true);
+  } catch(e){ _expStatus('❌ Erro: '+e.message); }
+}
+
+async function expRelatorioGovernanca(){
+  _expStatus('⏳ Buscando governança...');
+  try{
+    const db = getDB(); if(!db){ _expStatus('❌ Firebase indisponível'); return; }
+    const [snapMapa, snapXgl, snapSb] = await Promise.all([
+      db.collection('gov_mapa').get().catch(()=>({docs:[]})),
+      db.collection('gov_xgl').get().catch(()=>({docs:[]})),
+      db.collection('gov_sb').get().catch(()=>({docs:[]}))
+    ]);
+
+    const wb = XLSX.utils.book_new();
+    const fmtBR = d => d ? d.split('-').reverse().join('/') : '—';
+
+    // MAPA
+    const rowsMapa = [['RC','SEQ','Oportunidade','Analista','Fila','SLA','Status Tratamento','Envio','Prazo Retorno','Status','Finalizado','Validade']];
+    snapMapa.forEach(d=>{ const r=d.data(); rowsMapa.push([r.rc||'',r.seq||'',r.num_oport||'',r.analista||'',r.fila||'',r.sla||'',r.status||'',fmtBR(r.envio),fmtBR(r.prazo_retorno),r.status_calc||'',fmtBR(r.finalizado),r.validade||'']); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rowsMapa), 'MAPA');
+
+    // XGL
+    const rowsXgl = [['RC','Item','Analista','Status Tratamento','Envio','Prazo Retorno','Status','Finalizado','Conclusão','Comentário']];
+    snapXgl.forEach(d=>{ const r=d.data(); rowsXgl.push([r.rc||'',r.item||'',r.analista||'',r.status||'',fmtBR(r.envio),fmtBR(r.prazo_retorno),r.status_calc||'',fmtBR(r.finalizado),r.conclusao||'',r.comentario||'']); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rowsXgl), 'XGL');
+
+    // Status B
+    const rowsSb = [['RC','SEQ','Oportunidade','Item','Analista','Status Tratamento','Envio','Prazo','Status','Finalizado','Comentário']];
+    snapSb.forEach(d=>{ const r=d.data(); rowsSb.push([r.rc||'',r.seq||'',r.op||'',r.item||'',r.analista||'',r.status||'',fmtBR(r.envio),fmtBR(r.prazo_retorno),r.status_calc||'',fmtBR(r.finalizado),r.comentario||'']); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rowsSb), 'Status B');
+
+    const hoje = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Governanca_PATEC_${hoje}.xlsx`);
+    _expStatus(`✅ MAPA (${snapMapa.size}) + XGL (${snapXgl.size}) + Status B (${snapSb.size}) exportados!`, true);
+  } catch(e){ _expStatus('❌ Erro: '+e.message); }
+}
+
+// ══════════════════════════════════════════
+// BACKUP DO FIREBASE
+// ══════════════════════════════════════════
+
+function _backupProgresso(pct, txt){
+  const bar = document.getElementById('backup-progress-bar');
+  const msg = document.getElementById('backup-progress-txt');
+  const box = document.getElementById('backup-progress');
+  if(box) box.style.display = 'block';
+  if(bar) bar.style.width = pct+'%';
+  if(msg) msg.textContent = txt;
+}
+
+async function _backupLerColecao(db, nome){
+  try{
+    const snap = await db.collection(nome).get();
+    const docs = {};
+    snap.forEach(d=>{ docs[d.id]=d.data(); });
+    return { total: snap.size, docs };
+  } catch(e){ return { total:0, docs:{}, erro: e.message }; }
+}
+
+function _backupBaixar(dados, nomeArquivo){
+  const json = JSON.stringify(dados, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = nomeArquivo; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+}
+
+async function backupCompleto(){
+  const db = getDB();
+  if(!db){ alert('Firebase indisponível'); return; }
+
+  const COLECOES = ['gov_mapa','gov_xgl','gov_sb','fechamento_dia','producao_acoes','producao','producoes','ciclos_encerrados','config','usuarios','mapa_diario','pcp_diario','desfechos','gov_analista_overrides'];
+  const backup   = { gerado_em: new Date().toISOString(), versao: '1.0', colecoes: {} };
+  let i = 0;
+
+  for(const col of COLECOES){
+    i++;
+    _backupProgresso(Math.round(i/COLECOES.length*90), `⏳ Lendo ${col}... (${i}/${COLECOES.length})`);
+    backup.colecoes[col] = await _backupLerColecao(db, col);
+  }
+
+  _backupProgresso(100, '✅ Backup concluído! Baixando...');
+  const hoje = new Date().toISOString().split('T')[0];
+  _backupBaixar(backup, `PATEC_Backup_Completo_${hoje}.json`);
+
+  const ul = document.getElementById('backup-ultimo');
+  if(ul) ul.textContent = `Último backup: ${new Date().toLocaleString('pt-BR')} · ${COLECOES.length} coleções`;
+  setTimeout(()=>{ const box=document.getElementById('backup-progress'); if(box) box.style.display='none'; }, 3000);
+}
+
+async function backupGovernanca(){
+  const db = getDB();
+  if(!db){ alert('Firebase indisponível'); return; }
+  _backupProgresso(10, '⏳ Lendo MAPA...');
+  const mapa = await _backupLerColecao(db,'gov_mapa');
+  _backupProgresso(40, '⏳ Lendo XGL...');
+  const xgl  = await _backupLerColecao(db,'gov_xgl');
+  _backupProgresso(70, '⏳ Lendo Status B...');
+  const sb   = await _backupLerColecao(db,'gov_sb');
+  _backupProgresso(100, '✅ Concluído!');
+  const hoje = new Date().toISOString().split('T')[0];
+  _backupBaixar({ gerado_em:new Date().toISOString(), colecoes:{ gov_mapa:mapa, gov_xgl:xgl, gov_sb:sb } }, `PATEC_Backup_Governanca_${hoje}.json`);
+  setTimeout(()=>{ const box=document.getElementById('backup-progress'); if(box) box.style.display='none'; }, 3000);
+}
+
+async function backupProducao(){
+  const db = getDB();
+  if(!db){ alert('Firebase indisponível'); return; }
+  _backupProgresso(10, '⏳ Lendo producao_acoes...');
+  const acoes  = await _backupLerColecao(db,'producao_acoes');
+  _backupProgresso(50, '⏳ Lendo fechamento_dia...');
+  const fech   = await _backupLerColecao(db,'fechamento_dia');
+  _backupProgresso(80, '⏳ Lendo producao...');
+  const prod   = await _backupLerColecao(db,'producao');
+  _backupProgresso(100, '✅ Concluído!');
+  const hoje = new Date().toISOString().split('T')[0];
+  _backupBaixar({ gerado_em:new Date().toISOString(), colecoes:{ producao_acoes:acoes, fechamento_dia:fech, producao:prod } }, `PATEC_Backup_Producao_${hoje}.json`);
+  setTimeout(()=>{ const box=document.getElementById('backup-progress'); if(box) box.style.display='none'; }, 3000);
+}
+
 function exportAdmPCP(){var hd='Data,PATEC Fin./Parada,MDG,XGL,RCs Pedidos,RCs Dev.,RCs Repub.,Total\n';var rows=pcpData.map(function(r){var tot=(r.f1||0)+(r.f2||0)+(r.f6||0)+(r.f3||0)+(r.f4||0)+(r.f5||0);return fmtDt(r.data)+','+(r.f1||0)+','+(r.f2||0)+','+(r.f6||0)+','+(r.f3||0)+','+(r.f4||0)+','+(r.f5||0)+','+tot;}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();}
 
 // ── UPLOAD MAPA ADM ──
