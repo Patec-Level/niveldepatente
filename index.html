@@ -7434,10 +7434,11 @@ function _periodoHTML(colab, pi, p, unico=false){
 }
 
 function _limparPeriodo(colab,pi){
-  if(_feriasState[colab]&&_feriasState[colab][pi]){
-    _feriasState[colab][pi]={saida:'',dias:30,retorno:''};
-    _renderFeriasColabs();
-  }
+  console.log('[ferias] limpar', colab, pi, JSON.stringify(_feriasState[colab]));
+  if(!_feriasState[colab]){alert('Erro: colaborador não encontrado no estado. Recarregue a página ADM.');return;}
+  if(_feriasState[colab][pi]===undefined){alert('Erro: índice '+pi+' não encontrado. Estado: '+JSON.stringify(_feriasState[colab]));return;}
+  _feriasState[colab][pi]={saida:'',dias:30,retorno:''};
+  _renderFeriasColabs();
 }
 
 function _addPeriodo(colab){
@@ -7447,7 +7448,9 @@ function _addPeriodo(colab){
 }
 
 function _removePeriodo(colab, pi){
-  if(!_feriasState[colab]) return;
+  console.log('[ferias] remover', colab, pi, JSON.stringify(_feriasState[colab]));
+  if(!_feriasState[colab]){alert('Erro: colaborador não encontrado no estado. Recarregue a página ADM.');return;}
+  if(_feriasState[colab][pi]===undefined){alert('Erro: índice '+pi+' não encontrado. Estado: '+JSON.stringify(_feriasState[colab]));return;}
   _feriasState[colab].splice(pi,1);
   _renderFeriasColabs();
 }
