@@ -7410,7 +7410,7 @@ function _renderFeriasColabs(){
 function _periodoHTML(colab, pi, p, unico=false){
   const cid=colab.replace(/ /g,'_');
   const cj=JSON.stringify(colab);
-  const botoes=unico
+  const botoes=unico && !p.saida
     ?`<button class="btn btn-r" style="padding:6px 10px;align-self:flex-end;font-size:10px;white-space:nowrap" onclick="_limparPeriodo(${cj},${pi})" title="Limpar datas">🗑 Limpar</button>`
     :`<div style="display:flex;flex-direction:column;gap:4px;align-self:flex-end">
         <button class="btn btn-r" style="padding:4px 8px;font-size:10px" onclick="_removePeriodo(${cj},${pi})" title="Remover">✕</button>
@@ -7434,7 +7434,6 @@ function _periodoHTML(colab, pi, p, unico=false){
 }
 
 function _limparPeriodo(colab,pi){
-  if(!confirm('Limpar todas as datas deste período?'))return;
   if(_feriasState[colab]&&_feriasState[colab][pi]){
     _feriasState[colab][pi]={saida:'',dias:30,retorno:''};
     _renderFeriasColabs();
@@ -7442,14 +7441,14 @@ function _limparPeriodo(colab,pi){
 }
 
 function _addPeriodo(colab){
+  if(!_feriasState[colab]) _feriasState[colab]=[];
   _feriasState[colab].push({saida:'',dias:30,retorno:''});
   _renderFeriasColabs();
 }
 
 function _removePeriodo(colab, pi){
-  if(!confirm('Remover este período de férias?')) return;
+  if(!_feriasState[colab]) return;
   _feriasState[colab].splice(pi,1);
-  // Não repõe período vazio — deixa array vazio e exibe "Nenhum período ativo"
   _renderFeriasColabs();
 }
 
