@@ -7447,8 +7447,9 @@ function _addPeriodo(colab){
 }
 
 function _removePeriodo(colab, pi){
+  if(!confirm('Remover este período de férias?')) return;
   _feriasState[colab].splice(pi,1);
-  if(!_feriasState[colab].length) _feriasState[colab].push({saida:'',dias:30,retorno:''});
+  // Não repõe período vazio — deixa array vazio e exibe "Nenhum período ativo"
   _renderFeriasColabs();
 }
 
