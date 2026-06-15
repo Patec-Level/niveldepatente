@@ -4030,12 +4030,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <span id="fdia-ok" style="font-size:12px;color:var(--vd);font-weight:600;display:none">✓ Fechamento registrado!</span>
         </div>
 
-        <!-- Gráfico evolução dos últimos 7 dias -->
-        <div class="cd" style="margin-bottom:1rem;margin-top:1rem">
-          <div class="cd-t">📈 Evolução dos últimos 7 dias</div>
-          <canvas id="fdia-chart" height="80"></canvas>
-        </div>
-
         <!-- Histórico individual -->
         <div class="cd" style="margin-bottom:1rem">
           <div class="cd-t">📊 Histórico da minha produção</div>
@@ -17935,11 +17929,12 @@ async function prodCarregarHistorico(colab, dias=7){
       .get();
     const hist = {};
     datas.forEach(d=>hist[d]=0);
+    // André (sem meta individual) conta todos os tipos; analistas contam só os 3 principais
+    const semMeta = (typeof COLABS_SEM_META_RT!=='undefined') && COLABS_SEM_META_RT.includes(colab);
     snap.docs.forEach(doc=>{
       const r=doc.data();
-      if(r.anulada) return; // ignorar ações anuladas
-      // Só conta tipos que vão para meta (não "outros")
-      const contaMeta = ['primeira_analise','em_tratativa','status_b'].includes(r.tipo);
+      if(r.anulada) return;
+      const contaMeta = semMeta || ['primeira_analise','em_tratativa','status_b'].includes(r.tipo);
       if(contaMeta && hist[r.data]!==undefined) hist[r.data]++;
     });
     return hist;
@@ -18256,47 +18251,48 @@ async function fdiaInicializar(){
   document.getElementById('fdia-ja-fechado').style.display = 'none';
   document.getElementById('fdia-btn-wrap').style.display   = 'flex';
 
-  // Gráfico
-  const hist = await prodCarregarHistorico(colab, 7);
-  const labels = Object.keys(hist).map(d=>d.slice(5).split('-').reverse().join('/'));
-  const vals   = Object.values(hist);
-  const cFdia  = document.getElementById('fdia-chart');
-  if(cFdia){
-    if(_fdiaChart) _fdiaChart.destroy();
-    _fdiaChart = new Chart(cFdia, {
-      type:'bar',
-      data:{
-        labels,
-        datasets:[
-          { label:'Produção', data:vals, backgroundColor:vals.map(v=>v>=metaVal?'rgba(14,158,106,.7)':v>=metaVal*.8?'rgba(192,122,18,.7)':'rgba(217,64,64,.6)'), borderRadius:5 },
-          { label:'Meta', data:Array(7).fill(metaVal), type:'line', borderColor:'rgba(13,35,71,.5)', borderWidth:1.5, borderDash:[4,3], pointRadius:0 }
-        ]
-      },
-      options:{ plugins:{legend:{display:false},datalabels:{display:false}}, scales:{ y:{min:0,grid:{color:'#f0f0f0'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} } }
-    });
-  }
-
-  // Histórico individual — busca Firebase direto (evita problema de nome colab no array global)
+  // Histórico individual — busca em fechamento_dia (novo) + producao/producoes (legado)
   try{
     const tbHist = document.getElementById('fdia-hist-tbody');
     if(tbHist){
       tbHist.innerHTML='<tr><td colspan="17" style="text-align:center;color:var(--tx2);padding:1rem;font-size:12px">⏳ Carregando histórico...</td></tr>';
       const _30diasAtras = new Date(); _30diasAtras.setDate(_30diasAtras.getDate()-30);
       const _dtMin = _30diasAtras.getFullYear()+'-'+String(_30diasAtras.getMonth()+1).padStart(2,'0')+'-'+String(_30diasAtras.getDate()).padStart(2,'0');
-      // Buscar nas duas coleções e mesclar
       const db = getDB();
       let histRegs = [];
       if(db){
-        const [snapA, snapN] = await Promise.all([
+        const [snapFech, snapA, snapN] = await Promise.all([
+          db.collection('fechamento_dia').where('colab','==',colab).where('data','>=',_dtMin).get().catch(()=>({docs:[]})),
           db.collection('producao').where('colab','==',colab).where('data','>=',_dtMin).get().catch(()=>({docs:[]})),
           db.collection('producoes').where('colab','==',colab).where('data','>=',_dtMin).get().catch(()=>({docs:[]}))
         ]);
         const mapH = {};
+        // Legado
         (snapA.docs||[]).forEach(d=>{ const r=d.data(); if(r.data) mapH[r.data]=r; });
         (snapN.docs||[]).forEach(d=>{ const r=d.data(); if(r.data) mapH[r.data]=r; });
+        // fechamento_dia — converte para o mesmo formato {data, pres, f[], total}
+        (snapFech.docs||[]).forEach(d=>{
+          const r=d.data();
+          if(!r.data) return;
+          // Montar array f[] compatível com o layout da tabela
+          const f = [
+            r.primeira_analise||0,  // f[0]
+            r.em_tratativa||0,      // f[1]
+            r.status_b||0,          // f[2]
+            r.forn||0,              // f[3]
+            r.req||0,               // f[4]
+            r.mdg||0,               // f[5]
+            r.thiago||0,            // f[6]
+            r.xgl||0,               // f[7]
+            r.republicacao||0,      // f[8]
+            r.pedido||0,            // f[9]
+            r.devolucao||0,         // f[10]
+            r.outros||0,            // f[11]
+          ];
+          mapH[r.data] = { data:r.data, pres:r.presenca||'—', f, total:r.total||0, _origem:'fechamento_dia' };
+        });
         histRegs = Object.values(mapH).sort((a,b)=>b.data.localeCompare(a.data));
       } else {
-        // Fallback: array global com filtro flexível (nome parcial)
         const _regsGlobal = (typeof registros !== 'undefined' ? registros : []);
         histRegs = _regsGlobal
           .filter(r => r.colab === colab && r.data >= _dtMin)
