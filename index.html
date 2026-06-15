@@ -2063,6 +2063,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             </table>
           </div>
         </div>
+        </div>
+
+        <!-- ── PERFORMANCE SEMANAL DA EQUIPE ── -->
+        <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem">
+            <div>
+              <div class="cd-t" style="margin:0">📊 Performance Semanal da Equipe</div>
+              <div style="font-size:11px;color:var(--tx2);margin-top:3px" id="perf-sem-label">—</div>
+            </div>
+            <button class="btn btn-s" style="font-size:11px" onclick="renderPerfSemanal()">↺ Atualizar</button>
+          </div>
+          <div id="perf-semanal-content">
+            <div style="font-size:12px;color:var(--tx2)">Carregando...</div>
+          </div>
+        </div>
+
         <!-- Histórico antigo -->
         <div class="cd">
           <div class="cd-t">📊 Histórico da Produção — filtros</div>
@@ -3923,6 +3939,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div id="fdia-composicao" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px"></div>
         </div>
 
+        <!-- Minha Semana -->
+        <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+            <div class="cd-t" style="margin:0">📅 Minha Semana</div>
+            <span style="font-size:11px;color:var(--tx2)" id="fdia-semana-label">—</span>
+          </div>
+          <div id="fdia-semana-content">
+            <div style="font-size:12px;color:var(--tx2);padding:.5rem">Carregando...</div>
+          </div>
+        </div>
+
         <!-- Linha do tempo do dia -->
         <div class="cd" style="margin-bottom:1rem">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
@@ -4952,6 +4979,201 @@ function abrirHistoricoRC(rc){
   document.getElementById('hist-subtitulo').textContent = `Todas as ações registradas no sistema para esta RC`;
   document.getElementById('hist-conteudo').innerHTML = conteudo;
   modal.style.display = 'flex';
+}
+
+// ── UTILITÁRIOS DE SEMANA ──
+function _semanaAtual(){
+  const hoje = new Date();
+  const dow = hoje.getDay(); // 0=dom, 1=seg...
+  const seg = new Date(hoje); seg.setDate(hoje.getDate() - (dow===0?6:dow-1)); seg.setHours(0,0,0,0);
+  const sex = new Date(seg); sex.setDate(seg.getDate()+4);
+  const dias = [];
+  for(let i=0;i<5;i++){ const d=new Date(seg); d.setDate(seg.getDate()+i); dias.push(d.toISOString().split('T')[0]); }
+  return { seg, sex, dias };
+}
+
+function _contarAcoesSemana(colab, dias){
+  const cache = window._prodAcoesCache || {};
+  const TIPOS = ['primeira_analise','em_tratativa','status_b','outros'];
+  const LABEL = { primeira_analise:'1ª Análise', em_tratativa:'Em Tratativa', status_b:'Status B', outros:'Outros' };
+  const COR   = { primeira_analise:'var(--azm)', em_tratativa:'var(--azm)', status_b:'var(--vd)', outros:'var(--am)' };
+  const porDia = {};
+  let totalSem = 0;
+  const comp = { primeira_analise:0, em_tratativa:0, status_b:0, outros:0 };
+
+  dias.forEach(d => {
+    const acoes = (cache[d]||[]).filter(a => !a.anulada && (!colab || a.colab===colab));
+    const tot = acoes.length;
+    porDia[d] = tot;
+    totalSem += tot;
+    acoes.forEach(a => { if(comp[a.tipo]!==undefined) comp[a.tipo]++; });
+  });
+
+  return { porDia, totalSem, comp, LABEL, COR };
+}
+
+// ── ADM: Performance Semanal da Equipe ──
+function renderPerfSemanal(){
+  const el = document.getElementById('perf-semanal-content');
+  const lbl = document.getElementById('perf-sem-label');
+  if(!el) return;
+
+  const { dias, seg, sex } = _semanaAtual();
+  const fmtD = d => { const [,m,dd]=d.split('-'); return `${dd}/${m}`; };
+  const fmtDiaSem = d => { const dow=new Date(d+'T12:00:00').getDay(); return ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][dow]; };
+  const META_DIA = 30;
+
+  if(lbl) lbl.textContent = `${fmtD(dias[0])} a ${fmtD(dias[4])}`;
+
+  const COLABS_ANALISTAS = (window.COLABS||[]).filter(c => c !== 'André');
+  if(!COLABS_ANALISTAS.length){ el.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum colaborador carregado.</div>'; return; }
+
+  // Calcular dados por analista
+  const dados = COLABS_ANALISTAS.map(c => {
+    const { porDia, totalSem, comp, LABEL, COR } = _contarAcoesSemana(c, dias);
+    const metaSem = META_DIA * dias.length;
+    const pct = Math.round(totalSem/metaSem*100);
+    return { colab:c, porDia, totalSem, metaSem, pct, comp, LABEL, COR };
+  }).sort((a,b) => b.totalSem - a.totalSem);
+
+  // Cor da célula por dia
+  const corCelula = (tot) => {
+    if(tot >= META_DIA) return 'background:rgba(76,175,80,.15);color:var(--vd);font-weight:700';
+    if(tot >= META_DIA*0.7) return 'background:rgba(255,193,7,.15);color:var(--am);font-weight:700';
+    if(tot > 0) return 'background:rgba(217,64,64,.1);color:var(--vm);font-weight:600';
+    return 'color:var(--tx2)';
+  };
+
+  el.innerHTML = `
+    <!-- Ranking -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:1.25rem">
+      ${dados.map((d,i) => `
+        <div style="background:${i===0?'var(--azc)':'var(--cin)'};border:1.5px solid ${i===0?'var(--azm)':'var(--brd)'};border-radius:10px;padding:.875rem 1rem">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">
+            <span style="font-size:16px;font-weight:800;color:${i===0?'var(--azm)':i===1?'var(--am)':'var(--tx2)'}">${i+1}°</span>
+            <span style="font-size:13px;font-weight:700;color:var(--az)">${d.colab}</span>
+          </div>
+          <div style="font-size:26px;font-weight:800;color:${d.pct>=100?'var(--vd)':d.pct>=70?'var(--am)':'var(--vm)'};line-height:1">${d.totalSem}</div>
+          <div style="font-size:10px;color:var(--tx2);margin-top:2px">de ${d.metaSem} meta · ${d.pct}%</div>
+          <div style="height:4px;background:#EEE;border-radius:2px;margin-top:.5rem;overflow:hidden">
+            <div style="height:100%;width:${Math.min(d.pct,100)}%;background:${d.pct>=100?'var(--vd)':d.pct>=70?'var(--am)':'var(--vm)'};border-radius:2px;transition:width .5s"></div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Tabela por dia -->
+    <div class="tw" style="margin-bottom:1rem">
+      <table>
+        <thead>
+          <tr>
+            <th>Analista</th>
+            ${dias.map(d=>`<th style="text-align:center">${fmtDiaSem(d)}<br><span style="font-weight:400;font-size:10px">${fmtD(d)}</span></th>`).join('')}
+            <th style="text-align:center">Total</th>
+            <th style="text-align:center">Meta</th>
+            <th style="text-align:center">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${dados.map(d=>`
+            <tr>
+              <td style="font-weight:600">${d.colab}</td>
+              ${dias.map(dia=>`<td style="text-align:center;font-size:13px;${corCelula(d.porDia[dia]||0)}">${d.porDia[dia]||0}</td>`).join('')}
+              <td style="text-align:center;font-weight:700;font-size:14px;color:${d.pct>=100?'var(--vd)':d.pct>=70?'var(--am)':'var(--vm)'}">${d.totalSem}</td>
+              <td style="text-align:center;color:var(--tx2)">${d.metaSem}</td>
+              <td style="text-align:center;font-weight:700;color:${d.pct>=100?'var(--vd)':d.pct>=70?'var(--am)':'var(--vm)'}">${d.pct}%</td>
+            </tr>`).join('')}
+          <tr style="background:var(--cin);border-top:2px solid var(--brd)">
+            <td style="font-weight:700;color:var(--tx2)">Meta/dia</td>
+            ${dias.map(()=>`<td style="text-align:center;color:var(--tx2);font-size:11px">${META_DIA}</td>`).join('')}
+            <td></td><td></td><td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Composição por analista -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+      ${dados.map(d=>`
+        <div style="background:var(--cin);border:1px solid var(--brd);border-radius:8px;padding:.75rem">
+          <div style="font-size:11px;font-weight:700;color:var(--az);margin-bottom:.5rem">${d.colab} — composição</div>
+          ${Object.entries(d.comp).filter(([,v])=>v>0).map(([tipo,v])=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:11px;color:var(--tx)">${d.LABEL[tipo]}</span>
+              <span style="font-size:11px;font-weight:700;color:${d.COR[tipo]}">${v} <span style="color:var(--tx2);font-weight:400">(${Math.round(v/d.totalSem*100)||0}%)</span></span>
+            </div>`).join('') || '<div style="font-size:11px;color:var(--tx2)">Sem ações</div>'}
+        </div>`).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--tx2);margin-top:.75rem">🟢 ≥ meta · 🟡 ≥ 70% · 🔴 abaixo · Dados em tempo real do cache de produção</div>`;
+}
+
+// ── FECHAMENTO DO DIA: Minha Semana ──
+function renderFdiaSemana(colab){
+  const el = document.getElementById('fdia-semana-content');
+  const lbl = document.getElementById('fdia-semana-label');
+  if(!el || !colab) return;
+
+  const { dias } = _semanaAtual();
+  const fmtD = d => { const [,m,dd]=d.split('-'); return `${dd}/${m}`; };
+  const fmtDiaSem = d => { const dow=new Date(d+'T12:00:00').getDay(); return ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][dow]; };
+  const META_DIA = 30;
+
+  const { porDia, totalSem, comp, LABEL, COR } = _contarAcoesSemana(colab, dias);
+  const metaSem = META_DIA * dias.length;
+  const pct = Math.round(totalSem/metaSem*100);
+  const hoje = new Date().toISOString().split('T')[0];
+
+  if(lbl) lbl.textContent = `${fmtD(dias[0])} a ${fmtD(dias[4])}`;
+
+  const corCelula = (tot, isHoje) => {
+    const base = isHoje ? 'border:2px solid var(--azm);' : '';
+    if(tot >= META_DIA) return base+'background:rgba(76,175,80,.15);color:var(--vd);font-weight:700';
+    if(tot >= META_DIA*0.7) return base+'background:rgba(255,193,7,.15);color:var(--am);font-weight:700';
+    if(tot > 0) return base+'background:rgba(217,64,64,.1);color:var(--vm);font-weight:600';
+    return base+'color:var(--tx2)';
+  };
+
+  el.innerHTML = `
+    <!-- Mini cards por dia -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1rem">
+      ${dias.map(d => {
+        const tot = porDia[d]||0;
+        const isHoje = d===hoje;
+        return `<div style="text-align:center;border-radius:8px;padding:.5rem .25rem;${corCelula(tot,isHoje)}">
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;color:inherit">${fmtDiaSem(d)}</div>
+          <div style="font-size:20px;font-weight:800;line-height:1;color:inherit">${tot}</div>
+          <div style="font-size:9px;margin-top:2px;color:inherit;opacity:.7">${fmtD(d)}</div>
+          ${isHoje?'<div style="font-size:8px;font-weight:700;margin-top:3px;color:var(--azm)">HOJE</div>':''}
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Totalizador -->
+    <div style="display:flex;align-items:center;gap:16px;padding:.75rem 1rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd);margin-bottom:.875rem">
+      <div style="text-align:center">
+        <div style="font-size:28px;font-weight:800;color:${pct>=100?'var(--vd)':pct>=70?'var(--am)':'var(--vm)'};line-height:1">${totalSem}</div>
+        <div style="font-size:10px;color:var(--tx2)">total semana</div>
+      </div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+          <span style="color:var(--tx2)">Meta semanal</span>
+          <span style="font-weight:700;color:${pct>=100?'var(--vd)':pct>=70?'var(--am)':'var(--vm)'}">${pct}%</span>
+        </div>
+        <div style="height:8px;background:#EEE;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${Math.min(pct,100)}%;background:${pct>=100?'var(--vd)':pct>=70?'var(--am)':'var(--vm)'};border-radius:4px;transition:width .5s"></div>
+        </div>
+        <div style="font-size:10px;color:var(--tx2);margin-top:3px">${totalSem} de ${metaSem} · faltam ${Math.max(0,metaSem-totalSem)}</div>
+      </div>
+    </div>
+
+    <!-- Composição da semana -->
+    ${Object.entries(comp).filter(([,v])=>v>0).length ? `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px">
+      ${Object.entries(comp).filter(([,v])=>v>0).map(([tipo,v])=>`
+        <div style="background:#fff;border:1px solid var(--brd);border-radius:7px;padding:.5rem .75rem;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;color:var(--tx)">${LABEL[tipo]}</span>
+          <span style="font-size:12px;font-weight:700;color:${COR[tipo]}">${v}</span>
+        </div>`).join('')}
+    </div>` : '<div style="font-size:12px;color:var(--tx2)">Nenhuma ação registrada esta semana.</div>'}`;
 }
 
 function renderCardsDia(){
@@ -6646,7 +6868,7 @@ function setAdmTab(id,btn){
   if(id==='ferias-adm') setTimeout(renderFeriasForm,50);
   if(id==='pcp-adm') setTimeout(renderAdmPCP,50);
   if(id==='hist-mapa') setTimeout(renderAdmMapaHistorico,50);
-  if(id==='hist-prod') setTimeout(renderDistribuicao,50);
+  if(id==='hist-prod') setTimeout(()=>{ renderDistribuicao(); renderPerfSemanal(); },50);
   if(id==='banco-adm') setTimeout(()=>{bheInit();fbCarregarBHE();},50);
   if(id==='usuarios') setTimeout(()=>{
     // Aguardar window._db estar disponível
@@ -17714,6 +17936,8 @@ async function fdiaInicializar(){
   const acoes = window._prodAcoesHoje || [];
   // Renderizar linha do tempo
   fdiaRenderLinhaTempo(colab);
+  // Renderizar visão da semana
+  renderFdiaSemana(colab);
   const cnt   = prodContarHoje(acoes);
   const pct   = Math.min(100, Math.round(cnt.meta / metaVal * 100));
   const cor   = cnt.meta >= metaVal ? 'var(--vd)' : cnt.meta >= metaVal*.8 ? 'var(--am)' : 'var(--vm)';
