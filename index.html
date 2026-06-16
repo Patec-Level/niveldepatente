@@ -9186,6 +9186,7 @@ async function radarOnFile(file){
         return ''; // #N/A, vazio — não conta nem como Sim nem como Não
       })(),
       centro:        String(r['CENTRO']||r['Centro']||r['centro']||'').trim(),
+      urgencia:      String(r['URGENCIA']||r['URGÊNCIA']||r['Urgencia']||r['Urgência']||r['urgencia']||r['urgência']||'').trim(),
     }));
 
     // Debug: log column names from first row to help identify FAMILIA L OU Q
@@ -16825,7 +16826,7 @@ function q18Consultar(valor){
         <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px">↓ Tipo de conclusão</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem">
-        <button class="acao-sel-btn" onclick="acaoSelecionarConclusao(this,'XGL')"
+        <button class="acao-sel-btn" id="acao-btn-xgl" onclick="acaoSelecionarConclusao(this,'XGL')"
           style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:10px;padding:.875rem;cursor:pointer;text-align:center;transition:all .18s">
           <div style="font-size:20px;margin-bottom:4px">📦</div>
           <div style="font-size:12px;font-weight:600;color:var(--vd)">XGL</div>
@@ -16845,6 +16846,21 @@ function q18Consultar(valor){
           <div style="font-size:20px;margin-bottom:4px">↩</div>
           <div style="font-size:12px;font-weight:600;color:var(--vm)">Devolução</div>
         </button>
+      </div>
+
+      <!-- Sub-seleção: XGL Alto ou Baixo (aparece só quando XGL é escolhido) -->
+      <div id="acao-xgl-nivel-box" style="display:none;margin-bottom:1rem">
+        <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">↓ Nível do XGL</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="acao-sel-btn" id="acao-xgl-baixo-btn" onclick="acaoSelecionarXglNivel(this,'XGL BAIXO')"
+            style="background:var(--vdc);border:1.5px solid var(--vd);border-radius:10px;padding:.75rem;cursor:pointer;text-align:center">
+            <div style="font-size:12px;font-weight:700;color:var(--vd)">⬇ XGL Baixo</div>
+          </button>
+          <button class="acao-sel-btn" id="acao-xgl-alto-btn" onclick="acaoSelecionarXglNivel(this,'XGL ALTO')"
+            style="background:var(--vmc);border:1.5px solid var(--vm);border-radius:10px;padding:.75rem;cursor:pointer;text-align:center">
+            <div style="font-size:12px;font-weight:700;color:var(--vm)">⬆ XGL Alto</div>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -18153,8 +18169,38 @@ function acaoSelecionarConclusao(btn, conclusao){
   document.querySelectorAll('#acao-estagio-2 .acao-sel-btn').forEach(b=>b.classList.remove('selecionado'));
   btn.classList.add('selecionado');
   _prodCtx.conclusao = conclusao;
+  _prodCtx.xglNivel = null; // resetar nível XGL a cada seleção
   document.getElementById('acao-selecao-atual').style.display = 'block';
   document.getElementById('acao-selecao-texto').textContent = 'Concluído → ' + conclusao;
+
+  // Mostrar/ocultar sub-seleção de nível XGL (Alto/Baixo)
+  const _xglBox = document.getElementById('acao-xgl-nivel-box');
+  if(_xglBox){
+    if(conclusao === 'XGL'){
+      _xglBox.style.display = 'block';
+      document.querySelectorAll('#acao-xgl-nivel-box .acao-sel-btn').forEach(b=>b.classList.remove('selecionado'));
+
+      // Auto-selecionar o nível com base na coluna URGÊNCIA do Radar (Alto/Baixo)
+      try{
+        const _rcChaveAtualXgl = (_prodCtx.rcChaves||[_prodCtx.rcChave]||[]).filter(Boolean)[0];
+        if(_rcChaveAtualXgl){
+          const _rcNumAtualXgl = _rcChaveAtualXgl.split('|')[0];
+          const _rowUrg = (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNumAtualXgl && r.urgencia);
+          const _urgVal = (_rowUrg?.urgencia||'').trim().toLowerCase();
+          if(_urgVal === 'alto' || _urgVal === 'alta'){
+            const _btnAlto = document.getElementById('acao-xgl-alto-btn');
+            if(_btnAlto) acaoSelecionarXglNivel(_btnAlto, 'XGL ALTO');
+          } else if(_urgVal === 'baixo' || _urgVal === 'baixa'){
+            const _btnBaixo = document.getElementById('acao-xgl-baixo-btn');
+            if(_btnBaixo) acaoSelecionarXglNivel(_btnBaixo, 'XGL BAIXO');
+          }
+        }
+      } catch(_eUrg){ console.warn('Auto-preencher urgência XGL:', _eUrg); }
+    } else {
+      _xglBox.style.display = 'none';
+    }
+  }
+
   // Mostrar campos de devolução apenas se Devolução selecionada
   const _devBoxC = document.getElementById('acao-dev-box');
   if(_devBoxC) _devBoxC.style.display = conclusao === 'Devolução' ? 'block' : 'none';
@@ -18177,12 +18223,21 @@ function acaoSelecionarConclusao(btn, conclusao){
   }
 }
 
+function acaoSelecionarXglNivel(btn, nivel){
+  document.querySelectorAll('#acao-xgl-nivel-box .acao-sel-btn').forEach(b=>b.classList.remove('selecionado'));
+  btn.classList.add('selecionado');
+  _prodCtx.xglNivel = nivel;
+  document.getElementById('acao-selecao-texto').textContent = 'Concluído → XGL (' + (nivel==='XGL ALTO'?'Alto':'Baixo') + ')';
+}
+
 function acaoVoltarEstagio1(){
   _prodCtx.conclusao = null;
+  _prodCtx.xglNivel = null;
   document.getElementById('acao-estagio-2').style.display = 'none';
   document.getElementById('acao-estagio-1').style.display = 'block';
   document.getElementById('acao-finalizado-box').style.display = 'none';
   document.getElementById('acao-dev-box').style.display = 'none';
+  const _xglBoxV = document.getElementById('acao-xgl-nivel-box'); if(_xglBoxV) _xglBoxV.style.display = 'none';
   const _dcV = document.getElementById('acao-dev-centro'); if(_dcV) _dcV.value = '';
   const _dmV = document.getElementById('acao-dev-motivo'); if(_dmV) _dmV.value = '';
   document.getElementById('acao-modal-subtitulo').textContent = 'Selecione o status de tratamento';
@@ -18199,6 +18254,10 @@ async function prodConfirmarAcao(){
   }
   if(_prodCtx.tratamento === 'Concluído' && !_prodCtx.conclusao){
     errEl.textContent = 'Selecione o tipo de conclusão.';
+    errEl.style.display = 'block'; return;
+  }
+  if(_prodCtx.conclusao === 'XGL' && !_prodCtx.xglNivel){
+    errEl.textContent = 'Selecione o nível do XGL (Alto ou Baixo).';
     errEl.style.display = 'block'; return;
   }
   if(_prodCtx.conclusao && !document.getElementById('acao-data-finalizado')?.value){
@@ -18259,7 +18318,10 @@ async function prodConfirmarAcao(){
     'Concluído':        'Concluído'
   };
   const _tratamentoRaw = _prodCtx.tratamento || '';
-  const _statusGov = _TRAT_MAP[_tratamentoRaw] || _tratamentoRaw;
+  // Quando a conclusão é XGL, o status final da governança passa a ser o nível escolhido
+  // (XGL ALTO / XGL BAIXO) em vez do tratamento — é isso que classifica o item como XGL
+  const _ehConclusaoXgl = _prodCtx.conclusao === 'XGL' && _prodCtx.xglNivel;
+  const _statusGov = _ehConclusaoXgl ? _prodCtx.xglNivel : (_TRAT_MAP[_tratamentoRaw] || _tratamentoRaw);
 
   // Atualizar dados em memória + Firebase — usando a estrutura CORRETA conforme a origem do item
   // (MAPA usa _govDados/gov_mapa, XGL usa _xglDados/gov_xgl, Status B usa _sbDados/gov_sb —
@@ -18271,7 +18333,36 @@ async function prodConfirmarAcao(){
   if(_chaves.length > 0){
     const _dbG = getDB();
     for(const _chave of _chaves){
-      const _colecaoDestino = _chaveColecao[_chave] || 'gov_mapa';
+      // Conclusão XGL FORÇA o destino para gov_xgl, independente de onde o item estava antes
+      // (MAPA, Status B) — é assim que a RC "abre" automaticamente na aba XGL Alto/Baixo
+      const _colecaoDestino = _ehConclusaoXgl ? 'gov_xgl' : (_chaveColecao[_chave] || 'gov_mapa');
+
+      // Se a conclusão é XGL e o item ainda não existe na lista do XGL, criar agora
+      // (garante que ele apareça na aba XGL mesmo se só existia no MAPA/Status B antes)
+      if(_ehConclusaoXgl && typeof _xglItens !== 'undefined'){
+        const _jaExisteXgl = _xglItens.some(it => xglChave(it.rc, it.item, it.oport||'', it.itemop||'') === _chave);
+        if(!_jaExisteXgl){
+          // Buscar dados básicos da RC no radar/mapa para preencher o novo item XGL
+          const _partesChave = _chave.split('|');
+          const _rcNum = _partesChave[0] || '';
+          const _itemNum = _partesChave[1] || '';
+          const _rowOrigem = (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNum && String(r.seq||r.item||'').trim() === _itemNum)
+                            || (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNum);
+          const _novoItemXgl = {
+            rc: _rcNum,
+            item: _itemNum,
+            analista: _rowOrigem?.analista || colab || '',
+            oport: _rowOrigem?.num_oport || '',
+            itemop: _rowOrigem?.item_rc || ''
+          };
+          _xglItens.push(_novoItemXgl);
+          // Persistir a lista atualizada de itens XGL no Firebase (config/xgl_itens)
+          try{
+            if(_dbG) await _dbG.collection('config').doc('xgl_itens').set({ itens: _xglItens }, {merge:true});
+          } catch(_eXglItem){ console.warn('Erro ao adicionar item ao XGL:', _eXglItem); }
+        }
+      }
+
       // Selecionar a estrutura de memória correta
       const _memDestino = _colecaoDestino === 'gov_xgl' ? (typeof _xglDados!=='undefined' ? _xglDados : null)
                          : _colecaoDestino === 'gov_sb'  ? (typeof _sbDados!=='undefined'  ? _sbDados  : null)
@@ -18344,6 +18435,11 @@ async function prodConfirmarAcao(){
   }
   const _pcBEl = document.getElementById('pc-busca');
   if(_pcBEl && _pcBEl.value) pcBuscarRCDetalhe(_pcBEl.value);
+
+  // Se a conclusão foi XGL, atualizar a tabela do XGL imediatamente (item pode ter sido criado agora)
+  if(_ehConclusaoXgl && typeof xglRender === 'function'){
+    try{ xglRender(); } catch(_eXr){ console.warn('xglRender refresh:', _eXr); }
+  }
 
   // PCP será recalculado quando o listener onSnapshot disparar
 
