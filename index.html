@@ -2523,6 +2523,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           </div>
         </div>
 
+        <!-- ── LIMPAR DUPLICATAS DO XGL ── -->
+        <div class="cd" style="margin-top:1rem;border-top:3px solid var(--am)">
+          <div class="cd-t">🧹 Limpar Duplicatas do XGL</div>
+          <div class="al al-b" style="font-size:11px;margin-bottom:1rem">
+            Verifica se a lista de itens do XGL tem RCs duplicadas (mesma RC+Item+Oportunidade aparecendo mais de uma vez) e remove as cópias extras, mantendo apenas uma — sem afetar o histórico de status já registrado.
+          </div>
+          <button class="btn btn-s" onclick="xglVerificarDuplicatas()">🔍 Verificar Duplicatas</button>
+          <div id="xgl-dup-resultado" style="margin-top:1rem;display:none"></div>
+        </div>
+
       </div>
 
 
@@ -8722,6 +8732,70 @@ async function backupProducao(){
   setTimeout(()=>{ const box=document.getElementById('backup-progress'); if(box) box.style.display='none'; }, 3000);
 }
 
+// ══════════════════════════════════════════
+// LIMPAR DUPLICATAS DO XGL
+// ══════════════════════════════════════════
+async function xglVerificarDuplicatas(){
+  const el = document.getElementById('xgl-dup-resultado');
+  el.style.display = 'block';
+  el.innerHTML = '<div style="font-size:12px;color:var(--tx2)">⏳ Verificando...</div>';
+
+  try{
+    const db = getDB(); if(!db){ el.innerHTML = '❌ Firebase indisponível'; return; }
+    const doc = await db.collection('config').doc('xgl_itens').get();
+    const itens = (doc.exists && doc.data().itens) ? doc.data().itens : [];
+
+    const vistos = {};
+    const duplicatas = [];
+    itens.forEach((it, idx) => {
+      const k = xglChave(it.rc, it.item, it.oport||'', it.itemop||'');
+      if(vistos[k] !== undefined){
+        duplicatas.push({ chave:k, rc:it.rc, item:it.item, idxOriginal:vistos[k], idxDuplicado:idx });
+      } else {
+        vistos[k] = idx;
+      }
+    });
+
+    if(!duplicatas.length){
+      el.innerHTML = '<div style="font-size:12px;color:var(--vd);font-weight:600">✅ Nenhuma duplicata encontrada. Lista do XGL está limpa.</div>';
+      return;
+    }
+
+    el.innerHTML = `
+      <div style="font-size:12px;font-weight:700;color:var(--vm);margin-bottom:.5rem">⚠ ${duplicatas.length} duplicata(s) encontrada(s):</div>
+      <div class="tw" style="max-height:240px;margin-bottom:1rem">
+        <table>
+          <thead><tr><th>RC</th><th>Item</th></tr></thead>
+          <tbody>${duplicatas.map(d=>`<tr><td>${d.rc}</td><td>${d.item}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <button class="btn btn-r" onclick="xglRemoverDuplicatas()">🗑 Remover ${duplicatas.length} Duplicata(s)</button>
+      <div style="font-size:10px;color:var(--tx2);margin-top:.5rem">A primeira ocorrência de cada RC é mantida — apenas as cópias extras são removidas. O histórico de status (gov_xgl) não é afetado.</div>
+    `;
+    window._xglDuplicatasEncontradas = duplicatas;
+    window._xglItensOriginais = itens;
+  } catch(e){ el.innerHTML = '❌ Erro: '+e.message; }
+}
+
+async function xglRemoverDuplicatas(){
+  const el = document.getElementById('xgl-dup-resultado');
+  const itens = window._xglItensOriginais || [];
+  const duplicatas = window._xglDuplicatasEncontradas || [];
+  if(!itens.length || !duplicatas.length) return;
+
+  // Remover pelos índices duplicados (de trás para frente para não desalinhar índices)
+  const idxsRemover = duplicatas.map(d=>d.idxDuplicado).sort((a,b)=>b-a);
+  const itensLimpos = [...itens];
+  idxsRemover.forEach(i => itensLimpos.splice(i,1));
+
+  try{
+    const db = getDB();
+    await db.collection('config').doc('xgl_itens').set({ itens: itensLimpos }, {merge:true});
+    if(typeof _xglItens !== 'undefined'){ _xglItens.length=0; _xglItens.push(...itensLimpos); }
+    el.innerHTML = `<div style="font-size:12px;color:var(--vd);font-weight:600">✅ ${duplicatas.length} duplicata(s) removida(s) com sucesso! Total de itens agora: ${itensLimpos.length}.</div>`;
+  } catch(e){ el.innerHTML = '❌ Erro ao remover: '+e.message; }
+}
+
 function exportAdmPCP(){var hd='Data,PATEC Fin./Parada,MDG,XGL,RCs Pedidos,RCs Dev.,RCs Repub.,Total\n';var rows=pcpData.map(function(r){var tot=(r.f1||0)+(r.f2||0)+(r.f6||0)+(r.f3||0)+(r.f4||0)+(r.f5||0);return fmtDt(r.data)+','+(r.f1||0)+','+(r.f2||0)+','+(r.f6||0)+','+(r.f3||0)+','+(r.f4||0)+','+(r.f5||0)+','+tot;}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+hd+rows],{type:'text/csv'}));a.download='PCP_PATEC.csv';a.click();}
 
 // ── UPLOAD MAPA ADM ──
@@ -13895,10 +13969,18 @@ function govBuscarRC(rc){
       sla:r.sla||'—', fila:r.fila||'—', seguimento:r.seguimento||'—', cat_familia:r.cat_familia||'—', familia:r.familia||'—', tipo_familia:r.tipo_familia||'—', familia_lq:r.familia_lq||'—'});
   });
 
-  // XGL
-  (_xglItens||[]).filter(r=>(r.rc||'').includes(rcBusca)).forEach(r=>{
+  // XGL — deduplicar por chave antes de exibir (proteção contra duplicatas legadas na base)
+  const _xglVistos = new Set();
+  const _xglUnicos = (_xglItens||[]).filter(r => {
+    const k = xglChave(r.rc, r.item, r.oport||'', r.itemop||'');
+    if(_xglVistos.has(k)) return false;
+    _xglVistos.add(k);
+    return true;
+  });
+  _xglUnicos.filter(r=>(r.rc||'').includes(rcBusca)).forEach(r=>{
     const chave = xglChave(r.rc, r.item, r.oport, r.itemop);
     const m = _xglDados[chave]||{};
+    console.log('[govBuscarRC XGL] chave:', chave, '| dados encontrados:', JSON.stringify(m), '| _xglDados tem essa chave?', chave in _xglDados);
     const prazo = govCalcPrazo(m.status||'', m.envio||'');
     const status = govCalcStatus(prazo, m.finalizado||'');
     resultados.push({aba:'XGL', chave, analista:r.analista||'—', rc:r.rc, seq:r.item, op:r.oport, item:r.itemop,
@@ -18364,26 +18446,32 @@ async function prodConfirmarAcao(){
   const _chaveColecao = _prodCtx.rcChaveColecao || {};
   if(_chaves.length > 0){
     const _dbG = getDB();
-    for(const _chave of _chaves){
-      // Conclusão XGL FORÇA o destino para gov_xgl, independente de onde o item estava antes
-      // (MAPA, Status B) — é assim que a RC "abre" automaticamente na aba XGL Alto/Baixo
-      const _colecaoDestino = _ehConclusaoXgl ? 'gov_xgl' : (_chaveColecao[_chave] || 'gov_mapa');
+    // Detectar se alguma das chaves já é nativamente do XGL (2 partes RC|item)
+    const _algumaChaveJaEhXgl = _chaves.some(c => (_chaveColecao[c]||'') === 'gov_xgl');
 
-      // Se a conclusão é XGL e o item ainda não existe na lista do XGL, criar agora
-      // (garante que ele apareça na aba XGL mesmo se só existia no MAPA/Status B antes)
-      // Verificação ROBUSTA: relê a lista direto do Firebase antes de decidir, para evitar
-      // duplicidade se outro colaborador adicionou o mesmo item poucos segundos antes
-      // (a lista em memória pode estar desatualizada até o próximo onSnapshot)
-      if(_ehConclusaoXgl && _dbG){
+    for(const _chave of _chaves){
+      const _origemRealDaChave = _chaveColecao[_chave] || 'gov_mapa';
+      const _estaChaveEhXgl = _origemRealDaChave === 'gov_xgl';
+      // Esta chave recebe o tratamento "XGL" (status ALTO/BAIXO + vira item do XGL) somente se:
+      // ela já É nativamente do XGL, OU (a conclusão é XGL E nenhuma chave já é do XGL E esta é a 1ª chave)
+      const _aplicarXglNestaChave = _ehConclusaoXgl && (_estaChaveEhXgl || (!_algumaChaveJaEhXgl && _chaves.indexOf(_chave)===0));
+      const _colecaoDestino = _aplicarXglNestaChave ? 'gov_xgl' : _origemRealDaChave;
+
+      // Se vamos aplicar XGL numa chave que NÃO é nativamente do XGL, precisamos criar o item
+      // na lista do XGL usando uma chave NOVA no formato correto (RC|item, 2 partes) — nunca
+      // reaproveitar a chave de 3 partes do MAPA como documento do XGL, ou a busca nunca acha
+      let _chaveEfetivaXgl = _chave;
+      if(_aplicarXglNestaChave && !_estaChaveEhXgl && _dbG){
         try{
+          const _partesChave = _chave.split('|');
+          const _rcNum = _partesChave[0] || '';
+          const _itemNum = _partesChave[1] || '';
+          _chaveEfetivaXgl = xglChave(_rcNum, _itemNum, '', ''); // garante formato RC|item
+
           const _docXglItens = await _dbG.collection('config').doc('xgl_itens').get();
           const _xglItensAtuais = (_docXglItens.exists && _docXglItens.data().itens) ? _docXglItens.data().itens : [];
-          const _jaExisteXgl = _xglItensAtuais.some(it => xglChave(it.rc, it.item, it.oport||'', it.itemop||'') === _chave);
+          const _jaExisteXgl = _xglItensAtuais.some(it => xglChave(it.rc, it.item, it.oport||'', it.itemop||'') === _chaveEfetivaXgl);
           if(!_jaExisteXgl){
-            // Buscar dados básicos da RC no radar/mapa para preencher o novo item XGL
-            const _partesChave = _chave.split('|');
-            const _rcNum = _partesChave[0] || '';
-            const _itemNum = _partesChave[1] || '';
             const _rowOrigem = (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNum && String(r.seq||r.item||'').trim() === _itemNum)
                               || (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNum);
             const _novoItemXgl = {
@@ -18393,59 +18481,61 @@ async function prodConfirmarAcao(){
               oport: _rowOrigem?.num_oport || '',
               itemop: _rowOrigem?.item_rc || ''
             };
-            // Adicionar à lista relida do Firebase (não à cópia local desatualizada)
             const _xglItensNovos = [..._xglItensAtuais, _novoItemXgl];
             await _dbG.collection('config').doc('xgl_itens').set({ itens: _xglItensNovos }, {merge:true});
-            // Sincronizar a variável local também, para a tela atualizar sem esperar o listener
-            if(typeof _xglItens !== 'undefined'){
-              _xglItens.length = 0;
-              _xglItens.push(..._xglItensNovos);
-            }
-          } else if(typeof _xglItens !== 'undefined' && !_xglItens.some(it => xglChave(it.rc, it.item, it.oport||'', it.itemop||'') === _chave)){
-            // Item já existe no Firebase mas a cópia local não tem — sincronizar sem duplicar
+            if(typeof _xglItens !== 'undefined'){ _xglItens.length = 0; _xglItens.push(..._xglItensNovos); }
+          } else if(typeof _xglItens !== 'undefined' && !_xglItens.some(it => xglChave(it.rc, it.item, it.oport||'', it.itemop||'') === _chaveEfetivaXgl)){
             _xglItens.length = 0;
             _xglItens.push(..._xglItensAtuais);
           }
         } catch(_eXglItem){ console.warn('Erro ao adicionar item ao XGL:', _eXglItem); }
       }
 
-      // Selecionar a estrutura de memória correta
+      // Selecionar a estrutura de memória correta — usando a chave EFETIVA (pode diferir da original se converteu p/ XGL)
+      const _chaveParaSalvar = _aplicarXglNestaChave ? _chaveEfetivaXgl : _chave;
       const _memDestino = _colecaoDestino === 'gov_xgl' ? (typeof _xglDados!=='undefined' ? _xglDados : null)
                          : _colecaoDestino === 'gov_sb'  ? (typeof _sbDados!=='undefined'  ? _sbDados  : null)
                          : _govDados;
       if(_memDestino){
-        if(!_memDestino[_chave]) _memDestino[_chave] = {};
-        if(_statusGov)         _memDestino[_chave].status     = _statusGov;
-        if(_envioParaDestino)  _memDestino[_chave].envio       = _envioParaDestino;
-        // No XGL (conclusão XGL), finalizado nasce vazio mesmo que já exista um valor anterior
-        if(_ehConclusaoXgl)    _memDestino[_chave].finalizado  = '';
-        else if(_finParaDestino) _memDestino[_chave].finalizado = _finParaDestino;
+        if(!_memDestino[_chaveParaSalvar]) _memDestino[_chaveParaSalvar] = {};
+        if(_statusGov)         _memDestino[_chaveParaSalvar].status     = _statusGov;
+        if(_envioParaDestino)  _memDestino[_chaveParaSalvar].envio       = _envioParaDestino;
+        if(_aplicarXglNestaChave) _memDestino[_chaveParaSalvar].finalizado  = '';
+        else if(_finParaDestino) _memDestino[_chaveParaSalvar].finalizado = _finParaDestino;
       }
       // Manter _govDados também atualizado (usado pelo card de busca/Top SLA independente da origem)
       if(!_govDados[_chave]) _govDados[_chave] = {};
       if(_statusGov)         _govDados[_chave].status     = _statusGov;
       if(_envioParaDestino)  _govDados[_chave].envio       = _envioParaDestino;
-      if(_ehConclusaoXgl)    _govDados[_chave].finalizado  = '';
+      if(_aplicarXglNestaChave) _govDados[_chave].finalizado  = '';
       else if(_finParaDestino) _govDados[_chave].finalizado = _finParaDestino;
       // Recalcular prazo e status visual inline imediatamente
       const _prazoCalc   = govCalcPrazo(_statusGov, _envioParaDestino);
-      const _statusCalc  = govCalcStatus(_prazoCalc, _ehConclusaoXgl ? '' : _finParaDestino);
+      const _statusCalc  = govCalcStatus(_prazoCalc, _aplicarXglNestaChave ? '' : _finParaDestino);
       const _idKey = _chave.replace(/[|]/g,'_');
       const _elPrazo  = document.getElementById('busca-prazo-' + _idKey);
       const _elStatus = document.getElementById('busca-status-' + _idKey);
       if(_elPrazo)  _elPrazo.textContent = _prazoCalc ? fmtBR(_prazoCalc) : '—';
       if(_elStatus){ _elStatus.textContent = _statusCalc||'—'; _elStatus.style.cssText = govCorStatus(_statusCalc); }
-      // Salvar no Firebase — na coleção CORRETA (gov_mapa, gov_xgl ou gov_sb) conforme a origem real do item
+      // Salvar no Firebase — na coleção CORRETA, usando a chave EFETIVA (formato certo p/ aquela coleção)
       try{
         if(_dbG){
-          const _docId = _chave.replace(/[|]/g,'_');
-          const _payload = { chave: _chave, ts: new Date().toISOString() };
+          const _docId = _chaveParaSalvar.replace(/[|]/g,'_');
+          const _payload = { chave: _chaveParaSalvar, ts: new Date().toISOString() };
           if(_statusGov)        _payload.status     = _statusGov;
           if(_envioParaDestino) _payload.envio       = _envioParaDestino;
-          // No XGL recém-criado pela conclusão, finalizado fica explicitamente vazio (item está iniciando)
-          _payload.finalizado = _ehConclusaoXgl ? '' : (_finParaDestino || '');
+          _payload.finalizado = _aplicarXglNestaChave ? '' : (_finParaDestino || '');
           await _dbG.collection(_colecaoDestino).doc(_docId).set(_payload, {merge:true});
-          console.log('✓ Gov atualizado:', _chave, '| coleção:', _colecaoDestino, '| status:', _statusGov, '| envio:', _envioParaDestino);
+          console.log('✓ Gov atualizado:', _chaveParaSalvar, '| coleção:', _colecaoDestino, '| status:', _statusGov, '| envio:', _envioParaDestino);
+
+          // Se a chave do MAPA original foi "convertida" para XGL, ainda assim marcar
+          // o documento original do MAPA como concluído (para não ficar pendente lá)
+          if(_aplicarXglNestaChave && !_estaChaveEhXgl){
+            const _docIdMapa = _chave.replace(/[|]/g,'_');
+            await _dbG.collection('gov_mapa').doc(_docIdMapa).set({
+              chave: _chave, status: 'Concluído', finalizado: _dataFin || _envioParaDestino, ts: new Date().toISOString()
+            }, {merge:true});
+          }
         }
       }catch(_e){ console.warn('govDados save:', _e); }
     }
