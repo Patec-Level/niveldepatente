@@ -18078,8 +18078,13 @@ function prodAbrirModal(origem, tipo){
   const _rcChavesXgl   = _rcRowsXgl.map(r=>xglChave(r.rc,r.item,r.oport,r.itemop));
   const _rcChavesSb    = _rcRowsSb.map(r=>sbChave(r.rc,r.seq,r.op,r.item));
   const _rcChaves = [..._rcChavesRadar, ..._rcChavesXgl, ..._rcChavesSb];
+  // Mapa de chave → coleção correta, para o salvamento ir para o lugar certo (gov_mapa / gov_xgl / gov_sb)
+  const _rcChaveColecao = {};
+  _rcChavesRadar.forEach(c => _rcChaveColecao[c] = 'gov_mapa');
+  _rcChavesXgl.forEach(c => _rcChaveColecao[c] = 'gov_xgl');
+  _rcChavesSb.forEach(c => _rcChaveColecao[c] = 'gov_sb');
   const _rcChave = _rcChaves.length > 0 ? _rcChaves[0] : null;
-  _prodCtx = { origem, tipo, tratamento: null, conclusao: null, rcChave: _rcChave, rcChaves: _rcChaves, rcBusca: _rcBusca };
+  _prodCtx = { origem, tipo, tratamento: null, conclusao: null, rcChave: _rcChave, rcChaves: _rcChaves, rcChaveColecao: _rcChaveColecao, rcBusca: _rcBusca };
   console.log('[Modal] RC:', _rcBusca, '| chaves encontradas:', _rcChaves.length);
   const cfg = PROD_TIPO_LABELS[tipo];
 
@@ -18256,13 +18261,28 @@ async function prodConfirmarAcao(){
   const _tratamentoRaw = _prodCtx.tratamento || '';
   const _statusGov = _TRAT_MAP[_tratamentoRaw] || _tratamentoRaw;
 
-  // Atualizar _govDados com status de tratamento + datas
+  // Atualizar dados em memória + Firebase — usando a estrutura CORRETA conforme a origem do item
+  // (MAPA usa _govDados/gov_mapa, XGL usa _xglDados/gov_xgl, Status B usa _sbDados/gov_sb —
+  // são 3 estruturas separadas; salvar na errada fazia o status "voltar" ao recarregar a página)
   const _dataEnvio = (document.getElementById('acao-data-envio')?.value||'').trim();
   const _dataFin   = (document.getElementById('acao-data-finalizado')?.value||'').trim();
   const _chaves = _prodCtx.rcChaves || (_prodCtx.rcChave ? [_prodCtx.rcChave] : []);
+  const _chaveColecao = _prodCtx.rcChaveColecao || {};
   if(_chaves.length > 0){
     const _dbG = getDB();
     for(const _chave of _chaves){
+      const _colecaoDestino = _chaveColecao[_chave] || 'gov_mapa';
+      // Selecionar a estrutura de memória correta
+      const _memDestino = _colecaoDestino === 'gov_xgl' ? (typeof _xglDados!=='undefined' ? _xglDados : null)
+                         : _colecaoDestino === 'gov_sb'  ? (typeof _sbDados!=='undefined'  ? _sbDados  : null)
+                         : _govDados;
+      if(_memDestino){
+        if(!_memDestino[_chave]) _memDestino[_chave] = {};
+        if(_statusGov)   _memDestino[_chave].status     = _statusGov;
+        if(_dataEnvio)   _memDestino[_chave].envio       = _dataEnvio;
+        if(_dataFin)     _memDestino[_chave].finalizado  = _dataFin;
+      }
+      // Manter _govDados também atualizado (usado pelo card de busca/Top SLA independente da origem)
       if(!_govDados[_chave]) _govDados[_chave] = {};
       if(_statusGov)   _govDados[_chave].status     = _statusGov;
       if(_dataEnvio)   _govDados[_chave].envio       = _dataEnvio;
@@ -18275,7 +18295,7 @@ async function prodConfirmarAcao(){
       const _elStatus = document.getElementById('busca-status-' + _idKey);
       if(_elPrazo)  _elPrazo.textContent = _prazoCalc ? fmtBR(_prazoCalc) : '—';
       if(_elStatus){ _elStatus.textContent = _statusCalc||'—'; _elStatus.style.cssText = govCorStatus(_statusCalc); }
-      // Salvar no Firebase (MAPA) — inclui chave para o load reconhecer o doc
+      // Salvar no Firebase — na coleção CORRETA (gov_mapa, gov_xgl ou gov_sb) conforme a origem real do item
       try{
         if(_dbG){
           const _docId = _chave.replace(/[|]/g,'_');
@@ -18283,8 +18303,8 @@ async function prodConfirmarAcao(){
           if(_statusGov)  _payload.status     = _statusGov;
           if(_dataEnvio)  _payload.envio       = _dataEnvio;
           if(_dataFin)    _payload.finalizado  = _dataFin;
-          await _dbG.collection('gov_mapa').doc(_docId).set(_payload, {merge:true});
-          console.log('✓ Gov atualizado:', _chave, '| status:', _statusGov);
+          await _dbG.collection(_colecaoDestino).doc(_docId).set(_payload, {merge:true});
+          console.log('✓ Gov atualizado:', _chave, '| coleção:', _colecaoDestino, '| status:', _statusGov);
         }
       }catch(_e){ console.warn('govDados save:', _e); }
     }
