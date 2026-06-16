@@ -13634,7 +13634,16 @@ async function xglCarregarFirebase(){
     const db = getDB(); if(!db) return;
     // Carregar itens do Firebase e MESCLAR com base embutida
     const docItens = await db.collection('config').doc('xgl_itens').get();
-    const fbItens = (docItens.exists && docItens.data().itens) ? docItens.data().itens : [];
+    const fbItensRaw = (docItens.exists && docItens.data().itens) ? docItens.data().itens : [];
+    // Deduplicar defensivamente — se uma race condition já tiver criado duplicata no passado,
+    // ela é eliminada aqui silenciosamente (mantém a primeira ocorrência de cada chave)
+    const _vistosFb = new Set();
+    const fbItens = fbItensRaw.filter(r => {
+      const k = xglChave(r.rc, r.item, r.oport||"", r.itemop||"");
+      if(_vistosFb.has(k)) return false;
+      _vistosFb.add(k);
+      return true;
+    });
     // Sempre mesclar: Firebase + base embutida (sem duplicatas)
     const vistosXgl = new Set(fbItens.map(r => xglChave(r.rc, r.item, r.oport||"", r.itemop||"")));
     _xglItens = [...fbItens];
@@ -18362,28 +18371,42 @@ async function prodConfirmarAcao(){
 
       // Se a conclusão é XGL e o item ainda não existe na lista do XGL, criar agora
       // (garante que ele apareça na aba XGL mesmo se só existia no MAPA/Status B antes)
-      if(_ehConclusaoXgl && typeof _xglItens !== 'undefined'){
-        const _jaExisteXgl = _xglItens.some(it => xglChave(it.rc, it.item, it.oport||'', it.itemop||'') === _chave);
-        if(!_jaExisteXgl){
-          // Buscar dados básicos da RC no radar/mapa para preencher o novo item XGL
-          const _partesChave = _chave.split('|');
-          const _rcNum = _partesChave[0] || '';
-          const _itemNum = _partesChave[1] || '';
-          const _rowOrigem = (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNum && String(r.seq||r.item||'').trim() === _itemNum)
-                            || (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNum);
-          const _novoItemXgl = {
-            rc: _rcNum,
-            item: _itemNum,
-            analista: _rowOrigem?.analista || colab || '',
-            oport: _rowOrigem?.num_oport || '',
-            itemop: _rowOrigem?.item_rc || ''
-          };
-          _xglItens.push(_novoItemXgl);
-          // Persistir a lista atualizada de itens XGL no Firebase (config/xgl_itens)
-          try{
-            if(_dbG) await _dbG.collection('config').doc('xgl_itens').set({ itens: _xglItens }, {merge:true});
-          } catch(_eXglItem){ console.warn('Erro ao adicionar item ao XGL:', _eXglItem); }
-        }
+      // Verificação ROBUSTA: relê a lista direto do Firebase antes de decidir, para evitar
+      // duplicidade se outro colaborador adicionou o mesmo item poucos segundos antes
+      // (a lista em memória pode estar desatualizada até o próximo onSnapshot)
+      if(_ehConclusaoXgl && _dbG){
+        try{
+          const _docXglItens = await _dbG.collection('config').doc('xgl_itens').get();
+          const _xglItensAtuais = (_docXglItens.exists && _docXglItens.data().itens) ? _docXglItens.data().itens : [];
+          const _jaExisteXgl = _xglItensAtuais.some(it => xglChave(it.rc, it.item, it.oport||'', it.itemop||'') === _chave);
+          if(!_jaExisteXgl){
+            // Buscar dados básicos da RC no radar/mapa para preencher o novo item XGL
+            const _partesChave = _chave.split('|');
+            const _rcNum = _partesChave[0] || '';
+            const _itemNum = _partesChave[1] || '';
+            const _rowOrigem = (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNum && String(r.seq||r.item||'').trim() === _itemNum)
+                              || (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNum);
+            const _novoItemXgl = {
+              rc: _rcNum,
+              item: _itemNum,
+              analista: _rowOrigem?.analista || colab || '',
+              oport: _rowOrigem?.num_oport || '',
+              itemop: _rowOrigem?.item_rc || ''
+            };
+            // Adicionar à lista relida do Firebase (não à cópia local desatualizada)
+            const _xglItensNovos = [..._xglItensAtuais, _novoItemXgl];
+            await _dbG.collection('config').doc('xgl_itens').set({ itens: _xglItensNovos }, {merge:true});
+            // Sincronizar a variável local também, para a tela atualizar sem esperar o listener
+            if(typeof _xglItens !== 'undefined'){
+              _xglItens.length = 0;
+              _xglItens.push(..._xglItensNovos);
+            }
+          } else if(typeof _xglItens !== 'undefined' && !_xglItens.some(it => xglChave(it.rc, it.item, it.oport||'', it.itemop||'') === _chave)){
+            // Item já existe no Firebase mas a cópia local não tem — sincronizar sem duplicar
+            _xglItens.length = 0;
+            _xglItens.push(..._xglItensAtuais);
+          }
+        } catch(_eXglItem){ console.warn('Erro ao adicionar item ao XGL:', _eXglItem); }
       }
 
       // Selecionar a estrutura de memória correta
