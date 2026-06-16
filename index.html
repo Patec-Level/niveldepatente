@@ -10697,43 +10697,13 @@ async function mktCarregarTicker() {
 
   let manchetes = [];
 
-  // Função de fetch com múltiplos proxies
-  async function fetchFeed(feedUrl, badge, cor) {
-    const proxies = [
-      'https://api.rss2json.com/v1/api.json?rss_url=',
-      'https://api.allorigins.win/get?url=',
-    ];
-
-    // Tentar rss2json primeiro
-    try {
-      const r = await fetchComTimeout('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl) + '&count=8');
-      const d = await r.json();
-      if(d.status === 'ok' && d.items?.length) return {items: d.items, badge, cor};
-    } catch(e) {}
-
-    // Fallback: allorigins + parse manual do XML
-    try {
-      const r = await fetchComTimeout('https://api.allorigins.win/get?url=' + encodeURIComponent(feedUrl));
-      const d = await r.json();
-      if(d.contents) {
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(d.contents, 'text/xml');
-        const items = Array.from(xml.querySelectorAll('item')).slice(0,8).map(item => ({
-          title: item.querySelector('title')?.textContent || '',
-          link:  item.querySelector('link')?.textContent || '',
-          description: item.querySelector('description')?.textContent || '',
-        }));
-        if(items.length) return {items, badge, cor};
-      }
-    } catch(e) {}
-
-    return null;
-  }
-
-  // Carregar feeds em paralelo — só 4 para não sobrecarregar
+  // Carregar feeds em paralelo — usa fetchRSS central (3 provedores em cascata cada)
   const feedsParalelo = TICKER_FEEDS.slice(0, 6);
   const results = await Promise.allSettled(
-    feedsParalelo.map(f => fetchFeed(f.url, f.badge, f.cor))
+    feedsParalelo.map(async f => {
+      const items = await fetchRSS(f.url, 8);
+      return items.length ? { items, badge: f.badge, cor: f.cor } : null;
+    })
   );
 
   for(const res of results) {
@@ -10849,74 +10819,104 @@ function mktNoticiaHTML(item, badgeTxt, badgeColor) {
   '</a>';
 }
 
+// Busca RSS com múltiplos provedores em cascata — evita ficar 100% dependente
+// de um único serviço gratuito (rss2json.com pode ficar lento/instável)
+async function fetchRSS(feedUrl, count = 8) {
+  // Provedor 1: rss2json.com — JSON já pronto, mais rápido quando funciona
+  try {
+    const r = await fetchComTimeout('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl) + '&count=' + count, 6000);
+    const d = await r.json();
+    if(d.status === 'ok' && d.items?.length) return d.items;
+  } catch(e) {}
+
+  // Provedor 2: allorigins.win + parse manual do XML
+  try {
+    const r = await fetchComTimeout('https://api.allorigins.win/get?url=' + encodeURIComponent(feedUrl), 6000);
+    const d = await r.json();
+    if(d.contents) {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(d.contents, 'text/xml');
+      const items = Array.from(xml.querySelectorAll('item')).slice(0, count).map(item => ({
+        title: item.querySelector('title')?.textContent || '',
+        link:  item.querySelector('link')?.textContent || '',
+        description: item.querySelector('description')?.textContent || '',
+      }));
+      if(items.length) return items;
+    }
+  } catch(e) {}
+
+  // Provedor 3: corsproxy.io + parse manual do XML
+  try {
+    const r = await fetchComTimeout('https://corsproxy.io/?' + encodeURIComponent(feedUrl), 6000);
+    const xmlTxt = await r.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(xmlTxt, 'text/xml');
+    const items = Array.from(xml.querySelectorAll('item')).slice(0, count).map(item => ({
+      title: item.querySelector('title')?.textContent || '',
+      link:  item.querySelector('link')?.textContent || '',
+      description: item.querySelector('description')?.textContent || '',
+    }));
+    if(items.length) return items;
+  } catch(e) {}
+
+  return []; // todos os provedores falharam
+}
+
 async function mktCarregarNoticias() {
   const el = id => document.getElementById(id);
   const loadEl = (id, html) => { if(el(id)) el(id).innerHTML = html; };
   const errEl  = (id, link, nome) => loadEl(id, '<div class="mkt-loading">Feed indisponível — <a href="' + link + '" target="_blank" style="color:var(--azm)">' + nome + ' →</a></div>');
 
-  // Todas as fontes buscadas EM PARALELO (antes era sequencial — causava demora de 15-30s)
+  // Todas as fontes buscadas EM PARALELO, cada uma com 3 provedores em cascata (fetchRSS)
   await Promise.allSettled([
 
     // Reuters Energy (com fallback World)
     (async () => {
-      try {
-        const r = await fetchComTimeout('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://feeds.reuters.com/reuters/energyNews') + '&count=5&api_key=');
-        const d = await r.json();
-        if(d.status === 'ok' && d.items?.length) {
-          loadEl('mkt-news-reuters', d.items.map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
-        } else { throw new Error('empty'); }
-      } catch {
-        try {
-          const r2 = await fetchComTimeout('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://feeds.reuters.com/reuters/worldNews') + '&count=5');
-          const d2 = await r2.json();
-          if(d2.status === 'ok' && d2.items?.length) {
-            loadEl('mkt-news-reuters', d2.items.filter(i => {
-              const t = (i.title+' '+(i.description||'')).toLowerCase();
-              return ['oil','energy','petroleum','opec','war','conflict','geopolit','ukraine','russia'].some(k => t.includes(k));
-            }).slice(0,3).map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join('') || d2.items.slice(0,3).map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
-          } else errEl('mkt-news-reuters','https://www.reuters.com/business/energy/','Reuters Energy');
-        } catch { errEl('mkt-news-reuters','https://www.reuters.com/business/energy/','Reuters Energy'); }
+      let items = await fetchRSS('https://feeds.reuters.com/reuters/energyNews', 5);
+      if(items.length) {
+        loadEl('mkt-news-reuters', items.map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
+        return;
       }
+      items = await fetchRSS('https://feeds.reuters.com/reuters/worldNews', 5);
+      if(items.length) {
+        const filtradas = items.filter(i => {
+          const t = (i.title+' '+(i.description||'')).toLowerCase();
+          return ['oil','energy','petroleum','opec','war','conflict','geopolit','ukraine','russia'].some(k => t.includes(k));
+        });
+        const finais = (filtradas.length ? filtradas : items).slice(0,3);
+        loadEl('mkt-news-reuters', finais.map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
+      } else errEl('mkt-news-reuters','https://www.reuters.com/business/energy/','Reuters Energy');
     })(),
 
     // BBC Business
     (async () => {
-      try {
-        const r = await fetchComTimeout('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://feeds.bbci.co.uk/news/business/rss.xml') + '&count=8');
-        const d = await r.json();
-        if(d.status === 'ok' && d.items?.length) {
-          const kw = ['oil','energy','opec','war','conflict','ukraine','russia','petrol','fuel','inflation','gas'];
-          const filtradas = d.items.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
-          const items = (filtradas.length >= 3 ? filtradas : d.items).slice(0,3);
-          loadEl('mkt-news-bbc', items.map(i => mktNoticiaHTML(i,'BBC','#000')).join(''));
-        } else errEl('mkt-news-bbc','https://www.bbc.com/news/business','BBC Business');
-      } catch { errEl('mkt-news-bbc','https://www.bbc.com/news/business','BBC Business'); }
+      const items = await fetchRSS('https://feeds.bbci.co.uk/news/business/rss.xml', 8);
+      if(items.length) {
+        const kw = ['oil','energy','opec','war','conflict','ukraine','russia','petrol','fuel','inflation','gas'];
+        const filtradas = items.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
+        const finais = (filtradas.length >= 3 ? filtradas : items).slice(0,3);
+        loadEl('mkt-news-bbc', finais.map(i => mktNoticiaHTML(i,'BBC','#000')).join(''));
+      } else errEl('mkt-news-bbc','https://www.bbc.com/news/business','BBC Business');
     })(),
 
-    // Brasil: G1 + Agência Brasil (também em paralelo entre si)
+    // Brasil: G1 + Agência Brasil (em paralelo entre si)
     (async () => {
-      try {
-        const feeds = [
-          { url: 'https://g1.globo.com/rss/g1/economia/', badge: 'G1', cor: '#E74C3C' },
-          { url: 'https://agenciabrasil.ebc.com.br/economia/feed', badge: 'Ag.Brasil', cor: '#009B3A' },
-        ];
-        const resultados = await Promise.allSettled(feeds.map(async f => {
-          const r = await fetchComTimeout('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(f.url) + '&count=6');
-          const d = await r.json();
-          if(d.status === 'ok' && d.items?.length) {
-            return d.items.map(i => ({...i, _badge: f.badge, _cor: f.cor}));
-          }
-          return [];
-        }));
-        let todos = [];
-        resultados.forEach(res => { if(res.status==='fulfilled') todos = todos.concat(res.value); });
-        if(todos.length) {
-          const kw = ['petróleo','petroleo','combustível','combustivel','gasolina','diesel','energia','câmbio','dólar','dollar','inflação','inflacao','guerra','opep','petrobras','preço','preco','barril'];
-          const filtradas = todos.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
-          const items = (filtradas.length >= 3 ? filtradas : todos).slice(0,3);
-          loadEl('mkt-news-br', items.map(i => mktNoticiaHTML(i, i._badge, i._cor)).join(''));
-        } else errEl('mkt-news-br','https://g1.globo.com/economia/','G1 Economia');
-      } catch { errEl('mkt-news-br','https://g1.globo.com/economia/','G1 Economia'); }
+      const feeds = [
+        { url: 'https://g1.globo.com/rss/g1/economia/', badge: 'G1', cor: '#E74C3C' },
+        { url: 'https://agenciabrasil.ebc.com.br/economia/feed', badge: 'Ag.Brasil', cor: '#009B3A' },
+      ];
+      const resultados = await Promise.allSettled(feeds.map(async f => {
+        const items = await fetchRSS(f.url, 6);
+        return items.map(i => ({...i, _badge: f.badge, _cor: f.cor}));
+      }));
+      let todos = [];
+      resultados.forEach(res => { if(res.status==='fulfilled') todos = todos.concat(res.value); });
+      if(todos.length) {
+        const kw = ['petróleo','petroleo','combustível','combustivel','gasolina','diesel','energia','câmbio','dólar','dollar','inflação','inflacao','guerra','opep','petrobras','preço','preco','barril'];
+        const filtradas = todos.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
+        const finais = (filtradas.length >= 3 ? filtradas : todos).slice(0,3);
+        loadEl('mkt-news-br', finais.map(i => mktNoticiaHTML(i, i._badge, i._cor)).join(''));
+      } else errEl('mkt-news-br','https://g1.globo.com/economia/','G1 Economia');
     })(),
 
   ]);
