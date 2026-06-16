@@ -709,7 +709,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
       <!-- TOPBAR INFO (atualização) -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px">
         <div>
-          <div style="font-size:11px;color:var(--tx2)">Fontes: Reuters · BBC · AP News · G1 · Agência Brasil · Yahoo Finance · AwesomeAPI</div>
+          <div style="font-size:11px;color:var(--tx2)">Fontes: G1 · Agência Brasil · UOL · O Globo · InfoMoney · Exame · Yahoo Finance · Brapi · AwesomeAPI</div>
           <div style="font-size:10px;color:var(--tx2);margin-top:2px">Atualização automática a cada <strong>5 minutos</strong> · Apenas fontes de alto padrão jornalístico</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
@@ -849,42 +849,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         </div>
       </div>
 
-      <!-- NOTÍCIAS em 3 colunas -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">
-
-        <!-- Reuters / Internacional -->
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
-            <span style="font-size:10px;font-weight:700;background:#D63031;color:#fff;padding:2px 8px;border-radius:4px;letter-spacing:.5px">REUTERS</span>
-            <span style="font-size:10px;color:var(--tx2);font-weight:600">Energia & Petróleo</span>
-          </div>
-          <div id="mkt-news-reuters"></div>
-        </div>
-
-        <!-- BBC / AP News -->
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
-            <span style="font-size:10px;font-weight:700;background:#000;color:#fff;padding:2px 8px;border-radius:4px;letter-spacing:.5px">BBC</span>
-            <span style="font-size:10px;color:var(--tx2);font-weight:600">Business & Conflitos</span>
-          </div>
-          <div id="mkt-news-bbc"></div>
-        </div>
-
-        <!-- Brasil -->
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
-            <span style="font-size:10px;font-weight:700;background:#009B3A;color:#fff;padding:2px 8px;border-radius:4px;letter-spacing:.5px">BRASIL</span>
-            <span style="font-size:10px;color:var(--tx2);font-weight:600">G1 & Ag. Brasil</span>
-          </div>
-          <div id="mkt-news-br"></div>
-        </div>
-      </div>
-
       <!-- FONTE E DISCLAIMER -->
       <div style="padding:.875rem 1.1rem;background:var(--cin);border-radius:8px;border:1px solid var(--brd);display:flex;align-items:flex-start;gap:10px">
         <span style="font-size:16px;flex-shrink:0">ℹ️</span>
         <div style="font-size:11px;color:var(--tx2);line-height:1.6">
-          <strong style="color:var(--tx)">Fontes utilizadas:</strong> Reuters (agência de notícias global), BBC News (Reino Unido), AP News (EUA), G1/Globo, Agência Brasil (EBC/Governo Federal), Yahoo Finance (cotações Brent/WTI/PETR4), AwesomeAPI (câmbio baseado no Banco Central do Brasil).
+          <strong style="color:var(--tx)">Fontes utilizadas:</strong> G1/Globo, Agência Brasil (EBC/Governo Federal), UOL, O Globo, InfoMoney, Exame (manchetes do ticker), Yahoo Finance (cotações Brent/WTI), Brapi (PETR4), AwesomeAPI (câmbio baseado no Banco Central do Brasil).
           Nenhum blog, site de terceiros ou fonte sem credencial jornalística reconhecida é utilizado.
           Dados de mercado podem ter defasagem de até 15 minutos em relação ao tempo real das bolsas.
         </div>
@@ -10867,75 +10836,6 @@ async function fetchRSS(feedUrl, count = 8) {
   return []; // todos os provedores falharam
 }
 
-async function mktCarregarNoticias() {
-  const el = id => document.getElementById(id);
-  const loadEl = (id, html) => { if(el(id)) el(id).innerHTML = html; };
-  const errEl  = (id, link, nome) => loadEl(id, '<div class="mkt-loading">Feed indisponível — ' + nome + '</div>');
-
-  // Todas as fontes buscadas EM PARALELO, cada uma com 3 provedores em cascata (fetchRSS)
-  await Promise.allSettled([
-
-    // Reuters Energy (com fallback World)
-    (async () => {
-      let items = await fetchRSS('https://feeds.reuters.com/reuters/energyNews', 5);
-      if(items.length) {
-        loadEl('mkt-news-reuters', items.map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
-        return;
-      }
-      items = await fetchRSS('https://feeds.reuters.com/reuters/worldNews', 5);
-      if(items.length) {
-        const filtradas = items.filter(i => {
-          const t = (i.title+' '+(i.description||'')).toLowerCase();
-          return ['oil','energy','petroleum','opec','war','conflict','geopolit','ukraine','russia'].some(k => t.includes(k));
-        });
-        if(filtradas.length) {
-          loadEl('mkt-news-reuters', filtradas.slice(0,3).map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
-        } else {
-          errEl('mkt-news-reuters','https://www.reuters.com/business/energy/','Reuters Energy — sem notícias de energia no momento');
-        }
-      } else errEl('mkt-news-reuters','https://www.reuters.com/business/energy/','Reuters Energy');
-    })(),
-
-    // BBC Business
-    (async () => {
-      const items = await fetchRSS('https://feeds.bbci.co.uk/news/business/rss.xml', 8);
-      if(items.length) {
-        const kw = ['oil','energy','opec','war','conflict','ukraine','russia','petrol','fuel','inflation','gas'];
-        const filtradas = items.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
-        if(filtradas.length) {
-          loadEl('mkt-news-bbc', filtradas.slice(0,3).map(i => mktNoticiaHTML(i,'BBC','#000')).join(''));
-        } else {
-          errEl('mkt-news-bbc','https://www.bbc.com/news/business','BBC Business — sem notícias relevantes no momento');
-        }
-      } else errEl('mkt-news-bbc','https://www.bbc.com/news/business','BBC Business');
-    })(),
-
-    // Brasil: G1 + Agência Brasil (em paralelo entre si)
-    (async () => {
-      const feeds = [
-        { url: 'https://g1.globo.com/rss/g1/economia/', badge: 'G1', cor: '#E74C3C' },
-        { url: 'https://agenciabrasil.ebc.com.br/economia/feed', badge: 'Ag.Brasil', cor: '#009B3A' },
-      ];
-      const resultados = await Promise.allSettled(feeds.map(async f => {
-        const items = await fetchRSS(f.url, 6);
-        return items.map(i => ({...i, _badge: f.badge, _cor: f.cor}));
-      }));
-      let todos = [];
-      resultados.forEach(res => { if(res.status==='fulfilled') todos = todos.concat(res.value); });
-      if(todos.length) {
-        const kw = ['petróleo','petroleo','combustível','combustivel','gasolina','diesel','energia','câmbio','dólar','dollar','inflação','inflacao','guerra','opep','petrobras','preço','preco','barril'];
-        const filtradas = todos.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
-        if(filtradas.length) {
-          loadEl('mkt-news-br', filtradas.slice(0,3).map(i => mktNoticiaHTML(i, i._badge, i._cor)).join(''));
-        } else {
-          errEl('mkt-news-br','https://g1.globo.com/economia/','G1/Ag. Brasil — sem notícias relevantes no momento');
-        }
-      } else errEl('mkt-news-br','https://g1.globo.com/economia/','G1 Economia');
-    })(),
-
-  ]);
-}
-
 // ── CARGA PRINCIPAL ──
 async function mktCarregarTudo() {
   const el = id => document.getElementById(id);
@@ -10945,7 +10845,6 @@ async function mktCarregarTudo() {
   await Promise.allSettled([
     mktCarregarCambio(),
     mktCarregarPetroleo(),
-    mktCarregarNoticias(),
     mktCarregarTicker(),
   ]);
 
