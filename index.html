@@ -9145,6 +9145,13 @@ async function radarOnFile(file){
     const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
     if(msgEl) msgEl.textContent='Processando '+raw.length+' registros...';
 
+    // DEBUG: mostrar nomes EXATOS das colunas da planilha para identificar a coluna de urgência corretamente
+    if(raw.length > 0){
+      console.log('[RADAR] Colunas exatas da planilha:', Object.keys(raw[0]));
+      const colUrg = Object.keys(raw[0]).find(k => k.toUpperCase().includes('URGEN'));
+      console.log('[RADAR] Coluna de urgência encontrada:', colUrg, '| valor exemplo:', colUrg ? raw[0][colUrg] : 'NÃO ENCONTRADA');
+    }
+
     const rows=raw.filter(r=>r['RC']&&r['RC']!=='RC').map(r=>({
       analista_auto: String(r['STATUS MAPA ']||r['ANALISTA_AUTOMATICO']||'').trim(),
       rc:            String(r['RC']||'').trim(),
@@ -9186,7 +9193,12 @@ async function radarOnFile(file){
         return ''; // #N/A, vazio — não conta nem como Sim nem como Não
       })(),
       centro:        String(r['CENTRO']||r['Centro']||r['centro']||'').trim(),
-      urgencia:      String(r['URGENCIA']||r['URGÊNCIA']||r['Urgencia']||r['Urgência']||r['urgencia']||r['urgência']||'').trim(),
+      urgencia:      (()=>{
+        // Busca resiliente: qualquer coluna cujo nome contenha "URGEN" (cobre URGENCIA, URGÊNCIA,
+        // Urgencia, URGENCIA_NECESSIDADE, etc.) — não depende do nome exato da coluna
+        const k = Object.keys(r).find(k => k.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes('URGEN'));
+        return k ? String(r[k]||'').trim() : '';
+      })(),
     }));
 
     // Debug: log column names from first row to help identify FAMILIA L OU Q
@@ -18183,16 +18195,22 @@ function acaoSelecionarConclusao(btn, conclusao){
       // Auto-selecionar o nível com base na coluna URGÊNCIA do Radar (Alto/Baixo)
       try{
         const _rcChaveAtualXgl = (_prodCtx.rcChaves||[_prodCtx.rcChave]||[]).filter(Boolean)[0];
+        console.log('[XGL urgência] rcChave atual:', _rcChaveAtualXgl);
         if(_rcChaveAtualXgl){
           const _rcNumAtualXgl = _rcChaveAtualXgl.split('|')[0];
+          console.log('[XGL urgência] RC número:', _rcNumAtualXgl, '| total registros radar:', (_radarDados||[]).length);
           const _rowUrg = (_radarDados||[]).find(r => String(r.rc||'').trim() === _rcNumAtualXgl && r.urgencia);
+          console.log('[XGL urgência] linha encontrada:', _rowUrg ? {rc:_rowUrg.rc, urgencia:_rowUrg.urgencia} : 'NÃO ENCONTRADA (sem urgência preenchida ou RC não está no radar)');
           const _urgVal = (_rowUrg?.urgencia||'').trim().toLowerCase();
+          console.log('[XGL urgência] valor normalizado:', JSON.stringify(_urgVal));
           if(_urgVal === 'alto' || _urgVal === 'alta'){
             const _btnAlto = document.getElementById('acao-xgl-alto-btn');
             if(_btnAlto) acaoSelecionarXglNivel(_btnAlto, 'XGL ALTO');
           } else if(_urgVal === 'baixo' || _urgVal === 'baixa'){
             const _btnBaixo = document.getElementById('acao-xgl-baixo-btn');
             if(_btnBaixo) acaoSelecionarXglNivel(_btnBaixo, 'XGL BAIXO');
+          } else {
+            console.warn('[XGL urgência] Valor não reconhecido como Alto/Baixo:', JSON.stringify(_urgVal));
           }
         }
       } catch(_eUrg){ console.warn('Auto-preencher urgência XGL:', _eUrg); }
