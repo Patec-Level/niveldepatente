@@ -10749,20 +10749,15 @@ async function mktCarregarTicker() {
     }
   }
 
+  let usouFallback = false;
   if(!manchetes.length) {
-    // Manchetes de fallback hardcoded para não ficar vazio
+    usouFallback = true;
+    // Fallback genérico — usado SÓ quando todos os feeds RSS falham
+    // Marcado visualmente como "Geral" para não ser confundido com notícia do dia
     manchetes = [
-      {titulo:'Tensões geopolíticas pressionam mercado global de petróleo', badge:'G1 · Mundo', cor:'#E74C3C'},
-      {titulo:'OPEP+ mantém cortes de produção — Brent reage', badge:'Ag. Brasil', cor:'#009B3A'},
-      {titulo:'Dólar oscila com decisão do Fed sobre juros americanos', badge:'G1 · Economia', cor:'#E74C3C'},
-      {titulo:'Conflito no Oriente Médio afeta rotas de frete marítimo global', badge:'Ag. Brasil · Int', cor:'#009B3A'},
-      {titulo:'Sanções econômicas à Rússia são ampliadas pelo G7', badge:'G1 · Mundo', cor:'#E74C3C'},
-      {titulo:'Champions League: resultados e classificação atualizada', badge:'G1 · Esporte', cor:'#E74C3C'},
-      {titulo:'Ibovespa fecha em alta com dados positivos de inflação', badge:'InfoMoney', cor:'#FF6600'},
-      {titulo:'Brasil negocia acordo comercial com bloco asiático', badge:'Ag. Brasil', cor:'#009B3A'},
-      {titulo:'Copa do Mundo 2026: seleções confirmam convocações', badge:'UOL · Esporte', cor:'#0066CC'},
+      {titulo:'Acompanhe o noticiário de economia e mercado nos links abaixo', badge:'⚠ Feeds indisponíveis', cor:'#888'},
     ];
-    console.warn('Ticker: usando manchetes de fallback');
+    console.warn('Ticker: TODOS os feeds RSS falharam — exibindo aviso em vez de notícia genérica');
   }
 
   // Embaralhar e renderizar
@@ -10779,6 +10774,17 @@ async function mktCarregarTicker() {
 
   const html = manchetes.map(renderItem).join('') + manchetes.map(renderItem).join('');
   ticker.innerHTML = html;
+
+  // Avisar visualmente se os feeds reais falharam (evita confundir fallback com notícia do dia)
+  const avisoEl = document.getElementById('mkt-ticker-aviso');
+  if(usouFallback) {
+    if(!avisoEl) {
+      const wrap = document.getElementById('mkt-ticker-wrap');
+      if(wrap) wrap.insertAdjacentHTML('afterend', '<div id="mkt-ticker-aviso" style="font-size:10px;color:var(--am);background:var(--amc);padding:4px 10px;border-radius:6px;margin:-1rem 0 1.5rem;display:inline-block">⚠ Feeds de notícias temporariamente indisponíveis — manchetes não puderam ser carregadas agora</div>');
+    }
+  } else if(avisoEl) {
+    avisoEl.remove();
+  }
 
   const totalChars = manchetes.reduce((a,m) => a + (m.titulo||'').length, 0);
   const duration = Math.max(60, Math.min(180, totalChars * 0.6));
