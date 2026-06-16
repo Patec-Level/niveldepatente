@@ -362,8 +362,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 /* ── INTELIGÊNCIA DE MERCADO ── */
 @keyframes mkt-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 @keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(14,158,106,.5)}50%{opacity:.8;box-shadow:0 0 0 6px rgba(14,158,106,0)}}
-.mkt-noticia{background:#fff;border-radius:10px;padding:.75rem 1rem;margin-bottom:.625rem;border:1px solid rgba(221,227,238,.8);cursor:pointer;transition:border-color .15s,transform .15s;text-decoration:none;display:block}
-.mkt-noticia:hover{border-color:var(--azm);transform:translateY(-1px);box-shadow:0 4px 12px rgba(13,35,71,.08)}
+.mkt-noticia{background:#fff;border-radius:10px;padding:.75rem 1rem;margin-bottom:.625rem;border:1px solid rgba(221,227,238,.8);text-decoration:none;display:block}
+
 .mkt-noticia-fonte{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--tx2);margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .mkt-noticia-titulo{font-size:12px;font-weight:500;color:var(--tx);line-height:1.5;margin-bottom:3px}
 .mkt-noticia-tempo{font-size:10px;color:var(--tx2)}
@@ -10461,9 +10461,12 @@ function mktSetVar(el, pct, abs, prefixo) {
   el.textContent = arrow + ' ' + sign + mktFmt(pct) + '%' + (abs !== null ? ' (' + sign + prefixo + mktFmt(Math.abs(abs)) + ')' : '');
 }
 function mktTempoAtras(dateStr) {
+  if(!dateStr) return '';
   try {
     const d = new Date(dateStr);
+    if(isNaN(d.getTime())) return '';
     const diff = (Date.now() - d) / 1000;
+    if(diff < 0) return '';
     if(diff < 3600)  return Math.floor(diff/60) + 'min atrás';
     if(diff < 86400) return Math.floor(diff/3600) + 'h atrás';
     return Math.floor(diff/86400) + 'd atrás';
@@ -10810,13 +10813,13 @@ function mktAtualizarAnalise() {
 
 // ── NOTÍCIAS ──
 function mktNoticiaHTML(item, badgeTxt, badgeColor) {
-  return '<a class="mkt-noticia" href="' + item.link + '" target="_blank" rel="noopener">' +
+  return '<div class="mkt-noticia">' +
     '<div class="mkt-noticia-fonte">' +
       '<span style="background:' + badgeColor + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:8px">' + badgeTxt + '</span>' +
       '<span>' + mktTempoAtras(item.pubDate) + '</span>' +
     '</div>' +
     '<div class="mkt-noticia-titulo">' + (item.title||'').replace(/</g,'&lt;') + '</div>' +
-  '</a>';
+  '</div>';
 }
 
 // Busca RSS com múltiplos provedores em cascata — evita ficar 100% dependente
@@ -10840,6 +10843,7 @@ async function fetchRSS(feedUrl, count = 8) {
         title: item.querySelector('title')?.textContent || '',
         link:  item.querySelector('link')?.textContent || '',
         description: item.querySelector('description')?.textContent || '',
+        pubDate: item.querySelector('pubDate')?.textContent || '',
       }));
       if(items.length) return items;
     }
@@ -10855,6 +10859,7 @@ async function fetchRSS(feedUrl, count = 8) {
       title: item.querySelector('title')?.textContent || '',
       link:  item.querySelector('link')?.textContent || '',
       description: item.querySelector('description')?.textContent || '',
+      pubDate: item.querySelector('pubDate')?.textContent || '',
     }));
     if(items.length) return items;
   } catch(e) {}
@@ -10865,7 +10870,7 @@ async function fetchRSS(feedUrl, count = 8) {
 async function mktCarregarNoticias() {
   const el = id => document.getElementById(id);
   const loadEl = (id, html) => { if(el(id)) el(id).innerHTML = html; };
-  const errEl  = (id, link, nome) => loadEl(id, '<div class="mkt-loading">Feed indisponível — <a href="' + link + '" target="_blank" style="color:var(--azm)">' + nome + ' →</a></div>');
+  const errEl  = (id, link, nome) => loadEl(id, '<div class="mkt-loading">Feed indisponível — ' + nome + '</div>');
 
   // Todas as fontes buscadas EM PARALELO, cada uma com 3 provedores em cascata (fetchRSS)
   await Promise.allSettled([
@@ -10883,8 +10888,11 @@ async function mktCarregarNoticias() {
           const t = (i.title+' '+(i.description||'')).toLowerCase();
           return ['oil','energy','petroleum','opec','war','conflict','geopolit','ukraine','russia'].some(k => t.includes(k));
         });
-        const finais = (filtradas.length ? filtradas : items).slice(0,3);
-        loadEl('mkt-news-reuters', finais.map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
+        if(filtradas.length) {
+          loadEl('mkt-news-reuters', filtradas.slice(0,3).map(i => mktNoticiaHTML(i,'Reuters','#D63031')).join(''));
+        } else {
+          errEl('mkt-news-reuters','https://www.reuters.com/business/energy/','Reuters Energy — sem notícias de energia no momento');
+        }
       } else errEl('mkt-news-reuters','https://www.reuters.com/business/energy/','Reuters Energy');
     })(),
 
@@ -10894,8 +10902,11 @@ async function mktCarregarNoticias() {
       if(items.length) {
         const kw = ['oil','energy','opec','war','conflict','ukraine','russia','petrol','fuel','inflation','gas'];
         const filtradas = items.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
-        const finais = (filtradas.length >= 3 ? filtradas : items).slice(0,3);
-        loadEl('mkt-news-bbc', finais.map(i => mktNoticiaHTML(i,'BBC','#000')).join(''));
+        if(filtradas.length) {
+          loadEl('mkt-news-bbc', filtradas.slice(0,3).map(i => mktNoticiaHTML(i,'BBC','#000')).join(''));
+        } else {
+          errEl('mkt-news-bbc','https://www.bbc.com/news/business','BBC Business — sem notícias relevantes no momento');
+        }
       } else errEl('mkt-news-bbc','https://www.bbc.com/news/business','BBC Business');
     })(),
 
@@ -10914,8 +10925,11 @@ async function mktCarregarNoticias() {
       if(todos.length) {
         const kw = ['petróleo','petroleo','combustível','combustivel','gasolina','diesel','energia','câmbio','dólar','dollar','inflação','inflacao','guerra','opep','petrobras','preço','preco','barril'];
         const filtradas = todos.filter(i => kw.some(k => (i.title+'').toLowerCase().includes(k)));
-        const finais = (filtradas.length >= 3 ? filtradas : todos).slice(0,3);
-        loadEl('mkt-news-br', finais.map(i => mktNoticiaHTML(i, i._badge, i._cor)).join(''));
+        if(filtradas.length) {
+          loadEl('mkt-news-br', filtradas.slice(0,3).map(i => mktNoticiaHTML(i, i._badge, i._cor)).join(''));
+        } else {
+          errEl('mkt-news-br','https://g1.globo.com/economia/','G1/Ag. Brasil — sem notícias relevantes no momento');
+        }
       } else errEl('mkt-news-br','https://g1.globo.com/economia/','G1 Economia');
     })(),
 
