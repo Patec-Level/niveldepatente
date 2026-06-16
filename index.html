@@ -4461,22 +4461,40 @@ async function fbCarregarTudo(){
     console.log('✓ Topbar carregada do Firebase');
   }
 
-  // Produção — ler das duas coleções (producao = histórico antigo, producoes = novo sistema)
-  // producoes prevalece sobre producao para o mesmo colab+data
+  // Produção — ler das três coleções (producao = histórico antigo, producoes = novo sistema, fechamento_dia = fallback de segurança)
+  // Prioridade: fechamento_dia > producoes > producao (mais recente prevalece)
   try{
-    const [snapAntiga, snapNova] = await Promise.all([
+    const [snapAntiga, snapNova, snapFecha] = await Promise.all([
       db.collection('producao').where('data','>=', CICLO_NOVO_INICIO).get(),
-      db.collection('producoes').where('data','>=', CICLO_NOVO_INICIO).get()
+      db.collection('producoes').where('data','>=', CICLO_NOVO_INICIO).get(),
+      db.collection('fechamento_dia').where('data','>=', CICLO_NOVO_INICIO).get().catch(()=>({docs:[]}))
     ]);
     const map = {};
     // Primeiro carrega os antigos
     (snapAntiga.docs||[]).forEach(d=>{ const r=d.data(); if(r.colab&&r.data) map[r.colab+'|'+r.data]=r; });
     // Depois os novos sobrescrevem (prevalecem)
     (snapNova.docs||[]).forEach(d=>{ const r=d.data(); if(r.colab&&r.data) map[r.colab+'|'+r.data]=r; });
+    // Por último, fechamento_dia preenche qualquer lacuna (não sobrescreve se já existe registro com dados)
+    (snapFecha.docs||[]).forEach(d=>{
+      const r=d.data();
+      if(!r.colab||!r.data) return;
+      const key = r.colab+'|'+r.data;
+      if(!map[key]){
+        const b = r.breakdown || {};
+        const c = r.composicao || {};
+        map[key] = {
+          colab: r.colab, data: r.data, pres: r.presenca||'',
+          f: [ b.primeira_analise||0, b.em_tratativa||0, b.status_b||0,
+               c.forn||0, c.req||0, c.mdg||0, c.thiago||0, c.xgl||0,
+               c.republicacao||0, c.pedido||0, c.devolucao||0, b.outros||0 ],
+          justif: r.motivo ? (r.motivo + (r.detalhe?': '+r.detalhe:'')) : ''
+        };
+      }
+    });
     const prodsArr = Object.values(map);
     if(prodsArr.length > 0){
       registros = prodsArr.map(r => ({colab:r.colab,data:r.data,pres:r.pres,f:r.f||Array(10).fill(0),justif:r.justif||''}));
-      console.log('✓ Produção carregada:', registros.length, 'registros (antiga:', snapAntiga.size, '+ nova:', snapNova.size, ')');
+      console.log('✓ Produção carregada:', registros.length, 'registros (antiga:', snapAntiga.size, '+ nova:', snapNova.size, '+ fechamento:', snapFecha.size, ')');
       pcpRecalcularTudo();
     }
   } catch(_ep){ console.warn('fbCarregarTudo producao:', _ep); }
@@ -5124,7 +5142,7 @@ async function renderAlertasPerf(){
   if(!el) return;
   el.innerHTML = '<div style="font-size:12px;color:var(--tx2)">⏳ Carregando fechamentos...</div>';
 
-  const COLABS_AN = (window.COLABS||['Lory','Ludy','Wanessa']).filter(c=>c!=='André');
+  const COLABS_AN = (typeof COLABS!=='undefined' && COLABS.length ? COLABS : (window.COLABS||['Lory','Ludy','Wanessa'])).filter(c=>c!=='André');
   const META = 30;
 
   const { resultado, dias } = await _buscarFechamentos5Dias(COLABS_AN);
@@ -5136,9 +5154,10 @@ async function renderAlertasPerf(){
     const vals = dias.map(d => hist[d]); // null = sem fechamento
 
     // Calcular sequência de dias consecutivos abaixo da meta (do mais recente para trás)
+    // Dias sem fechamento (null) são ignorados — não quebram nem contam a sequência
     let consecutivos = 0;
     for(let i=dias.length-1;i>=0;i--){
-      if(vals[i]===null) break; // sem dado = para de contar
+      if(vals[i]===null) continue; // sem dado = pula, não interrompe a sequência
       if(vals[i] < META) consecutivos++;
       else break;
     }
@@ -5220,7 +5239,7 @@ async function renderFdiaAlertaIndividual(colab){
 
   let consecutivos = 0;
   for(let i=dias.length-1;i>=0;i--){
-    if(vals[i]===null) break;
+    if(vals[i]===null) continue; // sem dado = pula, não interrompe a sequência
     if(vals[i] < META) consecutivos++;
     else break;
   }
@@ -5343,7 +5362,7 @@ function renderPerfSemanal(){
 
   if(lbl) lbl.textContent = `${fmtD(dias[0])} a ${fmtD(dias[4])}`;
 
-  const COLABS_ANALISTAS = (window.COLABS||[]).filter(c => c !== 'André');
+  const COLABS_ANALISTAS = (typeof COLABS!=='undefined' && COLABS.length ? COLABS : (window.COLABS||['Lory','Ludy','Wanessa'])).filter(c => c !== 'André');
   if(!COLABS_ANALISTAS.length){ el.innerHTML='<div style="font-size:12px;color:var(--tx2)">Nenhum colaborador carregado.</div>'; return; }
 
   // Calcular dados por analista
