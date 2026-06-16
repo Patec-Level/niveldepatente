@@ -10542,15 +10542,45 @@ async function mktCarregarPetroleo() {
     } catch(e2) { console.warn('PETR4 falhou totalmente:', e2.message); }
   }
 
+  // Brent — tentar Yahoo via múltiplos proxies (allorigins pode estar instável)
+  const fetchYahooMultiProxy = async (ticker) => {
+    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '?interval=1d&range=5d';
+    const proxiesTentar = [
+      { tipo:'allorigins', build: u => 'https://api.allorigins.win/get?url=' + encodeURIComponent(u) },
+      { tipo:'corsproxy',  build: u => 'https://corsproxy.io/?' + encodeURIComponent(u) },
+      { tipo:'r.jina',     build: u => 'https://r.jina.ai/' + u },
+    ];
+    for(const px of proxiesTentar){
+      try{
+        const r = await fetchComTimeout(px.build(url), 5000);
+        const raw = await r.text();
+        let jsonTxt = raw;
+        if(px.tipo === 'allorigins'){
+          const d = JSON.parse(raw);
+          jsonTxt = d.contents;
+        }
+        const data = JSON.parse(jsonTxt);
+        const q = data?.chart?.result?.[0];
+        if(!q) continue;
+        const closes = q.indicators?.quote?.[0]?.close?.filter(v => v != null) || [];
+        const val  = closes[closes.length-1];
+        const prev = closes[closes.length-2];
+        if(val == null) continue;
+        return { val, prev, varAbs: val-prev, varPct: prev ? ((val-prev)/prev)*100 : 0 };
+      } catch(e){ continue; }
+    }
+    return null;
+  };
+
   // WTI — tentar Yahoo (futuro não disponível na Brapi)
   try {
-    const w = await fetchYahoo('CL=F');
+    const w = await fetchYahooMultiProxy('CL=F');
     if(w) {
       _mktWti = w.val;
       if(el('mkt-wti-val')) el('mkt-wti-val').textContent = 'US$ ' + mktFmtUsd(w.val);
       mktSetVar(el('mkt-wti-var'), w.varPct, w.varAbs, '$');
       mktAtualizarDerivados();
-    } else throw new Error('yahoo vazio');
+    } else throw new Error('todos os proxies falharam');
   } catch(e) {
     console.warn('WTI falhou:', e.message);
     if(el('mkt-wti-sub')) el('mkt-wti-sub').textContent = 'Indisponível — fonte bloqueada';
@@ -10558,7 +10588,7 @@ async function mktCarregarPetroleo() {
 
   // Brent — tentar Yahoo
   try {
-    const b = await fetchYahoo('BZ=F');
+    const b = await fetchYahooMultiProxy('BZ=F');
     if(b) {
       _mktBrent = b.val;
       if(el('mkt-brent-val')) el('mkt-brent-val').textContent = 'US$ ' + mktFmtUsd(b.val);
@@ -10566,7 +10596,7 @@ async function mktCarregarPetroleo() {
       if(el('mkt-brent-sub')) el('mkt-brent-sub').textContent = 'Yahoo Finance · ICE Futures · ' + mktTempoAtras(new Date());
       mktAtualizarDerivados();
       mktAtualizarAnalise();
-    } else throw new Error('yahoo vazio');
+    } else throw new Error('todos os proxies falharam');
   } catch(e) {
     console.warn('Brent falhou:', e.message);
     // Fallback: se WTI carregou, estimar Brent com spread médio histórico (~US$3-5 acima do WTI)
