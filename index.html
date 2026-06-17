@@ -3133,6 +3133,66 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
     </div>
 
+    <!-- ══════════════════════════════════════════
+         ABRIR PATEC — NOVO TÓPICO, DADOS INDEPENDENTES DO PLANO DE AÇÃO
+    ══════════════════════════════════════════ -->
+    <div id="p-abrir-patec" class="page">
+
+      <div class="al al-b" style="margin-bottom:1rem">
+        ℹ️ Este painel é totalmente independente do Plano de Ação — usa os valores de <strong>Abrir ID Não (L7)</strong> e <strong>Abrir PATEC Obrigatório (L8)</strong> já lançados no Resumo do Dia. Entrada/Saída calculada pela diferença entre o valor de hoje e o valor do dia anterior.
+      </div>
+
+      <!-- SELETOR DE INDICADOR -->
+      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div class="cd-t" style="margin:0">📂 Abrir PATEC — selecione o indicador</div>
+          <div style="display:flex;gap:8px">
+            <button id="ap-btn-l8" class="btn btn-p" style="font-size:12px" onclick="apSelecionarIndicador('l8',this)">📦 Abrir PATEC Obrigatório</button>
+            <button id="ap-btn-l7" class="btn btn-s" style="font-size:12px" onclick="apSelecionarIndicador('l7',this)">🆔 Abrir PATEC Idêntico Não</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRÁFICO CASCATA — ABRIR PATEC -->
+      <div class="cd" style="margin-bottom:1rem">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem">
+          <div class="cd-t" style="margin:0" id="ap-titulo-grafico">📉 Abrir PATEC Obrigatório — Acompanhamento</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="field-wrap" style="min-width:140px">
+              <span class="field-label">De</span>
+              <input type="date" id="ap-dt-inicio" style="width:100%;font-size:12px;padding:5px 10px" onchange="renderAbrirPatecCascata()">
+            </div>
+            <div class="field-wrap" style="min-width:140px">
+              <span class="field-label">Até</span>
+              <input type="date" id="ap-dt-fim" style="width:100%;font-size:12px;padding:5px 10px" onchange="renderAbrirPatecCascata()">
+            </div>
+            <button class="btn btn-s" style="font-size:11px;align-self:flex-end" onclick="apPeriodoHoje()">📅 Hoje</button>
+            <button class="btn btn-p" style="font-size:11px;align-self:flex-end" onclick="renderAbrirPatecCascata()">🔍 Analisar</button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem" id="ap-kpis"></div>
+
+        <!-- Gráfico -->
+        <div style="position:relative;height:360px;margin-bottom:1.25rem">
+          <canvas id="ap-chart-cascata"></canvas>
+        </div>
+
+        <!-- Tabela -->
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>Data</th><th>Início</th><th>Saídas</th><th>Entradas</th><th>Fim</th>
+            </tr></thead>
+            <tbody id="ap-tb-body"></tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
 
     <!-- ══════════════════════════════════════════
          ANALISTA AUTOMÁTICO — PEDIDO DIRETO
@@ -4794,6 +4854,11 @@ function go(id, el) {
     // Card de Devoluções no final da página — usa cache se já tiver, senão carrega
     if(Object.keys(_desfechoCache||{}).length){ try{ radarRenderDevolucoes(); }catch(e){} }
     else { desfechoCarregarFirebase().then(()=>{ try{ radarRenderDevolucoes(); }catch(e){} }); }
+  }, 100);
+  if(id==='abrir-patec') setTimeout(()=>{
+    const iniEl = document.getElementById('ap-dt-inicio');
+    if(iniEl && !iniEl.value) apPeriodoHoje();
+    else renderAbrirPatecCascata();
   }, 100);
   if(id==='plano-acao') setTimeout(()=>{
     if(!_radarDados?.length){
@@ -14580,6 +14645,179 @@ function radarRenderDevolucoes(){
   });
 }
 
+// ════════════════════════════════════════════
+// ABRIR PATEC — tópico independente, NÃO usa nenhuma estrutura do Plano de Ação
+// (sem _paEntradas, sem _paHistorico, sem paGetMarcoBase — zero risco de bagunçar
+// os dados existentes do Plano de Ação atual)
+// ════════════════════════════════════════════
+let _apIndicador = 'l8'; // 'l8' = Abrir PATEC Obrigatório | 'l7' = Abrir PATEC Idêntico Não
+let _apChartCascata = null;
+let _apHistoricoCache = null; // [{data, l7, l8}] vindo do Firebase, carregado 1x e reutilizado
+
+async function apCarregarHistorico(){
+  if(_apHistoricoCache) return _apHistoricoCache;
+  try{
+    const db = getDB();
+    if(!db){ _apHistoricoCache = []; return []; }
+    const snap = await db.collection('mapa_diario').get();
+    _apHistoricoCache = snap.docs.map(d => d.data()).filter(r => r.data);
+    _apHistoricoCache.sort((a,b) => a.data.localeCompare(b.data));
+    return _apHistoricoCache;
+  } catch(e){ console.warn('apCarregarHistorico:', e); _apHistoricoCache = []; return []; }
+}
+
+function apSelecionarIndicador(ind, btn){
+  _apIndicador = ind;
+  document.querySelectorAll('#p-abrir-patec .cd-t').forEach(()=>{});
+  const btnL7 = document.getElementById('ap-btn-l7');
+  const btnL8 = document.getElementById('ap-btn-l8');
+  if(btnL7) btnL7.className = ind==='l7' ? 'btn btn-p' : 'btn btn-s';
+  if(btnL8) btnL8.className = ind==='l8' ? 'btn btn-p' : 'btn btn-s';
+  const titEl = document.getElementById('ap-titulo-grafico');
+  if(titEl) titEl.textContent = ind==='l8' ? '📉 Abrir PATEC Obrigatório — Acompanhamento' : '📉 Abrir PATEC Idêntico Não — Acompanhamento';
+  renderAbrirPatecCascata();
+}
+
+function apPeriodoHoje(){
+  const hoje = new Date().toISOString().split('T')[0];
+  const _d30 = new Date(); _d30.setDate(_d30.getDate()-15);
+  const ini = document.getElementById('ap-dt-inicio');
+  const fim = document.getElementById('ap-dt-fim');
+  if(ini) ini.value = _d30.toISOString().split('T')[0];
+  if(fim) fim.value = hoje;
+  renderAbrirPatecCascata();
+}
+
+async function renderAbrirPatecCascata(){
+  const fmtDptBR = iso=>{ const p=iso.split('-'); return p[2]+'/'+p[1]; };
+  const dtInicioEl = document.getElementById('ap-dt-inicio');
+  const dtFimEl    = document.getElementById('ap-dt-fim');
+  if(!dtInicioEl?.value){ apPeriodoHoje(); return; }
+
+  const dtInicio = dtInicioEl.value;
+  const dtFim    = dtFimEl?.value || new Date().toISOString().split('T')[0];
+  if(dtInicio > dtFim) return;
+
+  const historico = await apCarregarHistorico();
+  const campo = _apIndicador; // 'l7' ou 'l8'
+
+  // Mapa rápido data → valor do campo selecionado
+  const valorPorData = {};
+  historico.forEach(r => { valorPorData[r.data] = Number(r[campo])||0; });
+
+  // Dia anterior ao início do filtro, para servir de referência do "Início"
+  const _dAnt = new Date(dtInicio+'T12:00:00');
+  _dAnt.setDate(_dAnt.getDate()-1);
+  const dtAnterior = _dAnt.toISOString().split('T')[0];
+
+  // Procurar o valor mais recente conhecido ANTES (ou igual) à data anterior, para
+  // servir de base — se não houver nenhum registro anterior, parte de 0
+  const datasConhecidas = Object.keys(valorPorData).sort();
+  let valorBase = 0;
+  for(const d of datasConhecidas){
+    if(d <= dtAnterior) valorBase = valorPorData[d];
+    else break;
+  }
+
+  const diasUteis = paDiasUteis(dtInicio, dtFim).filter(d => d > dtAnterior);
+
+  const linhas = [];
+  let valorAnterior = valorBase;
+  diasUteis.forEach(d => {
+    // Se não há registro lançado naquele dia, mantém o valor anterior (não houve mudança)
+    const valorHoje = valorPorData[d] !== undefined ? valorPorData[d] : valorAnterior;
+    const delta = valorHoje - valorAnterior;
+    const saidas   = delta < 0 ? Math.abs(delta) : 0; // diminuiu = saída
+    const entradas = delta > 0 ? delta : 0;            // aumentou = entrada
+    linhas.push({ data: d, inicio: valorAnterior, saidas, entradas, fim: valorHoje, semRegistro: valorPorData[d] === undefined });
+    valorAnterior = valorHoje;
+  });
+
+  const valorAtual = valorAnterior;
+
+  // ── KPIs ──
+  const totalSaidas   = linhas.reduce((s,l)=>s+l.saidas,0);
+  const totalEntradas = linhas.reduce((s,l)=>s+l.entradas,0);
+  const kpisEl = document.getElementById('ap-kpis');
+  if(kpisEl){
+    const labelInd = campo==='l8' ? 'Abrir PATEC Obrigatório' : 'Abrir PATEC Idêntico Não';
+    kpisEl.innerHTML = `
+      <div class="kc"><div class="kn" style="color:var(--az)">${valorAtual}</div><div class="kl">${labelInd} (atual)</div></div>
+      <div class="kc"><div class="kn" style="color:var(--vd)">${totalSaidas}</div><div class="kl">Total Saídas no período</div></div>
+      <div class="kc"><div class="kn" style="color:var(--vm)">${totalEntradas}</div><div class="kl">Total Entradas no período</div></div>
+      <div class="kc"><div class="kn" style="color:${valorAtual<=valorBase?'var(--vd)':'var(--am)'}">${valorAtual-valorBase>=0?'+':''}${valorAtual-valorBase}</div><div class="kl">Variação no período</div></div>
+    `;
+  }
+
+  // ── Tabela ──
+  const tb = document.getElementById('ap-tb-body');
+  if(tb){
+    tb.innerHTML = linhas.map(l => `<tr>
+      <td style="font-weight:600">${fmtDptBR(l.data)}${l.semRegistro?' <span style="font-size:9px;color:var(--tx2)">(sem lançamento)</span>':''}</td>
+      <td style="color:var(--az);font-weight:700">${l.inicio}</td>
+      <td style="color:var(--vd);font-weight:700">${l.saidas>0?'−'+l.saidas:'—'}</td>
+      <td style="color:${l.entradas>0?'var(--vm)':'var(--tx2)'};font-weight:700">${l.entradas>0?'+'+l.entradas:'—'}</td>
+      <td style="font-weight:700">${l.fim}</td>
+    </tr>`).join('');
+  }
+
+  // ── Gráfico Cascata ──
+  const canvas = document.getElementById('ap-chart-cascata');
+  if(!canvas) return;
+  if(_apChartCascata){ _apChartCascata.destroy(); _apChartCascata=null; }
+
+  const labels=[], floatData=[], floatCor=[], linhaData=[];
+
+  labels.push('Início '+fmtDptBR(dtAnterior));
+  floatData.push([0, valorBase]);
+  floatCor.push('rgba(100,116,139,0.75)');
+  linhaData.push(valorBase);
+
+  linhas.forEach(l => {
+    const dia = fmtDptBR(l.data);
+    if(l.saidas > 0){
+      labels.push(dia);
+      floatData.push([l.fim, l.inicio]);
+      floatCor.push('rgba(46,125,50,0.85)');
+      linhaData.push(l.fim);
+    } else if(l.entradas > 0){
+      labels.push(dia);
+      floatData.push([l.inicio, l.fim]);
+      floatCor.push('rgba(211,47,47,0.80)');
+      linhaData.push(l.fim);
+    } else {
+      labels.push(dia);
+      floatData.push(null);
+      floatCor.push('transparent');
+      linhaData.push(l.fim);
+    }
+  });
+
+  labels.push('Atual');
+  floatData.push([0, valorAtual]);
+  floatCor.push('rgba(0,105,135,0.85)');
+  linhaData.push(valorAtual);
+
+  _apChartCascata = new Chart(canvas, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        { label:'Variação', data:floatData, backgroundColor:floatCor, borderRadius:4, barPercentage:0.7 },
+        { label:'Valor', data:linhaData, type:'line', borderColor:'rgba(13,35,71,.55)', borderWidth:1.5, borderDash:[5,4], pointRadius:2, pointBackgroundColor:'rgba(13,35,71,.7)', fill:false }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, datalabels:{display:false} },
+      scales:{
+        y:{ beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}} },
+        x:{ grid:{display:false}, ticks:{font:{size:9},maxRotation:45} }
+      }
+    }
+  });
+}
+
 async function govBuscaSalvarAtualizar(aba, chave, campo, valor, el){
   await govBuscaSalvar(aba, chave, campo, valor);
   // Se preencheu o campo "finalizado", abrir modal de desfecho
@@ -17325,6 +17563,7 @@ const PERMS_SIDEBAR = {
   'mercado':        { icon:'🌐', label:'Indicadores de Mercado',  mod:'ESTRATÉGICO' },
   'radar':          { icon:'📡', label:'Radar Estratégico',        mod:'ESTRATÉGICO' },
   'plano-acao':     { icon:'🎯', label:'Plano de Ação',            mod:'ESTRATÉGICO' },
+  'abrir-patec':    { icon:'📂', label:'Abrir PATEC',              mod:'ESTRATÉGICO' },
   'pr-estrategico': { icon:'🎯', label:'Painel Estratégico',       mod:'EXECUÇÃO' },
   'governanca':     { icon:'⚖️', label:'Governança',               mod:'EXECUÇÃO' },
   'planilha-critica':{ icon:'🔴', label:'Planilha Crítica',        mod:'EXECUÇÃO' },
