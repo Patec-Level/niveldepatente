@@ -2716,9 +2716,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div class="cd">
           <div class="cd-t">📂 Gerador de Slide — Abrir PATEC</div>
           <div class="al al-b" style="margin-bottom:1rem">
-            ℹ️ Slide independente, focado apenas nos itens de <strong>Abrir PATEC</strong> (Fila = "Item em Parada" → Grupo de Mercadoria Obrigatório, ou Fila = "Fila de publicação" → Idêntico Não).
+            ℹ️ Slide independente, focado apenas nos itens de <strong>Abrir PATEC</strong> (Status Mapa = "Abrir PATEC Grupo de Mercadoria Obrigatória" ou "Abrir PATEC Identico Não").
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.25rem">
 
             <!-- Col 1: Identificação -->
             <div>
@@ -2749,10 +2749,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <div style="display:flex;flex-direction:column;gap:4px">
                 <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-familias" checked> Top 5 Famílias</label>
                 <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-sla" checked> Maior SLA</label>
-                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-saude" checked> Saúde da Carteira</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-saude" checked> Validade da Proposta + Saúde da Carteira</label>
                 <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-segmento" checked> Segmentos (Crítico/Operacional/Pág. Amarela/Estratégico)</label>
-                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-cascata" checked> Plano de Ação — Abrir PATEC (Cascata)</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-cascata" checked> Plano de Ação — Abrir PATEC (Cascata + Simulação)</label>
               </div>
+            </div>
+
+            <!-- Col 3: Mensagem do Plano de Ação (editável / gerada por IA) -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">💬 Mensagem do Plano de Ação</div>
+              <textarea id="apres1-msg-pa" rows="7" placeholder="Escreva aqui a mensagem que vai aparecer no slide, ou clique em Gerar com IA para que ela seja elaborada automaticamente com base nos números atuais..."
+                style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--brd);border-radius:8px;resize:vertical;font-family:inherit"></textarea>
+              <button class="btn btn-s" style="font-size:11px;margin-top:6px;width:100%;justify-content:center" onclick="apres1GerarMsgIA()" id="apres1-btn-ia">🤖 Gerar com IA</button>
+              <div style="font-size:10px;color:var(--tx2);margin-top:4px">A IA usa os números atuais (backlog, SLA, segmentos) para sugerir um texto. Você pode editar livremente depois.</div>
             </div>
           </div>
           <button class="btn btn-p" onclick="admApresentacao1Gerar()" style="width:100%;justify-content:center;font-size:13px;padding:10px">
@@ -17307,6 +17316,50 @@ function admApresentacao1Init(){
   }
 }
 
+// ── Gerar mensagem do Plano de Ação via IA (usa o mesmo worker já configurado no sistema) ──
+async function apres1GerarMsgIA(){
+  const btn = document.getElementById('apres1-btn-ia');
+  const txtEl = document.getElementById('apres1-msg-pa');
+  if(!btn || !txtEl) return;
+
+  const rows = apres1GetRowsAbrirPatec();
+  const totalRows = rows.length;
+  const histAP = (typeof apCarregarHistorico === 'function') ? await apCarregarHistorico() : [];
+  const dataRef = document.getElementById('apres1-data')?.value || new Date().toISOString().split('T')[0];
+  const regAP = histAP.find(h => h.data === dataRef) || histAP[histAP.length-1] || {};
+  const l7Val = Number(regAP.l7)||0;
+  const l8Val = Number(regAP.l8)||0;
+  const totalAbrir = l7Val + l8Val;
+  const maiorSLAItem = rows.length ? rows.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, rows[0]) : null;
+  const maiorSLAVal = maiorSLAItem ? Number(maiorSLAItem.sla||0) : 0;
+  const segCrit = rows.filter(d=>d.seguimento==='Crítica').length;
+
+  const contexto = `Backlog Abrir PATEC hoje (${dataRef}): ${totalAbrir} itens (${l7Val} Idêntico Não + ${l8Val} Grupo Mercadoria Obrigatório).
+Maior SLA em aberto: ${maiorSLAVal} dias.
+Itens em segmento crítico: ${segCrit} de ${totalRows}.`;
+
+  const prompt = `Você é um analista de compras escrevendo uma mensagem curta (3-4 frases, tom executivo, direto, sem floreio) para um slide de apresentação à diretoria sobre a situação do backlog "Abrir PATEC". Use os dados abaixo para destacar o panorama atual e indicar a ação prioritária recomendada.\n\nDADOS:\n${contexto}\n\nEscreva APENAS a mensagem final, sem introdução nem comentários extras.`;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="ia-spin">↻</span> Gerando...';
+  const WORKER_URL = 'https://patec-ia.amazzali.workers.dev';
+  try{
+    const resp = await fetch(WORKER_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ messages:[{role:'user', content:prompt}] })
+    });
+    if(!resp.ok){ const err = await resp.text(); throw new Error('Status '+resp.status+': '+err.slice(0,200)); }
+    const data = await resp.json();
+    const texto = (data.content||[]).map(c=>c.text||'').join('\n') || 'Sem resposta da IA.';
+    txtEl.value = texto.trim();
+  } catch(e){
+    alert('Erro ao gerar mensagem com IA: '+e.message);
+  }
+  btn.disabled = false;
+  btn.innerHTML = '🤖 Gerar com IA';
+}
+
 // Linhas do Radar que pertencem ao universo "Abrir PATEC" — usa a coluna STATUS MAPA
 // (analista_auto), que tem os valores exatos abaixo (chave de identificação: RC|SEQ|Oportunidade|Item)
 function apres1GetRowsAbrirPatec(){
@@ -17406,6 +17459,63 @@ async function admApresentacao1Gerar(){
     } catch(e){ console.warn('Erro ao capturar cascata Abrir PATEC:', e); }
   }
 
+  // ── Simulação de Backlog (estilo cards: Inicial / Atual / Meta / Conclusão / Status) ──
+  // Usa a mesma série de histórico (L7/L8) já carregada para a cascata
+  let simHTML = '';
+  if(incCascata){
+    try{
+      const campoSim = paIndicador; // 'l7', 'l8' ou 'total'
+      const valorPorData = {};
+      histAP.forEach(rr => {
+        valorPorData[rr.data] = campoSim==='total' ? (Number(rr.l7)||0)+(Number(rr.l8)||0) : (Number(rr[campoSim])||0);
+      });
+      const datasOrdenadas = Object.keys(valorPorData).sort();
+      const dtIniSim = paIni || dataRef;
+      const dtFimSim = paFim || dataRef;
+      let backlogIniSim = 0;
+      for(const d of datasOrdenadas){ if(d <= dtIniSim) backlogIniSim = valorPorData[d]; else break; }
+      let backlogAtualSim = backlogIniSim;
+      for(const d of datasOrdenadas){ if(d > dtIniSim && d <= dtFimSim) backlogAtualSim = valorPorData[d]; }
+
+      const metaDiaSimAP = 30; // meta diária padrão de referência
+      const diasParaZerar = metaDiaSimAP>0 ? Math.ceil(backlogAtualSim/metaDiaSimAP) : 999;
+      const dtZerarCalc = (() => {
+        const futuros = []; let d = new Date(dtFimSim+'T12:00:00');
+        while(futuros.length < diasParaZerar+30){
+          d.setDate(d.getDate()+1);
+          if(d.getDay()!==0 && d.getDay()!==6) futuros.push(d.toISOString().split('T')[0]);
+        }
+        return futuros[diasParaZerar-1] ? futuros[diasParaZerar-1].split('-').reverse().join('/') : '—';
+      })();
+
+      const _diffSim = backlogAtualSim - backlogIniSim;
+      const _pctSim = backlogIniSim>0 ? Math.abs(Math.round(_diffSim/backlogIniSim*100)) : 0;
+      let _badgeSim = '';
+      if(Math.abs(_diffSim) <= 5){
+        _badgeSim = `<div style="display:inline-flex;align-items:center;gap:5px;background:#E8F0FB;border-radius:20px;padding:3px 12px"><span>➡</span><span style="font-size:12px;font-weight:700;color:#1A4A8A">BACKLOG ESTÁVEL</span></div>`;
+      } else if(_diffSim > 0){
+        _badgeSim = `<div style="display:inline-flex;align-items:center;gap:5px;background:#FDEAEA;border-radius:20px;padding:3px 12px"><span>🔺</span><span style="font-size:12px;font-weight:700;color:#C62828">BACKLOG CRESCENDO</span></div><div style="font-size:10px;color:#C62828;margin-top:3px">+${_diffSim} itens (+${_pctSim}%) vs início</div>`;
+      } else {
+        _badgeSim = `<div style="display:inline-flex;align-items:center;gap:5px;background:#E6F7F1;border-radius:20px;padding:3px 12px"><span>🔽</span><span style="font-size:12px;font-weight:700;color:#0E9E6A">BACKLOG REDUZINDO</span></div><div style="font-size:10px;color:#0E9E6A;margin-top:3px">${_diffSim} itens (${_pctSim}%) vs início</div>`;
+      }
+
+      simHTML = `
+        <div class="sim-grid">
+          <div class="sim-card"><div class="sim-label">Backlog Inicial (${dtIniSim.split('-').reverse().join('/')})</div><div class="sim-val">${backlogIniSim.toLocaleString('pt-BR')}</div></div>
+          <div class="sim-card"><div class="sim-label">Backlog Atual (${dtFimSim.split('-').reverse().join('/')})</div><div class="sim-val">${backlogAtualSim.toLocaleString('pt-BR')}</div></div>
+          <div class="sim-card"><div class="sim-label">Meta diária simulada</div><div class="sim-val">${metaDiaSimAP}/dia</div></div>
+          <div class="sim-card sim-green"><div class="sim-label">📅 Conclusão estimada</div><div class="sim-val">${dtZerarCalc}</div><div class="sim-sub">${diasParaZerar} dias úteis</div></div>
+          <div class="sim-card" style="background:${_diffSim>5?'#FDEAEA':_diffSim<-5?'#E6F7F1':'#E8F0FB'};border-color:${_diffSim>5?'#ef9a9a':_diffSim<-5?'#a5d6a7':'#90caf9'}">
+            <div class="sim-label">Status do Backlog</div>
+            <div style="margin-top:6px">${_badgeSim}</div>
+          </div>
+        </div>`;
+    } catch(e){ console.warn('Erro ao calcular simulação Abrir PATEC:', e); }
+  }
+
+  // ── Mensagem do Plano de Ação (texto livre ou gerado por IA no formulário) ──
+  const msgPlanoAcao = (document.getElementById('apres1-msg-pa')?.value || '').trim();
+
   const indLabel = paIndicador==='l8' ? 'Abrir PATEC Obrigatório' : paIndicador==='l7' ? 'Abrir PATEC Idêntico Não' : 'Total Combinado (Obrig. + Idênt. Não)';
 
   const html = `<!DOCTYPE html>
@@ -17449,6 +17559,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
 .pl-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
 .pl-pct{font-size:18px;font-weight:800;min-width:46px}
 .cascata-img img{max-width:100%;max-height:180px;border-radius:6px}
+.sim-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sim-card{border-radius:6px;padding:8px 10px;background:#f7f9fc;border:1px solid #dde3ed}
+.sim-label{font-size:9px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:4px}
+.sim-val{font-size:15px;font-weight:800;color:#1565C0}
+.sim-sub{font-size:10px;color:#777;margin-top:2px}
+.sim-green{background:#e8f5e9;border-color:#a5d6a7} .sim-green .sim-val{color:#1b5e20}
 .ftr{background:#1b5e20;padding:7px 28px;display:flex;justify-content:space-between;align-items:center;margin-top:10px}
 .ftr-txt{color:rgba(255,255,255,.7);font-size:9px}
 @media print{
@@ -17518,14 +17634,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
     ${incSaude ? `
     <div class="two-col">
       <div>
-        <div class="sec-title">🩺 Saúde da Carteira — Abrir PATEC</div>
-        <div style="display:flex;align-items:center;gap:14px;padding-top:4px">
-          <div class="saude-badge" style="background:${saudeCorAP}18;color:${saudeCorAP}">${saudeIcoAP} ${saudeAP}</div>
-          <div style="font-size:11px;color:#666">${criticosAP} críticos de ${totalRows} (${pctCriticosAP}%)<br>Limiar estável &lt;${_limEstavelAP}% · Crítico &gt;${_limAlertaAP}%</div>
-        </div>
-      </div>
-      <div>
-        <div class="sec-title">📅 Validade da Proposta</div>
+        <div class="sec-title">📅 Validade da Proposta — Abrir PATEC</div>
         <div class="donut-wrap">
           <svg class="donut-svg" width="110" height="110" viewBox="0 0 42 42">
             <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#e0e0e0" stroke-width="6"></circle>
@@ -17538,6 +17647,19 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
           </div>
         </div>
       </div>
+      <div>
+        <div class="sec-title">🩺 Saúde da Carteira — Abrir PATEC</div>
+        <div style="display:flex;align-items:center;gap:14px;padding-top:4px">
+          <div class="saude-badge" style="background:${saudeCorAP}18;color:${saudeCorAP}">${saudeIcoAP} ${saudeAP}</div>
+          <div style="font-size:11px;color:#666">${criticosAP} críticos de ${totalRows} (${pctCriticosAP}%)<br>Limiar estável &lt;${_limEstavelAP}% · Crítico &gt;${_limAlertaAP}%</div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    ${msgPlanoAcao ? `
+    <div>
+      <div class="sec-title">💬 Mensagem do Plano de Ação</div>
+      <div style="font-size:13px;color:#333;line-height:1.6;background:#f7f9fc;border:1px solid #dde3ed;border-radius:8px;padding:12px 16px;white-space:pre-wrap">${msgPlanoAcao}</div>
     </div>` : ''}
 
     ${incSegmento ? `
@@ -17552,9 +17674,15 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
     </div>` : ''}
 
     ${incCascata && cascataImg ? `
-    <div>
-      <div class="sec-title">📉 Plano de Ação — ${indLabel}</div>
-      <div class="cascata-img"><img src="${cascataImg}"></div>
+    <div class="two-col">
+      <div>
+        <div class="sec-title">📉 Plano de Ação — ${indLabel}</div>
+        <div class="cascata-img"><img src="${cascataImg}"></div>
+      </div>
+      <div>
+        <div class="sec-title">📊 Simulação de Backlog</div>
+        ${simHTML}
+      </div>
     </div>` : ''}
 
   </div>
