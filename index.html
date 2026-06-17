@@ -17631,9 +17631,18 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
     </div>` : ''}
 
     ${incSaude ? `
-    <div>
-      <div class="sec-title">🩺 Saúde da Carteira — Abrir PATEC</div>
-      ${msgPlanoAcao ? `<div style="font-size:13px;color:#333;line-height:1.6;background:#f7f9fc;border:1px solid #dde3ed;border-radius:8px;padding:12px 16px;white-space:pre-wrap">${msgPlanoAcao}</div>` : '<div style="font-size:12px;color:#888">Nenhuma mensagem informada.</div>'}
+    <div class="two-col">
+      <div>
+        <div class="sec-title">🩺 Saúde da Carteira — Abrir PATEC</div>
+        <div style="display:flex;align-items:center;gap:14px;padding-top:4px">
+          <div class="saude-badge" style="background:${saudeCorAP}18;color:${saudeCorAP}">${saudeIcoAP} ${saudeAP}</div>
+          <div style="font-size:11px;color:#666">${criticosAP} críticos de ${totalRows} (${pctCriticosAP}%)<br>Limiar estável &lt;${_limEstavelAP}% · Crítico &gt;${_limAlertaAP}%</div>
+        </div>
+      </div>
+      <div>
+        <div class="sec-title">💬 Mensagem do Plano de Ação</div>
+        ${msgPlanoAcao ? `<div style="font-size:12px;color:#333;line-height:1.6;background:#f7f9fc;border:1px solid #dde3ed;border-radius:8px;padding:10px 14px;white-space:pre-wrap">${msgPlanoAcao}</div>` : '<div style="font-size:12px;color:#888">Nenhuma mensagem informada.</div>'}
+      </div>
     </div>` : ''}
 
     ${incSegmento ? `
