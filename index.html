@@ -12845,12 +12845,14 @@ function pcFiltrar(){
   const reprovados = filtrar(pcDadosReprovado());
   pcRenderTabela('reprovado', reprovados, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
 
-  // ITENS CRÍTICOS: familia (col L) = 'Crítica' E NÃO está vencido (col J)
+  // ITENS CRÍTICOS: mesma regra do Radar Estratégico — SLA>90 OU Prazo de validade>=60 dias
+  // (excluindo os que já estão na aba Vencido, para não duplicar entre as duas abas —
+  // usa a MESMA condição de "vencido" aplicada na aba Vencido acima, para garantir exclusão exata)
   const criticos = filtrar(base.filter(r => {
-    const ctrl = (r.status_ctrl||'').toUpperCase();
     const val  = (r.validade||'').toLowerCase();
-    const ehVencido = val.includes('vencimento') || val.includes('vencid');
-    return (ctrl === 'CRÍTICO' || ctrl === 'CRITICO') && !ehVencido;
+    const ehVencido = val.includes('vencida') || val.includes('vencid');
+    if(ehVencido) return false;
+    return Number(r.sla)>90 || Number(r.prazo_c||0)>=60;
   }));
   pcRenderTabela('criticos', criticos, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
 
