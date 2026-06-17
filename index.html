@@ -3142,6 +3142,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         ℹ️ Este painel é totalmente independente do Plano de Ação — usa os valores de <strong>Abrir ID Não (L7)</strong> e <strong>Abrir PATEC Obrigatório (L8)</strong> já lançados no Resumo do Dia. Entrada/Saída calculada pela diferença entre o valor de hoje e o valor do dia anterior.
       </div>
 
+      <!-- CARDS DO DIA (mesmo do Painel Estratégico / Plano de Ação) -->
+      <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="font-size:13px;font-weight:700;color:var(--az)">📊 Resumo do dia</div>
+            <input type="date" id="ap-dia-sel" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--brd);border-radius:6px;color:var(--az);font-weight:600" onchange="renderAbrirPatecCardsDia()">
+            <span style="font-size:11px;color:var(--tx2)" id="ap-hoje-label"></span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-s" style="font-size:11px" onclick="apVoltarHoje()">📅 Hoje</button>
+            <button class="btn btn-s" style="font-size:11px" onclick="renderAbrirPatecCardsDia()">↺ Atualizar</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px" id="ap-cards-dia"></div>
+      </div>
+
       <!-- SELETOR DE INDICADOR -->
       <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--azm)">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
@@ -3149,6 +3165,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div style="display:flex;gap:8px">
             <button id="ap-btn-l8" class="btn btn-p" style="font-size:12px" onclick="apSelecionarIndicador('l8',this)">📦 Abrir PATEC Obrigatório</button>
             <button id="ap-btn-l7" class="btn btn-s" style="font-size:12px" onclick="apSelecionarIndicador('l7',this)">🆔 Abrir PATEC Idêntico Não</button>
+            <button id="ap-btn-total" class="btn btn-s" style="font-size:12px" onclick="apSelecionarIndicador('total',this)">📊 Total Combinado (L7+L8)</button>
           </div>
         </div>
       </div>
@@ -4856,6 +4873,9 @@ function go(id, el) {
     else { desfechoCarregarFirebase().then(()=>{ try{ radarRenderDevolucoes(); }catch(e){} }); }
   }, 100);
   if(id==='abrir-patec') setTimeout(()=>{
+    const diaSel = document.getElementById('ap-dia-sel');
+    if(diaSel && !diaSel.value) diaSel.value = HOJE.toISOString().split('T')[0];
+    renderAbrirPatecCardsDia();
     const iniEl = document.getElementById('ap-dt-inicio');
     if(iniEl && !iniEl.value) apPeriodoHoje();
     else renderAbrirPatecCascata();
@@ -14650,7 +14670,7 @@ function radarRenderDevolucoes(){
 // (sem _paEntradas, sem _paHistorico, sem paGetMarcoBase — zero risco de bagunçar
 // os dados existentes do Plano de Ação atual)
 // ════════════════════════════════════════════
-let _apIndicador = 'l8'; // 'l8' = Abrir PATEC Obrigatório | 'l7' = Abrir PATEC Idêntico Não
+let _apIndicador = 'l8'; // 'l8' = Abrir PATEC Obrigatório | 'l7' = Abrir PATEC Idêntico Não | 'total' = soma dos dois
 let _apChartCascata = null;
 let _apHistoricoCache = null; // [{data, l7, l8}] vindo do Firebase, carregado 1x e reutilizado
 
@@ -14666,15 +14686,42 @@ async function apCarregarHistorico(){
   } catch(e){ console.warn('apCarregarHistorico:', e); _apHistoricoCache = []; return []; }
 }
 
+function renderAbrirPatecCardsDia(){
+  const sel    = document.getElementById('ap-dia-sel');
+  const lbl    = document.getElementById('ap-hoje-label');
+  const dt     = sel?.value || HOJE.toISOString().split('T')[0];
+  const hojeStr= HOJE.toISOString().split('T')[0];
+  if(lbl) lbl.textContent = dt+(dt===hojeStr?' (hoje)':'');
+
+  // Sincroniza com o seletor do Painel Estratégico e reusa renderCardsDia — mesmo
+  // padrão já usado pelo Plano de Ação, sem alterar nada do Painel Estratégico
+  const estSel = document.getElementById('est-dia-sel');
+  if(estSel) estSel.value = dt;
+
+  renderCardsDia();
+  const fonte = document.getElementById('est-cards-dia');
+  const dest  = document.getElementById('ap-cards-dia');
+  if(fonte && dest) dest.innerHTML = fonte.innerHTML;
+}
+
+function apVoltarHoje(){
+  const sel = document.getElementById('ap-dia-sel');
+  if(sel) sel.value = HOJE.toISOString().split('T')[0];
+  renderAbrirPatecCardsDia();
+}
+
 function apSelecionarIndicador(ind, btn){
   _apIndicador = ind;
-  document.querySelectorAll('#p-abrir-patec .cd-t').forEach(()=>{});
   const btnL7 = document.getElementById('ap-btn-l7');
   const btnL8 = document.getElementById('ap-btn-l8');
+  const btnTotal = document.getElementById('ap-btn-total');
   if(btnL7) btnL7.className = ind==='l7' ? 'btn btn-p' : 'btn btn-s';
   if(btnL8) btnL8.className = ind==='l8' ? 'btn btn-p' : 'btn btn-s';
+  if(btnTotal) btnTotal.className = ind==='total' ? 'btn btn-p' : 'btn btn-s';
   const titEl = document.getElementById('ap-titulo-grafico');
-  if(titEl) titEl.textContent = ind==='l8' ? '📉 Abrir PATEC Obrigatório — Acompanhamento' : '📉 Abrir PATEC Idêntico Não — Acompanhamento';
+  if(titEl) titEl.textContent = ind==='l8' ? '📉 Abrir PATEC Obrigatório — Acompanhamento'
+                                : ind==='l7' ? '📉 Abrir PATEC Idêntico Não — Acompanhamento'
+                                : '📉 Total Combinado (Obrigatório + Idêntico Não) — Acompanhamento';
   renderAbrirPatecCascata();
 }
 
@@ -14699,11 +14746,13 @@ async function renderAbrirPatecCascata(){
   if(dtInicio > dtFim) return;
 
   const historico = await apCarregarHistorico();
-  const campo = _apIndicador; // 'l7' ou 'l8'
+  const campo = _apIndicador; // 'l7', 'l8' ou 'total'
 
-  // Mapa rápido data → valor do campo selecionado
+  // Mapa rápido data → valor do campo selecionado (ou soma l7+l8 se 'total')
   const valorPorData = {};
-  historico.forEach(r => { valorPorData[r.data] = Number(r[campo])||0; });
+  historico.forEach(r => {
+    valorPorData[r.data] = campo==='total' ? (Number(r.l7)||0)+(Number(r.l8)||0) : (Number(r[campo])||0);
+  });
 
   // Dia anterior ao início do filtro, para servir de referência do "Início"
   const _dAnt = new Date(dtInicio+'T12:00:00');
@@ -14740,7 +14789,7 @@ async function renderAbrirPatecCascata(){
   const totalEntradas = linhas.reduce((s,l)=>s+l.entradas,0);
   const kpisEl = document.getElementById('ap-kpis');
   if(kpisEl){
-    const labelInd = campo==='l8' ? 'Abrir PATEC Obrigatório' : 'Abrir PATEC Idêntico Não';
+    const labelInd = campo==='l8' ? 'Abrir PATEC Obrigatório' : campo==='l7' ? 'Abrir PATEC Idêntico Não' : 'Total Combinado (Obrig. + Idênt. Não)';
     kpisEl.innerHTML = `
       <div class="kc"><div class="kn" style="color:var(--az)">${valorAtual}</div><div class="kl">${labelInd} (atual)</div></div>
       <div class="kc"><div class="kn" style="color:var(--vd)">${totalSaidas}</div><div class="kl">Total Saídas no período</div></div>
