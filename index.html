@@ -579,7 +579,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   </div>
 
   <div class="sb-mod">◈ ESTRATÉGICO</div>
-  <div class="sb-it active" onclick="go('vg-mercado',this)">🌐 Inteligência de Mercado</div>
+  <div class="sb-it active" onclick="go('vg-mercado',this)">🌐 Indicadores de Mercado</div>
   <div class="sb-it" onclick="go('radar',this)">📡 Radar Estratégico</div>
   <div class="sb-it" onclick="go('plano-acao',this)">🎯 Plano de Ação</div>
   <div class="sb-mod">◈ EXECUÇÃO</div>
@@ -610,7 +610,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
   <div style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1">
     <div style="display:flex;align-items:center;gap:10px">
       <span id="ttl-ico" style="font-size:18px">📊</span>
-      <h2 id="ttl" style="font-size:17px;font-weight:600;color:#fff;white-space:nowrap;letter-spacing:.2px">Inteligência de Mercado</h2>
+      <h2 id="ttl" style="font-size:17px;font-weight:600;color:#fff;white-space:nowrap;letter-spacing:.2px">Indicadores de Mercado</h2>
     </div>
   </div>
 
@@ -4734,12 +4734,15 @@ function go(id, el) {
   const centroIco = document.querySelector('.topbar [style*="translateX"] div');
   if(centroIco) centroIco.textContent = ico;
   const titles = {
-    'vg-mercado':'Inteligência de Mercado','vg-validade':'Validade Oportunidades',
+    'vg-mercado':'Indicadores de Mercado','vg-validade':'Validade Oportunidades',
 'pr-estrategico':'Painel Estratégico','pr-equipe':'Visão por Equipe',
     'pr-producao':'Produção da Equipe','pr-bancoferias':'Gestão de Jornada',
     'fechamento-dia':'Fechamento do Dia',
     };
-  document.getElementById('ttl').textContent = titles[id] || id;
+  // Fonte única: usa o label do menu lateral (PERMS_SIDEBAR) quando disponível,
+  // evitando mostrar o id cru (ex: "radar", "plano-acao") como título da página
+  const labelSidebar = (typeof PERMS_SIDEBAR !== 'undefined' && PERMS_SIDEBAR[id]) ? PERMS_SIDEBAR[id].label : null;
+  document.getElementById('ttl').textContent = titles[id] || labelSidebar || id;
   if(id==='pr-bancoferias'){ renderFerias(); renderBanco(); setTimeout(()=>{ fbCarregarBHE().then(()=>{ bheArquivarVencidos(); renderBHECards(); }); }, 100); }
   document.getElementById('sb').classList.remove('mob-open');
   if(id==='vg-mercado') mktCarregarTudo();
@@ -17090,7 +17093,7 @@ function q18Consultar(valor){
 
 // Mapa de permissões: chave sidebar → id da página
 const PERMS_SIDEBAR = {
-  'mercado':        { icon:'🌐', label:'Inteligência de Mercado',  mod:'ESTRATÉGICO' },
+  'mercado':        { icon:'🌐', label:'Indicadores de Mercado',  mod:'ESTRATÉGICO' },
   'radar':          { icon:'📡', label:'Radar Estratégico',        mod:'ESTRATÉGICO' },
   'plano-acao':     { icon:'🎯', label:'Plano de Ação',            mod:'ESTRATÉGICO' },
   'pr-estrategico': { icon:'🎯', label:'Painel Estratégico',       mod:'EXECUÇÃO' },
