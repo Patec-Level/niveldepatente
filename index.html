@@ -13094,14 +13094,6 @@ function pcAtualizar(){
   pcInicializar();
 }
 
-function pcLimparFiltros(){
-  const el1 = document.getElementById('pc-filtro-analista');
-  const el2 = document.getElementById('pc-busca');
-  if(el1) el1.value = '';
-  if(el2) el2.value = '';
-  pcFiltrar();
-}
-
 function pcGetFluxo(){
   if(!_bkDados || !_bkDados.rows || !_bkDados.rows.length) return [];
   const rows = _bkDados.rows;
