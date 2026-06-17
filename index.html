@@ -3047,6 +3047,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
 
 
 
+      <!-- DEVOLUÇÕES — Motivos do ciclo (mesma lógica do Painel Estratégico) -->
+      <div id="radar-dev-section" style="display:none;margin-top:1.5rem">
+        <div class="cd" style="margin-bottom:1rem;border-top:3px solid var(--vm)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:.875rem">
+            <div class="cd-t" style="margin:0">↩ Devoluções — Motivos do ciclo</div>
+            <span style="font-size:11px;color:var(--tx2)" id="radar-dev-total-label"></span>
+          </div>
+          <div id="radar-dev-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:1rem"></div>
+          <!-- Gráfico de barras: Devoluções por centro (Falta de retorno CSPN) -->
+          <div id="radar-dev-cspn-wrap" style="display:none">
+            <div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:.5rem">📊 Devoluções por centro — Falta de retorno CSPN</div>
+            <canvas id="radar-chart-dev-cspn" height="120"></canvas>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ══════════════════════════════════════════
@@ -4775,6 +4791,9 @@ function go(id, el) {
     } else {
       try{ renderRadarOperacional(); }catch(e){ console.error('[Radar] ERRO render:', e); }
     }
+    // Card de Devoluções no final da página — usa cache se já tiver, senão carrega
+    if(Object.keys(_desfechoCache||{}).length){ try{ radarRenderDevolucoes(); }catch(e){} }
+    else { desfechoCarregarFirebase().then(()=>{ try{ radarRenderDevolucoes(); }catch(e){} }); }
   }, 100);
   if(id==='plano-acao') setTimeout(()=>{
     if(!_radarDados?.length){
@@ -4799,14 +4818,14 @@ function go(id, el) {
         localStorage.removeItem('patec_desfecho_cache_ts');
       }
     }catch(e){}
-    if(!Object.keys(_desfechoCache||{}).length) desfechoCarregarFirebase().then(()=>{ estRenderDevolucoes(); estRenderDesfechoCards(); });
+    if(!Object.keys(_desfechoCache||{}).length) desfechoCarregarFirebase().then(()=>{ estRenderDevolucoes(); radarRenderDevolucoes(); estRenderDesfechoCards(); });
     const sel=document.getElementById('est-dia-sel');
     if(sel&&!sel.value) sel.value=HOJE.toISOString().split('T')[0];
     estInitFim();
     renderCardsDia();
     estPcpHoje();
     renderPainelEstrategico();
-    estRenderDevolucoes();
+    estRenderDevolucoes(); radarRenderDevolucoes();
     estRenderDesfechoCards();
     renderRadarSaude(_radarFiltroStatus?_radarDados.filter(r=>r.analista_auto===_radarFiltroStatus):_radarDados);
   }, 100);
@@ -14265,7 +14284,7 @@ async function desfechoSalvar(){
 
   // Re-renderizar seção de devoluções no painel estratégico se estiver aberto
   if(document.getElementById('p-pr-estrategico')?.classList.contains('active')){
-    estRenderDevolucoes(); estRenderDesfechoCards();
+    estRenderDevolucoes(); radarRenderDevolucoes(); estRenderDesfechoCards();
   }
 }
 
@@ -14330,7 +14349,7 @@ async function desfechoCarregarFirebase(){
         if(cached && Object.keys(cached).length > 0){
           _desfechoCache = cached;
           console.log('✓ Desfechos (cache):', Object.keys(_desfechoCache).length);
-          estRenderDevolucoes(); estRenderDesfechoCards();
+          estRenderDevolucoes(); radarRenderDevolucoes(); estRenderDesfechoCards();
           // Ainda assim atualiza em background
           db.collection('desfechos').get()
             .then(snap => normalizarDocs(snap))
@@ -14339,7 +14358,7 @@ async function desfechoCarregarFirebase(){
                 _desfechoCache = novo;
                 localStorage.setItem(CACHE_KEY, JSON.stringify(_desfechoCache));
                 localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
-                estRenderDevolucoes(); estRenderDesfechoCards();
+                estRenderDevolucoes(); radarRenderDevolucoes(); estRenderDesfechoCards();
               }
             }).catch(()=>{});
           return;
@@ -14355,7 +14374,7 @@ async function desfechoCarregarFirebase(){
       localStorage.setItem(CACHE_KEY, JSON.stringify(_desfechoCache));
       localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
     }catch(e){}
-    estRenderDevolucoes(); estRenderDesfechoCards();
+    estRenderDevolucoes(); radarRenderDevolucoes(); estRenderDesfechoCards();
   } catch(e){ console.warn('desfechoCarregarFirebase:', e); }
 }
 
@@ -14431,6 +14450,108 @@ function estRenderDevolucoes(){
   if(!ctx) return;
   if(_estChartDevCSPN) _estChartDevCSPN.destroy();
   _estChartDevCSPN = new Chart(ctx, {
+    type: 'bar',
+    data:{
+      labels: centros,
+      datasets:[{
+        label:'Devoluções (Falta de retorno CSPN)',
+        data: vals,
+        backgroundColor: '#D94040',
+        borderRadius: 4,
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        datalabels:{
+          anchor:'end', align:'end', color:'var(--tx)',
+          font:{size:11,weight:'600'},
+          formatter: v => v
+        }
+      },
+      scales:{
+        y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},
+        x:{ticks:{font:{size:10},maxRotation:30},grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ── Render de devoluções no Radar Estratégico (mesmo cálculo de estRenderDevolucoes,
+// destino diferente — card próprio no final da página do Radar) ──
+let _radarChartDevCSPN = null;
+function radarRenderDevolucoes(){
+  const sec = document.getElementById('radar-dev-section');
+  if(!sec) return;
+
+  const MOTIVOS = [
+    'Falta de retorno CSPN',
+    'Solicitação de cancelamento requisitante',
+    'Acima do DPV',
+    'Reprovado 100%',
+    'PATEC cancelado',
+    'Falta de retorno fornecedor',
+    'Falta de retorno cadastro (Thiago)',
+    'Preço excessivo',
+    'Proposta vencida',
+  ];
+
+  const devs = Object.values(_desfechoCache).filter(d => (d.tipo||'').toLowerCase() === 'devolução' || (d.tipo||'').toLowerCase() === 'devolucao');
+  if(!devs.length){ sec.style.display='none'; return; }
+  sec.style.display='block';
+
+  const norm = s => (s||'').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const contMotivo = {};
+  MOTIVOS.forEach(m=>contMotivo[m]=0);
+  devs.forEach(d=>{
+    if(!d.motivo) return;
+    const motNorm = norm(d.motivo);
+    const match = MOTIVOS.find(m => norm(m) === motNorm);
+    if(match) contMotivo[match]++;
+    else {
+      contMotivo[d.motivo] = (contMotivo[d.motivo]||0) + 1;
+      if(!MOTIVOS.includes(d.motivo)) MOTIVOS.push(d.motivo);
+    }
+  });
+  const totalDevs = devs.length;
+
+  const lblEl = document.getElementById('radar-dev-total-label');
+  if(lblEl) lblEl.textContent = `${totalDevs} devolução${totalDevs!==1?'s':''} registrada${totalDevs!==1?'s':''}`;
+
+  const cores = ['#D94040','#C07A12','#1A4A8A','#0E9E6A','#7C3AED','#EA580C','#0891B2','#B45309','#6B21A8'];
+  const cardsEl = document.getElementById('radar-dev-cards');
+  if(cardsEl){
+    // No Radar Estratégico, o motivo "Proposta vencida" não é exibido (pedido específico)
+    const MOTIVOS_RADAR = MOTIVOS.filter(m => norm(m) !== norm('Proposta vencida'));
+    cardsEl.innerHTML = MOTIVOS_RADAR.map((m,i)=>{
+      const cnt = contMotivo[m]||0;
+      const pct = totalDevs>0 ? Math.round(cnt/totalDevs*100) : 0;
+      return `<div style="background:var(--cin);border-radius:8px;padding:.75rem;border:1px solid var(--brd);border-left:3px solid ${cores[i]}">
+        <div style="font-size:10px;color:var(--tx2);margin-bottom:3px;line-height:1.3">${m}</div>
+        <div style="font-size:22px;font-weight:700;color:${cnt>0?cores[i]:'var(--tx2)'}">${cnt}</div>
+        <div style="font-size:10px;color:var(--tx2)">${pct}% do total</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Gráfico CSPN por centro
+  const cspnWrap = document.getElementById('radar-dev-cspn-wrap');
+  if(!cspnWrap) return;
+  const cspnDevs = devs.filter(d=>d.motivo==='Falta de retorno CSPN' && d.centro);
+  if(!cspnDevs.length){ cspnWrap.style.display='none'; return; }
+  cspnWrap.style.display='block';
+
+  const porCentro = {};
+  cspnDevs.forEach(d=>{ porCentro[d.centro]=(porCentro[d.centro]||0)+1; });
+  const centros = Object.keys(porCentro).sort((a,b)=>porCentro[b]-porCentro[a]);
+  const vals = centros.map(c=>porCentro[c]);
+
+  const ctx = document.getElementById('radar-chart-dev-cspn');
+  if(!ctx) return;
+  if(_radarChartDevCSPN) _radarChartDevCSPN.destroy();
+  _radarChartDevCSPN = new Chart(ctx, {
     type: 'bar',
     data:{
       labels: centros,
