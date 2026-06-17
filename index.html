@@ -980,6 +980,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="setAdmTab('analista-completo-adm',this)">🤖 Analista Completo</button>
         <button class="stab" onclick="setAdmTab('email-teste',this)">📧 Testar E-mails</button>
         <button class="stab" onclick="setAdmTab('apresentacao',this);admApresentacaoInit()">🖥️ Apresentação</button>
+        <button class="stab" onclick="setAdmTab('apresentacao1',this);admApresentacao1Init()">📂 Apresentação 1</button>
         <button class="stab" onclick="setAdmTab('q18-upload',this)">🚫 Q18</button>
         <button class="stab" onclick="setAdmTab('gestao-prod',this)">✏️ Gestão de Produção</button>
       </div>
@@ -2706,6 +2707,56 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           </div>
           <button class="btn btn-p" onclick="admApresentacaoGerar()" style="width:100%;justify-content:center;font-size:13px;padding:10px">
             🖨️ Gerar Slide para Apresentação
+          </button>
+        </div>
+      </div>
+
+      <!-- ── APRESENTAÇÃO 1 — ABRIR PATEC ── -->
+      <div id="adm-apresentacao1" class="adm-tab" style="display:none">
+        <div class="cd">
+          <div class="cd-t">📂 Gerador de Slide — Abrir PATEC</div>
+          <div class="al al-b" style="margin-bottom:1rem">
+            ℹ️ Slide independente, focado apenas nos itens de <strong>Abrir PATEC</strong> (Fila = "Item em Parada" → Grupo de Mercadoria Obrigatório, ou Fila = "Fila de publicação" → Idêntico Não).
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+
+            <!-- Col 1: Identificação -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">🏷️ Identificação</div>
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Título</div>
+              <input type="text" id="apres1-titulo" value="Abrir PATEC — Visão Geral" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Subtítulo / Área</div>
+              <input type="text" id="apres1-subtitulo" value="BPO de Compras · DPV" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Data de Referência</div>
+              <input type="date" id="apres1-data" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Plano de Ação — Início</div>
+              <input type="date" id="apres1-pa-ini" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Plano de Ação — Fim</div>
+              <input type="date" id="apres1-pa-fim" style="width:100%;font-size:12px;padding:5px 10px">
+            </div>
+
+            <!-- Col 2: Filtro de fila -->
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">🎯 Indicador do Plano de Ação</div>
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <label style="font-size:12px;display:flex;align-items:center;gap:5px"><input type="radio" name="apres1-pa-ind" value="total" checked> Total (Obrig. + Idênt. Não)</label>
+              </div>
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <label style="font-size:12px;display:flex;align-items:center;gap:5px"><input type="radio" name="apres1-pa-ind" value="l8"> Só Obrigatório</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:5px"><input type="radio" name="apres1-pa-ind" value="l7"> Só Idêntico Não</label>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:5px;margin-top:10px;text-transform:uppercase;letter-spacing:.5px">📋 Seções do Slide</div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-familias" checked> Top 5 Famílias</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-sla" checked> Maior SLA</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-saude" checked> Saúde da Carteira</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-segmento" checked> Segmentos (Crítico/Operacional/Pág. Amarela/Estratégico)</label>
+                <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="apres1-inc-cascata" checked> Plano de Ação — Abrir PATEC (Cascata)</label>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-p" onclick="admApresentacao1Gerar()" style="width:100%;justify-content:center;font-size:13px;padding:10px">
+            🖨️ Gerar Slide — Abrir PATEC
           </button>
         </div>
       </div>
@@ -17237,8 +17288,250 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
 }
 
 // ════════════════════════════════════════════
-// CONSULTA Q18 — Upload, Firebase, Consulta
+// APRESENTAÇÃO 1 — ABRIR PATEC (slide independente)
+// Filtro: Fila = 'Item em Parada' (Grupo Mercadoria Obrigatório) OU
+//         Fila = 'Fila de publicação' (Idêntico Não)
 // ════════════════════════════════════════════
+function admApresentacao1Init(){
+  const dtEl = document.getElementById('apres1-data');
+  if(dtEl && !dtEl.value) dtEl.value = new Date().toISOString().split('T')[0];
+  const paIniEl = document.getElementById('apres1-pa-ini');
+  const paFimEl = document.getElementById('apres1-pa-fim');
+  if(paIniEl && !paIniEl.value){
+    const apIni = document.getElementById('ap-dt-inicio')?.value;
+    if(apIni) paIniEl.value = apIni;
+  }
+  if(paFimEl && !paFimEl.value){
+    const apFim = document.getElementById('ap-dt-fim')?.value;
+    paFimEl.value = apFim || new Date().toISOString().split('T')[0];
+  }
+}
+
+// Linhas do Radar que pertencem ao universo "Abrir PATEC"
+function apres1GetRowsAbrirPatec(){
+  const normF = v=>String(v||'').trim().toLowerCase();
+  return (_radarDados||[]).filter(r => {
+    const f = normF(r.fila);
+    return f === 'item em parada' || f === 'fila de publicação' || f === 'fila de publicacao';
+  });
+}
+
+async function admApresentacao1Gerar(){
+  const titulo    = document.getElementById('apres1-titulo')?.value || 'Abrir PATEC — Visão Geral';
+  const subtitulo = document.getElementById('apres1-subtitulo')?.value || 'BPO de Compras · DPV';
+  const dataRef   = document.getElementById('apres1-data')?.value || new Date().toISOString().split('T')[0];
+  const dataFmt   = dataRef.split('-').reverse().join('/');
+  const paIndicador = document.querySelector('input[name="apres1-pa-ind"]:checked')?.value || 'total';
+  const paIni = document.getElementById('apres1-pa-ini')?.value || '';
+  const paFim = document.getElementById('apres1-pa-fim')?.value || dataRef;
+  const incFamilias = document.getElementById('apres1-inc-familias')?.checked;
+  const incSla      = document.getElementById('apres1-inc-sla')?.checked;
+  const incSaude     = document.getElementById('apres1-inc-saude')?.checked;
+  const incSegmento = document.getElementById('apres1-inc-segmento')?.checked;
+  const incCascata  = document.getElementById('apres1-inc-cascata')?.checked;
+
+  const rows = apres1GetRowsAbrirPatec();
+  const total = rows.length;
+
+  // ── Top 5 Famílias ──
+  const contagemFam = {}; const catMapFam = {};
+  rows.forEach(d=>{
+    const f = d.familia ? String(d.familia).trim() : '';
+    if(!f || f==='0' || f==='undefined') return;
+    contagemFam[f] = (contagemFam[f]||0) + 1;
+    if(d.cat_familia && !catMapFam[f]) catMapFam[f] = String(d.cat_familia).trim();
+  });
+  const top5Familias = Object.entries(contagemFam).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxFam = top5Familias.length ? top5Familias[0][1] : 1;
+  const coresFam = ['#1A4A8A','#0E9E6A','#C07A12','#D94040','#6C63FF'];
+
+  // ── Maior SLA ──
+  const maiorSLAItem = rows.length ? rows.reduce((mx,r)=>Number(r.sla||0)>Number(mx.sla||0)?r:mx, rows[0]) : null;
+  const maiorSLAVal  = maiorSLAItem ? Number(maiorSLAItem.sla||0) : 0;
+  const maiorSLARC   = maiorSLAItem ? (maiorSLAItem.rc||'—') : '—';
+  const maiorSLAFila = maiorSLAItem ? (maiorSLAItem.fila||'—') : '—';
+
+  // ── Saúde da Carteira (mesma regra do Radar Estratégico, aplicada só ao universo Abrir PATEC) ──
+  const r = (typeof radarGetRegras === 'function') ? radarGetRegras() : {};
+  const criticosAP = rows.filter(d=>Number(d.sla)>90 || Number(d.prazo_c||0)>=60).length;
+  const pctCriticosAP = total>0 ? Math.round(criticosAP/total*100) : 0;
+  const _limEstavelAP = r.limiar_estavel||10;
+  const _limAlertaAP  = r.limiar_alerta||25;
+  let saudeAP='', saudeIcoAP='', saudeCorAP='';
+  if(pctCriticosAP>=_limAlertaAP){ saudeAP='Operação Crítica'; saudeIcoAP='🔴'; saudeCorAP='#D94040'; }
+  else if(pctCriticosAP>=_limEstavelAP){ saudeAP='Operação em Alerta'; saudeIcoAP='🟡'; saudeCorAP='#C07A12'; }
+  else { saudeAP='Operação Estável'; saudeIcoAP='🟢'; saudeCorAP='#0E9E6A'; }
+
+  // ── Segmentos ──
+  const segCrit  = rows.filter(d=>d.seguimento==='Crítica').length;
+  const segOp    = rows.filter(d=>d.seguimento==='Operacional').length;
+  const segPag   = rows.filter(d=>d.seguimento==='Página amarela').length;
+  const segEstr  = rows.filter(d=>d.seguimento==='Estratégica').length;
+
+  // ── Plano de Ação — Abrir PATEC (cascata) — captura imagem do gráfico já existente na página ──
+  let cascataImg = '';
+  if(incCascata){
+    try{
+      // Garantir que a página Abrir PATEC está com o indicador e período certos antes de capturar
+      const pgAP = document.getElementById('p-abrir-patec');
+      const apHidden = pgAP && !pgAP.classList.contains('active');
+      if(apHidden){ pgAP.style.display='block'; pgAP.style.visibility='hidden'; pgAP.style.position='fixed'; pgAP.style.top='0'; pgAP.style.left='0'; }
+
+      if(typeof apSelecionarIndicador === 'function'){
+        const btnMap = { l8:'ap-btn-l8', l7:'ap-btn-l7', total:'ap-btn-total' };
+        const btnEl = document.getElementById(btnMap[paIndicador]);
+        _apIndicador = paIndicador; // seta direto, sem precisar de btn
+      }
+      const iniEl = document.getElementById('ap-dt-inicio');
+      const fimEl = document.getElementById('ap-dt-fim');
+      if(iniEl && paIni) iniEl.value = paIni;
+      if(fimEl) fimEl.value = paFim;
+      if(typeof renderAbrirPatecCascata === 'function') await renderAbrirPatecCascata();
+      await new Promise(res=>setTimeout(res, 500));
+
+      const canvasAP = document.getElementById('ap-chart-cascata');
+      if(canvasAP){ try{ cascataImg = canvasAP.toDataURL('image/png'); } catch(e){} }
+
+      if(apHidden){ pgAP.style.display=''; pgAP.style.visibility=''; pgAP.style.position=''; pgAP.style.top=''; pgAP.style.left=''; }
+    } catch(e){ console.warn('Erro ao capturar cascata Abrir PATEC:', e); }
+  }
+
+  const indLabel = paIndicador==='l8' ? 'Abrir PATEC Obrigatório' : paIndicador==='l7' ? 'Abrir PATEC Idêntico Não' : 'Total Combinado (Obrig. + Idênt. Não)';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>${titulo} — ${dataFmt}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
+.page{width:1200px;background:#fff;margin:0 auto 24px;padding:0;box-shadow:0 4px 32px rgba(0,0,0,.15);position:relative;overflow:hidden}
+.hdr{background:linear-gradient(90deg,#0d2347 0%,#1A4A8A 60%,#2563EB 100%);padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.hdr-title{color:#fff;font-size:22px;font-weight:700;letter-spacing:.3px}
+.hdr-sub{color:rgba(255,255,255,.85);font-size:12px;margin-top:2px}
+.hdr-right{text-align:right;color:rgba(255,255,255,.9)}
+.hdr-right .brand{font-size:22px;font-weight:900;letter-spacing:-1px}
+.hdr-right .sub{font-size:10px;opacity:.8;margin-top:1px}
+.body{padding:18px 24px;display:grid;gap:16px}
+.sec-title{font-size:11px;font-weight:700;color:#1A4A8A;text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid #1A4A8A;padding-bottom:4px;margin-bottom:10px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi-card{border-radius:8px;padding:10px 12px;border:1px solid rgba(0,0,0,.08);background:#f7f9fc}
+.kpi-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;color:#555}
+.kpi-val{font-size:24px;font-weight:800;line-height:1}
+.fam-bar-row{margin-bottom:10px}
+.fam-bar-track{background:#eef1f6;border-radius:5px;height:16px;overflow:hidden;margin-top:3px}
+.fam-bar-fill{height:100%;border-radius:5px}
+.saude-badge{display:inline-flex;align-items:center;gap:8px;font-size:18px;font-weight:800;padding:10px 18px;border-radius:10px}
+.seg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.seg-card{border-radius:8px;padding:12px;text-align:center;border:1px solid rgba(0,0,0,.08)}
+.seg-val{font-size:26px;font-weight:800}
+.seg-lbl{font-size:10px;color:#666;margin-top:4px;font-weight:600}
+.cascata-img img{max-width:100%;border-radius:6px}
+.ftr{background:#0d2347;padding:8px 28px;display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.ftr-txt{color:rgba(255,255,255,.7);font-size:9px}
+@media print{
+  body{background:#fff}
+  .page{box-shadow:none;margin:0;width:100%;page-break-after:always}
+  .no-print{display:none!important}
+  @page{size:A4 landscape;margin:5mm}
+}
+</style>
+</head>
+<body>
+<div class="no-print" style="text-align:center;padding:8px;background:#0d2347">
+  <button onclick="window.print()" style="background:#fff;color:#0d2347;border:none;padding:10px 32px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>
+</div>
+
+<div class="page">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">${titulo}</div>
+      <div class="hdr-sub">${subtitulo} · Referência: ${dataFmt}</div>
+    </div>
+    <div class="hdr-right">
+      <div class="brand">PATEC</div>
+      <div class="sub">Sistema de Gestão de Compras</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-lbl">Total Abrir PATEC</div><div class="kpi-val" style="color:#1A4A8A">${total}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Maior SLA</div><div class="kpi-val" style="color:#D94040">${maiorSLAVal} dias</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Itens Críticos</div><div class="kpi-val" style="color:#D94040">${criticosAP} (${pctCriticosAP}%)</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Indicador no PA</div><div class="kpi-val" style="font-size:13px;color:#555">${indLabel}</div></div>
+    </div>
+
+    ${incFamilias || incSla ? `
+    <div class="two-col">
+      ${incFamilias ? `
+      <div>
+        <div class="sec-title">📦 Top 5 Famílias</div>
+        ${top5Familias.length ? top5Familias.map(([fam,cnt],i)=>{
+          const pct = total>0?Math.round(cnt/total*100):0;
+          const w = Math.round(cnt/maxFam*100);
+          return `<div class="fam-bar-row">
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600">
+              <span>${fam}</span><span>${cnt} (${pct}%)</span>
+            </div>
+            <div class="fam-bar-track"><div class="fam-bar-fill" style="width:${w}%;background:${coresFam[i]}"></div></div>
+          </div>`;
+        }).join('') : '<div style="font-size:12px;color:#888">Sem dados de família.</div>'}
+      </div>` : '<div></div>'}
+      ${incSla ? `
+      <div>
+        <div class="sec-title">⏱ Maior SLA</div>
+        <div style="text-align:center;padding:20px 0">
+          <div style="font-size:48px;font-weight:800;color:#D94040;line-height:1">${maiorSLAVal}</div>
+          <div style="font-size:12px;color:#666;margin-top:4px">dias de SLA</div>
+          <div style="margin-top:14px;font-size:13px;font-weight:700;color:#1A4A8A">RC ${maiorSLARC}</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">${maiorSLAFila}</div>
+        </div>
+      </div>` : '<div></div>'}
+    </div>` : ''}
+
+    ${incSaude ? `
+    <div>
+      <div class="sec-title">🩺 Saúde da Carteira — Abrir PATEC</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="saude-badge" style="background:${saudeCorAP}18;color:${saudeCorAP}">${saudeIcoAP} ${saudeAP}</div>
+        <div style="font-size:12px;color:#666">${criticosAP} itens críticos de ${total} (${pctCriticosAP}%) · Limiar estável &lt;${_limEstavelAP}% · Crítico &gt;${_limAlertaAP}%</div>
+      </div>
+    </div>` : ''}
+
+    ${incSegmento ? `
+    <div>
+      <div class="sec-title">🗂 Segmentos — Abrir PATEC</div>
+      <div class="seg-grid">
+        <div class="seg-card" style="background:#FDEAEA;border-color:#D9404033"><div class="seg-val" style="color:#D94040">${segCrit}</div><div class="seg-lbl">Seg. Crítico</div></div>
+        <div class="seg-card" style="background:#EBF0FA;border-color:#1A4A8A33"><div class="seg-val" style="color:#1A4A8A">${segOp}</div><div class="seg-lbl">Seg. Operacional</div></div>
+        <div class="seg-card" style="background:#FDF3E3;border-color:#C07A1233"><div class="seg-val" style="color:#C07A12">${segPag}</div><div class="seg-lbl">Página Amarela</div></div>
+        <div class="seg-card" style="background:#E6F7F1;border-color:#0E9E6A33"><div class="seg-val" style="color:#0E9E6A">${segEstr}</div><div class="seg-lbl">Seg. Estratégico</div></div>
+      </div>
+    </div>` : ''}
+
+    ${incCascata && cascataImg ? `
+    <div>
+      <div class="sec-title">📉 Plano de Ação — ${indLabel}</div>
+      <div class="cascata-img"><img src="${cascataImg}"></div>
+    </div>` : ''}
+
+  </div>
+
+  <div class="ftr">
+    <div class="ftr-txt">PATEC · Abrir PATEC · ${dataFmt}</div>
+    <div class="ftr-txt">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+  </div>
+</div>
+
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  window.open(URL.createObjectURL(blob), '_blank');
+}
 let _q18Impedidos = new Set(); // COD. SAP AJUST impedidos
 let _q18Total = 0;
 
