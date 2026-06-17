@@ -3406,7 +3406,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <table>
               <thead><tr>
                 <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th>
-                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>Status</th>
               </tr></thead>
               <tbody id="pc-tbody-vencido"></tbody>
             </table>
@@ -3436,7 +3436,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
             <table>
               <thead><tr>
                 <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>SLA</th><th>Idas Mercado</th>
-                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Validade Proposta</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Validade Proposta</th><th>Status</th>
               </tr></thead>
               <tbody id="pc-tbody-criticos"></tbody>
             </table>
@@ -12904,6 +12904,21 @@ function pcRenderTabela(aba, rows, campos, comExtra){
     );
     if(comExtra) cells.push(`<td style="text-align:center;font-weight:600;color:${(r.patec_obrig||'').toLowerCase()==='sim'?'var(--vm)':'var(--tx2)'}">${r.patec_obrig||'—'}</td>`);
     if(comExtra && aba !== 'reprovado') cells.push(`<td style="${corValidade(r.validade)}">${r.validade||'—'}</td>`);
+    // Status (Dentro do Prazo / Atrasado / Concluído / Ag. Ação) — só nas abas Vencido e Itens Críticos
+    if(aba === 'vencido' || aba === 'criticos'){
+      const chave = govChave(r);
+      const m = _govDados[chave]||{};
+      let statusAtual = m.status || '';
+      if(!statusAtual && GOV_FILAS_AG.some(f=>(r.fila||'').toUpperCase().includes(f.toUpperCase()))) statusAtual = 'AG. TRATAMENTO';
+      const prazo = govCalcPrazo(statusAtual, m.envio||'');
+      let statusCalc = govCalcStatus(prazo, m.finalizado||'');
+      if(!statusCalc) statusCalc = 'AG. AÇÃO';
+      const corStatus = statusCalc==='ATRASADO' ? 'color:var(--vm);font-weight:700'
+                       : statusCalc==='DENTRO DO PRAZO' ? 'color:var(--vd);font-weight:700'
+                       : statusCalc==='CONCLUÍDO' ? 'color:var(--az);font-weight:700'
+                       : 'color:var(--tx2);font-weight:600';
+      cells.push(`<td style="${corStatus}">${statusCalc}</td>`);
+    }
     return `<tr>${cells.join('')}</tr>`;
   }).join('');
 }
