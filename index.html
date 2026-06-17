@@ -13347,7 +13347,7 @@ function govCalcPrazo(status, envio){
 
 function govCalcStatus(prazo, finalizado){
   if(finalizado && finalizado !== '') return 'CONCLUÍDO';
-  if(!prazo) return '';
+  if(!prazo) return 'AG. AÇÃO';
   const hoje = new Date().toISOString().split('T')[0];
   return prazo < hoje ? 'ATRASADO' : 'DENTRO DO PRAZO';
 }
@@ -13356,6 +13356,7 @@ function govCorStatus(status){
   if(status === 'ATRASADO') return 'color:var(--vm);font-weight:700';
   if(status === 'DENTRO DO PRAZO') return 'color:var(--vd);font-weight:700';
   if(status === 'CONCLUÍDO') return 'color:var(--az);font-weight:700';
+  if(status === 'AG. AÇÃO') return 'color:var(--tx2);font-weight:600';
   return 'color:var(--tx2)';
 }
 
