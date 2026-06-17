@@ -17634,9 +17634,16 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
     <div class="two-col">
       <div>
         <div class="sec-title">🩺 Saúde da Carteira — Abrir PATEC</div>
-        <div style="display:flex;align-items:center;gap:14px;padding-top:4px">
-          <div class="saude-badge" style="background:${saudeCorAP}18;color:${saudeCorAP}">${saudeIcoAP} ${saudeAP}</div>
-          <div style="font-size:11px;color:#666">${criticosAP} críticos de ${totalRows} (${pctCriticosAP}%)<br>Limiar estável &lt;${_limEstavelAP}% · Crítico &gt;${_limAlertaAP}%</div>
+        <div class="donut-wrap">
+          <svg class="donut-svg" width="110" height="110" viewBox="0 0 42 42">
+            <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#e0e0e0" stroke-width="6"></circle>
+            <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#0E9E6A" stroke-width="6"
+              stroke-dasharray="${pctOkValidade} ${100-pctOkValidade}" stroke-dashoffset="25"></circle>
+          </svg>
+          <div class="prazo-leg">
+            <div class="pl-row"><span class="pl-dot" style="background:#0E9E6A"></span><span class="pl-pct" style="color:#0E9E6A">${pctOkValidade}%</span><span>Dentro do prazo</span></div>
+            <div class="pl-row"><span class="pl-dot" style="background:#C07A12"></span><span class="pl-pct" style="color:#C07A12">${pctProxValidade}%</span><span>Vencida / próx. venc.</span></div>
+          </div>
         </div>
       </div>
       <div>
