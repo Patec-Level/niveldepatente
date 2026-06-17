@@ -12004,12 +12004,31 @@ function paEntradaRenderLista(){
   }
   el.innerHTML=`<table style="width:100%">
     <thead><tr><th>Data</th><th>Itens Entrados</th><th>Ação</th></tr></thead>
-    <tbody>${_paEntradas.map(e=>`<tr>
+    <tbody>${_paEntradas.map((e,i)=>`<tr>
       <td style="font-weight:600">${e.dt.split('-').reverse().join('/')}</td>
-      <td style="font-weight:700;color:var(--vm)">+${e.val}</td>
-      <td><button onclick="paEntradaRemover('${e.dt}')" style="font-size:10px;padding:2px 8px;border:1px solid var(--vm);border-radius:5px;color:var(--vm);background:#fff;cursor:pointer">✕ Remover</button></td>
+      <td>
+        <input type="number" value="${e.val}" min="0" id="pa-ent-edit-${i}"
+          style="width:90px;padding:4px 8px;border:1.5px solid var(--brd);border-radius:6px;font-weight:700;color:var(--vm)">
+      </td>
+      <td>
+        <button onclick="paEntradaEditar(${i})" style="font-size:10px;padding:2px 8px;border:1px solid var(--vd);border-radius:5px;color:var(--vd);background:#fff;cursor:pointer;margin-right:4px">💾 Salvar</button>
+        <button onclick="paEntradaRemover('${e.dt}')" style="font-size:10px;padding:2px 8px;border:1px solid var(--vm);border-radius:5px;color:var(--vm);background:#fff;cursor:pointer">✕ Remover</button>
+      </td>
     </tr>`).join('')}</tbody>
   </table>`;
+}
+
+async function paEntradaEditar(idx){
+  const input = document.getElementById('pa-ent-edit-'+idx);
+  if(!input || !_paEntradas[idx]) return;
+  const novoVal = Number(input.value)||0;
+  _paEntradas[idx].val = novoVal;
+  try{
+    await paEntradaSalvarFirebase();
+    const okEl = document.getElementById('pa-ent-ok');
+    if(okEl){ okEl.style.display='inline'; setTimeout(()=>okEl.style.display='none', 2000); }
+    console.log('✓ Entrada editada: ' + _paEntradas[idx].dt + ' = ' + novoVal);
+  } catch(e){ console.warn('Erro ao salvar edição de entrada:', e); }
 }
 
 
@@ -13287,6 +13306,9 @@ function pcRenderFluxo(){
 // ════════════════════════════════════════════
 let _govTabAtiva = 'mapa';
 let _govDados = {};
+let _govDadosCarregadoOK = false; // true só depois que fbCarregarGov() terminar com sucesso —
+  // protege contra registrar "entradas" falsas no Plano de Ação quando o upload do Radar
+  // acontece antes do Firebase terminar de carregar o _govDados (race condition)
 let _govAnalistaOverrides = {}; // {chave: analista} — editados na plataforma, soberanos sobre upload // { 'RC|SEQ|OP|IOP': { status, envio, finalizado } }
 
 // Feriados nacionais BR (fixos + móveis aproximados)
@@ -13563,6 +13585,7 @@ async function govCarregarFirebase(){
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
         if(cached && Object.keys(cached).length > 0){
           _govDados = cached;
+          _govDadosCarregadoOK = true;
           console.log('Gov MAPA (cache):', Object.keys(_govDados).length, 'registros');
           await govCarregarBase();
           return;
@@ -13613,6 +13636,7 @@ async function govCarregarFirebase(){
     } catch(e){}
     // Atualizar metadata de timestamp no Firebase (outras máquinas usam para invalidar cache)
     try{ await db.collection('config').doc('gov_mapa_ts').set({ts: _nowGovTs}); } catch(e){}
+    _govDadosCarregadoOK = true;
     console.log('Gov MAPA carregado:', Object.keys(_govDados).length, 'registros');
     await govCarregarBase();
   } catch(e){ console.warn('govCarregarFirebase:', e); }
@@ -14664,6 +14688,17 @@ async function govCarregarAnalistaOverrides(){
 }
 
 function govSincronizarMapa(rows){
+  // PROTEÇÃO: se o _govDados do Firebase ainda não terminou de carregar nesta sessão,
+  // qualquer item "novo" detectado aqui pode ser falso positivo (item que já existia,
+  // mas o sistema ainda não sabia disso) — isso já causou entradas fantasma gigantes
+  // no Plano de Ação (ex: +740 itens em um dia só). Por segurança, aborta a sincronização
+  // e tenta de novo em breve, dando tempo do Firebase terminar de carregar.
+  if(!_govDadosCarregadoOK){
+    console.warn('govSincronizarMapa: _govDados ainda não carregado do Firebase — abortando para evitar entradas falsas. Tentando novamente em 2s...');
+    setTimeout(() => govSincronizarMapa(rows), 2000);
+    return;
+  }
+
   // Filtrar só Analisar PATEC Finalizado
   const aptos = rows.filter(r => (r.analista_auto||'').trim() === 'Analisar PATEC Finalizado');
 
@@ -14681,6 +14716,28 @@ function govSincronizarMapa(rows){
 
   if(novos > 0){
     console.log('Gov MAPA: ' + novos + ' itens novos adicionados com AG. TRATAMENTO');
+
+    // LIMITE DE SANIDADE: mais de 100 itens "novos" num único upload é estatisticamente
+    // anormal para a operação diária — geralmente indica que _govDados estava incompleto
+    // no momento da comparação (não que realmente entraram 100+ RCs novas de uma vez).
+    // Nesses casos, pede confirmação manual antes de gravar a entrada no Plano de Ação,
+    // em vez de salvar silenciosamente um número que pode estar errado.
+    const LIMITE_SANIDADE_ENTRADA = 100;
+    if(novos > LIMITE_SANIDADE_ENTRADA){
+      const confirma = confirm(
+        '⚠ Atenção: ' + novos + ' itens foram identificados como "novos" neste upload — ' +
+        'um número bem acima do normal.\n\n' +
+        'Isso pode significar que realmente entraram muitas RCs novas, OU que o sistema ' +
+        'ainda não tinha terminado de carregar os dados anteriores quando este upload ' +
+        'foi processado (o que geraria uma entrada falsa no Plano de Ação).\n\n' +
+        'Confirmar este número (' + novos + ') como entrada real no Plano de Ação?\n' +
+        '(Cancelar = os itens são adicionados ao MAPA normalmente, mas a entrada NÃO é registrada no gráfico)'
+      );
+      if(!confirma){
+        console.warn('Entrada de ' + novos + ' itens REJEITADA pelo usuário — não registrada no Plano de Ação.');
+        return;
+      }
+    }
 
     // ── REGISTRO AUTOMÁTICO DE ENTRADAS NO PLANO DE AÇÃO ──
     // Apenas o PRIMEIRO upload do dia registra as entradas.
