@@ -17535,7 +17535,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
 .body{padding:8px 16px;display:grid;gap:8px}
 .sec-title{font-size:10px;font-weight:700;color:#1b5e20;text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid #1b5e20;padding-bottom:3px;margin-bottom:7px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr) 1.6fr;gap:8px}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr) 1.6fr;gap:8px}
 .kpi-card{border-radius:6px;padding:6px 10px;border:1px solid rgba(0,0,0,.08)}
 .kpi-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;color:#555}
 .kpi-val{font-size:20px;font-weight:800;line-height:1}
@@ -17594,10 +17594,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
   <div class="body">
 
     <div class="kpi-grid">
-      <div class="kpi-card" style="background:#FDEAEA;border-color:#D9404033"><div class="kpi-lbl">Abrir ID Não (L7)</div><div class="kpi-val" style="color:#D94040">${l7Val}</div></div>
-      <div class="kpi-card" style="background:#FDEAEA;border-color:#D9404033"><div class="kpi-lbl">Abrir PATEC Obrig. (L8)</div><div class="kpi-val" style="color:#D94040">${l8Val}</div></div>
+      <div class="kpi-card" style="background:#FDEAEA;border-color:#D9404033"><div class="kpi-lbl">Abrir ID Não</div><div class="kpi-val" style="color:#D94040">${l7Val}</div></div>
+      <div class="kpi-card" style="background:#FDEAEA;border-color:#D9404033"><div class="kpi-lbl">Abrir PATEC Obrig.</div><div class="kpi-val" style="color:#D94040">${l8Val}</div></div>
       <div class="kpi-card" style="background:#FDF3E3;border-color:#C07A1233"><div class="kpi-lbl">Total Abrir PATEC</div><div class="kpi-val" style="color:#C07A12">${totalAbrirPatec}</div></div>
-      <div class="kpi-card" style="background:#EBF0FA;border-color:#1A4A8A33"><div class="kpi-lbl">Maior SLA</div><div class="kpi-val" style="color:#1A4A8A">${maiorSLAVal} dias</div></div>
       <div class="kpi-card kpi-big" style="background:#f7f9fc"><div class="kpi-lbl">Indicador no Plano de Ação</div><div class="kpi-val" style="font-size:14px;color:#555">${indLabel}</div></div>
     </div>
 
@@ -17605,7 +17604,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
     <div class="two-col">
       ${incFamilias ? `
       <div>
-        <div class="sec-title">📦 Top 5 Famílias — Abrir PATEC</div>
+        <div class="sec-title">📦 Top 5 Famílias</div>
         ${top5Familias.length ? top5Familias.map(([fam,cnt],i)=>{
           const pct = totalRows>0?Math.round(cnt/totalRows*100):0;
           const w = Math.round(cnt/maxFam*100);
@@ -17618,7 +17617,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
       </div>` : '<div></div>'}
       ${incSla ? `
       <div>
-        <div class="sec-title">⏱ Maior SLA — Abrir PATEC</div>
+        <div class="sec-title">⏱ Maior SLA</div>
         <div style="display:flex;align-items:center;gap:18px;padding:8px 0">
           <div style="font-size:42px;font-weight:800;color:#D94040;line-height:1">${maiorSLAVal}</div>
           <div>
@@ -17633,7 +17632,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
     ${incSaude ? `
     <div class="two-col">
       <div>
-        <div class="sec-title">🩺 Saúde da Carteira — Abrir PATEC</div>
+        <div class="sec-title">🩺 Saúde da Carteira</div>
         <div class="donut-wrap">
           <svg class="donut-svg" width="110" height="110" viewBox="0 0 42 42">
             <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#e0e0e0" stroke-width="6"></circle>
@@ -17654,7 +17653,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a2e}
 
     ${incSegmento ? `
     <div>
-      <div class="sec-title">🗂 Segmentos — Abrir PATEC</div>
+      <div class="sec-title">🗂 Segmentos</div>
       <div class="seg-grid">
         <div class="seg-card" style="background:#FDEAEA;border-color:#D9404033"><div class="seg-val" style="color:#D94040">${segCrit}</div><div class="seg-lbl">Seg. Crítico</div></div>
         <div class="seg-card" style="background:#EBF0FA;border-color:#1A4A8A33"><div class="seg-val" style="color:#1A4A8A">${segOp}</div><div class="seg-lbl">Seg. Operacional</div></div>
