@@ -3647,8 +3647,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="tw" style="max-height:500px">
             <table>
               <thead><tr>
-                <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
-                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Status</th>
+                <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>Status</th>
               </tr></thead>
               <tbody id="pc-tbody-urgmuitoalta"></tbody>
             </table>
@@ -3661,8 +3661,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="tw" style="max-height:500px">
             <table>
               <thead><tr>
-                <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
-                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Status</th>
+                <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>Status</th>
               </tr></thead>
               <tbody id="pc-tbody-urgalta"></tbody>
             </table>
@@ -3675,8 +3675,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div class="tw" style="max-height:500px">
             <table>
               <thead><tr>
-                <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
-                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Status</th>
+                <th>Analista</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>Status</th>
               </tr></thead>
               <tbody id="pc-tbody-urgbaixa"></tbody>
             </table>
@@ -13158,19 +13158,19 @@ function pcFiltrar(){
   });
 
   const urgMuitoAlta = filtrar(baseUrgencia.filter(r => normUrgPC(r.urgencia).includes('muito alt')));
-  pcRenderTabela('urgmuitoalta', urgMuitoAlta, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
+  pcRenderTabela('urgmuitoalta', urgMuitoAlta, ['analista','validade','sla','rc','item_rc','num_oport','seq'], false);
 
   const urgAlta = filtrar(baseUrgencia.filter(r => {
     const u = normUrgPC(r.urgencia);
     return (u === 'alto' || u === 'alta') && !u.includes('muito');
   }));
-  pcRenderTabela('urgalta', urgAlta, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
+  pcRenderTabela('urgalta', urgAlta, ['analista','validade','sla','rc','item_rc','num_oport','seq'], false);
 
   const urgBaixa = filtrar(baseUrgencia.filter(r => {
     const u = normUrgPC(r.urgencia);
     return u === 'baixo' || u === 'baixa';
   }));
-  pcRenderTabela('urgbaixa', urgBaixa, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
+  pcRenderTabela('urgbaixa', urgBaixa, ['analista','validade','sla','rc','item_rc','num_oport','seq'], false);
 }
 
 function pcRenderTabela(aba, rows, campos, comExtra){
