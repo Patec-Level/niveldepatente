@@ -16732,6 +16732,12 @@ async function admApresentacaoGerar(){
   if(!_radarDados || !_radarDados.length){
     try{ await fbCarregarRadar(); } catch(e){ console.warn('Apresentação: erro ao carregar Radar antes de gerar:', e); }
   }
+  // Garantir que o XGL esteja carregado — sem isso, "XGL Pendentes" no Detalhamento de
+  // Governança fica zerado (e a linha nem aparece) só porque a sessão não passou pela
+  // página de Governança ainda, não porque não existam itens pendentes de fato
+  if(!_xglItens || !_xglItens.length){
+    try{ await xglCarregarFirebase(); } catch(e){ console.warn('Apresentação: erro ao carregar XGL antes de gerar:', e); }
+  }
 
   const titulo    = document.getElementById('apres-titulo')?.value || 'Visão Geral de PATEC';
   const subtitulo = document.getElementById('apres-subtitulo')?.value || 'BPO de Compras · DPV';
@@ -16882,6 +16888,14 @@ async function admApresentacaoGerar(){
     const pgPA = document.getElementById('p-plano-acao');
     const pgPAHidden = pgPA && !pgPA.classList.contains('active');
     if(pgPAHidden){ pgPA.style.display='block'; pgPA.style.visibility='hidden'; }
+    // Garantir que a aba interna "Finalizado" esteja visível — o gráfico (pa-chart-cascata)
+    // só existe dentro dela. Se a última navegação deixou a aba "Abrir PATEC" ativa,
+    // o canvas teria largura 0 e a captura falharia silenciosamente ("Gráfico não disponível")
+    const tabFinPA = document.getElementById('pa-tab-finalizado');
+    const tabAPPA  = document.getElementById('pa-tab-abrirpatec');
+    const tabWasHiddenPA = tabFinPA && tabFinPA.style.display === 'none';
+    if(tabFinPA) tabFinPA.style.display = 'block';
+    if(tabWasHiddenPA && tabAPPA) tabAPPA.style.display = 'none';
     if(typeof renderCascata === 'function') renderCascata();
     await new Promise(r=>setTimeout(r,800));
     const canvasCascata = document.getElementById('pa-chart-cascata');
@@ -16889,6 +16903,7 @@ async function admApresentacaoGerar(){
       try { cascataImg = canvasCascata.toDataURL('image/png'); } catch(e){}
     }
     if(pgPAHidden){ pgPA.style.display=''; pgPA.style.visibility=''; }
+    if(tabWasHiddenPA){ if(tabFinPA) tabFinPA.style.display='none'; if(tabAPPA) tabAPPA.style.display='block'; }
   }
 
   // ── Simulação PA — usa mesma lógica do renderCascata ──
