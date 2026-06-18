@@ -3045,7 +3045,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <div id="radar-cards" style="display:none"></div>
         <!-- TOP 5 FAMÍLIAS — ocupa toda a altura dos cards -->
         <div class="cd" style="margin:0;padding:.875rem">
-          <div style="font-size:11px;font-weight:700;color:var(--az);margin-bottom:.75rem;display:flex;align-items:center;gap:6px">📦 Top 3 Famílias</div>
+          <div style="font-size:11px;font-weight:700;color:var(--az);margin-bottom:.75rem;display:flex;align-items:center;gap:6px">📦 Top 5 Famílias</div>
           <div id="radar-top-familias-bars" style="margin-bottom:.75rem"></div>
 
         </div>
@@ -10025,7 +10025,7 @@ function renderRadarTopFamilias(rows){
   // Top 5
   const top5 = Object.entries(contagem)
     .sort((a,b)=>b[1]-a[1])
-    .slice(0,3);
+    .slice(0,5);
 
   if(!top5.length){
     barsEl.innerHTML='<div style="font-size:12px;color:var(--tx2);padding:.5rem">Sem dados de família disponíveis.</div>';
