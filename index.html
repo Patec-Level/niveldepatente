@@ -3555,6 +3555,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
         <button class="stab" onclick="pcSetTab('criticos',this)">🔴 Itens Críticos</button>
         <button class="stab" onclick="pcSetTab('fluxo',this)">🗑 Tirar do Fluxo</button>
         <button class="stab" onclick="pcSetTab('cancelado',this)">🚫 Cancelado</button>
+        <button class="stab" onclick="pcSetTab('urgmuitoalta',this)">🔴 Urgência Muito Alta</button>
+        <button class="stab" onclick="pcSetTab('urgalta',this)">🟠 Urgência Alta</button>
+        <button class="stab" onclick="pcSetTab('urgbaixa',this)">🟢 Urgência Baixa</button>
       </div>
 
 
@@ -3634,6 +3637,48 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
                 <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Status</th>
               </tr></thead>
               <tbody id="pc-tbody-cancelado"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABA URGÊNCIA MUITO ALTA -->
+        <div id="pc-tab-urgmuitoalta" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--vm);margin-bottom:.5rem" id="pc-count-urgmuitoalta"></div>
+          <div class="tw" style="max-height:500px">
+            <table>
+              <thead><tr>
+                <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Status</th>
+              </tr></thead>
+              <tbody id="pc-tbody-urgmuitoalta"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABA URGÊNCIA ALTA -->
+        <div id="pc-tab-urgalta" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--am);margin-bottom:.5rem" id="pc-count-urgalta"></div>
+          <div class="tw" style="max-height:500px">
+            <table>
+              <thead><tr>
+                <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Status</th>
+              </tr></thead>
+              <tbody id="pc-tbody-urgalta"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABA URGÊNCIA BAIXA -->
+        <div id="pc-tab-urgbaixa" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--vd);margin-bottom:.5rem" id="pc-count-urgbaixa"></div>
+          <div class="tw" style="max-height:500px">
+            <table>
+              <thead><tr>
+                <th>Analista</th><th>Centro</th><th>Fila Level Board</th><th>Validade Proposta</th><th>SLA</th><th>Idas Mercado</th>
+                <th>RC</th><th>Item RC</th><th>Oportunidade</th><th>Item OP</th><th>PATEC Obrig.</th><th>Status</th>
+              </tr></thead>
+              <tbody id="pc-tbody-urgbaixa"></tbody>
             </table>
           </div>
         </div>
@@ -13100,6 +13145,32 @@ function pcFiltrar(){
   // CANCELADO: col D = 'Analisar PATEC Cancelado'
   const cancelados = filtrar(pcDadosCancelado());
   pcRenderTabela('cancelado', cancelados, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
+
+  // ── URGÊNCIA (Muito Alta / Alta / Baixa) — coluna URGENCIA da planilha ──
+  // Base: Analisar PATEC Finalizado (igual às demais abas) + proposta VÁLIDA
+  // (itens com proposta vencida ficam só na aba "Vencido", nunca duplicam aqui —
+  // mesma condição de "vencido" usada na aba Vencido, para garantir exclusão exata)
+  const normUrgPC = v => String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const baseUrgencia = base.filter(r => {
+    const val = (r.validade||'').toLowerCase();
+    const ehVencido = val.includes('vencida') || val.includes('vencid');
+    return !ehVencido; // só itens com proposta válida (não vencida)
+  });
+
+  const urgMuitoAlta = filtrar(baseUrgencia.filter(r => normUrgPC(r.urgencia).includes('muito alt')));
+  pcRenderTabela('urgmuitoalta', urgMuitoAlta, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
+
+  const urgAlta = filtrar(baseUrgencia.filter(r => {
+    const u = normUrgPC(r.urgencia);
+    return (u === 'alto' || u === 'alta') && !u.includes('muito');
+  }));
+  pcRenderTabela('urgalta', urgAlta, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
+
+  const urgBaixa = filtrar(baseUrgencia.filter(r => {
+    const u = normUrgPC(r.urgencia);
+    return u === 'baixo' || u === 'baixa';
+  }));
+  pcRenderTabela('urgbaixa', urgBaixa, ['analista','validade','sla','idas','rc','item_rc','num_oport','seq','patec_obrig'], true);
 }
 
 function pcRenderTabela(aba, rows, campos, comExtra){
@@ -13341,7 +13412,7 @@ function pcSetTab(aba, btn){
   _pcTabAtiva = aba;
   document.querySelectorAll('#pc-tabs .stab').forEach(b => b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  ['vencido','reprovado','criticos','fluxo','cancelado'].forEach(t => {
+  ['vencido','reprovado','criticos','fluxo','cancelado','urgmuitoalta','urgalta','urgbaixa'].forEach(t => {
     const el = document.getElementById('pc-tab-' + t);
     if(el) el.style.display = t === aba ? 'block' : 'none';
   });
