@@ -16726,6 +16726,13 @@ function admApresentacaoGetFiltro(){
 }
 
 async function admApresentacaoGerar(){
+  // Garantir que o Radar Estratégico esteja carregado ANTES de calcular o backlog —
+  // sem isso, a ancoragem no Radar falha e o cálculo cai no acumulado bruto (que pode
+  // incluir entradas anômalas/infladas), gerando um "Backlog Atual" muito maior que o real
+  if(!_radarDados || !_radarDados.length){
+    try{ await fbCarregarRadar(); } catch(e){ console.warn('Apresentação: erro ao carregar Radar antes de gerar:', e); }
+  }
+
   const titulo    = document.getElementById('apres-titulo')?.value || 'Visão Geral de PATEC';
   const subtitulo = document.getElementById('apres-subtitulo')?.value || 'BPO de Compras · DPV';
   const dataRef   = document.getElementById('apres-data')?.value || new Date().toISOString().split('T')[0];
