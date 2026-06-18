@@ -2732,7 +2732,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
               <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Plano de Ação — Início</div>
               <input type="date" id="apres1-pa-ini" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
               <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Plano de Ação — Fim</div>
-              <input type="date" id="apres1-pa-fim" style="width:100%;font-size:12px;padding:5px 10px">
+              <input type="date" id="apres1-pa-fim" style="width:100%;font-size:12px;padding:5px 10px;margin-bottom:8px">
+              <div style="font-size:11px;color:var(--tx2);margin-bottom:3px">Meta diária simulada (itens/dia)</div>
+              <input type="number" id="apres1-meta-dia" min="1" placeholder="Ex: 30" style="width:100%;font-size:12px;padding:5px 10px">
             </div>
 
             <!-- Col 2: Filtro de fila -->
@@ -17375,6 +17377,8 @@ function admApresentacao1Init(){
     const apFim = document.getElementById('ap-dt-fim')?.value;
     paFimEl.value = apFim || new Date().toISOString().split('T')[0];
   }
+  const metaEl = document.getElementById('apres1-meta-dia');
+  if(metaEl && !metaEl.value) metaEl.value = 30;
 }
 
 // ── Gerar mensagem do Plano de Ação via IA (usa o mesmo worker já configurado no sistema) ──
@@ -17545,7 +17549,7 @@ async function admApresentacao1Gerar(){
       let backlogAtualSim = backlogIniSim;
       for(const d of datasOrdenadas){ if(d > dtIniSim && d <= dtFimSim) backlogAtualSim = valorPorData[d]; }
 
-      const metaDiaSimAP = 30; // meta diária padrão de referência
+      const metaDiaSimAP = parseInt(document.getElementById('apres1-meta-dia')?.value) || 30;
       const diasParaZerar = metaDiaSimAP>0 ? Math.ceil(backlogAtualSim/metaDiaSimAP) : 999;
       const dtZerarCalc = (() => {
         const futuros = []; let d = new Date(dtFimSim+'T12:00:00');
@@ -17571,7 +17575,7 @@ async function admApresentacao1Gerar(){
         <div class="sim-grid">
           <div class="sim-card"><div class="sim-label">Backlog Inicial (${dtIniSim.split('-').reverse().join('/')})</div><div class="sim-val">${backlogIniSim.toLocaleString('pt-BR')}</div></div>
           <div class="sim-card"><div class="sim-label">Backlog Atual (${dtFimSim.split('-').reverse().join('/')})</div><div class="sim-val">${backlogAtualSim.toLocaleString('pt-BR')}</div></div>
-          <div class="sim-card sim-green"><div class="sim-label">📅 Conclusão estimada</div><div class="sim-val">${dtZerarCalc}</div><div class="sim-sub">${diasParaZerar} dias úteis</div></div>
+          <div class="sim-card sim-green"><div class="sim-label">📅 Conclusão estimada</div><div class="sim-val">${dtZerarCalc}</div><div class="sim-sub">${diasParaZerar} dias úteis · meta ${metaDiaSimAP}/dia</div></div>
           <div class="sim-card" style="background:${_diffSim>5?'#FDEAEA':_diffSim<-5?'#E6F7F1':'#E8F0FB'};border-color:${_diffSim>5?'#ef9a9a':_diffSim<-5?'#a5d6a7':'#90caf9'}">
             <div class="sim-label">Status do Backlog</div>
             <div style="margin-top:6px">${_badgeSim}</div>
