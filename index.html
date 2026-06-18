@@ -3038,6 +3038,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azm);box
           <div id="radar-cards-l1" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px"></div>
           <!-- Linha 2: 6 cards -->
           <div id="radar-cards-l2" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px"></div>
+          <!-- Linha 3: Urgência (coluna URGÊNCIA da planilha) -->
+          <div id="radar-cards-l3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
         </div>
         <!-- manter id original para compatibilidade -->
         <div id="radar-cards" style="display:none"></div>
@@ -9956,6 +9958,21 @@ function _renderRadarCore(){
   const l2El = document.getElementById('radar-cards-l2');
   if(l1El) l1El.innerHTML = linha1.map(cardHTML).join('');
   if(l2El) l2El.innerHTML = linha2.map(cardHTML).join('');
+
+  // ── Linha 3: URGÊNCIA (coluna URGENCIA da planilha) — soma sobre o filtro de Analista Automático ativo ──
+  const normUrg = v => String(v||'').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // remove acentos
+  const urgAlto     = rows.filter(d => normUrg(d.urgencia) === 'alto' || normUrg(d.urgencia) === 'alta').length;
+  const urgBaixo    = rows.filter(d => normUrg(d.urgencia) === 'baixo' || normUrg(d.urgencia) === 'baixa').length;
+  const urgMuitoAlto= rows.filter(d => normUrg(d.urgencia).includes('muito alt')).length;
+
+  const linha3 = [
+    {label:'Urgência Muito Alta', val:urgMuitoAlto, cor:'var(--vm)', bg:'var(--vmc)', ico:'🔴'},
+    {label:'Urgência Alta',       val:urgAlto,      cor:'var(--am)', bg:'var(--amc)', ico:'🟠'},
+    {label:'Urgência Baixa',      val:urgBaixo,     cor:'var(--vd)', bg:'var(--vdc)', ico:'🟢'},
+  ];
+  const l3El = document.getElementById('radar-cards-l3');
+  if(l3El) l3El.innerHTML = linha3.map(cardHTML).join('');
 
   // Por analista — apenas itens "Analisar PATEC Finalizado"
   const rowsAnalista = rows.filter(d=>d.analista_auto==='Analisar PATEC Finalizado');
