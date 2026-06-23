@@ -6106,6 +6106,15 @@ function renderPainelEstrategico(){
   if(!renderPainelEstrategico._cacheCarregado){
     renderPainelEstrategico._cacheCarregado = true;
     (async () => {
+      // Aguarda autenticação estar completamente propagada antes de ler
+      // — evita "Missing or insufficient permissions" em chamadas precoces
+      if(!firebase.auth().currentUser){
+        await new Promise(resolve => {
+          const unsub = firebase.auth().onAuthStateChanged(user => {
+            if(user){ unsub(); resolve(); }
+          });
+        });
+      }
       const db = getDB(); if(!db) return;
       if(!window._prodAcoesCache) window._prodAcoesCache = {};
       try {
