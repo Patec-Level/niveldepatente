@@ -12723,15 +12723,22 @@ async function paHistoricoCarregarFirebase(){
     }
     const db=getDB(); if(!db){ console.warn('PA Histórico: db null'); return; }
     const doc=await db.collection('config').doc('pa_historico').get();
-    const lista = (doc.exists && doc.data().lista) ? doc.data().lista : [];
-    // CORREÇÃO BUG (20/06): antes, se o documento não existisse mais no
-    // Firebase (ex: apagado manualmente), essa função simplesmente não
-    // fazia nada — deixando o cache antigo do localStorage "preso" pra
-    // sempre, mesmo depois do dado real ser apagado. Agora sempre
-    // sincroniza com o que existe (ou não) no Firebase.
-    _paHistorico = lista;
+    const listaFB = (doc.exists && doc.data().lista) ? doc.data().lista : [];
+    // CORREÇÃO (26/06): se o Firebase tem menos marcos que o código embutido
+    // (ex: após perda de dados), usa os marcos do código como base e mescla
+    // com o Firebase — mantendo o conjunto mais completo.
+    if(listaFB.length < _paHistorico.length){
+      // Mescla: índice por data, o Firebase prevalece em caso de conflito
+      const mapa = {};
+      _paHistorico.forEach(m => mapa[m.dt] = m);
+      listaFB.forEach(m => mapa[m.dt] = m);
+      _paHistorico = Object.values(mapa).sort((a,b)=>a.dt.localeCompare(b.dt));
+      console.log('PA Histórico: Firebase incompleto — usando dados embutidos mesclados:', _paHistorico.length, 'marcos');
+    } else {
+      _paHistorico = listaFB;
+      console.log('PA Histórico carregado do Firebase:', _paHistorico.length, 'marcos');
+    }
     try{ localStorage.setItem(_lsMod('patec_pa_historico'), JSON.stringify(_paHistorico)); }catch(e){}
-    console.log('PA Histórico carregado do Firebase:', _paHistorico.length, 'marcos');
     paHistoricoRender();
   } catch(e){ console.warn('PA Histórico load:', e); }
 }
